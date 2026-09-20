@@ -2,6 +2,8 @@ name: repo-validation
 on:
   push:
   pull_request:
+permissions:
+  contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -38,3 +40,7 @@ jobs:
         run: PYTHONPATH=platform/src python3 -m unittest tests.test_postgres_slice -v
       - name: Compose config
         run: docker compose -f infrastructure/compose.yaml --env-file infrastructure/compose.example.env config >/dev/null
+      - name: Backup/restore script safety
+        run: bash tests/test_scripts_safety.sh
+      - name: Throwaway Postgres restore
+        run: bash scripts/test-backup-restore.sh

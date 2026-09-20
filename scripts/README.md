@@ -10,7 +10,9 @@ All host-mutating scripts default to checks. `--apply` / `--live` / `--confirm-r
 | [bootstrap.sh](bootstrap.sh) | Only with `--apply` |
 | [health-check.sh](health-check.sh) | No (`--live` probes, does not write) |
 | [backup.sh](backup.sh) | Writes backup dir only with `--execute` |
-| [restore.sh](restore.sh) | Only with `--confirm-restore <id>` |
+| [restore.sh](restore.sh) | Only with `--confirm-restore <id>` — and even then it **refuses** to overwrite live volumes |
+| [restore-throwaway.sh](restore-throwaway.sh) | Restores a dump into an ephemeral `ai-lab-pg-*` container only |
+| [test-backup-restore.sh](test-backup-restore.sh) | Ephemeral dump→restore on `127.0.0.1:55433` (tmpfs); not M1 |
 | [platform.sh](platform.sh) | No (local harness CLI / loopback serve) |
 | [control-plane.sh](control-plane.sh) | No (loopback uvicorn; refuses non-loopback) |
 | [studio-worker.sh](studio-worker.sh) | No (loopback uvicorn; refuses non-loopback) |

@@ -60,6 +60,9 @@ REQUIRED_FILES=(
   scripts/eval-dry-run.sh
   scripts/train.sh
   scripts/test-postgres-slice.sh
+  scripts/restore-throwaway.sh
+  scripts/test-backup-restore.sh
+  tests/test_scripts_safety.sh
   agents/lab-operations/policy.json
   scripts/preflight.sh scripts/backup.sh scripts/restore.sh scripts/platform.sh
   scripts/control-plane.sh scripts/studio-worker.sh
@@ -112,7 +115,7 @@ for sh in "$ROOT"/scripts/*.sh "$ROOT"/hosts/*/setup.sh; do
   bash -n "$sh" && pass "bash -n ${sh#"$ROOT"/}" || fail "syntax $sh"
 done
 
-for json in "$ROOT"/agents/*/policy.json; do
+for json in "$ROOT"/agents/*/policy.json "$ROOT"/models/catalog.json; do
   python3 -m json.tool "$json" >/dev/null && pass "json ${json#"$ROOT"/}" || fail "json $json"
 done
 

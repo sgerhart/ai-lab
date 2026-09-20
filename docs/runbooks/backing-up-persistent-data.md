@@ -6,6 +6,6 @@
 
 **Steps:** `./scripts/backup.sh` (dry-run). Then `--execute --target ...` when authorized.
 
-**Verify:** File non-empty. **A backup is invalid until a restore test onto a non-live database succeeds.**
+**Verify:** File non-empty. Throwaway restore: `./scripts/test-backup-restore.sh`. **A backup is invalid until that class of restore succeeds. Live M1 restore is still untested (D-011).**
 
 **Rollback:** Delete the timestamp directory if the dump is bad.

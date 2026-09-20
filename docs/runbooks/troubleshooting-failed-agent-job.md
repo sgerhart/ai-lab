@@ -2,7 +2,7 @@
 
 **Prerequisites:** Store access (SQLite in tests; Postgres when deployed).
 
-**Steps:** Read `status`, `attempt_history`, `final_result`. If `awaiting_approval`, it is not failed. If retries remain, inspect the last error. Do not re-run privileged tools without approval. Check Studio reachability if the error is transport.
+**Steps:** Read `status`, `attempt_history`, `final_result`, `log_refs`. If `awaiting_approval`, it is not failed. `studio_unavailable` means the worker was unreachable (work order stays `queued`). `plan_failed` means the worker ran and the deterministic plan errored (status `failed`). Do not re-run privileged tools without approval.
 
 **Verify:** New attempt increments `attempt_history`.
 

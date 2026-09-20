@@ -15,7 +15,7 @@ Resolved items stay listed with **Resolved** and the ADR.
 | D-009 | Ollama bind on the Air | **Open** as workstation hygiene; Studio bind is Tailscale/loopback (ADR 0012/0019) |
 | D-010 | Observability stack | **Open** — profile off |
 | D-011 | Backup destination (not M1) | **Open** — blocks a claimed restore |
-| D-012 | Commit/push authorization | **Commit authorized** 2026-09-20 (`f4891b1`). **Push still open** |
+| D-012 | Commit/push authorization | **Commit authorized** (`f4891b1`, `4cec8ff`). **Push authorized** 2026-09-20 (operator request). Repo is public (F-002). |
 | D-013 | M1 container engine: Colima vs Docker Desktop | **Open** — Colima preferred |
 | D-014 | LangGraph vs custom orchestrator | **Resolved** — LangGraph (ADR 0020) |
 | D-015 | M3 Air unified memory attestation | **Open** — 16 GB observed, not attested |
