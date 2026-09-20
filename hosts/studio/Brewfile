@@ -1,0 +1,9 @@
+# Compute plane — Mac Studio
+# No model pulls happen via this Brewfile.
+
+brew "git"
+brew "jq"
+brew "uv"
+brew "tailscale"
+brew "ollama"
+brew "cmake"

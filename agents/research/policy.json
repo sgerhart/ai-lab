@@ -1,0 +1,11 @@
+{
+  "id": "research",
+  "isolation_tier": 1,
+  "allowed_tools": [
+    "http_get_allowlist",
+    "write_report_artifact"
+  ],
+  "privileged_tools": [],
+  "network": ["allowlist"],
+  "citation_policy": "no-fabrication"
+}

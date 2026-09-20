@@ -1,0 +1,15 @@
+# Host inventory overlay (gitignored)
+# Copy to ../<host>/local.inventory.yaml and fill in. Never commit.
+
+inventory_name: example-host
+addresses:
+  ipv4: []          # e.g. ["192.0.2.10"]
+  ipv6: []
+mac_addresses: []
+serial: ""
+ssh:
+  alias: ""
+  hostname: ""
+  user: ""
+  identity_file: ""   # path on the operator workstation, not a key
+notes: ""

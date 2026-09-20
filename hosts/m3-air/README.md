@@ -1,0 +1,15 @@
+# m3-air — human / development plane
+
+Confirmed: MacBook Air, Apple M3, 512 GB.  
+Unified memory: **not attested**. Observed 16 GB on this workspace host (2026-09-19).
+
+**Does:** IDE, Git, SSH, dashboards, approvals.  
+**Does not:** always-on control-plane compose. Do not `compose up` the lab stack here (port collisions with Clarion are likely).
+
+See [RUNBOOK.md](RUNBOOK.md) for the independently executable bring-up.
+
+```bash
+./hosts/m3-air/setup.sh --preflight
+./hosts/m3-air/setup.sh --dry-run
+# ./hosts/m3-air/setup.sh --apply
+```

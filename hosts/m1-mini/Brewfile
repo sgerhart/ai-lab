@@ -1,0 +1,11 @@
+# Control plane — M1 Mac mini
+# Keep this list small. 16 GB is the whole machine.
+# Backups use pg_dump inside the postgres container (see scripts/backup.sh).
+
+brew "git"
+brew "jq"
+brew "uv"
+brew "tailscale"
+brew "colima"
+brew "docker"
+brew "docker-compose"

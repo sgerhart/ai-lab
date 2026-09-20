@@ -1,0 +1,40 @@
+name: repo-validation
+on:
+  push:
+  pull_request:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.6-alpine
+        env:
+          POSTGRES_USER: ai_lab
+          POSTGRES_PASSWORD: test-not-for-live
+          POSTGRES_DB: ai_lab
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ai_lab -d ai_lab"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Structure and secret scan
+        run: bash scripts/validate-repo.sh
+      - name: Stdlib harness tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Install control-plane extras
+        run: python3 -m pip install -r platform/requirements.txt
+      - name: LangGraph slice tests
+        run: PYTHONPATH=platform/src python3 -m unittest tests.test_langgraph_slice tests.test_studio_worker -v
+      - name: Postgres checkpoint slice tests
+        env:
+          DATABASE_URL: postgresql://ai_lab:test-not-for-live@localhost:5432/ai_lab
+        run: PYTHONPATH=platform/src python3 -m unittest tests.test_postgres_slice -v
+      - name: Compose config
+        run: docker compose -f infrastructure/compose.yaml --env-file infrastructure/compose.example.env config >/dev/null

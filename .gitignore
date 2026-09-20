@@ -1,0 +1,95 @@
+# Local environment and secrets — never commit these
+.env
+.env.*
+!.env.example
+!infrastructure/compose.example.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.pub
+authorized_keys
+credentials.json
+service-account*.json
+.vault-token
+auth.json
+secrets.yaml
+secrets.yml
+kubeconfig
+.kube/
+*.kdbx
+*.tskey
+tailscale-*.json
+
+# Secret directories (keep the README only)
+**/secrets/**
+!**/secrets/README.md
+
+# Local inventory overlays (IPs, MACs, serials, SSH targets, tailnet names)
+**/*.local.md
+**/*.local.yml
+**/*.local.yaml
+**/*.local.json
+**/inventory.local.*
+hosts/**/local/
+.lab/
+
+# Model weights, checkpoints, and blobs
+*.gguf
+*.ggml
+*.safetensors
+*.onnx
+*.ckpt
+*.h5
+*.pt
+*.pth
+*.bin
+*.weights
+models/weights/
+models/blobs/
+models/cache/
+models/datasets/raw/
+models/datasets/processed/
+.ollama/
+.cache/huggingface/
+.cache/llama.cpp/
+.cache/mlx/
+
+# Datasets and bulk data (do not ignore models/datasets/README.md)
+/data/
+data/raw/
+data/processed/
+*.parquet
+*.arrow
+*.feather
+*.sqlite
+*.db
+
+# Python / Node local state
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+.ruff_cache/
+.mypy_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.cursor/
+
+# Logs, backups, runtime
+*.log
+logs/
+tmp/
+backups/
+.pytest_cache/
+.coverage
+htmlcov/

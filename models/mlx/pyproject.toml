@@ -1,0 +1,10 @@
+[project]
+name = "ai-lab-mlx"
+version = "0.0.0"
+description = "Studio MLX environment — dependencies added after first successful import on the Studio"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

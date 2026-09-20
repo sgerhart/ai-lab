@@ -1,0 +1,8 @@
+# Human plane — M3 MacBook Air
+# No always-on lab services.
+
+brew "git"
+brew "gh"
+brew "jq"
+brew "uv"
+brew "tailscale"

@@ -1,0 +1,13 @@
+{
+  "id": "lab-operations",
+  "isolation_tier": 0,
+  "read_only": true,
+  "allowed_tools": [
+    "health_read",
+    "compose_ps_read",
+    "repo_read"
+  ],
+  "privileged_tools": [],
+  "network": ["tailscale-health"],
+  "notes": "Any new write tool requires an ADR and a policy change reviewed by a human."
+}

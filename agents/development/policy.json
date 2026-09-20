@@ -1,0 +1,19 @@
+{
+  "id": "development",
+  "isolation_tier": 1,
+  "allowed_tools": [
+    "repo_read",
+    "repo_write_bounded",
+    "run_tests",
+    "git_status",
+    "git_diff",
+    "git_commit"
+  ],
+  "privileged_tools": [
+    "git_push",
+    "gh_pr_merge",
+    "deploy"
+  ],
+  "network": ["github"],
+  "notes": "git_push and merge always require human approval even if listed."
+}
