@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "policy": "No automatic pulls. Bootstrap never pulls. Weights stay off Git.",
+  "host": "studio",
+  "default_backend": "ollama",
+  "models": []
+}

@@ -56,6 +56,9 @@ REQUIRED_FILES=(
   platform/src/ai_lab_platform/postgres_store.py
   platform/src/ai_lab_platform/settings.py
   platform/src/ai_lab_platform/schema.sql
+  models/catalog.json
+  scripts/eval-dry-run.sh
+  scripts/train.sh
   scripts/test-postgres-slice.sh
   agents/lab-operations/policy.json
   scripts/preflight.sh scripts/backup.sh scripts/restore.sh scripts/platform.sh

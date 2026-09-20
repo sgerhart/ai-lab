@@ -44,7 +44,7 @@ Observed on the workspace host (an M3 Mac, 2026-09-19): `sysctl hw.memsize` = 16
 | Host Brewfiles + dry-run setup | Yes | **No** |
 | Compose Postgres/Redis/Qdrant | Yes | **No** |
 | Agent harness + three catalog plans | Yes (deterministic; not LLM) | **No API process** |
-| Models | Catalog only | None pulled from this repo |
+| Models | `catalog.json` (empty of pulls) + FakeBackend dry-run | None pulled from this repo |
 | Tailscale | Documented | Not configured by this repo |
 
 ## Read next

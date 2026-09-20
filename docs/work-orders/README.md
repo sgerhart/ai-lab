@@ -8,5 +8,5 @@
 | [WO-003](WO-003-phase-3-compute.md) | Studio compute tooling | Code in Git; not deployed |
 | [WO-004](WO-004-phase-4-harness.md) | Agent harness | Core tested; API not deployed |
 | [WO-005](WO-005-phase-5-agents.md) | Three agents | Plans tested; not deployed |
-| [WO-006](WO-006-phase-6-model-lab.md) | Training/eval | Stubs |
+| [WO-006](WO-006-phase-6-model-lab.md) | Training/eval | Catalog + refuse-pull dry-run; no weights |
 | [WO-007](WO-007-phase-7-hardening.md) | Hardening / recovery tests | CI + runbooks; restore untested live |

@@ -1,0 +1,12 @@
+{
+  "id": "example-instruct",
+  "backend": "ollama",
+  "host": "studio",
+  "pull_name": "REPLACE_ME",
+  "license": "REPLACE_ME",
+  "approx_size": "unknown until pulled",
+  "role": "general-instruct",
+  "status": "template-not-a-real-pull",
+  "pull_authorized": false,
+  "notes": "Copy into catalog.json only after a human picks a real model. Do not commit weights."
+}
