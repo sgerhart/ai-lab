@@ -36,7 +36,7 @@ Do not expose PostgreSQL, Redis, Qdrant, Jupyter, model APIs, agent admin, or mo
 
 | ID | Severity | Summary | Live change? |
 |----|----------|---------|--------------|
-| F-001 | Critical, locally mitigated | Git was inited in the parent workspace | Relocated `.git` into `ai-lab`. Content commits are local until push. |
+| F-001 | Critical, locally mitigated | Git was inited in the parent workspace | Relocated `.git` into `ai-lab`. Pushed to `sgerhart/ai-lab` via `github-sgerhart`. |
 | F-002 | High | GitHub `sgerhart/ai-lab` is public | No |
 | F-003 | High | Ollama on the **Air** listens `*:11434` | No (not Studio) |
 | F-004 | Medium | `~/.ollama/id_ed25519` on Air | Ignored by Git |
