@@ -181,6 +181,20 @@ class ControlPlaneApiTests(unittest.TestCase):
         self.assertEqual(created.json()["status"], "queued")
         self.assertIn("studio_unavailable", created.json()["log_refs"])
 
+    def test_status_page_and_payload(self) -> None:
+        from ai_lab_platform.control_app import create_control_app
+
+        app = create_control_app(store=_store(), dispatch=lambda _p: {"ok": True}, checkpointer=MemorySaver())
+        client = TestClient(app)
+        page = client.get("/")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("text/html", page.headers.get("content-type", ""))
+        self.assertIn("mac-mini", page.text)
+        payload = client.get("/v1/status").json()
+        self.assertEqual(payload["host"], "mac-mini")
+        self.assertIn("postgres", payload["services"])
+        self.assertIn("queued", payload["work_orders"])
+
 
 if __name__ == "__main__":
     unittest.main()

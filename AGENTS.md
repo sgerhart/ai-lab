@@ -5,6 +5,7 @@ These rules apply to every human and coding agent that edits this repository.
 ## Identity
 
 - Repository root is the Git toplevel named `ai-lab`.
+- Operator clone path is `$HOME/workspace/github/sgerhart/ai-lab` (ADR 0035). Sibling GitHub-account directories stay out of this tree.
 - Do not create another Git repository.
 - Do not create `ai-infrastructure/`.
 - Do not rename this repository to `agent-lab`, `ai-factory`, `dentro-ai`, or anything else.

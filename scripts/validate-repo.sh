@@ -54,6 +54,8 @@ REQUIRED_FILES=(
   docs/decisions/0031-m3-air-16gb.md
   docs/decisions/0032-tailscale-machine-names.md
   docs/decisions/0033-studio-nvme-deferred.md
+  docs/decisions/0034-tailscale-ipv4-bind.md
+  docs/decisions/0035-workspace-github-clone-path.md
   docs/phases/repo-complete.md
   platform/mcp/allowlist.json
   infrastructure/compose.yaml
@@ -78,6 +80,9 @@ REQUIRED_FILES=(
   hosts/m1-mini/Brewfile hosts/studio/Brewfile hosts/m3-air/Brewfile
   hosts/m1-mini/RUNBOOK.md hosts/studio/RUNBOOK.md hosts/m3-air/RUNBOOK.md
   hosts/m1-mini/inventory.yaml hosts/studio/inventory.yaml hosts/m3-air/inventory.yaml
+  hosts/m1-mini/com.ai-lab.control-plane.plist.example
+  scripts/lib/bind.sh scripts/lib/compose.sh
+  platform/src/ai_lab_platform/web/status.html
 )
 
 for d in "${REQUIRED_DIRS[@]}"; do
@@ -87,7 +92,7 @@ for f in "${REQUIRED_FILES[@]}"; do
   [[ -f "$ROOT/$f" ]] && pass "file $f" || fail "missing file $f"
 done
 
-for pat in '.env' '*.gguf' '*.safetensors' 'id_ed25519' '*.local.yaml' 'local.inventory.yaml'; do
+for pat in '.env' '*.gguf' '*.safetensors' 'id_ed25519' '*.local.yaml' 'local.inventory.yaml' 'compose.local.env'; do
   grep -Fq "$pat" "$ROOT/.gitignore" && pass "gitignore contains $pat" || fail ".gitignore missing $pat"
 done
 
@@ -111,7 +116,7 @@ else
 fi
 rm -f "$SCAN_FILE"
 
-TRACKED_BAD="$(git ls-files | grep -E '(^|/)\.env$|\.local\.(ya?ml|md|json)$|inventory\.local\.|(^|/)local\.inventory\.ya?ml$' || true)"
+TRACKED_BAD="$(git ls-files | grep -E '(^|/)\.env$|\.local\.(ya?ml|md|json|env)$|inventory\.local\.|(^|/)local\.inventory\.ya?ml$|(^|/)compose\.local\.env$' || true)"
 [[ -n "$TRACKED_BAD" ]] && fail "git tracking forbidden files: $TRACKED_BAD" || pass "git is not tracking overlays or .env"
 
 if grep -v '^[[:space:]]*#' "$ROOT/infrastructure/compose.yaml" | grep -q '0.0.0.0'; then

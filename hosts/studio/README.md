@@ -9,6 +9,8 @@ M5 compatibility is unverified in this workspace. Thunderbolt NVMe is future (AD
 
 See [RUNBOOK.md](RUNBOOK.md) for the independently executable bring-up.
 
+Clone path: `~/workspace/github/sgerhart/ai-lab` (ADR 0035).
+
 ```bash
 ./hosts/studio/setup.sh --preflight
 ./hosts/studio/setup.sh --dry-run

@@ -14,6 +14,8 @@ Canonical host bring-up (start here):
 | [new-studio-setup.md](new-studio-setup.md) |
 | [m3-development-setup.md](m3-development-setup.md) |
 | [join-tailnet.md](join-tailnet.md) |
+| [installing-operator-ssh-keys.md](installing-operator-ssh-keys.md) |
+| [configure-tailscale-lab.md](configure-tailscale-lab.md) |
 | [checking-inter-host-connectivity.md](checking-inter-host-connectivity.md) |
 | [start-stop-control-plane.md](start-stop-control-plane.md) |
 | [adding-a-model.md](adding-a-model.md) |

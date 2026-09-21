@@ -29,7 +29,7 @@ Do **not** `docker compose up` `infrastructure/compose.yaml` on this laptop (por
 ## 2. Preflight (safe)
 
 ```bash
-cd /path/to/ai-lab
+cd ~/workspace/github/sgerhart/ai-lab
 ./hosts/m3-air/setup.sh --preflight
 ./scripts/validate-repo.sh
 python3 -m unittest discover -s tests -v
@@ -61,6 +61,7 @@ gh auth status   # prefer the sgerhart identity for this repo (ADR 0022)
 ```
 
 Join Tailscale: [../../docs/runbooks/join-tailnet.md](../../docs/runbooks/join-tailnet.md).  
+SSH to lab hosts: [../../docs/runbooks/installing-operator-ssh-keys.md](../../docs/runbooks/installing-operator-ssh-keys.md).  
 Record names in `hosts/m3-air/local.inventory.yaml` (gitignored).
 
 Optional local SQLite harness (not the M1 control plane):
@@ -74,7 +75,7 @@ Optional local SQLite harness (not the M1 control plane):
 
 **None required.** This host must sleep without taking the lab down.
 
-Optional: browse `http://mac-mini:8088/health` when the mini is up (MagicDNS; tailnet suffix still not in Git).
+Optional: browse `http://mac-mini:8088/` for the status board (JSON still at `/health`).
 
 Human approval:
 

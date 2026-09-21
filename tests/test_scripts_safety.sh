@@ -50,5 +50,21 @@ set -e
 [[ "$rc" -eq 1 ]] || { echo "FAIL: non-iCloud --execute should exit 1 (got $rc)"; exit 1; }
 grep -q "iCloud Drive" /tmp/ai-lab-backup-icloud.txt
 
-rm -rf "$tmpdir" /tmp/ai-lab-restore-no.txt /tmp/ai-lab-restore-live.txt /tmp/ai-lab-restore-ts.txt /tmp/ai-lab-restore-5432.txt /tmp/ai-lab-restore-name.txt /tmp/ai-lab-backup-icloud.txt
+# Bind policy (ADR 0034)
+# shellcheck source=../scripts/lib/bind.sh
+source "$ROOT/scripts/lib/bind.sh"
+ai_lab_bind_allowed 127.0.0.1 || { echo "FAIL: loopback should be allowed"; exit 1; }
+ai_lab_bind_allowed 0.0.0.0 && { echo "FAIL: 0.0.0.0 must be refused"; exit 1; }
+ai_lab_bind_allowed 8.8.8.8 && { echo "FAIL: public IP must be refused"; exit 1; }
+set +e
+AI_LAB_BIND_ADDRESS=0.0.0.0 "$ROOT/scripts/control-plane.sh" >/tmp/ai-lab-bind.txt 2>&1
+rc=$?
+set -e
+[[ "$rc" -eq 2 ]] || { echo "FAIL: control-plane.sh 0.0.0.0 should exit 2 (got $rc)"; exit 1; }
+
+plist="$ROOT/hosts/m1-mini/com.ai-lab.control-plane.plist.example"
+grep -q "com.ai-lab.control-plane" "$plist" || { echo "FAIL: launchd example missing label"; exit 1; }
+grep -Eiq "TOKEN|PASSWORD|DATABASE_URL" "$plist" && { echo "FAIL: launchd example must not contain secrets"; exit 1; }
+
+rm -rf "$tmpdir" /tmp/ai-lab-restore-no.txt /tmp/ai-lab-restore-live.txt /tmp/ai-lab-restore-ts.txt /tmp/ai-lab-restore-5432.txt /tmp/ai-lab-restore-name.txt /tmp/ai-lab-backup-icloud.txt /tmp/ai-lab-bind.txt
 echo "script safety OK"

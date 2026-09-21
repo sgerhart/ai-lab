@@ -3,6 +3,8 @@
 # Destination: iCloud Drive (ADR 0030), not the git repo and not the M1 data volume alone.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/compose.sh
+source "$ROOT/scripts/lib/compose.sh"
 EXECUTE=0
 ALLOW_OTHER=0
 ICLOUD_DRIVE="${HOME}/Library/Mobile Documents/com~apple~CloudDocs"
@@ -53,9 +55,9 @@ fi
 
 mkdir -p "$TARGET/$STAMP"
 echo "NOTE: this talks to a running compose stack. Authorized --execute assumed."
-docker compose -f "$ROOT/infrastructure/compose.yaml" --env-file "$COMPOSE_ENV" \
+ai_lab_compose -f "$ROOT/infrastructure/compose.yaml" --env-file "$COMPOSE_ENV" \
   exec -T postgres pg_dump -U "${POSTGRES_USER:-ai_lab}" "${POSTGRES_DB:-ai_lab}" \
-  > "$TARGET/$STAMP/postgres.sql"
+  < /dev/null > "$TARGET/$STAMP/postgres.sql"
 echo "wrote $TARGET/$STAMP/postgres.sql"
 echo "iCloud must finish syncing before this dump counts as off-box."
 echo "qdrant file copy is host-specific; record volume path in the overlay before relying on this backup."

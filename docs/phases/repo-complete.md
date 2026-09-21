@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 
-Git work for phases 0–7 is **done**. M1 `--apply` was authorized 2026-09-21 and **not executed** (agent is on the Air; SSH to `mac-mini` denied). Building files is not permission to deploy.
+Git work for phases 0–7 is **done**. M1 data plane and FastAPI control plane are **up** on `mac-mini` (Tailscale, canonical ports, LaunchAgent). First iCloud dump written. Studio and live restore remain.
 
 ## Done in Git
 
@@ -17,7 +17,7 @@ Git work for phases 0–7 is **done**. M1 `--apply` was authorized 2026-09-21 an
 | Model catalog (empty of pulls) | `models/catalog.json` |
 | Eval/train refuse-pull | `scripts/eval-dry-run.sh`, `scripts/train.sh` |
 | Throwaway dump→restore | `scripts/test-backup-restore.sh` |
-| iCloud backup default | `scripts/backup.sh` (ADR 0030); `--execute` not authorized |
+| iCloud backup default | `scripts/backup.sh` (ADR 0030); first `--execute` 2026-09-21; live restore untested |
 | MCP | deny-unlisted, **zero** servers |
 | Ollama client | loopback only, `pull` refused |
 | Git identity | local `sgerhart@gmail.com` (ADR 0022) |
@@ -36,6 +36,6 @@ Git work for phases 0–7 is **done**. M1 `--apply` was authorized 2026-09-21 an
 
 ## Blocked on host authorization
 
-[WO-001](../work-orders/WO-001-phase-1-host-bootstrap.md) `--apply` on the M1 requires a session **on the mini** (or working SSH). Do not `--force` the M1 Brewfile on the Air.
+[WO-001](../work-orders/WO-001-phase-1-host-bootstrap.md) remaining: Studio `--apply`. Do not `--force` the M1 Brewfile on the Air.
 
 Do not start control-plane compose on the Air (ADR 0025).

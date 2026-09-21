@@ -44,5 +44,7 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0031](0031-m3-air-16gb.md) | M3 Air 16 GB attested | Accepted |
 | [0032](0032-tailscale-machine-names.md) | Tailscale machine names | Accepted (partial — suffix/ACL still open) |
 | [0033](0033-studio-nvme-deferred.md) | Studio NVMe deferred | Accepted |
+| [0034](0034-tailscale-ipv4-bind.md) | Control plane Tailscale IPv4 bind | Accepted |
+| [0035](0035-workspace-github-clone-path.md) | Operator clone path `~/workspace/github/<account>/<repo>` | Accepted |
 
 Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents.

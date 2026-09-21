@@ -29,3 +29,8 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Tailscale machine names: `mac-mini`, `mac-studio`, `mac-air` (ADR 0032). Tailnet suffix stays in gitignored overlay (not a GitHub org name).
 - Studio Thunderbolt NVMe deferred; initial setup uses the internal 1 TB SSD (ADR 0033).
 - `local.inventory.yaml` is now gitignored (the old `*.local.yaml` pattern did not match that filename).
+- M1 `--apply` (Brewfile) ran on `mac-mini` as `steve` on 2026-09-21. Colima started the same day (`2` CPU / `3` GiB / `40` GiB). Compose is healthy on canonical ports (loopback + Tailscale IPv4). FastAPI/LangGraph is on Tailscale port **8088** (PostgresStore). Docker Desktop was uninstalled. `host-setup.sh` uses Homebrew 6 `brew bundle install` / `check`.
+- ADR 0034: bind loopback or this host's `tailscale ip -4`, never `0.0.0.0`.
+- ADR 0035: operator clones live at `$HOME/workspace/github/sgerhart/ai-lab`. Sibling GitHub-account directories stay out of this tree.
+- Control-plane `GET /` is an HTML status board (services + work-order counts). `/health` JSON is unchanged.
+- First iCloud `backup.sh --execute` on `mac-mini` (2026-09-21). `docker-compose` fallback for hosts without the Compose plugin. LaunchAgent `com.ai-lab.control-plane`.

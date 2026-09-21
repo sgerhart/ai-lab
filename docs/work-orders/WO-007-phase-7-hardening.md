@@ -14,4 +14,5 @@
 ## Acceptance (deploy)
 
 - [x] Backup destination chosen (iCloud Drive, ADR 0030)
-- [ ] Restore test from an iCloud dump, then a documented live drill
+- [x] First iCloud `backup.sh --execute` (2026-09-21, `20260921T194214Z`). Sync to another device not confirmed.
+- [ ] Restore test from that iCloud dump, then a documented live drill

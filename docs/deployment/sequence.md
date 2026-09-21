@@ -4,7 +4,7 @@
 
 1. GitHub stays public (ADR 0028). Keep alias-only inventory (ADR 0005).
 2. Confirm `gh` identity (ADR 0022).
-3. Clone `ai-lab` onto each Mac.
+3. Clone `ai-lab` onto each Mac at `~/workspace/github/sgerhart/ai-lab` (ADR 0035).
 4. Join each Mac to the tailnet ([../runbooks/join-tailnet.md](../runbooks/join-tailnet.md)). Set machine names `mac-mini`, `mac-studio`, `mac-air`. Fill gitignored overlays with IPv4 and the tailnet suffix.
 5. M1: `./hosts/m1-mini/setup.sh --preflight` then `--apply` when authorized. Engine is Colima (ADR 0023).
 6. M1: copy `infrastructure/compose.example.env` to a gitignored env file; set `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `QDRANT_API_KEY`; keep bind `127.0.0.1` until Tailscale IP is known.

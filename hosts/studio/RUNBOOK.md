@@ -28,7 +28,7 @@ A new engineer clones `ai-lab` and follows this file only.
 ## 2. Preflight (safe)
 
 ```bash
-cd /path/to/ai-lab
+cd ~/workspace/github/sgerhart/ai-lab
 ./hosts/studio/setup.sh --preflight
 ```
 

@@ -12,7 +12,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
-**Deployment status:** repository work for phases 0–7 is **complete in Git**. **Nothing has been authorized to run on the M1 or Studio.** See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
+**Deployment status:** M1 Postgres/Redis/Qdrant and the FastAPI control plane are **up** on `mac-mini` over Tailscale (API port **8088**). Studio is **not** started. See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
 
 ## Three areas
 

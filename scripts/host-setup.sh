@@ -83,12 +83,16 @@ case "$MODE" in
     log "preflight complete"
     ;;
   dry-run)
-    log "dry-run: brew bundle --dry-run --file=$BREWFILE"
-    brew bundle --dry-run --file="$BREWFILE"
+    log "dry-run: brew bundle check --file=$BREWFILE (Homebrew 6 has no --dry-run)"
+    if brew bundle check --file="$BREWFILE" --verbose; then
+      log "brew bundle check: all Brewfile deps already installed"
+    else
+      log "brew bundle check: missing formulae (expected before first apply)"
+    fi
     ;;
   apply)
-    log "APPLY: brew bundle --file=$BREWFILE"
-    brew bundle --file="$BREWFILE"
+    log "APPLY: brew bundle install --file=$BREWFILE"
+    brew bundle install --file="$BREWFILE"
     if [[ "$ROLE" == "studio" ]]; then
       log "note: not pulling any Ollama models"
     fi

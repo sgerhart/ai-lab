@@ -1,6 +1,6 @@
 # Architecture overview
 
-**Status:** Target architecture. **Not deployed.**  
+**Status:** Data plane and FastAPI control plane live on the M1 mini (Tailscale, canonical ports). Studio **not** deployed. Docker Desktop uninstalled.  
 **Updated:** 2026-09-21
 
 A personal, three-host Apple Silicon lab with Tailscale as the private network. Durable control-plane state lives on the M1 mini. Inference and training live on the Studio. The M3 Air is the human interface.
@@ -41,13 +41,13 @@ Observed on the workspace host (2026-09-19) and attested by the owner (2026-09-2
 | Piece | In Git | Running on lab hosts |
 |-------|--------|----------------------|
 | Docs, ADRs, runbooks | Yes | n/a |
-| Host Brewfiles + dry-run setup | Yes | **No** |
-| Compose Postgres/Redis/Qdrant | Yes | **No** |
-| Agent harness + three catalog plans | Yes (deterministic; not LLM) | **No API process** |
+| Host Brewfiles + dry-run setup | Yes | **m1-mini `--apply` done** |
+| Compose Postgres/Redis/Qdrant | Yes | **Up on mac-mini** (5432/6379/6333, loopback + Tailscale IPv4) |
+| Agent harness + three catalog plans | Yes (deterministic; not LLM) | **API on mac-mini:8088** |
 | Models | `catalog.json` (empty of pulls) + FakeBackend dry-run | None pulled from this repo |
 | MCP allowlist | Yes (empty / deny-unlisted) | No servers |
 | Ollama HTTP client | Loopback only; pull refused | Not pointed at Studio |
-| Tailscale | Documented (`mac-mini` / `mac-studio` / `mac-air`; suffix not in Git) | Not configured by this repo |
+| Tailscale | Documented (`mac-mini` / `mac-studio` / `mac-air`; suffix not in Git) | Air + mini on tailnet; Studio not seen |
 
 ## Read next
 

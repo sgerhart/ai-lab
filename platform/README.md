@@ -1,7 +1,6 @@
 # Agent platform
 
-**Status:** LangGraph vertical slice and FastAPI control plane are **unit-tested**.  
-Postgres work-order store and LangGraph checkpoints are tested against an **ephemeral local Postgres**, not the M1 compose stack. **Not deployed.**
+**Status:** LangGraph vertical slice and FastAPI control plane are **unit-tested** and **running on `mac-mini:8088`**. Studio worker is not deployed.
 
 ```bash
 # Laptop extras (does not deploy)

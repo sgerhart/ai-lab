@@ -1,12 +1,16 @@
-"""FastAPI control plane. Binds loopback by default. Not deployed on the M1 yet."""
+"""FastAPI control plane. Loopback by default; Tailscale IPv4 allowed at deploy (ADR 0034)."""
 
 from __future__ import annotations
 
+import socket
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
+from urllib.error import URLError
+from urllib.request import urlopen
 
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.responses import HTMLResponse, Response
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, Field
@@ -17,6 +21,33 @@ from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
 from .store import SqliteStore, WorkOrderStore
 from .work_order import Status, WorkOrder
+
+STATUS_HTML = Path(__file__).resolve().parent / "web" / "status.html"
+FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#141b22"/>
+  <circle cx="16" cy="16" r="6" fill="#3ee0a8"/>
+</svg>
+"""
+
+
+def _port_open(host: str, port: int, timeout: float = 0.2) -> bool:
+    sock = socket.socket()
+    sock.settimeout(timeout)
+    try:
+        sock.connect((host, port))
+        return True
+    except OSError:
+        return False
+    finally:
+        sock.close()
+
+
+def _http_ok(url: str, timeout: float = 0.4) -> bool:
+    try:
+        with urlopen(url, timeout=timeout) as resp:  # noqa: S310 — operator-set loopback worker
+            return 200 <= getattr(resp, "status", 0) < 300
+    except (URLError, OSError, ValueError):
+        return False
 
 
 def default_sqlite_path() -> Path:
@@ -104,7 +135,46 @@ def create_control_app(
             "orchestrator": "langgraph",
             "work_order_store": type(store).__name__,
             "checkpoints": checkpoint_backend,
-            "deployed": False,
+            "deployed": bool(settings.database_url),
+        }
+
+    @app.get("/", response_class=HTMLResponse)
+    def status_page() -> str:
+        return STATUS_HTML.read_text(encoding="utf-8")
+
+    @app.get("/favicon.svg")
+    def favicon() -> Response:
+        return Response(content=FAVICON_SVG, media_type="image/svg+xml")
+
+    @app.get("/v1/status")
+    def lab_status() -> dict[str, object]:
+        studio_url = (settings.studio_worker_url or "http://127.0.0.1:8090").rstrip("/")
+        studio_open = _port_open("127.0.0.1", 8090)
+        counts = {item.value: 0 for item in Status}
+        try:
+            for order in store.list():
+                counts[order.status.value] = counts.get(order.status.value, 0) + 1
+        except Exception:
+            counts = {}
+        return {
+            "ok": True,
+            "role": "control-plane",
+            "host": "mac-mini",
+            "orchestrator": "langgraph",
+            "work_order_store": type(store).__name__,
+            "checkpoints": checkpoint_backend,
+            "deployed": bool(settings.database_url),
+            "services": {
+                "postgres": {"port": 5432, "open": _port_open("127.0.0.1", 5432)},
+                "redis": {"port": 6379, "open": _port_open("127.0.0.1", 6379)},
+                "qdrant": {"port": 6333, "open": _port_open("127.0.0.1", 6333)},
+                "studio": {
+                    "port": 8090,
+                    "open": studio_open,
+                    "health": _http_ok(f"{studio_url}/health") if studio_open else False,
+                },
+            },
+            "work_orders": counts,
         }
 
     @app.post("/v1/work-orders")

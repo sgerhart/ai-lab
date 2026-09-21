@@ -10,21 +10,21 @@ A new engineer clones `ai-lab` and follows this file only.
 
 | Step | Status |
 |------|--------|
-| Preflight script | **Implemented** (`setup.sh --preflight`). Tested on an M3 Air (chip mismatch warning is expected). **Not tested on an M1 mini.** |
-| Brewfile apply | **Implemented**, default is dry-run. **Not applied** to any mini. Authorized 2026-09-21; execution blocked (wrong host + SSH). |
-| Compose file | **Implemented** (`infrastructure/compose.yaml`). `docker compose config` tested. **`up` not run.** |
-| Control-plane API | **Implemented** (unit-tested with FastAPI TestClient + LangGraph MemorySaver). **Not running on an M1.** |
-| Postgres store + checkpoints | **Implemented.** Tested against an ephemeral local Postgres (`scripts/test-postgres-slice.sh` / CI). **Not the M1 compose stack.** |
-| Tailscale join | **Documented.** Machine name `mac-mini`. Mini was reachable from the Air via MagicDNS on 2026-09-21. SSH publickey from this Air **denied**. `--apply` not run. |
-| Backup destination | **iCloud Drive** (ADR 0030). `--execute` not authorized. Live restore untested. |
+| Preflight script | **Tested on this M1 mini** 2026-09-21 (`./hosts/m1-mini/setup.sh --preflight`). Chip Apple M1. |
+| Brewfile apply | **Applied** 2026-09-21 as `steve`. git, jq, uv, tailscale, colima, docker, docker-compose. |
+| Colima | **Running** as `sgerhart` 2026-09-21 (`--cpu 2 --memory 3 --disk 40 --runtime docker --vm-type vz --network-host-addresses`). Docker context `colima`. |
+| Compose file | **Running** on `mac-mini`. Healthy. Host publishes loopback + Tailscale IPv4 on **5432/6379/6333/6334**. |
+| Control-plane API | **Running** as LaunchAgent `com.ai-lab.control-plane` on Tailscale **8088**. |
+| Tailscale join | Mini already on tailnet as `mac-mini`. Operator SSH is `sgerhart@mac-mini`. |
+| Backup destination | **iCloud Drive** (ADR 0030). First `--execute` 2026-09-21 (`20260921T194214Z`). Live restore untested. |
 
-Human authorization is required for `--apply`, `colima start`, `compose up`, and binding anything other than loopback.
+Human authorization is still required before starting Studio. Docker Desktop is uninstalled. The API is a LaunchAgent (`com.ai-lab.control-plane`).
 
 ## 1. Prerequisites
 
 - Mac mini, Apple M1, 16 GB unified memory, 512 GB disk (confirmed).
 - Admin user.
-- This repository cloned.
+- This repository cloned at `~/workspace/github/sgerhart/ai-lab` (ADR 0035).
 - Homebrew **or** willingness to install it yourself (this repo will not `curl | bash`).
 - Tailscale account. Do not invent the tailnet name.
 - A password manager / Keychain for `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `QDRANT_API_KEY` (ADR 0027).
@@ -32,7 +32,7 @@ Human authorization is required for `--apply`, `colima start`, `compose up`, and
 ## 2. Preflight (safe)
 
 ```bash
-cd /path/to/ai-lab
+cd ~/workspace/github/sgerhart/ai-lab
 ./hosts/m1-mini/setup.sh --preflight
 ./scripts/validate-repo.sh
 ```
@@ -61,6 +61,8 @@ docker version
 cp infrastructure/compose.example.env infrastructure/compose.local.env   # gitignored if you use *.local.env
 # Set POSTGRES_PASSWORD, REDIS_PASSWORD, QDRANT_API_KEY to real values.
 # Keep AI_LAB_BIND_ADDRESS=127.0.0.1 until Tailscale IPv4 is known.
+# Live file on mac-mini: infrastructure/compose.local.env (gitignored, mode 600).
+# Keychain copies were skipped when created over SSH.
 ```
 
 Python env for the control plane:
@@ -78,32 +80,50 @@ Join Tailscale: [../../docs/runbooks/join-tailnet.md](../../docs/runbooks/join-t
 ## 5. Service startup (authorize first)
 
 ```bash
-# Data plane
-docker compose -f infrastructure/compose.yaml --env-file infrastructure/compose.local.env up -d
+# Data plane (loopback + Tailscale overlay, never 0.0.0.0)
+docker compose -f infrastructure/compose.yaml \
+  -f infrastructure/compose.tailscale.local.yaml \
+  --env-file infrastructure/compose.local.env up -d
 
-# Control plane (loopback). Password from compose.local.env — do not commit it.
+# Control plane. Password from compose.local.env — do not commit it.
 export DATABASE_URL="postgresql://ai_lab:${POSTGRES_PASSWORD}@127.0.0.1:5432/ai_lab"
 export STUDIO_WORKER_URL="http://127.0.0.1:8090"
-export PYTHONPATH=/path/to/ai-lab/platform/src
+export AI_LAB_BIND_ADDRESS="$(tailscale ip -4 | head -1)"
+export PYTHONPATH="$HOME/workspace/github/sgerhart/ai-lab/platform/src"
 ./scripts/control-plane.sh
 ```
 
 Do not use `compose.example.env` for a live `up`.
 
-To let the Studio call in, set `AI_LAB_BIND_ADDRESS` to this host's Tailscale IPv4 **after** ACLs exist. The `control-plane.sh` wrapper currently **refuses** non-loopback binds; change that only with an ADR and a documented firewall exception.
+Live bind is this host's Tailscale IPv4 (ADR 0034), plus compose overlay for the data plane. Never `0.0.0.0`.
+
+Install the LaunchAgent from the example plist (replace `OPERATOR` with this host's login). Then:
+
+```bash
+launchctl bootout "gui/$(id -u)/com.ai-lab.control-plane" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" ~/Library/LaunchAgents/com.ai-lab.control-plane.plist
+launchctl enable "gui/$(id -u)/com.ai-lab.control-plane"
+```
+
+Do not put `AI_LAB_API_TOKEN` or `DATABASE_URL` in the plist; `~/.ai-lab/start-control-plane.sh` already exports them.
 
 ## 6. Verification
 
+From the Air:
+
 ```bash
-docker compose -f infrastructure/compose.yaml --env-file infrastructure/compose.local.env ps
-curl -sS http://127.0.0.1:8088/health
-# Expect: orchestrator=langgraph, work_order_store=PostgresStore, checkpoints=postgres, deployed=false
+curl -sS http://mac-mini:8088/health
+# Expect: orchestrator=langgraph, work_order_store=PostgresStore, checkpoints=postgres, deployed=true
+nc -z mac-mini 5432
 ```
+
+On the mini, the API does not listen on `127.0.0.1:8088` (Tailscale IPv4 only). Compose Postgres does listen on loopback `127.0.0.1:5432`.
 
 Vertical slice (Studio worker must be reachable, or you will see `queued` + `studio_unavailable` — that is success for the failure path):
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8088/v1/work-orders \
+curl -sS -X POST http://mac-mini:8088/v1/work-orders \
+  -H "Authorization: Bearer $(cat ~/.ai-lab/mac-mini-api.token)" \
   -H 'Content-Type: application/json' \
   -d '{"agent":"lab-operations","objective":"slice demo"}'
 ```
@@ -111,7 +131,7 @@ curl -sS -X POST http://127.0.0.1:8088/v1/work-orders \
 ## 7. Backup / recovery
 
 See [../../docs/runbooks/backing-up-persistent-data.md](../../docs/runbooks/backing-up-persistent-data.md).  
-`./scripts/backup.sh` is dry-run unless `--execute`. Default target is iCloud Drive (ADR 0030). Restore will not overwrite live volumes automatically. **No restore has been tested against live M1 volumes.**
+`./scripts/backup.sh` is dry-run unless `--execute`. Default target is iCloud Drive (ADR 0030). First dump **wrote** 2026-09-21 (`20260921T194214Z/postgres.sql`, 29712 bytes). iCloud sync to another device is **not** confirmed here. Live restore onto M1 volumes is **not** tested.
 
 ## 8. Troubleshooting
 

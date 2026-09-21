@@ -1,7 +1,7 @@
 # Agent platform
 
 **Code:** [`platform/`](../../platform/README.md)  
-**Status:** LangGraph vertical slice + FastAPI control plane are **implemented and unit-tested**. Postgres store and LangGraph checkpoints are tested against ephemeral local Postgres. Live M1/Studio processes are **not deployed**.
+**Status:** LangGraph vertical slice + FastAPI control plane are **implemented, unit-tested, and running on `mac-mini:8088`**. Studio worker is **not** deployed. Live restore drill is **not** done.
 
 LangGraph orchestrates **workflow steps and resume** (ADR 0020). It does not replace PostgreSQL work-order records, tool permissions, model serving, or Studio workers.
 

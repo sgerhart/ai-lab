@@ -4,7 +4,7 @@
 
 **Effects:** Read-only probes.
 
-**Steps:** From Air: `tailscale ping mac-mini` and `mac-studio`. SSH only if keys already exist. Do not nmap the home LAN.
+**Steps:** From Air: `tailscale ping mac-mini` and `mac-studio`. Then `ssh -o BatchMode=yes mac-mini hostname` after [installing-operator-ssh-keys.md](installing-operator-ssh-keys.md). Do not nmap the home LAN.
 
 **Verify:** ping succeeds; SSH if configured.
 

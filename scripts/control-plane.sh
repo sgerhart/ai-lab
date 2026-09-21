@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-# M1 control-plane API. Loopback only. Does not start compose or mutate hosts.
+# M1 control-plane API. Loopback or this host's Tailscale IPv4 (ADR 0034).
+# Does not start compose or mutate hosts.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=lib/bind.sh
+source "$ROOT/scripts/lib/bind.sh"
 export PYTHONPATH="$ROOT/platform/src${PYTHONPATH:+:$PYTHONPATH}"
 HOST="${AI_LAB_BIND_ADDRESS:-127.0.0.1}"
 PORT="${AI_LAB_API_PORT:-8088}"
-if [[ "$HOST" != "127.0.0.1" && "$HOST" != "localhost" && "$HOST" != "::1" ]]; then
-  echo "Refusing to bind control plane on $HOST (loopback only in this script)." >&2
+if ! ai_lab_bind_allowed "$HOST"; then
+  echo "Refusing to bind control plane on $HOST (loopback or this host's Tailscale IPv4 only)." >&2
   exit 2
 fi
 cd "$ROOT/platform"

@@ -14,7 +14,7 @@ All host-mutating scripts default to checks. `--apply` / `--live` / `--confirm-r
 | [restore-throwaway.sh](restore-throwaway.sh) | Restores a dump into an ephemeral `ai-lab-pg-*` container only |
 | [test-backup-restore.sh](test-backup-restore.sh) | Ephemeral dump→restore on `127.0.0.1:55433` (tmpfs); not M1 |
 | [platform.sh](platform.sh) | No (local harness CLI / loopback serve) |
-| [control-plane.sh](control-plane.sh) | No (loopback uvicorn; refuses non-loopback) |
+| [control-plane.sh](control-plane.sh) | No (uvicorn; loopback or this host's Tailscale IPv4, ADR 0034) |
 | [studio-worker.sh](studio-worker.sh) | No (loopback uvicorn; refuses non-loopback) |
 | [test-postgres-slice.sh](test-postgres-slice.sh) | Starts an ephemeral loopback Postgres (`127.0.0.1:55432`, data on tmpfs) for checkpoint tests, then removes it |
 | [eval-dry-run.sh](eval-dry-run.sh) | No (FakeBackend smoke; `--pull` exits 2) |
