@@ -18,6 +18,8 @@ The owner supplied Tailscale machine names. The tailnet DNS suffix and ACL file 
 
 MagicDNS FQDN remains `mac-mini.{{TAILNET_NAME}}.ts.net` until the tailnet name is recorded in a gitignored overlay. Do not invent the tailnet name, IPv4, or ACL IDs.
 
+The MagicDNS suffix is **not** a GitHub org name. A `dentroio` guess was checked on 2026-09-21 against `tailscale status` on the Air and did not match. The observed suffix stays in `hosts/*/local.inventory.yaml` (ADR 0005).
+
 Short names (`mac-mini`) may be used on the tailnet once MagicDNS is on.
 
 ## Consequences

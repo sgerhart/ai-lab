@@ -15,11 +15,11 @@ Resolved items stay listed with **Resolved** and the ADR.
 | D-009 | Ollama bind on the Air | **Resolved** — accepted workstation risk (ADR 0029); Studio still loopback/Tailscale |
 | D-010 | Observability stack | **Resolved** (deferred) — ADR 0026 |
 | D-011 | Backup destination (not M1) | **Resolved** — iCloud Drive (ADR 0030). Live restore still untested |
-| D-012 | Commit/push authorization | **Resolved** — pushed 2026-09-20 via `github-sgerhart` |
+| D-012 | Commit/push authorization | **Resolved** — pushed 2026-09-21 via `github-sgerhart` (`9756110` on `origin/main`) |
 | D-013 | M1 container engine | **Resolved** — Colima (ADR 0023) |
 | D-014 | LangGraph vs custom orchestrator | **Resolved** — LangGraph (ADR 0020) |
 | D-015 | M3 Air unified memory attestation | **Resolved** — 16 GB (ADR 0031) |
-| D-016 | Tailscale names | **Partial** — machines `mac-mini` / `mac-studio` / `mac-air` (ADR 0032). Tailnet suffix and ACL file still gitignored/unsupplied |
+| D-016 | Tailscale names | **Partial** — machines `mac-mini` / `mac-studio` / `mac-air` (ADR 0032). Suffix/IPv4 observed on the Air 2026-09-21 and written to gitignored overlays. **Not** `dentroio`. Studio was not on the tailnet. ACL file still unsupplied |
 | D-017 | Qdrant API key on vs off for first deploy | **Resolved** — key required (ADR 0024) |
 | D-018 | Thunderbolt NVMe | **Resolved** (deferred) — not in initial setup (ADR 0033) |
 

@@ -15,6 +15,7 @@ Patterns ignored by Git (see `.gitignore`):
 - `**/*.local.yaml`
 - `**/*.local.json`
 - `**/inventory.local.*`
+- `**/local.inventory.yaml` (the documented overlay filename; `*.local.yaml` does **not** match it)
 - `hosts/**/local/`
 
 ## Example
@@ -27,4 +28,4 @@ Copy [`hosts/_template/local.inventory.yaml.example`](../../hosts/_template/loca
 - MAC addresses, serial numbers
 - SSH `HostName` / `User` / `IdentityFile`
 - BIOS/firmware versions if they uniquely identify hardware
-- Any token, even "just a lab token"
+- Tailscale MagicDNS suffix and IPv4 (observed on a live node; still not committed while the repo is public)

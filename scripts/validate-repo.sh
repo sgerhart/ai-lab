@@ -87,7 +87,7 @@ for f in "${REQUIRED_FILES[@]}"; do
   [[ -f "$ROOT/$f" ]] && pass "file $f" || fail "missing file $f"
 done
 
-for pat in '.env' '*.gguf' '*.safetensors' 'id_ed25519' '*.local.yaml'; do
+for pat in '.env' '*.gguf' '*.safetensors' 'id_ed25519' '*.local.yaml' 'local.inventory.yaml'; do
   grep -Fq "$pat" "$ROOT/.gitignore" && pass "gitignore contains $pat" || fail ".gitignore missing $pat"
 done
 
@@ -111,7 +111,7 @@ else
 fi
 rm -f "$SCAN_FILE"
 
-TRACKED_BAD="$(git ls-files | grep -E '(^|/)\.env$|\.local\.(ya?ml|md|json)$|inventory\.local\.' || true)"
+TRACKED_BAD="$(git ls-files | grep -E '(^|/)\.env$|\.local\.(ya?ml|md|json)$|inventory\.local\.|(^|/)local\.inventory\.ya?ml$' || true)"
 [[ -n "$TRACKED_BAD" ]] && fail "git tracking forbidden files: $TRACKED_BAD" || pass "git is not tracking overlays or .env"
 
 if grep -v '^[[:space:]]*#' "$ROOT/infrastructure/compose.yaml" | grep -q '0.0.0.0'; then

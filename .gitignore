@@ -36,6 +36,8 @@ tailscale-*.json
 **/*.local.yaml
 **/*.local.json
 **/inventory.local.*
+**/local.inventory.yaml
+**/local.inventory.yml
 hosts/**/local/
 .lab/
 

@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 
-Git work for phases 0–7 is **done**. No host has been authorized. Building files is not permission to deploy.
+Git work for phases 0–7 is **done**. M1 `--apply` was authorized 2026-09-21 and **not executed** (agent is on the Air; SSH to `mac-mini` denied). Building files is not permission to deploy.
 
 ## Done in Git
 
@@ -31,11 +31,11 @@ Git work for phases 0–7 is **done**. No host has been authorized. Building fil
 | Backup destination | **Resolved** — iCloud Drive (ADR 0030). Live restore still untested |
 | M3 Air RAM | **Resolved** — 16 GB (ADR 0031) |
 | Tailscale machine names | **Resolved** — `mac-mini` / `mac-studio` / `mac-air` (ADR 0032) |
-| Tailnet DNS suffix / IPv4 / ACL file | **Open** — gitignored overlay only |
+| Tailnet DNS suffix / IPv4 / ACL file | Suffix/IPv4 observed 2026-09-21, **overlay only** (not `dentroio`). Studio not on tailnet. ACL still open |
 | Studio Thunderbolt NVMe | **Deferred** — not initial setup (ADR 0033) |
 
 ## Blocked on host authorization
 
-[WO-001](../work-orders/WO-001-phase-1-host-bootstrap.md) `--apply` on the M1, then compose `up`, then Studio, then an explicit model pull.
+[WO-001](../work-orders/WO-001-phase-1-host-bootstrap.md) `--apply` on the M1 requires a session **on the mini** (or working SSH). Do not `--force` the M1 Brewfile on the Air.
 
 Do not start control-plane compose on the Air (ADR 0025).

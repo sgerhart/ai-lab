@@ -26,5 +26,6 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Air Ollama `*:11434` accepted as workstation risk (ADR 0029); Studio still loopback/Tailscale.
 - Backup destination is iCloud Drive (ADR 0030). `backup.sh --execute` refuses non-iCloud targets unless `--allow-other-target`. Live restore still untested.
 - M3 Air unified memory attested at 16 GB (ADR 0031).
-- Tailscale machine names: `mac-mini`, `mac-studio`, `mac-air` (ADR 0032). Tailnet suffix still not in Git.
+- Tailscale machine names: `mac-mini`, `mac-studio`, `mac-air` (ADR 0032). Tailnet suffix stays in gitignored overlay (not a GitHub org name).
 - Studio Thunderbolt NVMe deferred; initial setup uses the internal 1 TB SSD (ADR 0033).
+- `local.inventory.yaml` is now gitignored (the old `*.local.yaml` pattern did not match that filename).

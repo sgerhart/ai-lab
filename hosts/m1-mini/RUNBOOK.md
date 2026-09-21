@@ -11,11 +11,11 @@ A new engineer clones `ai-lab` and follows this file only.
 | Step | Status |
 |------|--------|
 | Preflight script | **Implemented** (`setup.sh --preflight`). Tested on an M3 Air (chip mismatch warning is expected). **Not tested on an M1 mini.** |
-| Brewfile apply | **Implemented**, default is dry-run. **Not applied** to any mini. |
+| Brewfile apply | **Implemented**, default is dry-run. **Not applied** to any mini. Authorized 2026-09-21; execution blocked (wrong host + SSH). |
 | Compose file | **Implemented** (`infrastructure/compose.yaml`). `docker compose config` tested. **`up` not run.** |
 | Control-plane API | **Implemented** (unit-tested with FastAPI TestClient + LangGraph MemorySaver). **Not running on an M1.** |
 | Postgres store + checkpoints | **Implemented.** Tested against an ephemeral local Postgres (`scripts/test-postgres-slice.sh` / CI). **Not the M1 compose stack.** |
-| Tailscale join | **Documented.** Machine name `mac-mini`. Tailnet suffix still not in Git. |
+| Tailscale join | **Documented.** Machine name `mac-mini`. Mini was reachable from the Air via MagicDNS on 2026-09-21. SSH publickey from this Air **denied**. `--apply` not run. |
 | Backup destination | **iCloud Drive** (ADR 0030). `--execute` not authorized. Live restore untested. |
 
 Human authorization is required for `--apply`, `colima start`, `compose up`, and binding anything other than loopback.
