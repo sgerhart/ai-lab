@@ -16,6 +16,7 @@ class WorkOrderStore(Protocol):
     def get(self, order_id: str) -> WorkOrder | None: ...
     def list(self, status: Status | None = None) -> list[WorkOrder]: ...
     def set_status(self, order_id: str, status: Status) -> WorkOrder: ...
+    def append_audit(self, work_order_id: str, actor: str, event: str, detail: dict | None = None) -> None: ...
 
 
 class SqliteStore:
@@ -37,6 +38,18 @@ class SqliteStore:
                     payload TEXT NOT NULL,
                     status TEXT NOT NULL,
                     updated_at TEXT NOT NULL
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    work_order_id TEXT NOT NULL,
+                    at TEXT NOT NULL,
+                    actor TEXT NOT NULL,
+                    event TEXT NOT NULL,
+                    detail TEXT NOT NULL
                 )
                 """
             )
@@ -83,3 +96,34 @@ class SqliteStore:
         order.status = transition(order.status, status)
         self.put(order)
         return order
+
+    def append_audit(
+        self, work_order_id: str, actor: str, event: str, detail: dict | None = None
+    ) -> None:
+        blob = json.dumps(detail or {})
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO audit_events (work_order_id, at, actor, event, detail)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (work_order_id, utcnow(), actor, event, blob),
+            )
+
+    def list_audit(self, work_order_id: str) -> list[dict[str, str]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT at, actor, event, detail FROM audit_events WHERE work_order_id = ? ORDER BY id",
+                (work_order_id,),
+            ).fetchall()
+        out: list[dict[str, str]] = []
+        for row in rows:
+            out.append(
+                {
+                    "at": row["at"],
+                    "actor": row["actor"],
+                    "event": row["event"],
+                    "detail": row["detail"],
+                }
+            )
+        return out

@@ -6,6 +6,4 @@ This repository describes private personal infrastructure. No license is
 granted to copy, modify, publish, or distribute the contents except to
 the copyright holder and agents acting under that holder's direction.
 
-A public open-source license (MIT, Apache-2.0, or similar) is an open
-decision. See docs/open-decisions.md (D-003). Until that decision is
-recorded as an ADR, treat this tree as private infrastructure-as-code.
+A public open-source license (MIT, Apache-2.0, or similar) requires a new ADR (see ADR 0021). Until then, treat this tree as private infrastructure-as-code.

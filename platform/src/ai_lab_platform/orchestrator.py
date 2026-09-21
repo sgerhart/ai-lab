@@ -20,6 +20,7 @@ class Orchestrator:
         self.store.put(order)
         order = self.store.set_status(order.id, Status.QUEUED)
         self.queue.enqueue(order.id)
+        self.store.append_audit(order.id, "harness", "submitted", {"agent": order.agent})
         return order
 
     def hydrate_queue(self) -> int:
@@ -62,6 +63,7 @@ class Orchestrator:
             self.store.put(order)
         order = self.store.set_status(order_id, Status.QUEUED)
         self.queue.enqueue(order.id)
+        self.store.append_audit(order.id, "human", "approved", {"tools": tools or []})
         return order
 
     def cancel(self, order_id: str) -> WorkOrder:
@@ -75,7 +77,9 @@ class Orchestrator:
             order.attempt_history[-1].ended_at = utcnow()
         order.final_result = result
         self.store.put(order)
-        return self.store.set_status(order.id, Status.COMPLETED)
+        done = self.store.set_status(order.id, Status.COMPLETED)
+        self.store.append_audit(order.id, "harness", "completed", {})
+        return done
 
     def fail(self, order_id: str, error: str) -> WorkOrder:
         order = self.store.get(order_id)
@@ -87,6 +91,7 @@ class Orchestrator:
         attempts = len(order.attempt_history)
         self.store.put(order)
         order = self.store.set_status(order.id, Status.FAILED)
+        self.store.append_audit(order.id, "harness", "failed", {"error": error, "attempts": attempts})
         if attempts < order.execution_policy.max_attempts:
             order = self.store.set_status(order.id, Status.QUEUED)
             self.queue.enqueue(order.id)

@@ -29,6 +29,14 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0016](0016-local-and-cloud-models.md) | Provider-neutral local and cloud models | Accepted |
 | [0017](0017-agent-execution-isolation.md) | Agent execution isolation levels | Accepted |
 | [0018](0018-human-approval-privileged-actions.md) | Human approval for privileged actions | Accepted |
+| [0019](0019-ollama-initial-inference.md) | Ollama as initial local inference | Accepted |
 | [0020](0020-langgraph-orchestration.md) | LangGraph as initial workflow orchestration | Accepted |
+| [0021](0021-all-rights-reserved.md) | All-rights-reserved until SPDX | Accepted |
+| [0022](0022-sgerhart-git-identity.md) | sgerhart email + `github-sgerhart` remote | Accepted |
+| [0023](0023-colima-m1-engine.md) | Colima as initial M1 engine | Accepted |
+| [0024](0024-qdrant-api-key-required.md) | Qdrant API key on first deploy | Accepted |
+| [0025](0025-clarion-adjacent-only.md) | Clarion stays adjacent | Accepted |
+| [0026](0026-observability-deferred.md) | Observability deferred | Accepted |
+| [0027](0027-initial-secret-store.md) | Keychain + gitignored env | Accepted |
 
-Not yet ADRs (still open): secret store, backup destination, Docker engine on M1 (Colima vs Desktop), M3 RAM attestation, GitHub visibility.
+Still open (need a human, not inventable): GitHub visibility, Air Ollama bind, backup destination, M3 RAM attestation, Tailscale names, Studio NVMe.

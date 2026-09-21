@@ -18,3 +18,4 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Wired the Studio worker to the three catalog agent plans (shared `agent_plans.py`). Plan failure is persisted as `failed`; Studio-down still re-queues. Still not an LLM and not deployed.
 - Added `models/catalog.json`, a FakeBackend eval dry-run, and a train wrapper that refuses pulls and dataset downloads.
 - Added a throwaway Postgres dump→restore proof and kept live restore unwired. CI runs the throwaway test.
+- Closed lockable defaults as ADRs 0021–0027. MCP is deny-unlisted with zero servers. Ollama client is loopback-only and refuses pulls. Repo-complete checklist: `docs/phases/repo-complete.md`.

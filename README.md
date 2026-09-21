@@ -12,7 +12,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
-**Deployment status:** repository implementation is in progress. **Nothing in this tree has been authorized to run on the M1 or Studio.** Scripts default to dry-run / preflight. Do not treat a passing Git validation as a live lab.
+**Deployment status:** repository work for phases 0–7 is **complete in Git**. **Nothing has been authorized to run on the M1 or Studio.** See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
 
 ## Three areas
 
@@ -65,6 +65,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 ## Start here
 
 1. [docs/architecture/overview.md](docs/architecture/overview.md)
-2. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
+2. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
+3. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
 3. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
 4. [docs/open-decisions.md](docs/open-decisions.md)

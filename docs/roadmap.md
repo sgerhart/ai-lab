@@ -15,4 +15,6 @@ Deployment of any phase onto machines requires a separate human authorization. R
 
 ## Next recommended work order
 
+Repository work is complete: [phases/repo-complete.md](phases/repo-complete.md).
+
 Host apply remains [WO-001](work-orders/WO-001-phase-1-host-bootstrap.md) after you authorize it. D-011 (backup destination) still blocks a claimed live restore.

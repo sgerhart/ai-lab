@@ -1,1 +1,3 @@
-Runtime: `../src/ai_lab_platform/orchestrator.py` scheduling is in-process. A dedicated scheduler process is planned, not running.
+Runtime: in-process `Orchestrator.tick` / `hydrate_queue` plus the LangGraph control-plane graph.
+
+A dedicated scheduler daemon is **not** required for the first M1 deploy. Do not add Celery/Temporal (ADR 0020).

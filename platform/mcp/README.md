@@ -1,7 +1,5 @@
 # MCP
 
-MCP servers are added only with an explicit allowlist and a runbook.
+Deny-unlisted allowlist: [`allowlist.json`](allowlist.json). **Zero servers enabled.**
 
-This directory is **planned**. Do not treat it as a running gateway.
-
-See [../../docs/runbooks/adding-an-mcp-server.md](../../docs/runbooks/adding-an-mcp-server.md).
+Runtime check: `platform/src/ai_lab_platform/mcp.py`. Adding a server is a security change — [../../docs/runbooks/adding-an-mcp-server.md](../../docs/runbooks/adding-an-mcp-server.md).

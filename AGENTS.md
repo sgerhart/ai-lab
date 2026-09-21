@@ -8,6 +8,7 @@ These rules apply to every human and coding agent that edits this repository.
 - Do not create another Git repository.
 - Do not create `ai-infrastructure/`.
 - Do not rename this repository to `agent-lab`, `ai-factory`, `dentro-ai`, or anything else.
+- **Git author for this repo:** `Steven Gerhart <sgerhart@gmail.com>` (local config, ADR 0022). Push via `git@github-sgerhart:sgerhart/ai-lab.git`. Do not use the default `github.com` SSH key (that identity is `dentroio`).
 
 ## Read first
 

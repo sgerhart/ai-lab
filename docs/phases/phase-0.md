@@ -1,5 +1,7 @@
-# Phase 0 — Repository foundation (revised 2026-09-20)
+# Phase 0 — Repository foundation
 
-Git root remains `ai-lab`. Three-host architecture encoded. No commit, no push, no deploy.
+Git root is `ai-lab`. Three-host architecture encoded. Committed and pushed (ADR 0022). **Not deployed.**
 
-Validation: `./scripts/preflight.sh` (this revision).
+Validation: `./scripts/preflight.sh`
+
+Repo-complete checklist: [repo-complete.md](repo-complete.md).

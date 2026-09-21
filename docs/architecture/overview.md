@@ -1,7 +1,7 @@
 # Architecture overview
 
 **Status:** Target architecture. **Not deployed.**  
-**Updated:** 2026-09-20
+**Updated:** 2026-09-21
 
 A personal, three-host Apple Silicon lab with Tailscale as the private network. Durable control-plane state lives on the M1 mini. Inference and training live on the Studio. The M3 Air is the human interface.
 
@@ -45,7 +45,9 @@ Observed on the workspace host (an M3 Mac, 2026-09-19): `sysctl hw.memsize` = 16
 | Compose Postgres/Redis/Qdrant | Yes | **No** |
 | Agent harness + three catalog plans | Yes (deterministic; not LLM) | **No API process** |
 | Models | `catalog.json` (empty of pulls) + FakeBackend dry-run | None pulled from this repo |
-| Tailscale | Documented | Not configured by this repo |
+| MCP allowlist | Yes (empty / deny-unlisted) | No servers |
+| Ollama HTTP client | Loopback only; pull refused | Not pointed at Studio |
+| Tailscale | Documented (placeholders) | Not configured by this repo |
 
 ## Read next
 

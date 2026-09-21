@@ -86,7 +86,33 @@ def health_read(bind: str = "127.0.0.1", ports: tuple[int, ...] = (5432, 6379, 6
 
 
 def compose_ps_read() -> str:
-    return "compose not queried from the worker (read-only stub). Use docs/runbooks/start-stop-control-plane.md"
+    """Read-only status for *this* repo's compose file. Does not start services."""
+    root = Path(__file__).resolve().parents[3]
+    compose = root / "infrastructure" / "compose.yaml"
+    env = root / "infrastructure" / "compose.example.env"
+    try:
+        result = subprocess.run(
+            [
+                "docker",
+                "compose",
+                "-f",
+                str(compose),
+                "--env-file",
+                str(env),
+                "ps",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return f"compose not queried ({exc}). Expected until the M1 stack is deployed."
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or "").strip()[:400]
+        return f"compose ps failed (expected until deploy): {err or 'non-zero exit'}"
+    body = (result.stdout or "").strip()
+    return body or "ai-lab-control: no containers (expected until compose up)"
 
 
 def http_get_allowlist(_url: str) -> str:

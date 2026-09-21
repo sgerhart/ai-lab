@@ -47,6 +47,9 @@ REQUIRED_FILES=(
   docs/decisions/0008-keep-ai-lab-name-and-expanded-layout.md
   docs/decisions/0019-ollama-initial-inference.md
   docs/decisions/0020-langgraph-orchestration.md
+  docs/decisions/0027-initial-secret-store.md
+  docs/phases/repo-complete.md
+  platform/mcp/allowlist.json
   infrastructure/compose.yaml
   infrastructure/compose.example.env
   platform/src/ai_lab_platform/orchestrator.py
@@ -115,7 +118,7 @@ for sh in "$ROOT"/scripts/*.sh "$ROOT"/hosts/*/setup.sh; do
   bash -n "$sh" && pass "bash -n ${sh#"$ROOT"/}" || fail "syntax $sh"
 done
 
-for json in "$ROOT"/agents/*/policy.json "$ROOT"/models/catalog.json; do
+for json in "$ROOT"/agents/*/policy.json "$ROOT"/models/catalog.json "$ROOT"/platform/mcp/allowlist.json; do
   python3 -m json.tool "$json" >/dev/null && pass "json ${json#"$ROOT"/}" || fail "json $json"
 done
 

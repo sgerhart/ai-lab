@@ -13,13 +13,13 @@ Docker Desktop on a 16 GB M1 can consume several GB for the VM before any contai
 
 Use **Docker Compose** for the initial control-plane data services. Pin image tags. Default bind `127.0.0.1`. Resource limits are declared on each service.
 
-**Container engine on the M1 is not a final ADR.** Prefer Colima with a small VM (suggested 3 GB / 2 CPUs) over an uncapped Docker Desktop. Record the engine actually installed in `hosts/m1-mini/` at bootstrap. See open decision D-013.
+**Container engine on the M1:** Colima (ADR 0023). Suggested cap at first `up`: 2 CPUs / 3 GB / 40 GB disk — not applied until authorized.
 
 Compose files in this repo are **code-complete, not deployed**. `docker compose up` is unauthorized until a human says so.
 
 ## Consequences
 
-- Monitoring is a compose profile (`observability`), off by default.
+- Monitoring is deferred (ADR 0026), not a default compose profile.
 - Studio ML workloads run natively (Ollama, uv envs), not in this compose file.
 - `deploy.resources` in Compose is advisory depending on engine; `mem_limit` is set as well.
 

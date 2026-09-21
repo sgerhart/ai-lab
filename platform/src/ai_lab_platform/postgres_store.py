@@ -99,3 +99,31 @@ class PostgresStore:
         order.status = transition(order.status, status)
         self.put(order)
         return order
+
+    def append_audit(
+        self, work_order_id: str, actor: str, event: str, detail: dict | None = None
+    ) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO audit_events (work_order_id, actor, event, detail)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (work_order_id, actor, event, Jsonb(detail or {})),
+            )
+
+    def list_audit(self, work_order_id: str) -> list[dict[str, object]]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT at, actor, event, detail
+                FROM audit_events
+                WHERE work_order_id = %s
+                ORDER BY id
+                """,
+                (work_order_id,),
+            ).fetchall()
+        out: list[dict[str, object]] = []
+        for row in rows:
+            out.append({"at": row[0], "actor": row[1], "event": row[2], "detail": row[3]})
+        return out
