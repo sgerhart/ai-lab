@@ -19,3 +19,12 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Added `models/catalog.json`, a FakeBackend eval dry-run, and a train wrapper that refuses pulls and dataset downloads.
 - Added a throwaway Postgres dump→restore proof and kept live restore unwired. CI runs the throwaway test.
 - Closed lockable defaults as ADRs 0021–0027. MCP is deny-unlisted with zero servers. Ollama client is loopback-only and refuses pulls. Repo-complete checklist: `docs/phases/repo-complete.md`.
+
+### Owner decisions 2026-09-21 (ADRs 0028–0033)
+
+- GitHub stays public (ADR 0028). Alias-only inventory still binds (ADR 0005).
+- Air Ollama `*:11434` accepted as workstation risk (ADR 0029); Studio still loopback/Tailscale.
+- Backup destination is iCloud Drive (ADR 0030). `backup.sh --execute` refuses non-iCloud targets unless `--allow-other-target`. Live restore still untested.
+- M3 Air unified memory attested at 16 GB (ADR 0031).
+- Tailscale machine names: `mac-mini`, `mac-studio`, `mac-air` (ADR 0032). Tailnet suffix still not in Git.
+- Studio Thunderbolt NVMe deferred; initial setup uses the internal 1 TB SSD (ADR 0033).

@@ -1,6 +1,6 @@
 # Container strategy
 
-- Engine: Colima preferred on the M1 (D-013). Docker Desktop allowed if VM RAM is capped.
+- Engine: Colima on the M1 (ADR 0023). Docker Desktop allowed if VM RAM is capped.
 - Compose file: `infrastructure/compose.yaml`
 - Env template: `infrastructure/compose.example.env`
 - Default profile: postgres, redis, qdrant

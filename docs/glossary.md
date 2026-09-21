@@ -8,7 +8,7 @@
 | **Control plane** | M1 mini services and harness |
 | **Compute plane** | Studio inference and workers |
 | **Harness** | Work-order lifecycle, routing, tools, approvals |
-| **MagicDNS** | Tailscale names; placeholders in Git |
+| **MagicDNS** | Tailscale names. Machines in Git: `mac-mini`, `mac-studio`, `mac-air`. Suffix `{{TAILNET_NAME}}` is not. |
 | **Overlay** | Gitignored file with real IPs/names |
 | **Preflight** | Checks only; no changes |
 | **Privileged action** | Push, merge, deploy, restore, firewall, brew apply |

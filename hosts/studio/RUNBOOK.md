@@ -14,8 +14,8 @@ A new engineer clones `ai-lab` and follows this file only.
 | Ollama install | In Brewfile. **No model pulls** in setup. |
 | Studio worker API | **Implemented** (`scripts/studio-worker.sh`). Executes catalog agent plans (not an LLM). Unit-tested. **Not running on a Studio.** |
 | Ollama bind | **Documented.** Must not be `*:11434`. |
-| Tailscale | **Documented.** Names are placeholders. |
-| Thunderbolt NVMe | **Planned** (D-018). Paths are configurable. |
+| Tailscale | **Documented.** Machine name `mac-studio` (ADR 0032). |
+| Thunderbolt NVMe | **Deferred** (ADR 0033). Initial setup uses internal 1 TB SSD. |
 
 ## 1. Prerequisites
 
@@ -58,13 +58,13 @@ Ollama must listen on loopback (or later the Tailscale IPv4), never all interfac
 export OLLAMA_HOST=127.0.0.1:11434
 ```
 
-Worker URL that the **M1** will call (placeholder):
+Worker URL that the **M1** will call after Tailscale join:
 
 ```text
-STUDIO_WORKER_URL=http://{{STUDIO_TAILSCALE_HOSTNAME}}:8090
+STUDIO_WORKER_URL=http://mac-studio:8090
 ```
 
-Until Tailscale names exist, local tests use `http://127.0.0.1:8090`.
+Local tests still use `http://127.0.0.1:8090`. Tailnet suffix is not in Git.
 
 Join Tailscale: [../../docs/runbooks/join-tailnet.md](../../docs/runbooks/join-tailnet.md).
 

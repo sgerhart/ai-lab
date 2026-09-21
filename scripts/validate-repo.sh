@@ -48,6 +48,12 @@ REQUIRED_FILES=(
   docs/decisions/0019-ollama-initial-inference.md
   docs/decisions/0020-langgraph-orchestration.md
   docs/decisions/0027-initial-secret-store.md
+  docs/decisions/0028-github-stays-public.md
+  docs/decisions/0029-air-ollama-bind-accepted.md
+  docs/decisions/0030-icloud-backup-destination.md
+  docs/decisions/0031-m3-air-16gb.md
+  docs/decisions/0032-tailscale-machine-names.md
+  docs/decisions/0033-studio-nvme-deferred.md
   docs/phases/repo-complete.md
   platform/mcp/allowlist.json
   infrastructure/compose.yaml
@@ -71,6 +77,7 @@ REQUIRED_FILES=(
   scripts/control-plane.sh scripts/studio-worker.sh
   hosts/m1-mini/Brewfile hosts/studio/Brewfile hosts/m3-air/Brewfile
   hosts/m1-mini/RUNBOOK.md hosts/studio/RUNBOOK.md hosts/m3-air/RUNBOOK.md
+  hosts/m1-mini/inventory.yaml hosts/studio/inventory.yaml hosts/m3-air/inventory.yaml
 )
 
 for d in "${REQUIRED_DIRS[@]}"; do

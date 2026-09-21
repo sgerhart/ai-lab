@@ -6,4 +6,4 @@
 
 **Verify:** Postgres contains work orders; Qdrant collections exist if they were backed up.
 
-**Rollback:** Only as good as the last **tested** backup. If D-011 is still open, you may have no backup.
+**Rollback:** Only as good as the last **tested** backup. iCloud dumps that have not synced (or have never been restore-tested) may not exist.

@@ -1,0 +1,5 @@
+# Public-safe facts only. IPs, serials, and Tailscale IPv4 stay in local.inventory.yaml.
+inventory_name: m3-air
+role: human-plane
+tailscale:
+  hostname: mac-air

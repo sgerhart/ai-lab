@@ -15,8 +15,8 @@ A new engineer clones `ai-lab` and follows this file only.
 | Compose file | **Implemented** (`infrastructure/compose.yaml`). `docker compose config` tested. **`up` not run.** |
 | Control-plane API | **Implemented** (unit-tested with FastAPI TestClient + LangGraph MemorySaver). **Not running on an M1.** |
 | Postgres store + checkpoints | **Implemented.** Tested against an ephemeral local Postgres (`scripts/test-postgres-slice.sh` / CI). **Not the M1 compose stack.** |
-| Tailscale join | **Documented.** Real tailnet names require human input (D-016). |
-| Backup destination | **Blocked** on D-011. |
+| Tailscale join | **Documented.** Machine name `mac-mini`. Tailnet suffix still not in Git. |
+| Backup destination | **iCloud Drive** (ADR 0030). `--execute` not authorized. Live restore untested. |
 
 Human authorization is required for `--apply`, `colima start`, `compose up`, and binding anything other than loopback.
 
@@ -27,7 +27,7 @@ Human authorization is required for `--apply`, `colima start`, `compose up`, and
 - This repository cloned.
 - Homebrew **or** willingness to install it yourself (this repo will not `curl | bash`).
 - Tailscale account. Do not invent the tailnet name.
-- A password manager / Keychain for `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `QDRANT_API_KEY` (D-006 still open).
+- A password manager / Keychain for `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `QDRANT_API_KEY` (ADR 0027).
 
 ## 2. Preflight (safe)
 
@@ -48,7 +48,7 @@ Expected: chip contains `M1`. If you run this on another Mac, you get a warning 
 
 Installs: git, jq, uv, tailscale, colima, docker, docker-compose.
 
-Engine choice (D-013): Colima is in the Brewfile. Docker Desktop is not.
+Engine: Colima (ADR 0023). Docker Desktop is not in the Brewfile.
 
 ```bash
 colima start --cpu 2 --memory 3 --disk 40
@@ -111,7 +111,7 @@ curl -sS -X POST http://127.0.0.1:8088/v1/work-orders \
 ## 7. Backup / recovery
 
 See [../../docs/runbooks/backing-up-persistent-data.md](../../docs/runbooks/backing-up-persistent-data.md).  
-`./scripts/backup.sh` is dry-run unless `--execute`. Restore will not overwrite live volumes automatically. **No restore has been tested against real volumes. D-011 (destination) is open.**
+`./scripts/backup.sh` is dry-run unless `--execute`. Default target is iCloud Drive (ADR 0030). Restore will not overwrite live volumes automatically. **No restore has been tested against live M1 volumes.**
 
 ## 8. Troubleshooting
 

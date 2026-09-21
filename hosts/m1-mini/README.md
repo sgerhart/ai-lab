@@ -13,7 +13,7 @@ See [RUNBOOK.md](RUNBOOK.md) for the independently executable bring-up.
 # ./hosts/m1-mini/setup.sh --apply    # unauthorized until you say so
 ```
 
-Engine choice (D-013): Brewfile includes **Colima** and Docker CLI. Skip Docker Desktop unless you decide otherwise.
+Engine: Colima (ADR 0023).
 
 ## After packages (authorized deploy only)
 

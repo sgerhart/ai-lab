@@ -14,7 +14,7 @@ The Studio runs inference (Ollama initially), MLX / MLX-LM, PyTorch experiments,
 
 The Studio is **not** the home of durable agent state. 64 GB is shared with macOS and apps; do not assume it is all available to one model or to Docker.
 
-Model downloads are explicit operations, never part of bootstrap. Model and dataset paths stay configurable for a future Thunderbolt NVMe volume. Until then, use the internal 1 TB SSD.
+Model downloads are explicit operations, never part of bootstrap. Initial model disk is the internal 1 TB SSD. Thunderbolt NVMe is future (ADR 0033).
 
 M5 Max software compatibility was **not validated in this workspace** (this workspace is an M3). First Studio boot must verify Ollama and MLX; record results in `hosts/studio/`.
 

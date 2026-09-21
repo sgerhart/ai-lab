@@ -70,4 +70,4 @@ if [[ "$NOTE" != "ai-lab throwaway restore" ]]; then
 fi
 
 echo "throwaway backup/restore OK (row survived dump → new container → restore)"
-echo "This does not prove live M1 volume restore. D-011 destination still open."
+echo "This does not prove live M1 volume restore. Destination policy is iCloud (ADR 0030); live restore remains untested."

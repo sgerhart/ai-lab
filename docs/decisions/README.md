@@ -38,5 +38,11 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0025](0025-clarion-adjacent-only.md) | Clarion stays adjacent | Accepted |
 | [0026](0026-observability-deferred.md) | Observability deferred | Accepted |
 | [0027](0027-initial-secret-store.md) | Keychain + gitignored env | Accepted |
+| [0028](0028-github-stays-public.md) | GitHub remote stays public | Accepted |
+| [0029](0029-air-ollama-bind-accepted.md) | Air Ollama `*:11434` accepted | Accepted |
+| [0030](0030-icloud-backup-destination.md) | iCloud Drive backup destination | Accepted |
+| [0031](0031-m3-air-16gb.md) | M3 Air 16 GB attested | Accepted |
+| [0032](0032-tailscale-machine-names.md) | Tailscale machine names | Accepted (partial — suffix/ACL still open) |
+| [0033](0033-studio-nvme-deferred.md) | Studio NVMe deferred | Accepted |
 
-Still open (need a human, not inventable): GitHub visibility, Air Ollama bind, backup destination, M3 RAM attestation, Tailscale names, Studio NVMe.
+Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents.

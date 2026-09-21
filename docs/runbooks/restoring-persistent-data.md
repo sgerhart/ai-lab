@@ -1,6 +1,6 @@
 # Restoring persistent data
 
-**Prerequisites:** A dump that has already been restored successfully onto a throwaway Postgres (`./scripts/test-backup-restore.sh` or `restore-throwaway.sh --container ai-lab-pg-…`). Human at the keyboard.
+**Prerequisites:** An iCloud dump that has already been restored successfully onto a throwaway Postgres (`./scripts/test-backup-restore.sh` or `restore-throwaway.sh --container ai-lab-pg-…`). Confirm the dump is present on another Apple device. Human at the keyboard.
 
 **Effects:** Would replace live data. `scripts/restore.sh` **refuses to auto-apply** even with `--confirm-restore YES-RESTORE-LIVE`.
 

@@ -10,4 +10,4 @@ Each host has an independently executable **[`RUNBOOK.md`](m1-mini/RUNBOOK.md)**
 | [_template/](_template/README.md) | New host template | n/a |
 | [mac-workstation/](mac-workstation/README.md) | Pointer to `m3-air` (Phase 0 name) | n/a |
 
-Each host has `README.md`, `Brewfile`, and `setup.sh`. Scripts default to preflight/dry-run.
+Each host has `README.md`, `Brewfile`, `setup.sh`, `RUNBOOK.md`, and public-safe `inventory.yaml` (Tailscale machine name only). Scripts default to preflight/dry-run.

@@ -6,11 +6,11 @@
 
 ## Context
 
-`LICENSE` is already all-rights-reserved. A public SPDX license (MIT, Apache-2.0) would be a separate product decision. The GitHub remote is public (F-002 / D-001 still open).
+`LICENSE` is already all-rights-reserved. A public SPDX license (MIT, Apache-2.0) would be a separate product decision. The GitHub remote is public (ADR 0028).
 
 ## Decision
 
-Keep **all rights reserved**. Do not add an MIT/Apache header. Agents must not relicense the tree. D-001 (public vs private) is independent: visibility does not grant a license.
+Keep **all rights reserved**. Do not add an MIT/Apache header. Agents must not relicense the tree. Public visibility (ADR 0028) does not grant a license.
 
 ## Consequences
 

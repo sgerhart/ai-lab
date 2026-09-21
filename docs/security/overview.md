@@ -32,13 +32,13 @@ No bootstrap script may weaken SSH, disable security controls, change firewall p
 
 Do not expose PostgreSQL, Redis, Qdrant, Jupyter, model APIs, agent admin, or monitoring to the public Internet.
 
-## Findings (still open)
+## Findings
 
 | ID | Severity | Summary | Live change? |
 |----|----------|---------|--------------|
 | F-001 | Critical, locally mitigated | Git was inited in the parent workspace | Relocated `.git` into `ai-lab`. Pushed to `sgerhart/ai-lab` via `github-sgerhart`. |
-| F-002 | High | GitHub `sgerhart/ai-lab` is public | No |
-| F-003 | High | Ollama on the **Air** listens `*:11434` | No (not Studio) |
+| F-002 | High | GitHub `sgerhart/ai-lab` is public | **Accepted** (ADR 0028) |
+| F-003 | High | Ollama on the **Air** listens `*:11434` | **Accepted** workstation risk (ADR 0029); not Studio |
 | F-004 | Medium | `~/.ollama/id_ed25519` on Air | Ignored by Git |
 | F-005 | Medium | `gh` active account `dentroio` vs `sgerhart` repo | No |
 | F-006 | Info | Product Docker/Postgres on the Air | Adjacent |
@@ -48,7 +48,7 @@ Details of F-001–F-006: recorded 2026-09-19 on the operator workstation.
 
 ## Secret store
 
-Still open (D-006). Until then: macOS Keychain / filled gitignored `.env` on the M1 only. Do not reuse Clarion Vault credentials in this repo.
+Decision recorded (ADR 0027): macOS Keychain plus a filled gitignored `.env` on the M1 at deploy. Values are not in Git.
 
 ## Data retention
 

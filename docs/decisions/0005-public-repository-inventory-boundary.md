@@ -1,6 +1,6 @@
 # ADR 0005 — Public repository inventory boundary
 
-- **Status:** Accepted (until D-001 is resolved)
+- **Status:** Accepted (IPs/serials still gitignored while public; ADR 0028)
 - **Date:** 2026-09-19
 - **Phase:** 0
 
@@ -12,7 +12,7 @@
 
 While the remote is public, committed inventory uses **roles and aliases only**. IPs, MACs, serial numbers, and SSH URIs go in gitignored `*.local.yaml` overlays. Adjacent systems may be named at a high level (for example "Clarion lab VMs on a private /24") without listing addresses.
 
-If D-001 makes the repository private, a later ADR may allow deeper committed inventory. Until then this boundary holds.
+If the repository is made private later, a new ADR may allow deeper committed inventory. While public (ADR 0028), this boundary still holds for IPs, MACs, serials, and keys.
 
 ## Consequences
 

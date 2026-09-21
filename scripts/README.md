@@ -9,7 +9,7 @@ All host-mutating scripts default to checks. `--apply` / `--live` / `--confirm-r
 | [host-setup.sh](host-setup.sh) | Only with `--apply` |
 | [bootstrap.sh](bootstrap.sh) | Only with `--apply` |
 | [health-check.sh](health-check.sh) | No (`--live` probes, does not write) |
-| [backup.sh](backup.sh) | Writes backup dir only with `--execute` |
+| [backup.sh](backup.sh) | Writes iCloud Drive backup dir only with `--execute` (ADR 0030) |
 | [restore.sh](restore.sh) | Only with `--confirm-restore <id>` — and even then it **refuses** to overwrite live volumes |
 | [restore-throwaway.sh](restore-throwaway.sh) | Restores a dump into an ephemeral `ai-lab-pg-*` container only |
 | [test-backup-restore.sh](test-backup-restore.sh) | Ephemeral dump→restore on `127.0.0.1:55433` (tmpfs); not M1 |

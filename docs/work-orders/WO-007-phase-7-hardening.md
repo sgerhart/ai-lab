@@ -1,6 +1,6 @@
 # WO-007 — Phase 7 operational hardening
 
-**Status:** CI, secret scan, live-restore refuse, **throwaway dump→restore tested**. Live M1 restore **not tested**. D-011 destination still open.  
+**Status:** CI, secret scan, live-restore refuse, **throwaway dump→restore tested**. Live M1 restore **not tested**. Backup dest is iCloud (ADR 0030).  
 **Phase:** 7
 
 ## Acceptance (repo)
@@ -13,5 +13,5 @@
 
 ## Acceptance (deploy)
 
-- [ ] Backup destination chosen (D-011)
-- [ ] Restore test onto that destination, then a documented live drill
+- [x] Backup destination chosen (iCloud Drive, ADR 0030)
+- [ ] Restore test from an iCloud dump, then a documented live drill

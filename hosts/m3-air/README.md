@@ -1,7 +1,6 @@
 # m3-air — human / development plane
 
-Confirmed: MacBook Air, Apple M3, 512 GB.  
-Unified memory: **not attested**. Observed 16 GB on this workspace host (2026-09-19).
+Confirmed: MacBook Air, Apple M3, **16 GB**, 512 GB.
 
 **Does:** IDE, Git, SSH, dashboards, approvals.  
 **Does not:** always-on control-plane compose. Do not `compose up` the lab stack here (port collisions with Clarion are likely).

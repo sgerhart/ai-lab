@@ -14,16 +14,17 @@ A new engineer clones `ai-lab` and follows this file only.
 | Brewfile apply | **Implemented**, **not applied** by the repo build. |
 | Local harness CLI | **Implemented and tested** (`scripts/platform.sh`). |
 | Control-plane TestClient slice | **Implemented and tested** on this Air (not a substitute for M1 deploy). |
-| Unified memory | **Unconfirmed.** 16 GB was observed via `sysctl` on 2026-09-19 (D-015). |
-| Ollama on this laptop | Present; listens `*:11434` (F-003). **Not** lab serving. Hygiene only. |
+| Unified memory | **16 GB** attested (ADR 0031). |
+| Ollama on this laptop | Present; listens `*:11434` (F-003, **accepted** ADR 0029). **Not** lab serving. |
+| Tailscale name | `mac-air` (ADR 0032) |
 
 Do **not** `docker compose up` `infrastructure/compose.yaml` on this laptop (port collisions with Clarion).
 
 ## 1. Prerequisites
 
-- MacBook Air, Apple M3, 512 GB (confirmed). RAM: do not invent; see D-015.
+- MacBook Air, Apple M3, 16 GB, 512 GB (confirmed, ADR 0031).
 - Cloned `ai-lab`.
-- GitHub access for `sgerhart/ai-lab` (D-002: which `gh` account is still open).
+- GitHub access for `sgerhart/ai-lab` (prefer `sgerhart` identity, ADR 0022).
 
 ## 2. Preflight (safe)
 
@@ -56,7 +57,7 @@ Installs: git, gh, jq, uv, tailscale.
 ## 4. Configuration
 
 ```bash
-gh auth status   # prefer the sgerhart identity for this repo (D-002)
+gh auth status   # prefer the sgerhart identity for this repo (ADR 0022)
 ```
 
 Join Tailscale: [../../docs/runbooks/join-tailnet.md](../../docs/runbooks/join-tailnet.md).  
@@ -73,12 +74,12 @@ Optional local SQLite harness (not the M1 control plane):
 
 **None required.** This host must sleep without taking the lab down.
 
-Optional: browse `http://{{M1_TAILSCALE_HOSTNAME}}:8088/health` when the mini is up (placeholder name).
+Optional: browse `http://mac-mini:8088/health` when the mini is up (MagicDNS; tailnet suffix still not in Git).
 
 Human approval:
 
 ```bash
-curl -sS -X POST http://{{M1_TAILSCALE_HOSTNAME}}:8088/v1/work-orders/{id}/approve \
+curl -sS -X POST http://mac-mini:8088/v1/work-orders/{id}/approve \
   -H 'Content-Type: application/json' \
   -d '{"decision":"approved"}'
 ```
@@ -98,7 +99,7 @@ This host is not the backup source for Postgres. Keep the git working tree; do n
 
 | Symptom | Check |
 |---------|--------|
-| `gh` posts as dentroio | D-002 |
+| `gh` posts as dentroio | Use `github-sgerhart` / sgerhart identity (ADR 0022) |
 | Compose ports busy | You started control-plane compose on the Air — stop it |
 | Ollama wildcard listen | F-003; optional local bind to 127.0.0.1; not Studio |
 

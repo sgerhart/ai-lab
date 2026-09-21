@@ -8,28 +8,31 @@ Git work for phases 0–7 is **done**. No host has been authorized. Building fil
 
 | Area | Evidence |
 |------|----------|
-| Foundation, ADRs 0001–0027 | `docs/decisions/` |
+| Foundation, ADRs 0001–0033 | `docs/decisions/` |
 | Host Brewfiles + dry-run setup | `hosts/*` |
+| Public-safe inventory names | `hosts/*/inventory.yaml` (`mac-mini` / `mac-studio` / `mac-air`) |
 | Compose Postgres/Redis/Qdrant | `infrastructure/compose.yaml` |
 | LangGraph slice + FastAPI + Postgres store | `platform/`, `tests/test_langgraph_slice.py` |
 | Three agent plans | `agent_plans.py`, Studio worker |
 | Model catalog (empty of pulls) | `models/catalog.json` |
 | Eval/train refuse-pull | `scripts/eval-dry-run.sh`, `scripts/train.sh` |
 | Throwaway dump→restore | `scripts/test-backup-restore.sh` |
+| iCloud backup default | `scripts/backup.sh` (ADR 0030); `--execute` not authorized |
 | MCP | deny-unlisted, **zero** servers |
 | Ollama client | loopback only, `pull` refused |
 | Git identity | local `sgerhart@gmail.com` (ADR 0022) |
 
-## Blocked on a human decision (not inventable)
+## Remaining human facts (not inventable)
 
-| ID | Need |
-|----|------|
-| [D-001](../open-decisions.md) | Public vs private GitHub |
-| [D-009](../open-decisions.md) | Bind Air Ollama off `*:11434` (live hygiene) |
-| [D-011](../open-decisions.md) | Backup destination **not** the M1 disk |
-| [D-015](../open-decisions.md) | Attest M3 Air unified memory |
-| [D-016](../open-decisions.md) | Real Tailscale names / tailnet / ACLs |
-| [D-018](../open-decisions.md) | Whether Studio Thunderbolt NVMe exists |
+| Need | Status |
+|------|--------|
+| GitHub public vs private | **Resolved** — stays public (ADR 0028) |
+| Air Ollama `*:11434` | **Resolved** — accepted on Air (ADR 0029) |
+| Backup destination | **Resolved** — iCloud Drive (ADR 0030). Live restore still untested |
+| M3 Air RAM | **Resolved** — 16 GB (ADR 0031) |
+| Tailscale machine names | **Resolved** — `mac-mini` / `mac-studio` / `mac-air` (ADR 0032) |
+| Tailnet DNS suffix / IPv4 / ACL file | **Open** — gitignored overlay only |
+| Studio Thunderbolt NVMe | **Deferred** — not initial setup (ADR 0033) |
 
 ## Blocked on host authorization
 

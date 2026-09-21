@@ -18,7 +18,7 @@ The M1 does not run large local models.
 ## Consequences
 
 - Studio unavailability must queue, retry, or fail visibly.
-- Backup destination cannot be the M1 itself (open: D-011).
+- Backup destination is iCloud Drive (ADR 0030). Live restore is still untested.
 - Docker VM size on the M1 must be capped; see ADR 0013.
 
 ## Alternatives considered

@@ -8,7 +8,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 |-------|---------|------|
 | Control | Mac mini (M1, 16 GB, 512 GB) | Orchestration, queues, PostgreSQL, Qdrant, Redis, monitoring, backups |
 | Compute | Mac Studio (M5 Max, 64 GB, 1 TB) | Inference, MLX, training, agent workers, evaluation |
-| Human | MacBook Air (M3, 512 GB) | IDE, Git, SSH, approvals, dashboards |
+| Human | MacBook Air (M3, 16 GB, 512 GB) | IDE, Git, SSH, approvals, dashboards |
 
 The repository name is **`ai-lab`**. Do not rename it.
 
@@ -59,7 +59,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 2. Do not commit or push unless asked.
 3. Do not deploy or mutate hosts unless asked.
 4. Bind services to `127.0.0.1` by default; Tailscale IP bind is an explicit deploy-time setting.
-5. Do not invent hostnames, IPs, tailnet names, or credentials. Use placeholders.
+5. Do not invent IPs, the tailnet DNS suffix, credentials, or unattested hardware. Committed Tailscale machine names are `mac-mini`, `mac-studio`, and `mac-air` (ADR 0032).
 6. Record architecture changes as ADRs.
 
 ## Start here
@@ -67,5 +67,5 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 1. [docs/architecture/overview.md](docs/architecture/overview.md)
 2. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
 3. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
-3. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
-4. [docs/open-decisions.md](docs/open-decisions.md)
+4. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
+5. [docs/open-decisions.md](docs/open-decisions.md)

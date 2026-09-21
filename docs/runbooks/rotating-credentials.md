@@ -1,6 +1,6 @@
 # Rotating credentials
 
-**Prerequisites:** Access to the secret store / M1 env file. D-006 still open.
+**Prerequisites:** Access to Keychain / the M1 gitignored env file (ADR 0027).
 
 **Effects:** Invalidates old Postgres/Redis/Qdrant/API/cloud keys.
 

@@ -6,6 +6,7 @@ cd "$ROOT"
 
 backup_out="$("$ROOT/scripts/backup.sh")"
 echo "$backup_out" | grep -q "dry-run" || { echo "FAIL: backup.sh should dry-run"; exit 1; }
+echo "$backup_out" | grep -q "iCloud" || { echo "FAIL: backup.sh dry-run should mention iCloud"; exit 1; }
 
 set +e
 "$ROOT/scripts/restore.sh" >/tmp/ai-lab-restore-no.txt 2>&1
@@ -42,5 +43,12 @@ rc=$?
 set -e
 [[ "$rc" -eq 1 ]] || { echo "FAIL: compose-like container name should be refused (got $rc)"; exit 1; }
 
-rm -rf "$tmpdir" /tmp/ai-lab-restore-no.txt /tmp/ai-lab-restore-live.txt /tmp/ai-lab-restore-ts.txt /tmp/ai-lab-restore-5432.txt /tmp/ai-lab-restore-name.txt
+set +e
+"$ROOT/scripts/backup.sh" --execute --target /tmp/ai-lab-not-icloud >/tmp/ai-lab-backup-icloud.txt 2>&1
+rc=$?
+set -e
+[[ "$rc" -eq 1 ]] || { echo "FAIL: non-iCloud --execute should exit 1 (got $rc)"; exit 1; }
+grep -q "iCloud Drive" /tmp/ai-lab-backup-icloud.txt
+
+rm -rf "$tmpdir" /tmp/ai-lab-restore-no.txt /tmp/ai-lab-restore-live.txt /tmp/ai-lab-restore-ts.txt /tmp/ai-lab-restore-5432.txt /tmp/ai-lab-restore-name.txt /tmp/ai-lab-backup-icloud.txt
 echo "script safety OK"

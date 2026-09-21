@@ -20,6 +20,6 @@
 
 10. **Honest status.** Scaffolded, implemented, and deployed are three different words.
 
-11. **Placeholders until facts are supplied.** Do not invent hostnames, IPs, tailnet names, domains, usernames, or credentials.
+11. **Placeholders until facts are supplied.** Do not invent IPs, the tailnet DNS suffix, domains, usernames, or credentials. Machine names `mac-mini` / `mac-studio` / `mac-air` were supplied (ADR 0032).
 
 12. **Approvals for irreversible actions.** Agents do not silently gain host privileges. Restore scripts do not overwrite live data without confirmation.

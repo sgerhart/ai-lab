@@ -1,32 +1,32 @@
 # Network and Tailscale
 
-Placeholders only. Do not invent real names.
+Machine names are committed (ADR 0032). Do not invent the tailnet suffix or IPs.
 
-## Host naming convention
+## Host naming
 
-| Inventory | Suggested Tailscale hostname (placeholder) |
-|-----------|--------------------------------------------|
-| m1-mini | `{{M1_TAILSCALE_HOSTNAME}}` |
-| studio | `{{STUDIO_TAILSCALE_HOSTNAME}}` |
-| m3-air | `{{M3_TAILSCALE_HOSTNAME}}` |
+| Inventory | Tailscale machine name |
+|-----------|------------------------|
+| m1-mini | `mac-mini` |
+| studio | `mac-studio` |
+| m3-air | `mac-air` |
 
-MagicDNS form: `{{HOST}}.{{TAILNET_NAME}}.ts.net` (exact suffix depends on tailnet; do not guess).
+MagicDNS FQDN: `mac-mini.{{TAILNET_NAME}}.ts.net` (suffix is not in Git). Short names work on the tailnet once MagicDNS is enabled.
 
 ## Port matrix (published on `AI_LAB_BIND_ADDRESS`)
 
 | Service | Host | Port | Public Internet |
 |---------|------|------|-----------------|
-| PostgreSQL | m1-mini | 5432 | No |
+| PostgreSQL | m1-mini (`mac-mini`) | 5432 | No |
 | Redis | m1-mini | 6379 | No |
 | Qdrant HTTP | m1-mini | 6333 | No |
 | Qdrant gRPC | m1-mini | 6334 | No |
 | Agent API | m1-mini | 8088 | No (not deployed) |
-| Ollama | studio | 11434 | No |
+| Ollama | studio (`mac-studio`) | 11434 | No |
 | JupyterLab | studio | 8888 | No (not deployed) |
 
 ## SSH
 
-Use Tailscale SSH or SSH over MagicDNS. Identity files stay on disk, never in Git. Host aliases belong in a gitignored overlay, not in committed `~/.ssh/config` snippets with real names.
+Use Tailscale SSH or SSH over MagicDNS (`mac-mini`, `mac-studio`, `mac-air`). Identity files stay on disk, never in Git.
 
 ## DNS
 
@@ -45,8 +45,8 @@ Prefer Tailscale MagicDNS. Do not run a lab-wide DNS server in Phase 1–2.
 | Node membership | Tailscale identity / tags |
 | Postgres | password from env (not in Git) |
 | Redis | requirepass |
-| Qdrant | API key env (optional until deploy; prefer on) |
-| Ollama | network restriction + later reverse-proxy auth if exposed beyond Studio workers |
+| Qdrant | API key (ADR 0024) |
+| Ollama | network restriction; Studio is the lab endpoint (ADR 0029) |
 | Agent API | token header (planned) |
 
 ## Tailscale ACL considerations (placeholders)
