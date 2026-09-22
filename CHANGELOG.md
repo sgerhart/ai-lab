@@ -34,3 +34,4 @@ All notable repository changes. Host deployments are recorded in phase completio
 - ADR 0035: operator clones live at `$HOME/workspace/github/sgerhart/ai-lab`. Sibling GitHub-account directories stay out of this tree.
 - Control-plane `GET /` is an HTML status board (services + work-order counts). `/health` JSON is unchanged.
 - First iCloud `backup.sh --execute` on `mac-mini` (2026-09-21). `docker-compose` fallback for hosts without the Compose plugin. LaunchAgent `com.ai-lab.control-plane`.
+- Features backlog (`docs/features/`): lifecycle, FEAT-001..009 index, FEAT-001 planning spec; GitHub issues #2–#10. No capability implementation under that docs change.

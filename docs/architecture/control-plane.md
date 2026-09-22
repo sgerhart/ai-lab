@@ -1,7 +1,7 @@
 # Control plane (M1 Mac mini)
 
 **Host directory:** [`hosts/m1-mini/`](../../hosts/m1-mini/README.md)  
-**Status:** Designed and encoded. **Not deployed.**
+**Status:** Compose + FastAPI/LangGraph **live** on `mac-mini` (Tailscale, 2026-09-21). Studio worker **not** deployed. Live restore **untested**.
 
 ## Why this host
 
@@ -14,7 +14,7 @@
 | PostgreSQL | Authoritative work orders, audit, approvals | Yes |
 | Redis | Queue and cache only | Yes |
 | Qdrant | Vector memory | Yes |
-| Agent API / orchestrator / scheduler | Platform processes | Later (Phase 4 deploy) |
+| Agent API / orchestrator / scheduler | Platform processes | **Live** on mini (`:8088`, LaunchAgent); Studio dispatch pending |
 | Backup orchestration | Scripts in `scripts/` and `infrastructure/backup/` | Scripts only |
 | Monitoring | Optional profile `observability` | Off |
 

@@ -32,6 +32,7 @@ fi
 REQUIRED_DIRS=(
   docs/architecture docs/decisions docs/deployment docs/operations
   docs/security docs/models docs/agents docs/runbooks docs/work-orders
+  docs/features
   hosts/m1-mini hosts/studio hosts/m3-air
   infrastructure/postgres infrastructure/qdrant infrastructure/redis
   infrastructure/backup infrastructure/monitoring
@@ -57,6 +58,11 @@ REQUIRED_FILES=(
   docs/decisions/0034-tailscale-ipv4-bind.md
   docs/decisions/0035-workspace-github-clone-path.md
   docs/phases/repo-complete.md
+  docs/features/README.md
+  docs/features/TEMPLATE.md
+  docs/features/index.md
+  docs/features/FEAT-001-work-order-planning-and-approval.md
+  docs/roadmap.md
   platform/mcp/allowlist.json
   infrastructure/compose.yaml
   infrastructure/compose.example.env
@@ -91,6 +97,19 @@ done
 for f in "${REQUIRED_FILES[@]}"; do
   [[ -f "$ROOT/$f" ]] && pass "file $f" || fail "missing file $f"
 done
+
+for id in FEAT-001 FEAT-002 FEAT-003 FEAT-004 FEAT-005 FEAT-006 FEAT-007 FEAT-008 FEAT-009; do
+  grep -q "$id" "$ROOT/docs/features/index.md" && pass "features index mentions $id" || fail "features index missing $id"
+done
+grep -qi "self-approval\|self-approve" "$ROOT/docs/features/FEAT-001-work-order-planning-and-approval.md" \
+  && pass "FEAT-001 mentions self-approval prohibition" \
+  || fail "FEAT-001 must prohibit self-approval"
+grep -q "Runtime work order" "$ROOT/docs/features/README.md" \
+  && pass "features README defines runtime work orders" \
+  || fail "features README missing runtime work order entity"
+grep -q "historical implementation-phase" "$ROOT/docs/work-orders/README.md" \
+  && pass "work-orders README marks WO-000..007 historical" \
+  || fail "work-orders README must distinguish historical phase WOs"
 
 for pat in '.env' '*.gguf' '*.safetensors' 'id_ed25519' '*.local.yaml' 'local.inventory.yaml' 'compose.local.env'; do
   grep -Fq "$pat" "$ROOT/.gitignore" && pass "gitignore contains $pat" || fail ".gitignore missing $pat"

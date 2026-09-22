@@ -1,6 +1,6 @@
 # WO-004 — Phase 4 minimum agent harness
 
-**Status:** LangGraph vertical slice + FastAPI **unit-tested**. Postgres store + checkpoints tested against ephemeral local Postgres. **Not deployed.**  
+**Status:** LangGraph vertical slice + FastAPI **unit-tested** and **running on `mac-mini:8088`**. Postgres store + checkpoints on live M1 compose. Studio worker **not** deployed.  
 **Phase:** 4
 
 ## Acceptance (repo)
@@ -14,5 +14,5 @@
 
 ## Acceptance (deploy)
 
-- [ ] API running on the M1 with a Postgres checkpointer
+- [x] API running on the M1 with a Postgres checkpointer (2026-09-21, Tailscale `:8088`)
 - [ ] Studio worker running on the Studio and reachable over Tailscale

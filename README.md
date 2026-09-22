@@ -42,7 +42,8 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 
 | Path | Role |
 |------|------|
-| [`docs/`](docs/README.md) | Architecture, ADRs, operations, security, runbooks, work orders |
+| [`docs/`](docs/README.md) | Architecture, ADRs, operations, security, runbooks, work orders, **features** |
+| [`docs/features/`](docs/features/README.md) | Future capabilities (`FEAT-*`); not runtime jobs |
 | [`hosts/`](hosts/README.md) | `studio`, `m1-mini`, `m3-air` Brewfiles and setup scripts |
 | [`infrastructure/`](infrastructure/README.md) | Compose, Postgres, Qdrant, Redis, backup, monitoring |
 | [`platform/`](platform/README.md) | Agent harness (API, orchestrator, store, router, approvals) |
@@ -66,6 +67,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 
 1. [docs/architecture/overview.md](docs/architecture/overview.md)
 2. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
-3. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
-4. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
-5. [docs/open-decisions.md](docs/open-decisions.md)
+3. [docs/features/index.md](docs/features/index.md) — future capabilities backlog
+4. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
+5. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
+6. [docs/open-decisions.md](docs/open-decisions.md)

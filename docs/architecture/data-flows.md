@@ -1,6 +1,6 @@
 # Data flows
 
-**Status:** Target. Control-plane compose is not running.
+**Status:** Control-plane compose and API are **live** on `mac-mini` (2026-09-21). Studio worker path **not** live. Sequence below still shows the target end-to-end flow including Studio.
 
 ```mermaid
 sequenceDiagram
