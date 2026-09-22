@@ -36,7 +36,7 @@ A **desired capability or user outcome**. Identified as `FEAT-NNN`. Lives in Git
 
 ### 2. Implementation work order
 
-A **bounded engineering task** (design, code, tests, docs). Identified historically as `WO-000`…`WO-007` for phases 0–7, and later as `IWO-…` (or GitHub issues) when tied to a feature. Has dependencies, acceptance criteria, explicit out-of-scope, and required tests. Completing an implementation work order in Git is **not** host deploy.
+A **bounded engineering task** (design, code, tests, docs). Identified historically as `WO-000`…`WO-007` for phases 0–7, and as `IWO-…` (or GitHub issues from the Work order template) when tied to a feature. Shape follows the [Work Order Protocol](../work-order-protocol/README.md) (`templates/WO-template.md`, ADR 0036). Completing an implementation work order in Git is **not** host deploy.
 
 Historical phase records `WO-000`–`WO-007` remain under [`../work-orders/`](../work-orders/README.md). Do not rename them or claim they are live PostgreSQL jobs.
 
@@ -46,17 +46,19 @@ An **execution record** on the M1 control plane (`POST /v1/work-orders`). Durabl
 
 | Concern | Feature | Implementation WO | Runtime WO |
 |---------|---------|-------------------|------------|
-| Home | `docs/features/` | `docs/work-orders/` (+ future IWO) | Postgres on `mac-mini` |
+| Home | `docs/features/` | `docs/work-orders/IWO-*` + GitHub WO issues | Postgres on `mac-mini` |
 | ID | `FEAT-NNN` | `WO-NNN` / `IWO-…` | UUID |
 | Approves | Human plan / PR / deploy auth | Human review of code | Human `POST …/approve` |
 | Executes code on hosts? | No | Only after deploy auth | Via Studio worker when up |
 
 ## Index and template
 
-- [Future capabilities index](index.md) — nine planned capabilities (owner priority order)
+- [Future capabilities index](index.md) — mini-first plan + FEAT-001…011
+- [Mini-first dependency plan](PLAN-mini-first.md)
 - [Feature specification template](TEMPLATE.md)
-- First specification: [FEAT-001 Feature backlog and work-order planning](FEAT-001-work-order-planning-and-approval.md)
-- GitHub issues: [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#10](https://github.com/sgerhart/ai-lab/issues/10) (one per capability)
+- Core specs: [FEAT-010 harness](FEAT-010-mini-personal-agent-loop.md), [FEAT-011 providers](FEAT-011-frontier-model-access.md)
+- Protocol: [Work Order Protocol adoption](../work-order-protocol/README.md), [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md)
+- GitHub issues: [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#12](https://github.com/sgerhart/ai-lab/issues/12)
 
 ## Honesty
 

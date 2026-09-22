@@ -31,13 +31,14 @@ Turn lab ideas into **reviewed feature specifications** and **bounded implementa
 
 ## Dependencies
 
-- ADRs: 0001 (Git SoT), 0006 (phase-gated deploy), 0018 (human approval), 0020 (LangGraph is for runtime workflows—not a substitute for this planning gate)
+- ADRs: 0001 (Git SoT), 0006 (phase-gated deploy), 0018 (human approval), 0020 (LangGraph is for runtime workflows—not a substitute for this planning gate), **0036** (Work Order Protocol for IWOs)
 - Existing historical phase WOs for context only (`WO-000`–`WO-007`)
 - Does **not** require Studio
 
 ## Proposed deliverables
 
 - This features tree (`README`, `index`, `TEMPLATE`, FEAT specs)
+- Protocol adoption: `AGENT_PROCESS.md`, `templates/WO-template.md`, `docs/work-order-protocol/` (IWO-001)
 - Optional planning-agent module later (read-only tools + question loop)
 - Issue/PR checklist that blocks merge without human approval of the feature plan
 - Explicit prohibition in agent policy: no `deploy`, no runtime `POST /v1/work-orders` from the planner, no self-approval
@@ -46,8 +47,9 @@ Turn lab ideas into **reviewed feature specifications** and **bounded implementa
 
 | ID (proposed) | Title | Depends on | Acceptance (sketch) |
 |---------------|-------|------------|---------------------|
-| IWO-001-a | Features docs + index + template (this change) | — | Validation finds `docs/features/`; lifecycle documented |
-| IWO-001-b | Planning agent read-only context loader | IWO-001-a | Unit tests; refuses secret/overlay paths |
+| IWO-001-a | Features docs + index + template | — | Validation finds `docs/features/`; lifecycle documented — **Done** |
+| [IWO-001](../work-orders/IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol (template + lifecycle map) | IWO-001-a | `AGENT_PROCESS.md` + WO-template + ADR 0036 — **Done** |
+| IWO-001-b | Planning agent read-only context loader | IWO-001 | Unit tests; refuses secret/overlay paths |
 | IWO-001-c | Clarify-and-draft loop (no execute) | IWO-001-b | Produces FEAT/IWO Markdown; exits awaiting human |
 | IWO-001-d | Policy: planner cannot approve or dispatch | IWO-001-b | Tests assert privileged tools denied |
 
@@ -56,6 +58,7 @@ Turn lab ideas into **reviewed feature specifications** and **bounded implementa
 - [x] Lifecycle Idea → … → verified completion documented
 - [x] Feature vs implementation WO vs runtime WO distinguished
 - [x] Nine owner-priority capabilities indexed with stable IDs
+- [x] Work Order Protocol adopted for IWOs (ADR 0036 / IWO-001)
 - [ ] Planning agent implemented (future IWOs)
 - [ ] Planner cannot call deploy, model pull, or runtime submit
 - [ ] Planner cannot mark its own plan approved
@@ -74,7 +77,7 @@ Turn lab ideas into **reviewed feature specifications** and **bounded implementa
 
 | Layer | Status | Evidence |
 |-------|--------|----------|
-| Spec in Git | Done (this file + index) | `docs/features/` |
+| Spec in Git | Done (features tree + protocol adoption) | `docs/features/`, `AGENT_PROCESS.md`, ADR 0036 |
 | Code (planning agent) | Not started | — |
 | Host deploy | n/a | Docs only |
 | Live verified | n/a | — |
