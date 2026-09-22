@@ -1,6 +1,6 @@
 # IWO-002 — Agent-run and conversation contract on the mini
 
-**Status:** Ready  
+**Status:** Complete  
 **Priority:** P1  
 **Effort:** M  
 **Owner:** operator  
@@ -86,7 +86,12 @@ durable to land. Fixed plans must not be mistaken for a model-driven loop.
 
 ## Closeout
 
-- Verification evidence: (pending implementation)
-- Follow-ons filed: IWO-003
-- Residual risks: live mini schema migrate needs deploy auth
+- Verification evidence:
+  - `PYTHONPATH=platform/src platform/.venv/bin/python -m unittest tests.test_conversation_contract tests.test_langgraph_slice -v` → OK
+  - `./scripts/validate-repo.sh` → RESULT: OK
+  - `./tests/test_scripts_safety.sh` → OK
+  - `python3 -m unittest discover -s tests -v` → exit 0
+- Follow-ons filed: IWO-003 (auth UI)
+- Residual risks: live mini schema migrate needs separate deploy auth; API tests need platform venv (`httpx`)
+- Docs/status updated: Yes (FEAT-010, platform README)
 - Host deploy performed? No

@@ -15,7 +15,9 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
+from .model_router import CompletionRequest, FakeBackend, ModelRouter
 from .policy import load_policy
 from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
@@ -65,6 +67,37 @@ class WorkOrderIn(BaseModel):
 class ApproveIn(BaseModel):
     decision: str = Field(default="approved", description="approved|rejected")
 
+
+class ConversationIn(BaseModel):
+    agent: str
+    title: str = ""
+
+
+class MessageIn(BaseModel):
+    """Ordinary chat turn. Does not create a runtime work order or agent run."""
+
+    content: str
+    role: str = Field(default="user", description="user|assistant|system|tool")
+
+
+class AgentRunIn(BaseModel):
+    """Durable agent-run request. Distinct from an ordinary chat message.
+
+    Does not start the full model/tool loop (IWO-005). With backend=fake,
+    records a FakeBackend placeholder trace for contract tests.
+    """
+
+    objective: str = ""
+    model: str = "fake-instruct"
+    billing_class: str = Field(
+        default="local",
+        description="local|subscription_client|usage_billed_api (ADR 0038)",
+    )
+    backend: str = Field(default="fake", description="fake for tests; cloud disabled by default")
+    work_order_id: str | None = Field(
+        default=None,
+        description="Optional runtime work-order UUID link; not an Implementation WO id",
+    )
 
 def _auth(expected: str, authorization: str | None) -> None:
     if not expected:
@@ -119,12 +152,13 @@ def create_control_app(
         if pg_context is not None:
             pg_context.__exit__(None, None, None)
 
-    app = FastAPI(title="ai-lab control plane", version="0.3.0", lifespan=lifespan)
+    app = FastAPI(title="ai-lab control plane", version="0.4.0", lifespan=lifespan)
     app.state.store = store
     app.state.graph = graph
     app.state.checkpointer = checkpointer
     app.state.token = token
     app.state.settings = settings
+    app.state.model_router = ModelRouter(backends={"fake": FakeBackend(), "ollama": FakeBackend()})
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -237,6 +271,159 @@ def create_control_app(
         if current is None:
             raise HTTPException(status_code=404, detail="not found")
         return current.to_dict()
+
+    # --- Conversations / agent runs (FEAT-010 / IWO-002) -------------------
+    # Chat messages ≠ durable agent runs ≠ runtime work orders ≠ Implementation WOs.
+
+    @app.post("/v1/conversations")
+    def create_conversation(
+        body: ConversationIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        try:
+            load_policy(body.agent)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if not hasattr(store, "put_conversation"):
+            raise HTTPException(status_code=501, detail="conversation store unavailable")
+        conversation = Conversation.new(agent=body.agent, title=body.title)
+        store.put_conversation(conversation)  # type: ignore[attr-defined]
+        return conversation.to_dict()
+
+    @app.get("/v1/conversations/{conversation_id}")
+    def get_conversation(
+        conversation_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        return conversation.to_dict()
+
+    @app.post("/v1/conversations/{conversation_id}/messages")
+    def post_message(
+        conversation_id: str,
+        body: MessageIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Persist an ordinary chat turn. Does not enqueue a work order or agent run."""
+        _auth(token, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            role = MessageRole(body.role)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"invalid role: {body.role}") from exc
+        message = Message.new(
+            conversation_id=conversation_id,
+            role=role,
+            content=body.content,
+            meta={"kind": "chat_turn"},
+        )
+        store.put_message(message)  # type: ignore[attr-defined]
+        return message.to_dict()
+
+    @app.get("/v1/conversations/{conversation_id}/messages")
+    def list_messages(
+        conversation_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        messages = store.list_messages(conversation_id)  # type: ignore[attr-defined]
+        return {
+            "conversation_id": conversation_id,
+            "messages": [m.to_dict() for m in messages],
+            "note": "Ordinary chat turns only; not runtime work orders.",
+        }
+
+    @app.post("/v1/conversations/{conversation_id}/runs")
+    def create_agent_run(
+        conversation_id: str,
+        body: AgentRunIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Create a durable agent run. Not an ordinary chat message.
+
+        FakeBackend may write a placeholder trace. Full model/tool loop is IWO-005.
+        """
+        _auth(token, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            billing = BillingClass(body.billing_class)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"invalid billing_class: {body.billing_class}") from exc
+        if billing == BillingClass.USAGE_BILLED_API and body.backend not in {"fake"}:
+            raise HTTPException(
+                status_code=400,
+                detail="usage_billed_api providers are disabled until owner enables credentials",
+            )
+        run = AgentRun.new(
+            agent=conversation.agent,
+            objective=body.objective,
+            conversation_id=conversation_id,
+            work_order_id=body.work_order_id,
+            model=body.model,
+            billing_class=billing,
+            backend=body.backend,
+        )
+        if body.backend == "fake":
+            router: ModelRouter = app.state.model_router
+            completion = router.complete(
+                CompletionRequest(model=body.model, prompt=body.objective or "(no objective)", backend="fake")
+            )
+            run.traces.append(
+                {
+                    "kind": "placeholder_model_call",
+                    "note": "Not the FEAT-010 model/tool loop; FakeBackend contract only (IWO-002).",
+                    "billing_class": billing.value,
+                    "response": completion.text,
+                }
+            )
+        run.status = AgentRunStatus.CREATED
+        store.put_agent_run(run)  # type: ignore[attr-defined]
+        out = run.to_dict()
+        out["kind"] = "agent_run"
+        out["note"] = (
+            "Durable agent run record. Distinct from chat messages and from "
+            "POST /v1/work-orders runtime jobs. Model/tool loop: IWO-005."
+        )
+        return out
+
+    @app.get("/v1/agent-runs/{run_id}")
+    def get_agent_run(
+        run_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        out = run.to_dict()
+        out["kind"] = "agent_run"
+        return out
+
+    @app.get("/v1/conversations/{conversation_id}/runs")
+    def list_conversation_runs(
+        conversation_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        runs = store.list_agent_runs(conversation_id)  # type: ignore[attr-defined]
+        return {
+            "conversation_id": conversation_id,
+            "runs": [r.to_dict() for r in runs],
+        }
 
     return app
 

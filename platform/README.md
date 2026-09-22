@@ -19,12 +19,16 @@ PYTHONPATH=platform/src platform/.venv/bin/python -m unittest tests.test_langgra
 | Concern | Implementation |
 |---------|----------------|
 | Work-order record | `store.py` (SQLite tests) / `postgres_store.py` (Postgres) |
+| Conversations / agent runs | `conversation.py` + store methods (IWO-002; FakeBackend placeholder) |
 | Workflow / resume | `slice_graph.py` (LangGraph) |
 | HTTP control plane | `control_app.py` (FastAPI, M1) |
 | Studio dispatch | `dispatch.py` |
 | Studio worker | `studio_worker.py` (deterministic plans; FastAPI) |
-| Agent plans | `agent_plans.py` (shared with laptop worker) |
+| Agent plans | `agent_plans.py` (fixture until FEAT-010 model/tool loop) |
+| Model interface | `model_router.py` (`FakeBackend` for tests) |
 | Permissions | `policy.py` / `approvals.py` |
 | Deterministic laptop worker | `worker.py` (no LangGraph required) |
 
-LangGraph is not the entire harness. CrewAI / AutoGen / Temporal / Celery are out of scope.
+Chat messages (`POST /v1/conversations/.../messages`) are ordinary turns. Durable
+agent runs (`.../runs`) are separate from runtime work orders
+(`POST /v1/work-orders`). Full model/tool loop is IWO-005.

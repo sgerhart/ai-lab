@@ -22,7 +22,7 @@ Do not treat this index as authorized implementation or deploy.
 
 | Pri | ID | Capability | Status | GitHub |
 |-----|----|------------|--------|--------|
-| 0 | [FEAT-010](FEAT-010-mini-personal-agent-loop.md) | Mini personal-agent loop and harness | **Specified** | [#11](https://github.com/sgerhart/ai-lab/issues/11) |
+| 0 | [FEAT-010](FEAT-010-mini-personal-agent-loop.md) | Mini personal-agent loop and harness | **Partial (code):** IWO-002 contract; no model loop | [#11](https://github.com/sgerhart/ai-lab/issues/11) |
 | 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Specified** | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
 | 1 | [FEAT-001](FEAT-001-work-order-planning-and-approval.md) | Feature backlog and WO planning | **Partial (docs)** + protocol IWO-001 | [#2](https://github.com/sgerhart/ai-lab/issues/2) |
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live)** | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
@@ -39,7 +39,7 @@ Do not treat this index as authorized implementation or deploy.
 | ID | Title | Feature | Status |
 |----|-------|---------|--------|
 | [IWO-001](../work-orders/IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol | FEAT-001 | Complete (docs) |
-| [IWO-002](../work-orders/IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | FEAT-010 | **Ready** (first mini code slice) |
+| [IWO-002](../work-orders/IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | FEAT-010 | **Complete** (unit-tested; not live-migrated) |
 | [IWO-003](../work-orders/IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | FEAT-004/010 | Draft |
 | [IWO-004](../work-orders/IWO-004-model-router.md) | Model router | FEAT-011 | Draft |
 | [IWO-005](../work-orders/IWO-005-bounded-model-tool-loop.md) | Model/tool loop | FEAT-010 | Draft |

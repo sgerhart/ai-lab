@@ -95,6 +95,7 @@ REQUIRED_FILES=(
   platform/src/ai_lab_platform/postgres_store.py
   platform/src/ai_lab_platform/settings.py
   platform/src/ai_lab_platform/schema.sql
+  platform/src/ai_lab_platform/conversation.py
   models/catalog.json
   scripts/eval-dry-run.sh
   scripts/train.sh

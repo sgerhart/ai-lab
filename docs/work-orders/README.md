@@ -32,7 +32,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | ID | Title | Status |
 |----|-------|--------|
 | [IWO-001](IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol | Complete (docs) |
-| [IWO-002](IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | Ready (first mini code) |
+| [IWO-002](IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | Complete (unit-tested) |
 | [IWO-003](IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | Draft |
 | [IWO-004](IWO-004-model-router.md) | Model router | Draft |
 | [IWO-005](IWO-005-bounded-model-tool-loop.md) | Model/tool loop | Draft |

@@ -16,6 +16,14 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Added FEAT-010 (personal-agent loop), FEAT-011 (provider router / billing classes), amended FEAT-002–009, Studio Jupyter milestone-1 track (FEAT-006).
 - Bounded IWOs IWO-002–007 (mini) and IWO-011–015 (Jupyter). First code slice: IWO-002. No host deploy or paid API calls in this planning change.
 
+### IWO-002 — conversation / agent-run contract
+
+- Added `conversation.py`, Postgres/SQLite tables, and FastAPI
+  `/v1/conversations` + `/v1/agent-runs` endpoints.
+- Ordinary chat messages are distinct from durable agent runs and from
+  `POST /v1/work-orders`. FakeBackend placeholder traces only; no model/tool
+  loop yet (IWO-005). No live mini schema migrate.
+
 ### Phase 0–7 repository build (2026-09-20)
 
 - Adopted the three-host architecture: M1 mini control plane, Studio compute plane, M3 Air human plane.
