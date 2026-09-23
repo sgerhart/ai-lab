@@ -46,5 +46,8 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0033](0033-studio-nvme-deferred.md) | Studio NVMe deferred | Accepted |
 | [0034](0034-tailscale-ipv4-bind.md) | Control plane Tailscale IPv4 bind | Accepted |
 | [0035](0035-workspace-github-clone-path.md) | Operator clone path `~/workspace/github/<account>/<repo>` | Accepted |
+| [0036](0036-adopt-work-order-protocol.md) | Adopt Work Order Protocol for implementation contracts | Accepted |
+| [0037](0037-mini-owns-personal-agent-loop.md) | Mini owns the personal-agent loop | Accepted |
+| [0038](0038-model-provider-billing-classes.md) | Model provider billing classes and subscription boundaries | Accepted |
 
 Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents.

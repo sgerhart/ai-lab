@@ -1,13 +1,20 @@
 # Work orders
 
-This directory holds **historical implementation-phase records** (`WO-000`–`WO-007`) from the initial repository build. They describe Git deliverables and (where noted) host deploy state.
+This directory holds:
+
+1. **historical implementation-phase records** (`WO-000`–`WO-007`) from the initial repository build.
+2. **Protocol Implementation Work Orders** (`IWO-*`) written to the
+   [Work Order Protocol](../work-order-protocol/README.md) template
+   ([`templates/WO-template.md`](../../templates/WO-template.md)).
 
 They are **not**:
 
 - Live PostgreSQL runtime work orders on `mac-mini` (those are UUIDs via `POST /v1/work-orders`)
 - Future capability specs (see [`../features/`](../features/README.md), `FEAT-001`…)
 
-Do not silently rename these files into `FEAT-*` IDs. New engineering tasks that implement a feature should be proposed as implementation work orders under that feature (for example `IWO-…`) or as GitHub issues linked from the feature index.
+Do not silently rename historical files into `FEAT-*` IDs. New engineering
+tasks should use `IWO-…` Markdown here and/or a GitHub issue from the Work
+order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 
 | ID | Title | Code in Git | Host deployed | Live verified |
 |----|-------|-------------|---------------|---------------|
@@ -20,4 +27,19 @@ Do not silently rename these files into `FEAT-*` IDs. New engineering tasks that
 | [WO-006](WO-006-phase-6-model-lab.md) | Training/eval | Catalog + refuse-pull | **No** | No weights / no pulls |
 | [WO-007](WO-007-phase-7-hardening.md) | Hardening / recovery | CI + throwaway restore | Backup dest iCloud | First `--execute` dump written; restore drill **not** done |
 
-Forward-looking capabilities: [`../features/index.md`](../features/index.md).
+## Protocol IWOs
+
+| ID | Title | Status |
+|----|-------|--------|
+| [IWO-001](IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol | Complete (docs) |
+| [IWO-002](IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | Complete (unit-tested) |
+| [IWO-003](IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | Complete |
+| [IWO-004](IWO-004-model-router.md) | Model router | Complete |
+| [IWO-005](IWO-005-bounded-model-tool-loop.md) | Model/tool loop | Complete |
+| [IWO-006](IWO-006-durable-async-recovery.md) | Durable async recovery | Complete |
+| [IWO-007](IWO-007-tool-action-approvals.md) | Tool action approvals | Complete |
+| [IWO-011](IWO-011-studio-jupyter-host.md)–[015](IWO-015-jupyter-sample-notebook.md) | Studio Jupyter track | Draft |
+
+Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
+Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
+Mini-first plan: [`../features/PLAN-mini-first.md`](../features/PLAN-mini-first.md).

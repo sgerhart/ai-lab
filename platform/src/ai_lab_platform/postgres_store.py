@@ -8,6 +8,7 @@ from pathlib import Path
 import psycopg
 from psycopg.types.json import Jsonb
 
+from .conversation import AgentRun, Conversation, Message
 from .state_machine import transition
 from .work_order import Status, WorkOrder, utcnow
 
@@ -126,4 +127,143 @@ class PostgresStore:
         out: list[dict[str, object]] = []
         for row in rows:
             out.append({"at": row[0], "actor": row[1], "event": row[2], "detail": row[3]})
+        return out
+
+    def put_conversation(self, conversation: Conversation) -> None:
+        conversation.updated_at = utcnow()
+        payload = conversation.to_dict()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO conversations (id, agent, title, payload, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s::timestamptz, %s::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    agent = EXCLUDED.agent,
+                    title = EXCLUDED.title,
+                    payload = EXCLUDED.payload,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                (
+                    conversation.id,
+                    conversation.agent,
+                    conversation.title,
+                    Jsonb(payload),
+                    conversation.created_at,
+                    conversation.updated_at,
+                ),
+            )
+
+    def get_conversation(self, conversation_id: str) -> Conversation | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT payload FROM conversations WHERE id = %s", (conversation_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        payload = row[0]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        return Conversation.from_dict(payload)
+
+    def put_message(self, message: Message) -> None:
+        payload = message.to_dict()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO conversation_messages (id, conversation_id, role, content, payload, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    role = EXCLUDED.role,
+                    content = EXCLUDED.content,
+                    payload = EXCLUDED.payload
+                """,
+                (
+                    message.id,
+                    message.conversation_id,
+                    message.role.value,
+                    message.content,
+                    Jsonb(payload),
+                    message.created_at,
+                ),
+            )
+            conn.execute(
+                "UPDATE conversations SET updated_at = now() WHERE id = %s",
+                (message.conversation_id,),
+            )
+
+    def list_messages(self, conversation_id: str) -> list[Message]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT payload FROM conversation_messages
+                WHERE conversation_id = %s
+                ORDER BY created_at, id
+                """,
+                (conversation_id,),
+            ).fetchall()
+        out: list[Message] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            out.append(Message.from_dict(payload))
+        return out
+
+    def put_agent_run(self, run: AgentRun) -> None:
+        run.updated_at = utcnow()
+        payload = run.to_dict()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO agent_runs (
+                    id, conversation_id, work_order_id, agent, status, payload, created_at, updated_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s::timestamptz, %s::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    conversation_id = EXCLUDED.conversation_id,
+                    work_order_id = EXCLUDED.work_order_id,
+                    agent = EXCLUDED.agent,
+                    status = EXCLUDED.status,
+                    payload = EXCLUDED.payload,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                (
+                    run.id,
+                    run.conversation_id,
+                    run.work_order_id,
+                    run.agent,
+                    run.status.value,
+                    Jsonb(payload),
+                    run.created_at,
+                    run.updated_at,
+                ),
+            )
+
+    def get_agent_run(self, run_id: str) -> AgentRun | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT payload FROM agent_runs WHERE id = %s", (run_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        payload = row[0]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        return AgentRun.from_dict(payload)
+
+    def list_agent_runs(self, conversation_id: str | None = None) -> list[AgentRun]:
+        query = "SELECT payload FROM agent_runs"
+        args: tuple[str, ...] = ()
+        if conversation_id is not None:
+            query += " WHERE conversation_id = %s"
+            args = (conversation_id,)
+        query += " ORDER BY updated_at"
+        with self._connect() as conn:
+            rows = conn.execute(query, args).fetchall()
+        out: list[AgentRun] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            out.append(AgentRun.from_dict(payload))
         return out

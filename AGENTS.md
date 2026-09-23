@@ -15,10 +15,12 @@ These rules apply to every human and coding agent that edits this repository.
 
 Before changing implementation, read:
 
-1. `docs/architecture/overview.md`
-2. Relevant ADRs in `docs/decisions/`
-3. The work order for the current phase
-4. `docs/security/overview.md` if the change touches network, secrets, agents, or isolation
+1. `AGENT_PROCESS.md` (Work Order Protocol front door; ADR 0036)
+2. `docs/architecture/overview.md`
+3. Relevant ADRs in `docs/decisions/`
+4. The assigned Implementation Work Order (`docs/work-orders/IWO-*` or GitHub WO issue) — not only historical `WO-000`–`WO-007`
+5. `docs/security/overview.md` if the change touches network, secrets, agents, or isolation
+6. `docs/work-order-protocol/` when drafting or closing IWOs
 
 ## Authorization
 
@@ -50,7 +52,8 @@ If a secret is found in the tree: stop, remove it, rotate it if it may have leak
 
 ## Implementation discipline
 
-- Use bounded work orders.
+- Use bounded Implementation Work Orders from `templates/WO-template.md` (Work Order Protocol Level 1–2). Do not conflate Features, IWOs, and runtime Postgres jobs — see `docs/work-order-protocol/lifecycle-mapping.md`.
+- Accepting an IWO never authorizes host deploy; see `docs/work-order-protocol/risk-and-deploy-gates.md`.
 - Keep documentation aligned with files and commands.
 - Add or update tests for meaningful behavior.
 - Prefer `uv` for new Python projects when it is available; `python3 -m venv` + `requirements.txt` is the documented fallback.

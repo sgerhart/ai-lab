@@ -24,26 +24,28 @@ Status columns (do not collapse them):
 | 6 | SLM training / eval | Catalog + FakeBackend dry-run | No | No pulls |
 | 7 | Hardening, recovery testing | CI + throwaway restore | Backup script used once | Live M1 restore **untested** |
 
-Evidence notes: [phases/repo-complete.md](phases/repo-complete.md), host runbooks, [`features/index.md`](features/index.md).
+Evidence: [phases/repo-complete.md](phases/repo-complete.md), [`features/index.md`](features/index.md), [`features/PLAN-mini-first.md`](features/PLAN-mini-first.md).
 
-Contradictory older phrases such as “API not deployed” in phase docs should be read against the **Deployed** / **Live verified** columns above and the 2026-09-21 mini bring-up—not as a claim that the Air factory or Clarion stack is part of this lab.
+## Mini-first personal-agent platform (forward)
 
-## Future capabilities (planned)
+Core purpose: always-on personal agents + AI experimentation—not an autonomous coding factory.
 
-Owner priority order — full table in [features/index.md](features/index.md):
+| Slice | Work | Code | Deploy | Live |
+|-------|------|------|--------|------|
+| Planning | Protocol + FEAT-010/011 + IWOs | Docs | n/a | n/a |
+| Mini 1 | IWO-002 + IWO-003 (contract + auth UI, FakeBackend) | **Done in Git** | Schema migrate needs auth | — |
+| Mini 2 | IWO-004 + IWO-005 (router + model/tool loop) | **Done in Git** (Fake/scripted) | Cloud $ needs auth | — |
+| Mini 3 | IWO-006 + IWO-007 (recovery + action approvals) | **Done in Git** | — | — |
+| Studio Jupyter | FEAT-006 / IWO-011…015 | Planned | Host auth | — |
+| Studio inference | FEAT-003 + Ollama provider | Partial code | Host auth | — |
+| Later | FEAT-005/008/009; optional FEAT-007 | — | — | — |
 
-1. FEAT-001 Feature backlog and work-order planning — **Specified**
-2. FEAT-002 Durable background execution — **Partial (live)**
-3. FEAT-003 Studio worker and real model integration — **Partial (code)**
-4. FEAT-004 Work-order dashboard — **Partial (live status board only)**
-5. FEAT-005 Python client and IDE MCP adapter — **Not started**
-6. FEAT-006 Jupyter integration — **Not started**
-7. FEAT-007 Coding agent and GitHub PR workflow — **Partial (deterministic plan)**
-8. FEAT-008 Research agent and retrieval memory — **Partial**
-9. FEAT-009 Scheduled lab-operations agent — **Partial (on-demand only)**
+## Feature list
+
+Full table: [features/index.md](features/index.md).
 
 ## Next recommended work
 
-1. Keep using FEAT-001 docs/issues for new ideas (no auto-execute).
-2. Studio host: Tailscale `mac-studio` → `hosts/studio/setup.sh` when authorized (**FEAT-003**).
-3. Do not start lab compose on the Air (ADR 0025).
+1. Merge planning PR; then implement **IWO-002** (conversation/agent-run contract).
+2. Do **not** deploy hosts, pull models, or enable paid APIs without separate auth.
+3. Parallel when authorized: Studio Tailscale + Jupyter (FEAT-006).

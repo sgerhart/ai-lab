@@ -4,6 +4,34 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### Work Order Protocol adoption (IWO-001, ADR 0036)
+
+- Adopted [`dentroio/work-order-protocol`](https://github.com/dentroio/work-order-protocol) Level 1–2 for **implementation** Work Orders.
+- Added root `AGENT_PROCESS.md`, `templates/WO-template.md`, expanded GitHub work-order issue template, and `docs/work-order-protocol/` (lifecycle mapping to runtime `Status`, stricter deploy gates).
+- Features / IWOs / runtime jobs remain three distinct entities. No host deploy under this change.
+
+### Mini-first personal-agent platform plan (ADR 0037–0038)
+
+- Clarified product intent: always-on personal agents + experimentation on the mini; coding factory optional (FEAT-007).
+- Added FEAT-010 (personal-agent loop), FEAT-011 (provider router / billing classes), amended FEAT-002–009, Studio Jupyter milestone-1 track (FEAT-006).
+- Bounded IWOs IWO-002–007 (mini) and IWO-011–015 (Jupyter). First code slice: IWO-002. No host deploy or paid API calls in this planning change.
+
+### IWO-002 — conversation / agent-run contract
+
+- Added `conversation.py`, Postgres/SQLite tables, and FastAPI
+  `/v1/conversations` + `/v1/agent-runs` endpoints.
+- Ordinary chat messages are distinct from durable agent runs and from
+  `POST /v1/work-orders`. FakeBackend placeholder traces only; no model/tool
+  loop yet (IWO-005). No live mini schema migrate.
+
+### IWO-003–007 — mini-only agent platform (no Studio)
+
+- `/agents` authenticated UI shell (bearer token in sessionStorage).
+- Model router with billing classes; OpenAI/Anthropic/Gemini disabled by default.
+- Bounded model/tool loop on the mini (`agent_loop.py`) with scripted/FakeBackend tests (≥2 tool steps).
+- Cancel / safe retry / reconcile stuck running; action-level approve/deny for privileged tools.
+- No host deploy, no Studio, no paid API calls.
+
 ### Phase 0–7 repository build (2026-09-20)
 
 - Adopted the three-host architecture: M1 mini control plane, Studio compute plane, M3 Air human plane.

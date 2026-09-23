@@ -44,6 +44,9 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 |------|------|
 | [`docs/`](docs/README.md) | Architecture, ADRs, operations, security, runbooks, work orders, **features** |
 | [`docs/features/`](docs/features/README.md) | Future capabilities (`FEAT-*`); not runtime jobs |
+| [`docs/work-order-protocol/`](docs/work-order-protocol/README.md) | Protocol adoption; IWO vs runtime lifecycle |
+| [`AGENT_PROCESS.md`](AGENT_PROCESS.md) | Agent front door for Implementation Work Orders |
+| [`templates/WO-template.md`](templates/WO-template.md) | Canonical IWO template |
 | [`hosts/`](hosts/README.md) | `studio`, `m1-mini`, `m3-air` Brewfiles and setup scripts |
 | [`infrastructure/`](infrastructure/README.md) | Compose, Postgres, Qdrant, Redis, backup, monitoring |
 | [`platform/`](platform/README.md) | Agent harness (API, orchestrator, store, router, approvals) |
@@ -52,7 +55,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 | [`scripts/`](scripts/README.md) | Bootstrap, preflight, health, backup, restore |
 | [`tests/`](tests/README.md) | Structure, policy, harness unit tests |
 | [`.github/`](.github/workflows/repo-validation.yml) | CI that does not need the tailnet |
-| [`AGENTS.md`](AGENTS.md) | Rules for coding agents |
+| [`AGENTS.md`](AGENTS.md) | Rules for coding agents (identity, secrets, deploy auth) |
 
 ## Working rules
 
@@ -66,8 +69,9 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 ## Start here
 
 1. [docs/architecture/overview.md](docs/architecture/overview.md)
-2. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
-3. [docs/features/index.md](docs/features/index.md) — future capabilities backlog
-4. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
-5. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
-6. [docs/open-decisions.md](docs/open-decisions.md)
+2. [AGENT_PROCESS.md](AGENT_PROCESS.md) — Implementation Work Orders
+3. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
+4. [docs/features/index.md](docs/features/index.md) — future capabilities backlog
+5. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
+6. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
+7. [docs/open-decisions.md](docs/open-decisions.md)
