@@ -33,9 +33,9 @@ Core purpose: always-on personal agents + AI experimentation—not an autonomous
 | Slice | Work | Code | Deploy | Live |
 |-------|------|------|--------|------|
 | Planning | Protocol + FEAT-010/011 + IWOs | Docs | n/a | n/a |
-| Mini 1 | IWO-002 + IWO-003 (contract + auth UI, FakeBackend) | **IWO-002 code done** (unit); IWO-003 planned | Schema migrate needs auth | — |
-| Mini 2 | IWO-004 + IWO-005 (router + model/tool loop) | Planned | Cloud $ needs auth | — |
-| Mini 3 | IWO-006 + IWO-007 (recovery + action approvals) | Planned | — | — |
+| Mini 1 | IWO-002 + IWO-003 (contract + auth UI, FakeBackend) | **Done in Git** | Schema migrate needs auth | — |
+| Mini 2 | IWO-004 + IWO-005 (router + model/tool loop) | **Done in Git** (Fake/scripted) | Cloud $ needs auth | — |
+| Mini 3 | IWO-006 + IWO-007 (recovery + action approvals) | **Done in Git** | — | — |
 | Studio Jupyter | FEAT-006 / IWO-011…015 | Planned | Host auth | — |
 | Studio inference | FEAT-003 + Ollama provider | Partial code | Host auth | — |
 | Later | FEAT-005/008/009; optional FEAT-007 | — | — | — |

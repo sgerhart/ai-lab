@@ -128,9 +128,11 @@ class AgentRun:
     billing_class: BillingClass = BillingClass.LOCAL
     backend: str = "fake"
     budget: RunBudget = field(default_factory=RunBudget)
-    # Placeholder until IWO-005 model/tool loop writes real traces.
+    # Placeholder / loop traces (IWO-002 / IWO-005).
     traces: list[dict[str, Any]] = field(default_factory=list)
     usage: dict[str, Any] = field(default_factory=dict)
+    # IWO-007: specific tool action awaiting human decision.
+    pending_action: dict[str, Any] | None = None
     error: str | None = None
     final_result: str | None = None
     created_at: str = field(default_factory=utcnow)
@@ -188,4 +190,5 @@ class AgentRun:
         payload["budget"] = RunBudget(**budget) if isinstance(budget, dict) else budget
         payload.setdefault("traces", [])
         payload.setdefault("usage", {})
+        payload.setdefault("pending_action", None)
         return cls(**payload)

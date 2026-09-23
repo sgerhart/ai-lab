@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ai-lab · agents</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      --bg: #0c1014; --panel: #141b22; --line: #243040; --ink: #e8eef6;
+      --muted: #8ea0b5; --live: #3ee0a8; --warn: #e8b45c; --down: #ff6b7a; --accent: #7cb8ff;
+    }
+    * { box-boxing: border-box; box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100%; color: var(--ink);
+      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1000px 420px at 8% -10%, #1a2a3d 0%, transparent 55%), var(--bg);
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 18px 48px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 20px; }
+    .eyebrow { font: 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+    h1 { margin: 6px 0 0; font-size: 26px; letter-spacing: -.03em; }
+    a { color: var(--accent); }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea, button {
+      font: inherit; color: var(--ink); background: #0c1218; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    }
+    input, select, textarea { width: 100%; }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+    .row2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+    button { cursor: pointer; background: color-mix(in srgb, var(--accent) 22%, #0c1218); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+    button.danger { background: color-mix(in srgb, var(--down) 18%, #0c1218); }
+    .muted { color: var(--muted); font-size: 13px; }
+    .pill { display: inline-block; font: 11px/1 ui-monospace, Menlo, monospace; padding: 4px 8px; border-radius: 999px; background: #0c1218; color: var(--muted); }
+    .pill.local { color: var(--live); }
+    .pill.usage_billed_api { color: var(--warn); }
+    .pill.subscription_client { color: var(--accent); }
+    .msg { padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .msg:last-child { border-bottom: 0; }
+    .trace { font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; background: #0c1218; padding: 10px; border-radius: 8px; margin-top: 8px; }
+    .err { color: var(--down); }
+    @media (max-width: 800px) { .row, .row2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="eyebrow">ai-lab · personal agents</div>
+        <h1>Chat on the mini</h1>
+        <p class="muted">Token stays in this browser. Secrets are never returned by the API. <a href="/">Status</a></p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="row2">
+        <div>
+          <label for="token">API bearer token</label>
+          <input id="token" type="password" autocomplete="off" placeholder="required when AI_LAB_API_TOKEN is set">
+        </div>
+        <button type="button" id="save-token">Save</button>
+      </div>
+      <p class="muted" id="auth-note">Not saved yet.</p>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <div>
+          <label for="agent">Agent</label>
+          <select id="agent">
+            <option value="lab-operations">lab-operations (read-only)</option>
+            <option value="development">development</option>
+            <option value="research">research</option>
+          </select>
+        </div>
+        <div>
+          <label for="provider">Provider / model</label>
+          <select id="provider"></select>
+        </div>
+        <div>
+          <label>Billing class</label>
+          <div id="billing" class="pill">—</div>
+        </div>
+        <button type="button" id="new-conv">New conversation</button>
+      </div>
+      <p class="muted" id="conv-id">No conversation yet.</p>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:0 0 10px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Chat <span class="muted">(not a work order)</span></h3>
+      <div id="messages"></div>
+      <div class="row2" style="margin-top:12px">
+        <div>
+          <label for="chat">Message</label>
+          <textarea id="chat" placeholder="Ordinary chat turn…"></textarea>
+        </div>
+        <button type="button" id="send-chat">Send</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3 style="margin:0 0 10px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Durable agent run</h3>
+      <div class="row2">
+        <div>
+          <label for="objective">Objective</label>
+          <textarea id="objective" placeholder="e.g. check lab health ports"></textarea>
+        </div>
+        <button type="button" id="start-run">Run loop</button>
+      </div>
+      <div id="run-view" class="trace" hidden></div>
+      <div id="pending" hidden style="margin-top:12px">
+        <p class="muted">Pending tool action (approve this action — not an Implementation WO):</p>
+        <div id="pending-detail" class="trace"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" id="approve-action">Approve action</button>
+          <button type="button" class="danger" id="deny-action">Deny action</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="button" id="cancel-run">Cancel</button>
+        <button type="button" id="retry-run">Retry</button>
+      </div>
+    </section>
+
+    <p class="err" id="error"></p>
+  </div>
+  <script>
+    const state = { conversationId: null, runId: null, pendingActionId: null, providers: [] };
+    const $ = (id) => document.getElementById(id);
+    function token() { return sessionStorage.getItem("ai_lab_token") || $("token").value.trim(); }
+    function headers() {
+      const h = { "Content-Type": "application/json" };
+      const t = token();
+      if (t) h.Authorization = `Bearer ${t}`;
+      return h;
+    }
+    function showErr(e) { $("error").textContent = e ? String(e) : ""; }
+    async function api(path, opts = {}) {
+      const res = await fetch(path, { ...opts, headers: { ...headers(), ...(opts.headers || {}) } });
+      const text = await res.text();
+      let body; try { body = JSON.parse(text); } catch { body = { raw: text }; }
+      if (!res.ok) throw new Error(body.detail || body.raw || res.statusText);
+      return body;
+    }
+    function renderBilling() {
+      const sel = $("provider");
+      const p = state.providers.find((x) => x.id === sel.value);
+      const pill = $("billing");
+      if (!p) { pill.textContent = "—"; pill.className = "pill"; return; }
+      pill.textContent = p.billing_class;
+      pill.className = "pill " + p.billing_class;
+    }
+    async function loadProviders() {
+      const data = await api("/v1/models");
+      state.providers = data.providers || [];
+      const sel = $("provider");
+      sel.innerHTML = "";
+      for (const p of state.providers) {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = `${p.id} (${p.billing_class}${p.enabled ? "" : ", disabled"})`;
+        opt.disabled = !p.enabled && p.id !== "fake";
+        sel.appendChild(opt);
+      }
+      if (![...sel.options].some((o) => o.value === "fake")) {
+        const opt = document.createElement("option");
+        opt.value = "fake"; opt.textContent = "fake (local)";
+        sel.appendChild(opt);
+      }
+      sel.value = "fake";
+      renderBilling();
+    }
+    async function newConversation() {
+      const body = await api("/v1/conversations", {
+        method: "POST",
+        body: JSON.stringify({ agent: $("agent").value, title: "ui" }),
+      });
+      state.conversationId = body.id;
+      state.runId = null;
+      $("conv-id").textContent = "Conversation " + body.id;
+      $("messages").innerHTML = "";
+      $("run-view").hidden = true;
+      $("pending").hidden = true;
+    }
+    async function refreshMessages() {
+      if (!state.conversationId) return;
+      const data = await api(`/v1/conversations/${state.conversationId}/messages`);
+      const box = $("messages");
+      box.innerHTML = "";
+      for (const m of data.messages || []) {
+        const el = document.createElement("div");
+        el.className = "msg";
+        el.innerHTML = `<strong>${m.role}</strong> <span class="muted">${m.meta?.kind || ""}</span><div>${m.content}</div>`;
+        box.appendChild(el);
+      }
+    }
+    function renderRun(run) {
+      state.runId = run.id;
+      $("run-view").hidden = false;
+      $("run-view").textContent = JSON.stringify({
+        id: run.id, status: run.status, billing_class: run.billing_class,
+        backend: run.backend, error: run.error, final_result: run.final_result,
+        traces: run.traces, pending_action: run.pending_action, usage: run.usage,
+      }, null, 2);
+      if (run.pending_action) {
+        state.pendingActionId = run.pending_action.id;
+        $("pending").hidden = false;
+        $("pending-detail").textContent = JSON.stringify(run.pending_action, null, 2);
+      } else {
+        state.pendingActionId = null;
+        $("pending").hidden = true;
+      }
+    }
+    $("save-token").onclick = () => {
+      sessionStorage.setItem("ai_lab_token", $("token").value.trim());
+      $("auth-note").textContent = "Token saved in sessionStorage for this tab.";
+      showErr("");
+      loadProviders().catch((e) => showErr(e));
+    };
+    $("provider").onchange = renderBilling;
+    $("new-conv").onclick = () => newConversation().then(refreshMessages).catch((e) => showErr(e));
+    $("send-chat").onclick = async () => {
+      try {
+        if (!state.conversationId) await newConversation();
+        await api(`/v1/conversations/${state.conversationId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ content: $("chat").value, role: "user" }),
+        });
+        $("chat").value = "";
+        await refreshMessages();
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
+    $("start-run").onclick = async () => {
+      try {
+        if (!state.conversationId) await newConversation();
+        const run = await api(`/v1/conversations/${state.conversationId}/runs`, {
+          method: "POST",
+          body: JSON.stringify({
+            objective: $("objective").value || "lab health",
+            model: "fake-instruct",
+            billing_class: "local",
+            backend: $("provider").value || "fake",
+            execute: true,
+            max_steps: 8,
+          }),
+        });
+        renderRun(run);
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
+    $("approve-action").onclick = async () => {
+      try {
+        const run = await api(`/v1/agent-runs/${state.runId}/approve-action`, {
+          method: "POST",
+          body: JSON.stringify({ decision: "approved", action_id: state.pendingActionId }),
+        });
+        renderRun(run);
+      } catch (e) { showErr(e); }
+    };
+    $("deny-action").onclick = async () => {
+      try {
+        const run = await api(`/v1/agent-runs/${state.runId}/approve-action`, {
+          method: "POST",
+          body: JSON.stringify({ decision: "denied", action_id: state.pendingActionId }),
+        });
+        renderRun(run);
+      } catch (e) { showErr(e); }
+    };
+    $("cancel-run").onclick = async () => {
+      if (!state.runId) return;
+      try { renderRun(await api(`/v1/agent-runs/${state.runId}/cancel`, { method: "POST", body: "{}" })); }
+      catch (e) { showErr(e); }
+    };
+    $("retry-run").onclick = async () => {
+      if (!state.runId) return;
+      try { renderRun(await api(`/v1/agent-runs/${state.runId}/retry`, { method: "POST", body: "{}" })); }
+      catch (e) { showErr(e); }
+    };
+    $("token").value = sessionStorage.getItem("ai_lab_token") || "";
+    if ($("token").value) $("auth-note").textContent = "Token loaded from sessionStorage.";
+    loadProviders().catch(() => {});
+  </script>
+</body>
+</html>

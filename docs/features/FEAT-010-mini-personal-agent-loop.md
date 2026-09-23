@@ -99,9 +99,9 @@ an optional small mini model, or an authorized cloud API.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done (this file) | planning PR |
-| Code | **Partial** — conversation/agent-run contract (IWO-002); no model/tool loop | `conversation.py`, store, `/v1/conversations*` |
+| Code | **Partial** — IWO-002–007 in Git (loop + UI + approvals); not live-migrated | `agent_loop.py`, `/agents` |
 | Host deploy | n/a for docs; harness API already up; **schema migrate not applied** | mini:8088 |
-| Live verified | no model-driven loop; contract unit-tested only | FakeBackend |
+| Live verified | no — unit-tested FakeBackend/scripted only | — |
 
 ## Notes
 

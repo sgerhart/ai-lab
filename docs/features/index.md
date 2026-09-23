@@ -22,11 +22,11 @@ Do not treat this index as authorized implementation or deploy.
 
 | Pri | ID | Capability | Status | GitHub |
 |-----|----|------------|--------|--------|
-| 0 | [FEAT-010](FEAT-010-mini-personal-agent-loop.md) | Mini personal-agent loop and harness | **Partial (code):** IWO-002 contract; no model loop | [#11](https://github.com/sgerhart/ai-lab/issues/11) |
-| 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Specified** | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
+| 0 | [FEAT-010](FEAT-010-mini-personal-agent-loop.md) | Mini personal-agent loop and harness | **Partial (code):** IWO-002–007 unit-tested; not live-migrated | [#11](https://github.com/sgerhart/ai-lab/issues/11) |
+| 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Partial (code):** router + disabled cloud; no live $ | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
 | 1 | [FEAT-001](FEAT-001-work-order-planning-and-approval.md) | Feature backlog and WO planning | **Partial (docs)** + protocol IWO-001 | [#2](https://github.com/sgerhart/ai-lab/issues/2) |
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live)** | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
-| 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (status board)** | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
+| 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (code):** `/agents` UI + status board | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
 | 4 | [FEAT-003](FEAT-003-studio-worker-and-models.md) | Studio inference and worker | **Partial (code)** | [#4](https://github.com/sgerhart/ai-lab/issues/4) |
 | 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Specified** | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Specified** | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
@@ -40,11 +40,11 @@ Do not treat this index as authorized implementation or deploy.
 |----|-------|---------|--------|
 | [IWO-001](../work-orders/IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol | FEAT-001 | Complete (docs) |
 | [IWO-002](../work-orders/IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | FEAT-010 | **Complete** (unit-tested; not live-migrated) |
-| [IWO-003](../work-orders/IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | FEAT-004/010 | Draft |
-| [IWO-004](../work-orders/IWO-004-model-router.md) | Model router | FEAT-011 | Draft |
-| [IWO-005](../work-orders/IWO-005-bounded-model-tool-loop.md) | Model/tool loop | FEAT-010 | Draft |
-| [IWO-006](../work-orders/IWO-006-durable-async-recovery.md) | Async recovery | FEAT-002/010 | Draft |
-| [IWO-007](../work-orders/IWO-007-tool-action-approvals.md) | Action approvals | FEAT-004/010 | Draft |
+| [IWO-003](../work-orders/IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | FEAT-004/010 | **Complete** (unit; `/agents`) |
+| [IWO-004](../work-orders/IWO-004-model-router.md) | Model router | FEAT-011 | **Complete** (cloud disabled) |
+| [IWO-005](../work-orders/IWO-005-bounded-model-tool-loop.md) | Model/tool loop | FEAT-010 | **Complete** (FakeBackend/scripted) |
+| [IWO-006](../work-orders/IWO-006-durable-async-recovery.md) | Async recovery | FEAT-002/010 | **Complete** (unit) |
+| [IWO-007](../work-orders/IWO-007-tool-action-approvals.md) | Action approvals | FEAT-004/010 | **Complete** (unit) |
 | [IWO-011](../work-orders/IWO-011-studio-jupyter-host.md)–[015](../work-orders/IWO-015-jupyter-sample-notebook.md) | Jupyter track | FEAT-006 | Draft (host gates) |
 
 ## Historical phase work orders

@@ -33,11 +33,11 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 |----|-------|--------|
 | [IWO-001](IWO-001-adopt-work-order-protocol.md) | Adopt Work Order Protocol | Complete (docs) |
 | [IWO-002](IWO-002-agent-run-conversation-contract.md) | Agent-run / conversation contract | Complete (unit-tested) |
-| [IWO-003](IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | Draft |
-| [IWO-004](IWO-004-model-router.md) | Model router | Draft |
-| [IWO-005](IWO-005-bounded-model-tool-loop.md) | Model/tool loop | Draft |
-| [IWO-006](IWO-006-durable-async-recovery.md) | Durable async recovery | Draft |
-| [IWO-007](IWO-007-tool-action-approvals.md) | Tool action approvals | Draft |
+| [IWO-003](IWO-003-authenticated-agent-ui.md) | Authenticated agent UI | Complete |
+| [IWO-004](IWO-004-model-router.md) | Model router | Complete |
+| [IWO-005](IWO-005-bounded-model-tool-loop.md) | Model/tool loop | Complete |
+| [IWO-006](IWO-006-durable-async-recovery.md) | Durable async recovery | Complete |
+| [IWO-007](IWO-007-tool-action-approvals.md) | Tool action approvals | Complete |
 | [IWO-011](IWO-011-studio-jupyter-host.md)–[015](IWO-015-jupyter-sample-notebook.md) | Studio Jupyter track | Draft |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  

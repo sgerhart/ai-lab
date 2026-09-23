@@ -1,6 +1,6 @@
 # IWO-007 — Tool action-level approvals in UI and API
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P0  
 **Effort:** M  
 **Owner:** operator  
@@ -27,3 +27,10 @@ Humans must see arguments and deny without the action executing.
 ## Depends on
 
 IWO-003, IWO-005; ADR 0018
+
+
+## Closeout
+
+- Verification evidence: `tests.test_agent_loop` + validate-repo (2026-09-22)
+- Host deploy performed? No
+- Live mini migrate? No

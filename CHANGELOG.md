@@ -24,6 +24,14 @@ All notable repository changes. Host deployments are recorded in phase completio
   `POST /v1/work-orders`. FakeBackend placeholder traces only; no model/tool
   loop yet (IWO-005). No live mini schema migrate.
 
+### IWO-003–007 — mini-only agent platform (no Studio)
+
+- `/agents` authenticated UI shell (bearer token in sessionStorage).
+- Model router with billing classes; OpenAI/Anthropic/Gemini disabled by default.
+- Bounded model/tool loop on the mini (`agent_loop.py`) with scripted/FakeBackend tests (≥2 tool steps).
+- Cancel / safe retry / reconcile stuck running; action-level approve/deny for privileged tools.
+- No host deploy, no Studio, no paid API calls.
+
 ### Phase 0–7 repository build (2026-09-20)
 
 - Adopted the three-host architecture: M1 mini control plane, Studio compute plane, M3 Air human plane.

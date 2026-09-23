@@ -1,6 +1,6 @@
 # IWO-006 — Durable async recovery, cancel, and safe retry
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P1  
 **Effort:** M  
 **Owner:** operator  
@@ -21,3 +21,10 @@ down—runs must remain retrievable or fail visibly. Cancel and retry must be sa
 ## Depends on
 
 IWO-005
+
+
+## Closeout
+
+- Verification evidence: `tests.test_agent_loop` + validate-repo (2026-09-22)
+- Host deploy performed? No
+- Live mini migrate? No

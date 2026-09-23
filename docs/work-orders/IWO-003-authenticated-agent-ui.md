@@ -1,6 +1,6 @@
 # IWO-003 — Authenticated private agent UI shell
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P1  
 **Effort:** M  
 **Owner:** operator  
@@ -38,3 +38,10 @@ Large dashboard framework; action-approval polish (IWO-007); live cloud models
 ## Depends on
 
 IWO-002
+
+
+## Closeout
+
+- Verification evidence: `tests.test_agent_loop` + validate-repo (2026-09-22)
+- Host deploy performed? No
+- Live mini migrate? No

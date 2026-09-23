@@ -1,6 +1,6 @@
 # IWO-005 — Bounded LangGraph model/tool loop (lab-operations)
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P1  
 **Effort:** L  
 **Owner:** operator  
@@ -34,3 +34,10 @@ New write/privileged tools; Studio requirement; coding agent
 ## Depends on
 
 IWO-002, IWO-004
+
+
+## Closeout
+
+- Verification evidence: `tests.test_agent_loop` + validate-repo (2026-09-22)
+- Host deploy performed? No
+- Live mini migrate? No

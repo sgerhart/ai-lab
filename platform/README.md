@@ -19,16 +19,19 @@ PYTHONPATH=platform/src platform/.venv/bin/python -m unittest tests.test_langgra
 | Concern | Implementation |
 |---------|----------------|
 | Work-order record | `store.py` (SQLite tests) / `postgres_store.py` (Postgres) |
-| Conversations / agent runs | `conversation.py` + store methods (IWO-002; FakeBackend placeholder) |
-| Workflow / resume | `slice_graph.py` (LangGraph) |
+| Conversations / agent runs | `conversation.py` + store methods |
+| Personal-agent loop | `agent_loop.py` (mini; FakeBackend/scripted tests) |
+| Tool runtime | `tool_runtime.py` (allowlist + approval gate) |
+| Agent UI | `web/agents.html` at `/agents` |
+| Workflow / resume | `slice_graph.py` (LangGraph work-order slice) |
 | HTTP control plane | `control_app.py` (FastAPI, M1) |
 | Studio dispatch | `dispatch.py` |
 | Studio worker | `studio_worker.py` (deterministic plans; FastAPI) |
-| Agent plans | `agent_plans.py` (fixture until FEAT-010 model/tool loop) |
-| Model interface | `model_router.py` (`FakeBackend` for tests) |
+| Agent plans | `agent_plans.py` (fixture; loop is separate) |
+| Model interface | `model_router.py` (billing classes; cloud disabled default) |
 | Permissions | `policy.py` / `approvals.py` |
 | Deterministic laptop worker | `worker.py` (no LangGraph required) |
 
 Chat messages (`POST /v1/conversations/.../messages`) are ordinary turns. Durable
-agent runs (`.../runs`) are separate from runtime work orders
-(`POST /v1/work-orders`). Full model/tool loop is IWO-005.
+agent runs (`.../runs?execute=true`) run the mini model/tool loop. Runtime work
+orders remain `POST /v1/work-orders`.

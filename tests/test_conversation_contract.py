@@ -131,14 +131,14 @@ class ConversationApiTests(unittest.TestCase):
                 "model": "fake-instruct",
                 "billing_class": "local",
                 "backend": "fake",
+                "execute": False,
             },
         )
         self.assertEqual(run.status_code, 200, run.text)
         body = run.json()
         self.assertEqual(body["kind"], "agent_run")
         self.assertEqual(body["billing_class"], "local")
-        self.assertEqual(len(body["traces"]), 1)
-        self.assertIn("fake:", body["traces"][0]["response"])
+        self.assertEqual(body["status"], "created")
 
         got = self.client.get(f"/v1/agent-runs/{body['id']}", headers=self.headers)
         self.assertEqual(got.status_code, 200)

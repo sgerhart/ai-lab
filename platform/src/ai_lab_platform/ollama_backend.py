@@ -40,7 +40,15 @@ class OllamaBackend:
         text = ""
         if isinstance(data, dict):
             text = str(data.get("response") or data.get("text") or "")
-        return CompletionResponse(model=request.model, backend="ollama", text=text)
+        return CompletionResponse(
+            model=request.model,
+            backend="ollama",
+            text=text,
+            billing_class=__import__("ai_lab_platform.conversation", fromlist=["BillingClass"]).BillingClass.LOCAL,
+        )
+
+    def health(self) -> dict[str, object]:
+        return {"ok": False, "backend": "ollama", "billing_class": "local", "reason": "live_check_not_in_this_method"}
 
     def pull(self, model: str) -> None:
         refuse_pull(model)

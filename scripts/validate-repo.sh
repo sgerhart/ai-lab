@@ -96,6 +96,8 @@ REQUIRED_FILES=(
   platform/src/ai_lab_platform/settings.py
   platform/src/ai_lab_platform/schema.sql
   platform/src/ai_lab_platform/conversation.py
+  platform/src/ai_lab_platform/agent_loop.py
+  platform/src/ai_lab_platform/web/agents.html
   models/catalog.json
   scripts/eval-dry-run.sh
   scripts/train.sh

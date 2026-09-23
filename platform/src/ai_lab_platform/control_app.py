@@ -15,9 +15,16 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+from .agent_loop import (
+    cancel_agent_run,
+    reconcile_stuck_running,
+    resolve_pending_action,
+    retry_agent_run,
+    run_until_idle,
+)
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
-from .model_router import CompletionRequest, FakeBackend, ModelRouter
+from .model_router import ModelRouter
 from .policy import load_policy
 from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
@@ -25,6 +32,7 @@ from .store import SqliteStore, WorkOrderStore
 from .work_order import Status, WorkOrder
 
 STATUS_HTML = Path(__file__).resolve().parent / "web" / "status.html"
+AGENTS_HTML = Path(__file__).resolve().parent / "web" / "agents.html"
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="6" fill="#141b22"/>
   <circle cx="16" cy="16" r="6" fill="#3ee0a8"/>
@@ -81,11 +89,7 @@ class MessageIn(BaseModel):
 
 
 class AgentRunIn(BaseModel):
-    """Durable agent-run request. Distinct from an ordinary chat message.
-
-    Does not start the full model/tool loop (IWO-005). With backend=fake,
-    records a FakeBackend placeholder trace for contract tests.
-    """
+    """Durable agent-run request. Distinct from an ordinary chat message."""
 
     objective: str = ""
     model: str = "fake-instruct"
@@ -93,11 +97,22 @@ class AgentRunIn(BaseModel):
         default="local",
         description="local|subscription_client|usage_billed_api (ADR 0038)",
     )
-    backend: str = Field(default="fake", description="fake for tests; cloud disabled by default")
+    backend: str = Field(default="fake", description="fake/scripted for tests; cloud disabled by default")
     work_order_id: str | None = Field(
         default=None,
         description="Optional runtime work-order UUID link; not an Implementation WO id",
     )
+    execute: bool = Field(
+        default=False,
+        description="If true, run the bounded model/tool loop now (IWO-005)",
+    )
+    max_steps: int = Field(default=8, ge=1, le=64)
+
+
+class ActionDecisionIn(BaseModel):
+    decision: str = Field(description="approved|denied")
+    action_id: str | None = None
+
 
 def _auth(expected: str, authorization: str | None) -> None:
     if not expected:
@@ -123,6 +138,7 @@ def create_control_app(
     token: str = "",
     studio_worker_url: str | None = None,
     settings: Settings | None = None,
+    model_router: ModelRouter | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     token = token or settings.api_token
@@ -158,7 +174,7 @@ def create_control_app(
     app.state.checkpointer = checkpointer
     app.state.token = token
     app.state.settings = settings
-    app.state.model_router = ModelRouter(backends={"fake": FakeBackend(), "ollama": FakeBackend()})
+    app.state.model_router = model_router or ModelRouter()
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -176,9 +192,23 @@ def create_control_app(
     def status_page() -> str:
         return STATUS_HTML.read_text(encoding="utf-8")
 
+    @app.get("/agents", response_class=HTMLResponse)
+    def agents_page() -> str:
+        """Authenticated personal-agent UI shell (IWO-003). Token stays in the browser."""
+        return AGENTS_HTML.read_text(encoding="utf-8")
+
     @app.get("/favicon.svg")
     def favicon() -> Response:
         return Response(content=FAVICON_SVG, media_type="image/svg+xml")
+
+    @app.get("/v1/models")
+    def list_models(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+        _auth(token, authorization)
+        router: ModelRouter = app.state.model_router
+        return {
+            "providers": router.list_providers(),
+            "note": "Cloud providers start disabled. No silent paid fallback (ADR 0038).",
+        }
 
     @app.get("/v1/status")
     def lab_status() -> dict[str, object]:
@@ -348,10 +378,7 @@ def create_control_app(
         body: AgentRunIn,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
-        """Create a durable agent run. Not an ordinary chat message.
-
-        FakeBackend may write a placeholder trace. Full model/tool loop is IWO-005.
-        """
+        """Create a durable agent run. Optionally execute the bounded loop."""
         _auth(token, authorization)
         conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
         if conversation is None:
@@ -360,11 +387,13 @@ def create_control_app(
             billing = BillingClass(body.billing_class)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"invalid billing_class: {body.billing_class}") from exc
-        if billing == BillingClass.USAGE_BILLED_API and body.backend not in {"fake"}:
+        if billing == BillingClass.USAGE_BILLED_API and body.backend not in {"fake", "scripted"}:
             raise HTTPException(
                 status_code=400,
                 detail="usage_billed_api providers are disabled until owner enables credentials",
             )
+        from .conversation import RunBudget
+
         run = AgentRun.new(
             agent=conversation.agent,
             objective=body.objective,
@@ -373,27 +402,25 @@ def create_control_app(
             model=body.model,
             billing_class=billing,
             backend=body.backend,
+            budget=RunBudget(max_steps=body.max_steps),
         )
-        if body.backend == "fake":
-            router: ModelRouter = app.state.model_router
-            completion = router.complete(
-                CompletionRequest(model=body.model, prompt=body.objective or "(no objective)", backend="fake")
+        router: ModelRouter = app.state.model_router
+        if body.execute:
+            run.status = AgentRunStatus.QUEUED
+            store.put_agent_run(run)  # type: ignore[attr-defined]
+            run = run_until_idle(
+                run,
+                router=router,
+                store_put=store.put_agent_run,  # type: ignore[attr-defined]
             )
-            run.traces.append(
-                {
-                    "kind": "placeholder_model_call",
-                    "note": "Not the FEAT-010 model/tool loop; FakeBackend contract only (IWO-002).",
-                    "billing_class": billing.value,
-                    "response": completion.text,
-                }
-            )
-        run.status = AgentRunStatus.CREATED
-        store.put_agent_run(run)  # type: ignore[attr-defined]
+        else:
+            run.status = AgentRunStatus.CREATED
+            store.put_agent_run(run)  # type: ignore[attr-defined]
         out = run.to_dict()
         out["kind"] = "agent_run"
         out["note"] = (
-            "Durable agent run record. Distinct from chat messages and from "
-            "POST /v1/work-orders runtime jobs. Model/tool loop: IWO-005."
+            "Durable agent run. Distinct from chat messages and from "
+            "POST /v1/work-orders. Set execute=true to run the mini model/tool loop."
         )
         return out
 
@@ -408,6 +435,92 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         out = run.to_dict()
         out["kind"] = "agent_run"
+        return out
+
+    @app.post("/v1/agent-runs/{run_id}/tick")
+    def tick_agent_run(
+        run_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        run = run_until_idle(
+            run,
+            router=app.state.model_router,
+            store_put=store.put_agent_run,  # type: ignore[attr-defined]
+        )
+        out = run.to_dict()
+        out["kind"] = "agent_run"
+        return out
+
+    @app.post("/v1/agent-runs/{run_id}/cancel")
+    def cancel_run(
+        run_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        run = cancel_agent_run(run, store.put_agent_run)  # type: ignore[attr-defined]
+        return run.to_dict()
+
+    @app.post("/v1/agent-runs/{run_id}/retry")
+    def retry_run(
+        run_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            run = retry_agent_run(run, store.put_agent_run)  # type: ignore[attr-defined]
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        run = run_until_idle(
+            run,
+            router=app.state.model_router,
+            store_put=store.put_agent_run,  # type: ignore[attr-defined]
+        )
+        return run.to_dict()
+
+    @app.post("/v1/agent-runs/{run_id}/reconcile")
+    def reconcile_run(
+        run_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        run = reconcile_stuck_running(run, store.put_agent_run)  # type: ignore[attr-defined]
+        return run.to_dict()
+
+    @app.post("/v1/agent-runs/{run_id}/approve-action")
+    def approve_action(
+        run_id: str,
+        body: ActionDecisionIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Approve or deny one pending tool action (IWO-007). Not an IWO/plan approval."""
+        _auth(token, authorization)
+        run = store.get_agent_run(run_id)  # type: ignore[attr-defined]
+        if run is None:
+            raise HTTPException(status_code=404, detail="not found")
+        if run.pending_action and body.action_id and body.action_id != run.pending_action.get("id"):
+            raise HTTPException(status_code=400, detail="action_id mismatch")
+        run = resolve_pending_action(
+            run,
+            decision=body.decision,
+            router=app.state.model_router,
+            store_put=store.put_agent_run,  # type: ignore[attr-defined]
+        )
+        out = run.to_dict()
+        out["kind"] = "agent_run"
+        out["note"] = "Action-level decision; distinct from Implementation WO plan approval."
         return out
 
     @app.get("/v1/conversations/{conversation_id}/runs")
