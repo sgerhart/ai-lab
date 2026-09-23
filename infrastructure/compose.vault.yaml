@@ -1,0 +1,30 @@
+# Optional Vault overlay (ADR 0039 / IWO-017).
+# Host publish stays on AI_LAB_BIND_ADDRESS (loopback or Tailscale IPv4) — never all interfaces.
+# Inside the container Vault must listen on all container interfaces so Docker can forward;
+# that listen address is NOT a host bind.
+#
+#   docker compose -f infrastructure/compose.yaml -f infrastructure/compose.vault.yaml \
+#     --env-file infrastructure/compose.example.env --profile vault config
+
+services:
+  vault:
+    profiles: ["vault"]
+    image: hashicorp/vault:1.17.6
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: ${VAULT_DEV_ROOT_TOKEN_ID:-dev-only-not-for-live}
+      # Container-local listen (Docker port-forward target). Host bind is ports: below.
+      VAULT_DEV_LISTEN_ADDRESS: ${VAULT_CONTAINER_LISTEN:-0.0.0.0:8200}
+      VAULT_ADDR: http://127.0.0.1:8200
+    ports:
+      - "${AI_LAB_BIND_ADDRESS:-127.0.0.1}:${VAULT_PORT:-8200}:8200"
+    volumes:
+      - ai_lab_vault:/vault/file
+    mem_limit: 256m
+    cpus: 0.50
+    command: server -dev -dev-root-token-id=${VAULT_DEV_ROOT_TOKEN_ID:-dev-only-not-for-live}
+
+volumes:
+  ai_lab_vault:

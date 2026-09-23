@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ai-lab · agents</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/chrome.css">
   <style>
     :root {
       --bg: #0c1014; --panel: #141b22; --line: #243040; --ink: #e8eef6;
       --muted: #8ea0b5; --live: #3ee0a8; --warn: #e8b45c; --down: #ff6b7a; --accent: #7cb8ff;
     }
-    * { box-boxing: border-box; box-sizing: border-box; }
+    * { box-sizing: border-box; }
     body {
       margin: 0; min-height: 100%; color: var(--ink);
       font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -48,21 +49,21 @@
   <div class="wrap">
     <header>
       <div>
-        <div class="eyebrow">ai-lab · personal agents</div>
+        <div class="eyebrow">personal agents</div>
         <h1>Chat on the mini</h1>
-        <p class="muted">Token stays in this browser. Secrets are never returned by the API. <a href="/">Status</a></p>
+        <p class="muted">Lab token from <code>~/.ai-lab/api.token</code> on mac-mini — see <a href="/help#token">Help</a>.</p>
       </div>
     </header>
 
-    <section class="panel">
+    <section class="panel" data-auth-panel>
       <div class="row2">
         <div>
-          <label for="token">API bearer token</label>
-          <input id="token" type="password" autocomplete="off" placeholder="required when AI_LAB_API_TOKEN is set">
+          <label for="token">Lab API bearer token</label>
+          <input id="token" type="password" autocomplete="off" placeholder="only if not on Tailscale">
         </div>
         <button type="button" id="save-token">Save</button>
       </div>
-      <p class="muted" id="auth-note">Not saved yet.</p>
+      <p class="muted" id="auth-note">Tailscale peers usually need no paste.</p>
     </section>
 
     <section class="panel">
@@ -131,9 +132,11 @@
     const $ = (id) => document.getElementById(id);
     function token() { return sessionStorage.getItem("ai_lab_token") || $("token").value.trim(); }
     function headers() {
-      const h = { "Content-Type": "application/json" };
-      const t = token();
-      if (t) h.Authorization = `Bearer ${t}`;
+      const h = Object.assign({ "Content-Type": "application/json" }, window.aiLabHeaders ? window.aiLabHeaders() : {});
+      if (!h.Authorization) {
+        const t = token();
+        if (t) h.Authorization = `Bearer ${t}`;
+      }
       return h;
     }
     function showErr(e) { $("error").textContent = e ? String(e) : ""; }
@@ -283,5 +286,6 @@
     if ($("token").value) $("auth-note").textContent = "Token loaded from sessionStorage.";
     loadProviders().catch(() => {});
   </script>
+  <script src="/static/chrome.js"></script>
 </body>
 </html>

@@ -63,6 +63,7 @@ REQUIRED_FILES=(
   docs/decisions/0036-adopt-work-order-protocol.md
   docs/decisions/0037-mini-owns-personal-agent-loop.md
   docs/decisions/0038-model-provider-billing-classes.md
+  docs/decisions/0039-hashicorp-vault-on-mini.md
   docs/phases/repo-complete.md
   docs/features/README.md
   docs/features/TEMPLATE.md
@@ -79,6 +80,11 @@ REQUIRED_FILES=(
   docs/features/FEAT-009-scheduled-personal-agents.md
   docs/features/FEAT-010-mini-personal-agent-loop.md
   docs/features/FEAT-011-frontier-model-access.md
+  docs/features/FEAT-012-lab-site-and-secret-vault.md
+  docs/work-orders/IWO-016-lab-site-connect-hub.md
+  docs/work-orders/IWO-017-vault-scaffold.md
+  platform/src/ai_lab_platform/connect.py
+  platform/src/ai_lab_platform/web/lab.html
   docs/work-order-protocol/README.md
   docs/work-order-protocol/lifecycle-mapping.md
   docs/work-order-protocol/risk-and-deploy-gates.md
@@ -123,7 +129,7 @@ for f in "${REQUIRED_FILES[@]}"; do
   [[ -f "$ROOT/$f" ]] && pass "file $f" || fail "missing file $f"
 done
 
-for id in FEAT-001 FEAT-002 FEAT-003 FEAT-004 FEAT-005 FEAT-006 FEAT-007 FEAT-008 FEAT-009 FEAT-010 FEAT-011; do
+for id in FEAT-001 FEAT-002 FEAT-003 FEAT-004 FEAT-005 FEAT-006 FEAT-007 FEAT-008 FEAT-009 FEAT-010 FEAT-011 FEAT-012; do
   grep -q "$id" "$ROOT/docs/features/index.md" && pass "features index mentions $id" || fail "features index missing $id"
 done
 grep -q "FakeBackend" "$ROOT/docs/features/FEAT-010-mini-personal-agent-loop.md" \
@@ -132,6 +138,9 @@ grep -q "FakeBackend" "$ROOT/docs/features/FEAT-010-mini-personal-agent-loop.md"
 grep -q "usage_billed_api\|usage-billed" "$ROOT/docs/decisions/0038-model-provider-billing-classes.md" \
   && pass "ADR 0038 defines usage-billed API class" \
   || fail "ADR 0038 missing usage-billed API class"
+grep -q "HashiCorp Vault\|hashicorp/vault" "$ROOT/docs/decisions/0039-hashicorp-vault-on-mini.md" \
+  && pass "ADR 0039 defines Vault on mini" \
+  || fail "ADR 0039 missing Vault"
 grep -q "IWO-002" "$ROOT/docs/features/PLAN-mini-first.md" \
   && pass "mini-first plan names IWO-002" \
   || fail "PLAN-mini-first must identify IWO-002"

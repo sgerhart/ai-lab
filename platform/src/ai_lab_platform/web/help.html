@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ai-lab · help</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/chrome.css">
+  <style>
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background-image:
+        radial-gradient(900px 400px at 10% -10%, #1a2a3d 0%, transparent 55%),
+        linear-gradient(180deg, transparent, #0c1014 40%);
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 28px 22px 56px; }
+    h1 { margin: 8px 0 10px; font-size: 28px; letter-spacing: -.03em; }
+    h2 { margin: 28px 0 10px; font-size: 18px; }
+    .lead, p, li { color: var(--muted); }
+    .lead { margin: 0 0 18px; }
+    code, pre {
+      font: 12px/1.45 ui-monospace, Menlo, monospace;
+      background: #0c1218; border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    code { padding: 2px 6px; color: var(--ink); }
+    pre { padding: 12px 14px; overflow-x: auto; color: var(--ink); }
+    .card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 14px; padding: 16px; margin: 14px 0;
+    }
+    a { color: var(--accent); }
+    .eyebrow { font: 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">ai-lab · help</div>
+    <h1>Operator guide</h1>
+    <p class="lead">How to authenticate the lab site and open Studio without SSH tunnels.</p>
+
+    <h2 id="token">Lab API bearer token (<code>AI_LAB_API_TOKEN</code>)</h2>
+    <div class="card">
+      <p><strong>Preferred:</strong> with <code>AI_LAB_AUTH_MODE=trusted_tailnet</code> on the mini,
+      browsers on your Tailscale network (or loopback) do <em>not</em> need to paste a token.
+      The top nav shows “Signed in via Tailscale”.</p>
+      <p>Optional fallback (non-tailnet clients): the token lives on <strong>mac-mini</strong>:</p>
+      <pre>ssh mac-mini 'cat ~/.ai-lab/api.token'</pre>
+      <p>This is <strong>not</strong> an OpenAI/Anthropic key. Keep the API off the public Internet.</p>
+    </div>
+
+    <h2 id="pages">Pages</h2>
+    <ul>
+      <li><a href="/">Status</a> — mini services and work-order counts</li>
+      <li><a href="/lab">Lab</a> — open Studio Jupyter; Ollama health</li>
+      <li><a href="/agents">Agents</a> — personal-agent chat on the mini</li>
+      <li><a href="/secrets">API keys</a> — OpenAI / Anthropic / Gemini keys (write-only)</li>
+    </ul>
+
+    <h2 id="studio">Studio Jupyter</h2>
+    <p>From <a href="/lab">Lab</a>, paste the lab token, then <strong>Open Jupyter</strong>. No <code>ssh -L</code> required when Studio listens on Tailscale.</p>
+
+    <h2 id="foundation">Foundation model keys</h2>
+    <p>On <a href="/secrets">API keys</a>, enter platform API keys (not ChatGPT/Claude app subscriptions). Authorize usage-billed spend separately before live paid calls.</p>
+  </div>
+  <script src="/static/chrome.js"></script>
+</body>
+</html>

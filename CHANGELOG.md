@@ -4,6 +4,16 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### FEAT-012 / IWO-016–018 — lab site, secrets UI, Vault scaffold
+
+- Mini lab site: `/lab`, `/secrets`, `/help`, shared nav; Studio Jupyter open without
+  Air-side `ssh -L` (Tailscale bind on Studio).
+- `AI_LAB_AUTH_MODE=trusted_tailnet`: Tailscale/loopback peers skip bearer paste.
+- Browser write-only API key entry (`~/.ai-lab/secrets/`); usage-billed flag (ADR 0038).
+- ADR 0039 HashiCorp Vault on mini; `compose.vault.yaml` scaffold (not deployed).
+- Catalog entries for `llama3.2:3b` and MLX 3B 4-bit (Git still `pull_authorized: false`).
+- Security finding F-012 (rotate mini API token + DB password).
+
 ### Work Order Protocol adoption (IWO-001, ADR 0036)
 
 - Adopted [`dentroio/work-order-protocol`](https://github.com/dentroio/work-order-protocol) Level 1–2 for **implementation** Work Orders.

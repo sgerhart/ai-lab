@@ -38,7 +38,10 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-005](IWO-005-bounded-model-tool-loop.md) | Model/tool loop | Complete |
 | [IWO-006](IWO-006-durable-async-recovery.md) | Durable async recovery | Complete |
 | [IWO-007](IWO-007-tool-action-approvals.md) | Tool action approvals | Complete |
-| [IWO-011](IWO-011-studio-jupyter-host.md)–[015](IWO-015-jupyter-sample-notebook.md) | Studio Jupyter track | Draft |
+| [IWO-011](IWO-011-studio-jupyter-host.md)–[015](IWO-015-jupyter-sample-notebook.md) | Studio Jupyter track | Host path live; docs Draft |
+| [IWO-016](IWO-016-lab-site-connect-hub.md) | Lab site connect hub | Complete (live) |
+| [IWO-017](IWO-017-vault-scaffold.md) | Vault compose scaffold | Complete (not deployed) |
+| [IWO-018](IWO-018-browser-api-key-entry.md) | Browser API key entry | Complete (file store) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

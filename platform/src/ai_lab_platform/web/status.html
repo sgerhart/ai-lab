@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ai-lab · mac-mini</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/chrome.css">
   <style>
     :root {
       --bg: #0c1014;
@@ -108,7 +109,7 @@
   <div class="wrap">
     <header>
       <div>
-        <div class="eyebrow">ai-lab control plane</div>
+        <div class="eyebrow">control plane</div>
         <h1>mac-mini is the rack</h1>
       </div>
       <div class="clock" id="clock">syncing…</div>
@@ -149,9 +150,8 @@
       </div>
     </section>
     <footer>
-      JSON still at <a href="/health">/health</a> and <a href="/v1/status">/v1/status</a>.
-      Personal agents: <a href="/agents">/agents</a> (token required for API).
-      Tailscale membership is not an API token. Studio stays off until you authorize it.
+      JSON: <a href="/health">/health</a>, <a href="/v1/status">/v1/status</a>.
+      Lab token help: <a href="/help#token">/help#token</a>.
     </footer>
   </div>
   <script>
@@ -202,5 +202,6 @@
     tick().catch((err) => { document.getElementById("clock").textContent = String(err); });
     setInterval(() => { tick().catch(() => {}); }, 4000);
   </script>
+  <script src="/static/chrome.js"></script>
 </body>
 </html>

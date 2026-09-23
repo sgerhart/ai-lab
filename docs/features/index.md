@@ -1,6 +1,6 @@
 # Future capabilities index
 
-**Updated:** 2026-09-21  
+**Updated:** 2026-09-23  
 **Plan:** [PLAN-mini-first.md](PLAN-mini-first.md)  
 **GitHub:** [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#10](https://github.com/sgerhart/ai-lab/issues/10); [#11](https://github.com/sgerhart/ai-lab/issues/11) (FEAT-010); [#12](https://github.com/sgerhart/ai-lab/issues/12) (FEAT-011).
 
@@ -27,8 +27,9 @@ Do not treat this index as authorized implementation or deploy.
 | 1 | [FEAT-001](FEAT-001-work-order-planning-and-approval.md) | Feature backlog and WO planning | **Partial (docs)** + protocol IWO-001 | [#2](https://github.com/sgerhart/ai-lab/issues/2) |
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live)** | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
 | 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (code):** `/agents` UI + status board | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
+| 3 | [FEAT-012](FEAT-012-lab-site-and-secret-vault.md) | Lab site + Vault (frictionless Studio) | **Partial (live):** `/lab` `/secrets` `/help`; trusted_tailnet auth; Vault scaffold only | — |
 | 4 | [FEAT-003](FEAT-003-studio-worker-and-models.md) | Studio inference and worker | **Partial (code)** | [#4](https://github.com/sgerhart/ai-lab/issues/4) |
-| 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Specified** | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
+| 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Partial (live):** Studio Lab + MLX/Ollama; Air opens via mini `/lab` | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Specified** | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
 | 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial** | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
 | 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial (on-demand)** | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
@@ -45,7 +46,10 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-005](../work-orders/IWO-005-bounded-model-tool-loop.md) | Model/tool loop | FEAT-010 | **Complete** (FakeBackend/scripted) |
 | [IWO-006](../work-orders/IWO-006-durable-async-recovery.md) | Async recovery | FEAT-002/010 | **Complete** (unit) |
 | [IWO-007](../work-orders/IWO-007-tool-action-approvals.md) | Action approvals | FEAT-004/010 | **Complete** (unit) |
-| [IWO-011](../work-orders/IWO-011-studio-jupyter-host.md)–[015](../work-orders/IWO-015-jupyter-sample-notebook.md) | Jupyter track | FEAT-006 | Draft (host gates) |
+| [IWO-011](../work-orders/IWO-011-studio-jupyter-host.md)–[015](../work-orders/IWO-015-jupyter-sample-notebook.md) | Jupyter track | FEAT-006 | Host path live; docs still Draft |
+| [IWO-016](../work-orders/IWO-016-lab-site-connect-hub.md) | Lab site connect hub | FEAT-012 | **Complete** (live on mini; trusted_tailnet) |
+| [IWO-017](../work-orders/IWO-017-vault-scaffold.md) | Vault compose scaffold | FEAT-012 | **Complete** (compose overlay; not `up`) |
+| [IWO-018](../work-orders/IWO-018-browser-api-key-entry.md) | Browser API key entry | FEAT-012 | **Complete** (file store; Vault later) |
 
 ## Historical phase work orders
 

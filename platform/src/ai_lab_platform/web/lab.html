@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ai-lab · lab site</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/chrome.css">
+  <style>
+    :root {
+      --bg: #0c1014;
+      --panel: #141b22;
+      --line: #243040;
+      --ink: #e8eef6;
+      --muted: #8ea0b5;
+      --live: #3ee0a8;
+      --warn: #e8b45c;
+      --down: #ff6b7a;
+      --accent: #7cb8ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background-image:
+        radial-gradient(1000px 420px at 80% -20%, #1a2a3d 0%, transparent 50%),
+        linear-gradient(180deg, transparent 0%, #0c1014 45%);
+    }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 28px 22px 56px; }
+    .eyebrow { font: 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+    h1 { margin: 8px 0 6px; font-size: 30px; font-weight: 620; letter-spacing: -.03em; }
+    .lead { color: var(--muted); margin: 0 0 22px; max-width: 42rem; }
+    a { color: var(--accent); }
+    .auth {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 18px; display: grid; gap: 8px;
+    }
+    label { font-size: 12px; color: var(--muted); }
+    input {
+      width: 100%; background: #0c1218; border: 1px solid var(--line); color: var(--ink);
+      border-radius: 10px; padding: 10px 12px; font: 13px/1.3 ui-monospace, Menlo, monospace;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px; display: flex; flex-direction: column; gap: 10px; min-height: 180px;
+    }
+    .card h2 { margin: 0; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 13px; flex: 1; }
+    .pill {
+      align-self: flex-start; font: 11px/1 ui-monospace, Menlo, monospace;
+      padding: 5px 8px; border-radius: 999px;
+    }
+    .pill.on { background: color-mix(in srgb, var(--live) 16%, transparent); color: var(--live); }
+    .pill.off { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down); }
+    .pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+    button, .btn {
+      appearance: none; border: 0; border-radius: 10px; padding: 10px 14px;
+      background: var(--accent); color: #061018; font-weight: 650; cursor: pointer;
+      text-decoration: none; display: inline-block; text-align: center;
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    .meta { font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--muted); }
+    footer { margin-top: 20px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">connection hub</div>
+    <h1>Use the Studio without the tunnel CLI</h1>
+    <p class="lead">
+      Open Jupyter on the Studio, check Ollama, and jump to agents — all from the mini.
+      Lab token: see <a href="/help#token">Help</a>. Jupyter token never appears in page HTML.
+    </p>
+
+    <div class="auth" data-auth-panel>
+      <label for="token">Lab API bearer token</label>
+      <input id="token" type="password" autocomplete="off" placeholder="only if not on Tailscale">
+    </div>
+
+    <section class="grid">
+      <article class="card">
+        <span class="pill off" id="jupyter-pill">checking…</span>
+        <h2>Studio JupyterLab</h2>
+        <p>Runs on mac-studio (MLX / PyTorch MPS / notebooks). One click opens Lab in a new tab over Tailscale.</p>
+        <button id="open-jupyter" type="button" disabled>Open Jupyter</button>
+        <div class="meta" id="jupyter-meta"></div>
+      </article>
+      <article class="card">
+        <span class="pill off" id="ollama-pill">checking…</span>
+        <h2>Studio Ollama</h2>
+        <p>Local inference API on the Studio. Models listed when reachable from the mini.</p>
+        <a class="btn secondary" href="/agents">Use via Agents</a>
+        <div class="meta" id="ollama-meta"></div>
+      </article>
+      <article class="card">
+        <span class="pill warn" id="vault-pill">keys</span>
+        <h2>Foundation APIs</h2>
+        <p>Enter OpenAI / Anthropic / Gemini keys in the browser. Stored on the mini (mode 600); never shown again. Vault later.</p>
+        <a class="btn" href="/secrets">Manage API keys</a>
+        <div class="meta" id="secrets-meta">Load status after token…</div>
+      </article>
+      <article class="card">
+        <span class="pill on" id="agents-pill">ready</span>
+        <h2>Personal agents</h2>
+        <p>Chat and durable runs on the mini control plane.</p>
+        <a class="btn" href="/agents">Open Agents</a>
+      </article>
+    </section>
+
+    <footer>
+      Prefer this page over <code>ssh -L 8888:…</code>. Studio must bind Jupyter/Ollama to its Tailscale address.
+    </footer>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function setPill(id, ok, label) {
+      const el = $(id);
+      el.className = "pill " + (ok ? "on" : "off");
+      el.textContent = label;
+    }
+    function token() {
+      return sessionStorage.getItem("ai_lab_token") || $("token").value.trim();
+    }
+    function authHeaders() {
+      if (window.aiLabHeaders) return window.aiLabHeaders();
+      const t = token();
+      return t ? { Authorization: "Bearer " + t } : {};
+    }
+    $("token").addEventListener("change", () => {
+      sessionStorage.setItem("ai_lab_token", $("token").value.trim());
+      refresh();
+    });
+    $("token").value = sessionStorage.getItem("ai_lab_token") || "";
+
+    async function refresh() {
+      const res = await fetch("/v1/connect/status");
+      const d = await res.json();
+      const j = d.jupyter || {};
+      const o = d.ollama || {};
+      setPill("jupyter-pill", j.http_ok || j.port_open, j.http_ok ? "reachable" : (j.port_open ? "port open" : "down"));
+      setPill("ollama-pill", o.http_ok, o.http_ok ? "reachable" : "down");
+      $("jupyter-meta").textContent = j.configured
+        ? `host ${j.url_host || "?"} · token ${j.token_configured ? "on mini" : "missing"}`
+        : "STUDIO_JUPYTER_URL not set on mini";
+      $("ollama-meta").textContent = o.http_ok
+        ? `models: ${(o.models || []).join(", ") || "(none)"}`
+        : (o.configured ? `host ${o.url_host || "?"}` : "STUDIO_OLLAMA_URL not set");
+      $("open-jupyter").disabled = !(j.configured && j.token_configured);
+      try {
+        const sres = await fetch("/v1/secrets/status", { headers: authHeaders() });
+        if (sres.ok) {
+          const s = await sres.json();
+          const n = (s.providers || []).filter((p) => p.configured).length;
+          setPill("vault-pill", n > 0, n ? (n + " keys") : "none");
+          $("secrets-meta").textContent = s.usage_billed_authorized
+            ? "usage-billed authorized · " + n + " key(s)"
+            : n + " key(s) · usage-billed not authorized yet";
+        }
+      } catch (_) { /* ignore */ }
+    }
+
+    $("open-jupyter").addEventListener("click", async () => {
+      const headers = authHeaders();
+      if (window.aiLabAuth && window.aiLabAuth.paste_required && !headers.Authorization) {
+        alert("Paste the lab API token first (or join the tailnet)."); return;
+      }
+      const res = await fetch("/v1/connect/jupyter", {
+        headers,
+        redirect: "manual",
+      });
+      if (res.status === 401) { alert("Unauthorized — check Tailscale or lab token."); return; }
+      if (res.status === 503) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.detail || "Jupyter not configured on mini");
+        return;
+      }
+      if (res.ok) {
+        const body = await res.json();
+        if (body.open_url) {
+          window.open(body.open_url, "_blank", "noopener");
+          return;
+        }
+      }
+      const loc = res.headers.get("Location");
+      if (loc) window.open(loc, "_blank", "noopener");
+      else alert("Could not open Jupyter (" + res.status + ")");
+    });
+
+    document.addEventListener("ai-lab-auth-ready", () => refresh());
+    refresh();
+    setInterval(refresh, 8000);
+  </script>
+  <script src="/static/chrome.js"></script>
+</body>
+</html>

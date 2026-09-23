@@ -43,12 +43,15 @@ Do not expose PostgreSQL, Redis, Qdrant, Jupyter, model APIs, agent admin, or mo
 | F-005 | Medium | `gh` active account `dentroio` vs `sgerhart` repo | No |
 | F-006 | Info | Product Docker/Postgres on the Air | Adjacent |
 | F-007 | Design | Compose loopback is unreachable across tailnet | Documented; bind address at deploy |
+| F-012 | Medium | Mini control-plane start script exposed in operator chat | **Rotate** API token + DB password; [findings/F-012](findings/F-012-control-plane-start-script-exposure.md) |
 
-Details of F-001–F-006: recorded 2026-09-19 on the operator workstation.
+Details of F-001–F-006: recorded 2026-09-19 on the operator workstation. F-012: 2026-09-23.
 
 ## Secret store
 
-Decision recorded (ADR 0027): macOS Keychain plus a filled gitignored `.env` on the M1 at deploy. Values are not in Git.
+Initial: Keychain + gitignored env (ADR 0027). Shared lab / foundation API keys:
+HashiCorp Vault on the mini (ADR 0039) — scaffold only until deploy authorized.
+Values are not in Git.
 
 ## Data retention
 

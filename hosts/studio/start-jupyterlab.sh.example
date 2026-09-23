@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Prefer Tailscale IPv4 for Studio Jupyter so the mini/Air can open Lab without SSH -L.
+# Never binds 0.0.0.0. Falls back to 127.0.0.1 if Tailscale is down.
+set -euo pipefail
+JDIR="${HOME}/.ai-lab/jupyter"
+TOKEN="$(cat "${JDIR}/token")"
+export PATH="/opt/homebrew/bin:${PATH}"
+
+BIND="${AI_LAB_JUPYTER_BIND:-}"
+if [[ -z "${BIND}" ]]; then
+  if command -v tailscale >/dev/null 2>&1; then
+    BIND="$(tailscale ip -4 2>/dev/null | head -1 || true)"
+  fi
+fi
+BIND="${BIND:-127.0.0.1}"
+
+exec "${JDIR}/.venv/bin/jupyter" lab \
+  --no-browser \
+  --ip="${BIND}" \
+  --port=8888 \
+  --ServerApp.token="${TOKEN}" \
+  --ServerApp.password="" \
+  --ServerApp.allow_origin="*" \
+  --ServerApp.root_dir="${HOME}"
