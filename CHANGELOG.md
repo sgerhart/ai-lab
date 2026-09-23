@@ -4,6 +4,24 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### IWO-021 — OpenAI / Anthropic adapters (gated)
+
+- Adapters read keys from `~/.ai-lab/secrets/`; enabled only with usage-billed
+  authorize checkbox + key. Gemini remains stub. No live $ in automated tests.
+
+### IWO-020 — Live Studio Ollama agent tool loop
+
+- Policy-aware TOOL/FINAL system prompt; tolerant parser; stop repeated tools.
+- `/agents` Run loop shows tool/observation summary (not only raw JSON).
+- Live: `lab-operations` + `llama3.2:3b` runs `health_read` then FINAL.
+
+### IWO-019 — Studio Ollama provider on mini router
+
+- `OllamaBackend` allows loopback, `mac-studio`, `*.ts.net`, Tailscale CGNAT.
+- `build_router_from_settings` wires live Ollama when `STUDIO_OLLAMA_URL` is set.
+- `/agents` chat-first UI: Send completes via model (`reply=true`); defaults to
+  enabled Ollama + listed models (prefer `llama3.2`).
+
 ### FEAT-012 / IWO-016–018 — lab site, secrets UI, Vault scaffold
 
 - Mini lab site: `/lab`, `/secrets`, `/help`, shared nav; Studio Jupyter open without

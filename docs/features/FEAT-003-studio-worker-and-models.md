@@ -1,6 +1,6 @@
 # FEAT-003 — Studio inference and worker integration
 
-- **Status:** Specified (partial code)
+- **Status:** Partial (Studio Ollama live; mini router IWO-019)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#4](https://github.com/sgerhart/ai-lab/issues/4)
@@ -29,7 +29,7 @@ Studio provides **inference bytes** and compute—not the work-order database.
 ## Dependencies
 
 - FEAT-010, FEAT-011; ADR 0010, 0019, 0037
-- Host: Studio on tailnet (not yet)
+- Host: Studio on tailnet as `mac-studio`
 
 ## Proposed deliverables
 
@@ -47,9 +47,9 @@ Studio provides **inference bytes** and compute—not the work-order database.
 
 ## Acceptance criteria
 
-- [ ] Studio on tailnet; Ollama health from mini
-- [ ] Agent run completes with Studio model (or fails visibly)
-- [ ] No silent `ollama pull`
+- [x] Studio on tailnet; Ollama health from mini (`STUDIO_OLLAMA_URL`)
+- [x] Agent run completes with Studio model (or fails visibly) — IWO-019
+- [x] No silent `ollama pull`
 
 ## Out of scope
 
@@ -60,9 +60,9 @@ Studio provides **inference bytes** and compute—not the work-order database.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | worker + ollama client unit-tested |
-| Deploy | No | Studio not on tailnet |
-| Live verified | No | — |
+| Code | Done for Ollama path | `OllamaBackend` + `build_router_from_settings` |
+| Deploy | Partial | Studio Ollama LaunchAgent + mini `STUDIO_OLLAMA_URL` |
+| Live verified | Yes (Ollama) | 2026-09-23 Agents/API `backend=ollama` `llama3.2:3b` |
 
 ## Notes
 

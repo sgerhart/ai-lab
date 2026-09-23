@@ -10,127 +10,206 @@
     :root {
       --bg: #0c1014; --panel: #141b22; --line: #243040; --ink: #e8eef6;
       --muted: #8ea0b5; --live: #3ee0a8; --warn: #e8b45c; --down: #ff6b7a; --accent: #7cb8ff;
+      --user: #1a2838; --assistant: #121820;
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
     body {
-      margin: 0; min-height: 100%; color: var(--ink);
+      color: var(--ink);
       font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
-      background: radial-gradient(1000px 420px at 8% -10%, #1a2a3d 0%, transparent 55%), var(--bg);
+      background: var(--bg);
+      display: flex; flex-direction: column;
     }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 18px 48px; }
-    header { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-bottom: 20px; }
-    .eyebrow { font: 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
-    h1 { margin: 6px 0 0; font-size: 26px; letter-spacing: -.03em; }
-    a { color: var(--accent); }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
-    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    input, select, textarea, button {
-      font: inherit; color: var(--ink); background: #0c1218; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+    .shell {
+      flex: 1; min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      max-width: 820px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 16px;
     }
-    input, select, textarea { width: 100%; }
-    textarea { min-height: 72px; resize: vertical; }
-    .row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
-    .row2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
-    button { cursor: pointer; background: color-mix(in srgb, var(--accent) 22%, #0c1218); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
-    button.danger { background: color-mix(in srgb, var(--down) 18%, #0c1218); }
-    .muted { color: var(--muted); font-size: 13px; }
-    .pill { display: inline-block; font: 11px/1 ui-monospace, Menlo, monospace; padding: 4px 8px; border-radius: 999px; background: #0c1218; color: var(--muted); }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 8px 12px;
+      align-items: end;
+      padding: 14px 0 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .toolbar .field { min-width: 0; flex: 1 1 120px; }
+    .toolbar .field.narrow { flex: 0 1 110px; }
+    label { display: block; font-size: 11px; letter-spacing: .04em; color: var(--muted); margin-bottom: 4px; }
+    select, textarea, button, input {
+      font: inherit; color: var(--ink); background: #0c1218;
+      border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
+    }
+    select, input { width: 100%; }
+    .pill {
+      display: inline-block; font: 11px/1 ui-monospace, Menlo, monospace;
+      padding: 7px 10px; border-radius: 999px; background: #0c1218; color: var(--muted);
+      border: 1px solid var(--line); margin-bottom: 1px;
+    }
     .pill.local { color: var(--live); }
     .pill.usage_billed_api { color: var(--warn); }
     .pill.subscription_client { color: var(--accent); }
-    .msg { padding: 8px 0; border-bottom: 1px solid var(--line); }
-    .msg:last-child { border-bottom: 0; }
-    .trace { font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; background: #0c1218; padding: 10px; border-radius: 8px; margin-top: 8px; }
-    .err { color: var(--down); }
-    @media (max-width: 800px) { .row, .row2 { grid-template-columns: 1fr; } }
+    button {
+      cursor: pointer;
+      background: color-mix(in srgb, var(--accent) 22%, #0c1218);
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+      white-space: nowrap;
+    }
+    button.primary {
+      background: var(--accent); color: #061018; font-weight: 650; border-color: transparent;
+    }
+    button.danger {
+      background: color-mix(in srgb, var(--down) 18%, #0c1218);
+      border-color: color-mix(in srgb, var(--down) 35%, var(--line));
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .thread {
+      overflow-y: auto; padding: 18px 0 12px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .empty {
+      margin: auto; text-align: center; color: var(--muted); max-width: 28rem;
+      padding: 40px 12px;
+    }
+    .empty strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 6px; font-weight: 600; }
+    .bubble {
+      max-width: 88%; padding: 10px 14px; border-radius: 14px;
+      border: 1px solid var(--line); white-space: pre-wrap; word-break: break-word;
+    }
+    .bubble.user {
+      align-self: flex-end; background: var(--user);
+      border-bottom-right-radius: 4px;
+    }
+    .bubble.assistant, .bubble.system, .bubble.tool {
+      align-self: flex-start; background: var(--assistant);
+      border-bottom-left-radius: 4px;
+    }
+    .bubble .who {
+      font: 10px/1 ui-monospace, Menlo, monospace;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .composer {
+      padding: 10px 0 16px;
+      border-top: 1px solid var(--line);
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;
+    }
+    .composer textarea {
+      width: 100%; min-height: 52px; max-height: 160px; resize: vertical;
+    }
+    .side {
+      max-width: 820px; width: 100%; margin: 0 auto; padding: 0 16px 28px;
+    }
+    details.loop {
+      border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+      padding: 0 14px;
+    }
+    details.loop > summary {
+      cursor: pointer; list-style: none; padding: 12px 0;
+      color: var(--muted); font-size: 13px;
+    }
+    details.loop > summary::-webkit-details-marker { display: none; }
+    details.loop[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 12px; }
+    .loop .row2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 10px; }
+    .trace {
+      font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap;
+      background: #0c1218; padding: 10px; border-radius: 8px; margin-top: 8px;
+    }
+    .muted { color: var(--muted); font-size: 13px; }
+    .err { color: var(--down); font-size: 13px; padding: 0 0 8px; min-height: 1.2em; }
+    .auth-slim {
+      max-width: 820px; margin: 0 auto; padding: 8px 16px 0;
+      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end;
+    }
+    @media (max-width: 640px) {
+      .toolbar .field { flex: 1 1 45%; }
+      .bubble { max-width: 95%; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
+  <div class="auth-slim" data-auth-panel>
+    <div>
+      <label for="token">Lab API bearer token</label>
+      <input id="token" type="password" autocomplete="off" placeholder="only if not on Tailscale">
+    </div>
+    <button type="button" id="save-token">Save</button>
+  </div>
+
+  <div class="shell">
+    <div class="toolbar">
+      <div class="field">
+        <label for="agent">Agent</label>
+        <select id="agent">
+          <option value="lab-operations">lab-operations</option>
+          <option value="development">development</option>
+          <option value="research">research</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="provider">Provider</label>
+        <select id="provider"></select>
+      </div>
+      <div class="field">
+        <label for="model">Model</label>
+        <select id="model"></select>
+      </div>
+      <div class="field narrow">
+        <label>Billing</label>
+        <div id="billing" class="pill">—</div>
+      </div>
+      <button type="button" id="new-conv">New chat</button>
+    </div>
+
+    <div id="messages" class="thread" aria-live="polite">
+      <div class="empty" id="empty">
+        <strong>Talk to a lab agent</strong>
+        Studio Ollama when selected — ordinary chat, not a durable work order.
+      </div>
+    </div>
+
+    <div class="composer">
       <div>
-        <div class="eyebrow">personal agents</div>
-        <h1>Chat on the mini</h1>
-        <p class="muted">Lab token from <code>~/.ai-lab/api.token</code> on mac-mini — see <a href="/help#token">Help</a>.</p>
+        <label for="chat" class="muted" id="conv-id">No conversation yet</label>
+        <textarea id="chat" rows="2" placeholder="Message…"></textarea>
       </div>
-    </header>
+      <button type="button" class="primary" id="send-chat">Send</button>
+    </div>
+  </div>
 
-    <section class="panel" data-auth-panel>
-      <div class="row2">
-        <div>
-          <label for="token">Lab API bearer token</label>
-          <input id="token" type="password" autocomplete="off" placeholder="only if not on Tailscale">
-        </div>
-        <button type="button" id="save-token">Save</button>
-      </div>
-      <p class="muted" id="auth-note">Tailscale peers usually need no paste.</p>
-    </section>
-
-    <section class="panel">
-      <div class="row">
-        <div>
-          <label for="agent">Agent</label>
-          <select id="agent">
-            <option value="lab-operations">lab-operations (read-only)</option>
-            <option value="development">development</option>
-            <option value="research">research</option>
-          </select>
-        </div>
-        <div>
-          <label for="provider">Provider / model</label>
-          <select id="provider"></select>
-        </div>
-        <div>
-          <label>Billing class</label>
-          <div id="billing" class="pill">—</div>
-        </div>
-        <button type="button" id="new-conv">New conversation</button>
-      </div>
-      <p class="muted" id="conv-id">No conversation yet.</p>
-    </section>
-
-    <section class="panel">
-      <h3 style="margin:0 0 10px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Chat <span class="muted">(not a work order)</span></h3>
-      <div id="messages"></div>
-      <div class="row2" style="margin-top:12px">
-        <div>
-          <label for="chat">Message</label>
-          <textarea id="chat" placeholder="Ordinary chat turn…"></textarea>
-        </div>
-        <button type="button" id="send-chat">Send</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <h3 style="margin:0 0 10px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)">Durable agent run</h3>
+  <div class="side">
+    <p class="err" id="error"></p>
+    <details class="loop">
+      <summary>Agent loop — tools, approvals, durable run</summary>
       <div class="row2">
         <div>
           <label for="objective">Objective</label>
-          <textarea id="objective" placeholder="e.g. check lab health ports"></textarea>
+          <textarea id="objective" rows="2" placeholder="e.g. check lab health with tools">Check lab health using tools, then summarize.</textarea>
         </div>
         <button type="button" id="start-run">Run loop</button>
       </div>
       <div id="run-view" class="trace" hidden></div>
       <div id="pending" hidden style="margin-top:12px">
-        <p class="muted">Pending tool action (approve this action — not an Implementation WO):</p>
+        <p class="muted">Pending tool action:</p>
         <div id="pending-detail" class="trace"></div>
         <div style="display:flex;gap:8px;margin-top:8px">
-          <button type="button" id="approve-action">Approve action</button>
-          <button type="button" class="danger" id="deny-action">Deny action</button>
+          <button type="button" id="approve-action">Approve</button>
+          <button type="button" class="danger" id="deny-action">Deny</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
+      <div style="display:flex;gap:8px;margin-top:10px;padding-bottom:12px">
         <button type="button" id="cancel-run">Cancel</button>
         <button type="button" id="retry-run">Retry</button>
       </div>
-    </section>
-
-    <p class="err" id="error"></p>
+    </details>
   </div>
+
   <script>
-    const state = { conversationId: null, runId: null, pendingActionId: null, providers: [] };
+    const state = { conversationId: null, runId: null, pendingActionId: null, providers: [], sending: false };
     const $ = (id) => document.getElementById(id);
-    function token() { return sessionStorage.getItem("ai_lab_token") || $("token").value.trim(); }
+    function token() { return sessionStorage.getItem("ai_lab_token") || ($("token") && $("token").value.trim()) || ""; }
     function headers() {
       const h = Object.assign({ "Content-Type": "application/json" }, window.aiLabHeaders ? window.aiLabHeaders() : {});
       if (!h.Authorization) {
@@ -144,16 +223,33 @@
       const res = await fetch(path, { ...opts, headers: { ...headers(), ...(opts.headers || {}) } });
       const text = await res.text();
       let body; try { body = JSON.parse(text); } catch { body = { raw: text }; }
-      if (!res.ok) throw new Error(body.detail || body.raw || res.statusText);
+      if (!res.ok) {
+        const detail = body.detail;
+        throw new Error(typeof detail === "string" ? detail : (body.raw || res.statusText));
+      }
       return body;
     }
     function renderBilling() {
-      const sel = $("provider");
-      const p = state.providers.find((x) => x.id === sel.value);
+      const p = state.providers.find((x) => x.id === $("provider").value);
       const pill = $("billing");
       if (!p) { pill.textContent = "—"; pill.className = "pill"; return; }
       pill.textContent = p.billing_class;
       pill.className = "pill " + p.billing_class;
+    }
+    function fillModels() {
+      const p = state.providers.find((x) => x.id === $("provider").value);
+      const msel = $("model");
+      msel.innerHTML = "";
+      const models = (p && p.models && p.models.length) ? p.models : ["fake-instruct"];
+      for (const m of models) {
+        const opt = document.createElement("option");
+        opt.value = m; opt.textContent = m;
+        msel.appendChild(opt);
+      }
+      if (p && p.id === "ollama") {
+        const preferred = models.find((m) => m.includes("llama3.2"));
+        if (preferred) msel.value = preferred;
+      }
     }
     async function loadProviders() {
       const data = await api("/v1/models");
@@ -163,17 +259,46 @@
       for (const p of state.providers) {
         const opt = document.createElement("option");
         opt.value = p.id;
-        opt.textContent = `${p.id} (${p.billing_class}${p.enabled ? "" : ", disabled"})`;
+        opt.textContent = p.id + (p.enabled ? "" : " (off)");
         opt.disabled = !p.enabled && p.id !== "fake";
         sel.appendChild(opt);
       }
       if (![...sel.options].some((o) => o.value === "fake")) {
         const opt = document.createElement("option");
-        opt.value = "fake"; opt.textContent = "fake (local)";
+        opt.value = "fake"; opt.textContent = "fake";
         sel.appendChild(opt);
       }
-      sel.value = "fake";
+      const ollama = state.providers.find((p) => p.id === "ollama" && p.enabled);
+      sel.value = ollama ? "ollama" : "fake";
+      fillModels();
       renderBilling();
+      sel.onchange = () => { fillModels(); renderBilling(); };
+    }
+    function renderMessages(list) {
+      const box = $("messages");
+      box.innerHTML = "";
+      if (!list || !list.length) {
+        box.innerHTML = '<div class="empty" id="empty"><strong>Talk to a lab agent</strong>Studio Ollama when selected — ordinary chat, not a durable work order.</div>';
+        return;
+      }
+      for (const m of list) {
+        const el = document.createElement("div");
+        el.className = "bubble " + (m.role || "assistant");
+        const who = document.createElement("div");
+        who.className = "who";
+        who.textContent = m.role + (m.meta && m.meta.backend ? " · " + m.meta.backend : "");
+        const body = document.createElement("div");
+        body.textContent = m.content || "";
+        el.appendChild(who);
+        el.appendChild(body);
+        box.appendChild(el);
+      }
+      box.scrollTop = box.scrollHeight;
+    }
+    async function refreshMessages() {
+      if (!state.conversationId) { renderMessages([]); return; }
+      const data = await api(`/v1/conversations/${state.conversationId}/messages`);
+      renderMessages(data.messages || []);
     }
     async function newConversation() {
       const body = await api("/v1/conversations", {
@@ -182,31 +307,38 @@
       });
       state.conversationId = body.id;
       state.runId = null;
-      $("conv-id").textContent = "Conversation " + body.id;
-      $("messages").innerHTML = "";
+      $("conv-id").textContent = "Chat " + body.id.slice(0, 8);
       $("run-view").hidden = true;
       $("pending").hidden = true;
+      renderMessages([]);
     }
-    async function refreshMessages() {
-      if (!state.conversationId) return;
-      const data = await api(`/v1/conversations/${state.conversationId}/messages`);
-      const box = $("messages");
-      box.innerHTML = "";
-      for (const m of data.messages || []) {
-        const el = document.createElement("div");
-        el.className = "msg";
-        el.innerHTML = `<strong>${m.role}</strong> <span class="muted">${m.meta?.kind || ""}</span><div>${m.content}</div>`;
-        box.appendChild(el);
+    function summarizeRun(run) {
+      const lines = [];
+      lines.push(`status: ${run.status} · backend: ${run.backend || "?"} · model: ${run.model || "?"}`);
+      if (run.error) lines.push(`error: ${run.error}`);
+      if (run.final_result) lines.push(`final: ${run.final_result}`);
+      for (const t of run.traces || []) {
+        if (t.kind === "model_call") {
+          const preview = (t.text || "").replace(/\s+/g, " ").slice(0, 120);
+          lines.push(`model → ${preview}`);
+        } else if (t.kind === "tool_result") {
+          const obs = (t.observation || "").replace(/\s+/g, " ").slice(0, 160);
+          lines.push(`tool ${t.tool} ${t.ok ? "ok" : "fail"} → ${obs}`);
+        } else if (t.kind === "tool_denied") {
+          lines.push(`denied ${t.tool}: ${t.reason || ""}`);
+        } else if (t.kind === "approval_required") {
+          lines.push(`needs approval: ${t.tool}`);
+        } else if (t.kind === "final") {
+          lines.push(`done: ${(t.text || "").slice(0, 160)}`);
+        }
       }
+      return lines.join("\n");
     }
     function renderRun(run) {
       state.runId = run.id;
+      document.querySelector("details.loop").open = true;
       $("run-view").hidden = false;
-      $("run-view").textContent = JSON.stringify({
-        id: run.id, status: run.status, billing_class: run.billing_class,
-        backend: run.backend, error: run.error, final_result: run.final_result,
-        traces: run.traces, pending_action: run.pending_action, usage: run.usage,
-      }, null, 2);
+      $("run-view").textContent = summarizeRun(run);
       if (run.pending_action) {
         state.pendingActionId = run.pending_action.id;
         $("pending").hidden = false;
@@ -218,34 +350,68 @@
     }
     $("save-token").onclick = () => {
       sessionStorage.setItem("ai_lab_token", $("token").value.trim());
-      $("auth-note").textContent = "Token saved in sessionStorage for this tab.";
       showErr("");
       loadProviders().catch((e) => showErr(e));
     };
-    $("provider").onchange = renderBilling;
-    $("new-conv").onclick = () => newConversation().then(refreshMessages).catch((e) => showErr(e));
+    $("new-conv").onclick = () => newConversation().catch((e) => showErr(e));
+    $("chat").addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && !ev.shiftKey) {
+        ev.preventDefault();
+        $("send-chat").click();
+      }
+    });
     $("send-chat").onclick = async () => {
+      const text = $("chat").value.trim();
+      if (!text || state.sending) return;
+      state.sending = true;
+      $("send-chat").disabled = true;
       try {
         if (!state.conversationId) await newConversation();
-        await api(`/v1/conversations/${state.conversationId}/messages`, {
-          method: "POST",
-          body: JSON.stringify({ content: $("chat").value, role: "user" }),
-        });
         $("chat").value = "";
+        // Optimistic user bubble
+        const empty = $("empty");
+        if (empty) empty.remove();
+        const optimistic = document.createElement("div");
+        optimistic.className = "bubble user";
+        optimistic.innerHTML = '<div class="who">user</div>';
+        const body = document.createElement("div");
+        body.textContent = text;
+        optimistic.appendChild(body);
+        $("messages").appendChild(optimistic);
+        $("messages").scrollTop = $("messages").scrollHeight;
+
+        const resp = await api(`/v1/conversations/${state.conversationId}/messages`, {
+          method: "POST",
+            body: JSON.stringify({
+            content: text,
+            role: "user",
+            reply: true,
+            backend: $("provider").value || "fake",
+            model: $("model").value || "fake-instruct",
+          }),
+        });
+        if (resp.error) showErr(resp.error);
+        else showErr("");
         await refreshMessages();
-        showErr("");
       } catch (e) { showErr(e); }
+      finally {
+        state.sending = false;
+        $("send-chat").disabled = false;
+        $("chat").focus();
+      }
     };
     $("start-run").onclick = async () => {
       try {
         if (!state.conversationId) await newConversation();
+        const backend = $("provider").value || "fake";
+        const p = state.providers.find((x) => x.id === backend);
         const run = await api(`/v1/conversations/${state.conversationId}/runs`, {
           method: "POST",
           body: JSON.stringify({
-            objective: $("objective").value || "lab health",
-            model: "fake-instruct",
-            billing_class: "local",
-            backend: $("provider").value || "fake",
+            objective: $("objective").value.trim() || "Check lab health using tools, then summarize.",
+            model: $("model").value || "fake-instruct",
+            billing_class: (p && p.billing_class) || "local",
+            backend,
             execute: true,
             max_steps: 8,
           }),
@@ -256,20 +422,18 @@
     };
     $("approve-action").onclick = async () => {
       try {
-        const run = await api(`/v1/agent-runs/${state.runId}/approve-action`, {
+        renderRun(await api(`/v1/agent-runs/${state.runId}/approve-action`, {
           method: "POST",
           body: JSON.stringify({ decision: "approved", action_id: state.pendingActionId }),
-        });
-        renderRun(run);
+        }));
       } catch (e) { showErr(e); }
     };
     $("deny-action").onclick = async () => {
       try {
-        const run = await api(`/v1/agent-runs/${state.runId}/approve-action`, {
+        renderRun(await api(`/v1/agent-runs/${state.runId}/approve-action`, {
           method: "POST",
           body: JSON.stringify({ decision: "denied", action_id: state.pendingActionId }),
-        });
-        renderRun(run);
+        }));
       } catch (e) { showErr(e); }
     };
     $("cancel-run").onclick = async () => {
@@ -282,9 +446,10 @@
       try { renderRun(await api(`/v1/agent-runs/${state.runId}/retry`, { method: "POST", body: "{}" })); }
       catch (e) { showErr(e); }
     };
-    $("token").value = sessionStorage.getItem("ai_lab_token") || "";
-    if ($("token").value) $("auth-note").textContent = "Token loaded from sessionStorage.";
-    loadProviders().catch(() => {});
+    if ($("token")) $("token").value = sessionStorage.getItem("ai_lab_token") || "";
+    function boot() { loadProviders().catch(() => {}); }
+    document.addEventListener("ai-lab-auth-ready", boot);
+    boot();
   </script>
   <script src="/static/chrome.js"></script>
 </body>

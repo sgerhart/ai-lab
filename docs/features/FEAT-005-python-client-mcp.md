@@ -23,8 +23,10 @@ FEAT-002, FEAT-010; new ADR if enabling first MCP server.
 
 | ID | Title | Acceptance |
 |----|-------|------------|
-| IWO-020 | Python client package | Submit/fetch against test API |
-| IWO-021 | Optional MCP server allowlist entry | Deny-unlisted still holds |
+| IWO-022 | Python client package | Submit/fetch against test API |
+| IWO-023 | Optional MCP server allowlist entry | Deny-unlisted still holds |
+
+Note: IWO-020/021 are taken (live Ollama tool loop; cloud adapters).
 
 ## Out of scope
 

@@ -12,6 +12,8 @@ sys.path.insert(0, str(ROOT / "platform" / "src"))
 
 from ai_lab_platform.agent_loop import (  # noqa: E402
     cancel_agent_run,
+    loop_system_prompt,
+    parse_model_turn,
     reconcile_stuck_running,
     resolve_pending_action,
     retry_agent_run,
@@ -24,6 +26,7 @@ from ai_lab_platform.model_router import (  # noqa: E402
     ModelRouter,
     ScriptedToolBackend,
 )
+from ai_lab_platform.policy import load_policy  # noqa: E402
 from ai_lab_platform.store import SqliteStore  # noqa: E402
 
 try:
@@ -61,6 +64,46 @@ class ModelRouterBillingTests(unittest.TestCase):
         resp = router.complete(CompletionRequest(model="fake-instruct", prompt="hi", backend="fake"))
         self.assertEqual(resp.billing_class, BillingClass.LOCAL)
         self.assertTrue(router.usage_log())
+
+
+class ParseModelTurnTests(unittest.TestCase):
+    def test_exact_tool_and_final(self) -> None:
+        self.assertEqual(
+            parse_model_turn('TOOL health_read {}'),
+            {"type": "tool", "name": "health_read", "args": {}},
+        )
+        self.assertEqual(parse_model_turn("FINAL all good"), {"type": "final", "text": "all good"})
+
+    def test_tool_line_inside_prose(self) -> None:
+        text = "Sure, I will check.\nTOOL health_read {}\nThanks"
+        turn = parse_model_turn(text)
+        self.assertEqual(turn["type"], "tool")
+        self.assertEqual(turn["name"], "health_read")
+
+    def test_final_wins_when_both_present(self) -> None:
+        text = "TOOL health_read {}\nFINAL ports look fine"
+        self.assertEqual(
+            parse_model_turn(text),
+            {"type": "final", "text": "ports look fine"},
+        )
+
+    def test_tool_without_args_braces(self) -> None:
+        self.assertEqual(
+            parse_model_turn("TOOL health_read"),
+            {"type": "tool", "name": "health_read", "args": {}},
+        )
+
+    def test_json_tool_blob(self) -> None:
+        turn = parse_model_turn('{"type": "tool", "name": "repo_read", "args": {"limit": 5}}')
+        self.assertEqual(turn["type"], "tool")
+        self.assertEqual(turn["name"], "repo_read")
+        self.assertEqual(turn["args"], {"limit": 5})
+
+    def test_loop_system_prompt_lists_tools(self) -> None:
+        prompt = loop_system_prompt(load_policy("lab-operations"))
+        self.assertIn("health_read", prompt)
+        self.assertIn("TOOL", prompt)
+        self.assertIn("FINAL", prompt)
 
 
 class AgentLoopTests(unittest.TestCase):

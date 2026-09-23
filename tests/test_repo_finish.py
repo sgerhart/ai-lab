@@ -31,9 +31,15 @@ class McpAllowlistTests(unittest.TestCase):
 
 
 class OllamaBackendTests(unittest.TestCase):
-    def test_rejects_non_loopback(self) -> None:
+    def test_rejects_lan_and_public_hosts(self) -> None:
         with self.assertRaises(ValueError):
             OllamaBackend("http://10.0.0.1:11434")
+        with self.assertRaises(ValueError):
+            OllamaBackend("http://8.8.8.8:11434")
+
+    def test_allows_mac_studio_magicdns(self) -> None:
+        backend = OllamaBackend("http://mac-studio:11434")
+        self.assertEqual(backend.base_url, "http://mac-studio:11434")
 
     def test_pull_is_refused(self) -> None:
         with self.assertRaises(PullRefused):

@@ -1,6 +1,6 @@
 # FEAT-012 — Lab site (frictionless Studio access) and secret vault
 
-- **Status:** Specified (implementation starting)
+- **Status:** Partial (live on mini; Vault not up)
 - **Created:** 2026-09-23
 - **Owner:** human (operator)
 - **Priority:** Core platform (post Studio bring-up)
@@ -56,10 +56,10 @@ safely.
 
 ## Acceptance criteria
 
-- [ ] From Air: authenticated `/lab` → Studio Jupyter without manual SSH tunnel
-- [ ] Connect status shows Studio Jupyter/Ollama reachability from mini
-- [ ] No secrets in Git or HTML responses
-- [ ] Vault not required for Jupyter path; required before enabling paid APIs
+- [x] From Air: authenticated `/lab` → Studio Jupyter without manual SSH tunnel
+- [x] Connect status shows Studio Jupyter/Ollama reachability from mini
+- [x] No secrets in Git or HTML responses
+- [x] Vault not required for Jupyter path; required before enabling paid APIs
 
 ## Out of scope
 

@@ -27,7 +27,7 @@ from .auth import auth_status, client_ip, require_auth
 from .connect import connect_status, jupyter_open_url, read_token_file
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
-from .model_router import ModelRouter
+from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
 from .settings import Settings
@@ -95,6 +95,12 @@ class MessageIn(BaseModel):
 
     content: str
     role: str = Field(default="user", description="user|assistant|system|tool")
+    reply: bool = Field(
+        default=False,
+        description="If true (user role), complete via model router and store assistant reply",
+    )
+    backend: str = Field(default="fake", description="Provider id when reply=true")
+    model: str = Field(default="fake-instruct", description="Model id when reply=true")
 
 
 class AgentRunIn(BaseModel):
@@ -195,7 +201,7 @@ def create_control_app(
     app.state.checkpointer = checkpointer
     app.state.token = token
     app.state.settings = settings
-    app.state.model_router = model_router or ModelRouter()
+    app.state.model_router = model_router or build_router_from_settings(settings, secret_store=secrets)
     app.state.secret_store = secrets
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
@@ -475,7 +481,7 @@ def create_control_app(
         body: MessageIn,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
-        """Persist an ordinary chat turn. Does not enqueue a work order or agent run."""
+        """Persist an ordinary chat turn. Optionally complete a model reply (not an agent run)."""
         _gate(request, authorization)
         conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
         if conversation is None:
@@ -491,7 +497,52 @@ def create_control_app(
             meta={"kind": "chat_turn"},
         )
         store.put_message(message)  # type: ignore[attr-defined]
-        return message.to_dict()
+
+        if not body.reply or role != MessageRole.USER:
+            return message.to_dict()
+
+        from .cloud_backends import CloudUnavailable
+        from .ollama_backend import OllamaUnavailable
+
+        prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
+        # Build a short transcript prompt (exclude the just-stored user turn duplicate at end).
+        lines: list[str] = []
+        for m in prior[-12:]:
+            lines.append(f"{m.role.value}: {m.content}")
+        prompt = "\n".join(lines) if lines else body.content
+        router: ModelRouter = app.state.model_router
+        try:
+            completion = router.complete(
+                CompletionRequest(
+                    model=body.model,
+                    prompt=prompt,
+                    backend=body.backend,
+                    system=f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly.",
+                )
+            )
+        except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
+            return {
+                "message": message.to_dict(),
+                "reply": None,
+                "error": f"provider_unavailable:{exc}",
+            }
+        assistant = Message.new(
+            conversation_id=conversation_id,
+            role=MessageRole.ASSISTANT,
+            content=completion.text,
+            meta={
+                "kind": "chat_reply",
+                "backend": completion.backend,
+                "model": completion.model,
+                "billing_class": completion.billing_class.value,
+            },
+        )
+        store.put_message(assistant)  # type: ignore[attr-defined]
+        return {
+            "message": message.to_dict(),
+            "reply": assistant.to_dict(),
+            "error": None,
+        }
 
     @app.get("/v1/conversations/{conversation_id}/messages")
     def list_messages(
@@ -527,10 +578,17 @@ def create_control_app(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"invalid billing_class: {body.billing_class}") from exc
         if billing == BillingClass.USAGE_BILLED_API and body.backend not in {"fake", "scripted"}:
-            raise HTTPException(
-                status_code=400,
-                detail="usage_billed_api providers are disabled until owner enables credentials",
-            )
+            secrets_s: SecretStore = app.state.secret_store
+            if not secrets_s.usage_billed_authorized():
+                raise HTTPException(
+                    status_code=400,
+                    detail="usage_billed_api disabled until authorized on /secrets (ADR 0038)",
+                )
+            if body.backend in PROVIDER_IDS and not secrets_s.has_provider(body.backend):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{body.backend} API key not configured on /secrets",
+                )
         from .conversation import RunBudget
 
         run = AgentRun.new(

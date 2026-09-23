@@ -18,7 +18,7 @@ A new engineer clones `ai-lab` and follows this file only.
 | Tailscale join | Mini already on tailnet as `mac-mini`. Operator SSH is `sgerhart@mac-mini`. |
 | Backup destination | **iCloud Drive** (ADR 0030). First `--execute` 2026-09-21 (`20260921T194214Z`). Live restore untested. |
 
-Human authorization is still required before starting Studio. Docker Desktop is uninstalled. The API is a LaunchAgent (`com.ai-lab.control-plane`).
+Human authorization is still required before cloud API enablement. Docker Desktop is uninstalled. The API is a LaunchAgent (`com.ai-lab.control-plane`).
 
 ## 1. Prerequisites
 
@@ -88,6 +88,9 @@ docker compose -f infrastructure/compose.yaml \
 # Control plane. Password from compose.local.env — do not commit it.
 export DATABASE_URL="postgresql://ai_lab:${POSTGRES_PASSWORD}@127.0.0.1:5432/ai_lab"
 export STUDIO_WORKER_URL="http://127.0.0.1:8090"
+export STUDIO_JUPYTER_URL="http://mac-studio:8888"
+export STUDIO_OLLAMA_URL="http://mac-studio:11434"
+export AI_LAB_AUTH_MODE="trusted_tailnet"
 export AI_LAB_BIND_ADDRESS="$(tailscale ip -4 | head -1)"
 export PYTHONPATH="$HOME/workspace/github/sgerhart/ai-lab/platform/src"
 ./scripts/control-plane.sh
@@ -96,6 +99,8 @@ export PYTHONPATH="$HOME/workspace/github/sgerhart/ai-lab/platform/src"
 Do not use `compose.example.env` for a live `up`.
 
 Live bind is this host's Tailscale IPv4 (ADR 0034), plus compose overlay for the data plane. Never `0.0.0.0`.
+
+`STUDIO_OLLAMA_URL` must be set for `/agents` to use live Studio Ollama (IWO-019). Put the same exports in `~/.ai-lab/start-control-plane.sh` (gitignored), not in the plist.
 
 Install the LaunchAgent from the example plist (replace `OPERATOR` with this host's login). Then:
 

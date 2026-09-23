@@ -135,7 +135,6 @@ class ModelRouter:
         if backends is None:
             backends = {
                 "fake": FakeBackend(),
-                # Local stand-in until Studio Ollama is wired (still billing_class=local).
                 "ollama": FakeBackend(),
                 "openai": DisabledCloudBackend("openai"),
                 "anthropic": DisabledCloudBackend("anthropic"),
@@ -156,9 +155,15 @@ class ModelRouter:
             else:
                 bc = str(billing)
             enabled = bool(health.get("enabled", health.get("ok", False)))
+    # list_providers: Cloud backends report enabled via health(); DisabledCloudBackend uses .enabled
             if isinstance(backend, DisabledCloudBackend):
                 enabled = backend.enabled
-            models = ["fake-instruct"] if name in {"fake", "scripted", "ollama"} else []
+            models = list(health.get("models") or [])
+            if not models:
+                if name in {"fake", "scripted"}:
+                    models = ["fake-instruct"]
+                elif name == "ollama" and isinstance(backend, FakeBackend):
+                    models = ["fake-instruct"]
             out.append(
                 {
                     "id": name,
@@ -201,3 +206,35 @@ class ModelRouter:
 
     def usage_log(self) -> list[dict[str, Any]]:
         return list(self._usage_log)
+
+
+def build_router_from_settings(
+    settings: Any | None = None,
+    *,
+    secret_store: Any | None = None,
+) -> ModelRouter:
+    """Construct the live router. Studio Ollama + optional cloud from SecretStore."""
+    from .cloud_backends import AnthropicBackend, OpenAIBackend
+    from .ollama_backend import OllamaBackend
+    from .secrets_store import SecretStore, default_secret_store
+    from .settings import Settings
+
+    cfg = settings if settings is not None else Settings.from_env()
+    secrets: SecretStore = secret_store if secret_store is not None else default_secret_store()
+    ollama_url = getattr(cfg, "studio_ollama_url", "") or ""
+    backends: dict[str, CompletionBackend] = {
+        "fake": FakeBackend(),
+        "openai": OpenAIBackend(secrets),
+        "anthropic": AnthropicBackend(secrets),
+        "gemini": DisabledCloudBackend("gemini"),
+    }
+    default = "fake"
+    if ollama_url:
+        try:
+            backends["ollama"] = OllamaBackend(ollama_url)
+            default = "ollama"
+        except ValueError:
+            backends["ollama"] = FakeBackend()
+    else:
+        backends["ollama"] = FakeBackend()
+    return ModelRouter(backends=backends, default_backend=default)

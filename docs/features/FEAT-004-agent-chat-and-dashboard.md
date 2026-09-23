@@ -1,6 +1,6 @@
 # FEAT-004 — Interactive agent chat UI and work-order dashboard
 
-- **Status:** Specified (status board live)
+- **Status:** Partial (live chat + agent loop UI)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#5](https://github.com/sgerhart/ai-lab/issues/5)
@@ -60,9 +60,9 @@ large dashboard framework.
 
 ## Acceptance criteria
 
-- [ ] Authenticated chat with agent + model select
-- [ ] Run states visible; approve/deny specific action
-- [ ] Billing class visible; secrets not exposed
+- [x] Authenticated chat with agent + model select
+- [x] Run states visible; approve/deny specific action
+- [x] Billing class visible; secrets not exposed
 - [ ] Streaming endpoints protected
 - [ ] Mobile-on-tailnet acceptable later (not blocking)
 
@@ -75,6 +75,6 @@ large dashboard framework.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | `GET /` status board only |
-| Deploy | Partial | board on mini:8088 |
-| Live verified | Partial | counts only |
+| Code | Partial | `/agents` chat-first UI + run loop; status board |
+| Deploy | Partial | live on mini:8088 |
+| Live verified | Partial | chat + Ollama tool loop 2026-09-23; no streaming |

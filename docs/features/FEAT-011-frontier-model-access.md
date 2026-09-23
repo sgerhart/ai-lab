@@ -1,6 +1,6 @@
 # FEAT-011 — Frontier model access and provider router
 
-- **Status:** Specified
+- **Status:** Partial (Ollama live; cloud adapters gated — IWO-021)
 - **Created:** 2026-09-21
 - **Priority:** Core platform (with FEAT-010)
 - **Owner:** human (operator)
@@ -65,18 +65,18 @@ No silent switch from local → paid API.
 | ID | Title | Depends on | Acceptance (sketch) |
 |----|-------|------------|---------------------|
 | [IWO-004](../work-orders/IWO-004-model-router.md) | Router + Fake + disabled cloud stubs | ADR 0038 | Unit tests; no live $ |
-| IWO-004-b | OpenAI + Anthropic adapters (disabled default) | IWO-004 | Contract tests with recorded fixtures; live calls need auth |
-| IWO-004-c | Studio Ollama provider | FEAT-003 host | Health against Studio when up |
+| [IWO-021](../work-orders/IWO-021-cloud-provider-adapters.md) | OpenAI + Anthropic from secret store | IWO-004, IWO-018 | Gate + mocked HTTP; no live $ in CI |
+| [IWO-019](../work-orders/IWO-019-studio-ollama-provider.md) | Studio Ollama provider | FEAT-003 host | Health + Agents completion |
 | IWO-004-d | Optional Gemini adapter | IWO-004 | Same disable-by-default pattern |
 
 ## Acceptance criteria
 
-- [ ] Provider-neutral interface used by FEAT-010 loop
-- [ ] All cloud providers start disabled
-- [ ] UI shows local / subscription-client / usage-billed
-- [ ] No silent paid fallback
-- [ ] Secrets never in browser responses
-- [ ] No live chargeable tests without separate authorization
+- [x] Provider-neutral interface used by FEAT-010 loop
+- [x] All cloud providers start disabled
+- [x] UI shows local / subscription-client / usage-billed
+- [x] No silent paid fallback
+- [x] Secrets never in browser responses
+- [x] No live chargeable tests without separate authorization
 
 ## Out of scope
 
@@ -89,9 +89,9 @@ No silent switch from local → paid API.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done | this file |
-| Code | Partial: Ollama client + FakeBackend; no router | `ollama_backend.py`, `eval_dry_run.py` |
-| Host deploy | Cloud disabled; Studio Ollama not pointed | — |
-| Live verified | no | — |
+| Code | Partial: Ollama live; OpenAI/Anthropic adapters gated (IWO-021); Gemini stub | `cloud_backends.py` |
+| Host deploy | Cloud off until `/secrets` authorize + keys | — |
+| Live verified | Partial | Studio Ollama; cloud not live-charged |
 
 ## Notes
 

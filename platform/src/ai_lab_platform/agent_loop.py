@@ -1,19 +1,21 @@
-"""Bounded personal-agent model/tool loop on the mini (FEAT-010 / IWO-005).
+"""Bounded personal-agent model/tool loop on the mini (FEAT-010 / IWO-005 / IWO-020).
 
-Runs on the control plane. Uses FakeBackend / ScriptedToolBackend in tests.
-Does not require Studio. Deterministic agent_plans.py remains a separate fixture.
+Runs on the control plane. FakeBackend / ScriptedToolBackend in tests; live
+Studio Ollama via the same TOOL/FINAL protocol when the model cooperates.
+Deterministic agent_plans.py remains a separate fixture.
 """
 
 from __future__ import annotations
 
 import ast
+import json
 import re
 from typing import Any
 from uuid import uuid4
 
 from .conversation import AgentRun, AgentRunStatus
 from .model_router import CompletionRequest, ModelRouter
-from .policy import load_policy
+from .policy import AgentPolicy, load_policy
 from .tool_runtime import (
     ToolContext,
     build_tool_context,
@@ -22,27 +24,81 @@ from .tool_runtime import (
 )
 from .work_order import utcnow
 
-_TOOL_RE = re.compile(r"^TOOL\s+(\S+)\s+(\{.*\})\s*$", re.DOTALL)
+_TOOL_RE = re.compile(r"^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$", re.DOTALL)
+_TOOL_LINE_RE = re.compile(r"(?m)^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$")
 _FINAL_RE = re.compile(r"^FINAL\s*(.*)$", re.DOTALL)
+_FINAL_LINE_RE = re.compile(r"(?m)^FINAL\s*(.*)$")
+_JSON_TOOL_RE = re.compile(
+    r'\{\s*"type"\s*:\s*"tool"\s*,\s*"name"\s*:\s*"([^"]+)"\s*,\s*"args"\s*:\s*(\{.*?\})\s*\}',
+    re.DOTALL,
+)
+
+
+def loop_system_prompt(policy: AgentPolicy) -> str:
+    """Instruct live models (Ollama) to emit the harness TOOL/FINAL protocol."""
+    allowed = ", ".join(policy.allowed_tools) or "(none)"
+    privileged = ", ".join(policy.privileged_tools) or "(none)"
+    return (
+        f"You are the {policy.id} agent for ai-lab on the Mac mini control plane.\n"
+        f"Isolation tier {policy.isolation_tier}; read_only={policy.read_only}.\n"
+        f"Allowed tools (no approval): {allowed}.\n"
+        f"Privileged tools (need human approval): {privileged}.\n"
+        "Respond with exactly one of these forms — no markdown fences, no commentary outside the line:\n"
+        '  TOOL <tool_name> {"arg": "value"}\n'
+        "  FINAL <short answer for the operator>\n"
+        "Use tools when you need facts (health, compose, repo). "
+        "After observations appear in the user message, call more tools or FINAL.\n"
+        "Never invent tool results. Prefer health_read first for health questions."
+    )
 
 
 def parse_model_turn(text: str) -> dict[str, Any]:
-    text = text.strip()
+    text = (text or "").strip()
+    if not text:
+        return {"type": "final", "text": ""}
+
+    # Prefer FINAL when the model emitted tools and an answer in one completion.
+    m_final_line = _FINAL_LINE_RE.search(text)
+    m_tool_line = _TOOL_LINE_RE.search(text)
+    if m_final_line and m_tool_line:
+        return {"type": "final", "text": m_final_line.group(1).strip()}
+
     m = _TOOL_RE.match(text)
     if m:
-        name = m.group(1)
-        try:
-            args = ast.literal_eval(m.group(2))
-            if not isinstance(args, dict):
-                args = {}
-        except (SyntaxError, ValueError):
-            args = {}
-        return {"type": "tool", "name": name, "args": args}
+        return _tool_from_match(m.group(1), m.group(2) or "{}")
+
     m = _FINAL_RE.match(text)
     if m:
         return {"type": "final", "text": m.group(1).strip()}
-    # Plain fake text → treat as final (non-scripted FakeBackend)
+
+    if m_tool_line:
+        return _tool_from_match(m_tool_line.group(1), m_tool_line.group(2) or "{}")
+
+    m = _JSON_TOOL_RE.search(text)
+    if m:
+        return _tool_from_match(m.group(1), m.group(2))
+
+    if m_final_line:
+        return {"type": "final", "text": m_final_line.group(1).strip()}
+
     return {"type": "final", "text": text}
+
+
+def _tool_from_match(name: str, args_raw: str) -> dict[str, Any]:
+    args: dict[str, Any] = {}
+    raw = args_raw.strip()
+    try:
+        parsed = ast.literal_eval(raw)
+        if isinstance(parsed, dict):
+            args = parsed
+    except (SyntaxError, ValueError):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                args = parsed
+        except json.JSONDecodeError:
+            args = {}
+    return {"type": "tool", "name": name, "args": args}
 
 
 def _merge_usage(run: AgentRun, usage: dict[str, Any]) -> None:
@@ -86,10 +142,19 @@ def step_agent_run(
         return run
 
     run.status = AgentRunStatus.RUNNING
-    obs = [t.get("observation", "") for t in run.traces if t.get("kind") == "tool_result"]
+    tool_traces = [t for t in run.traces if t.get("kind") == "tool_result"]
+    obs = [t.get("observation", "") for t in tool_traces]
     prompt = run.objective or "(no objective)"
     if obs:
-        prompt = prompt + "\n\nObservations:\n" + "\n---\n".join(obs[-5:])
+        prompt = (
+            prompt
+            + "\n\nObservations from tools (use these; do not invent):\n"
+            + "\n---\n".join(obs[-5:])
+            + "\n\nYou already have tool results. Emit a single FINAL line summarizing them. "
+            "Only emit TOOL if you need a different tool than you already used."
+        )
+    else:
+        prompt = prompt + "\n\nNo observations yet. Emit one TOOL … line, or FINAL if no tool is needed."
 
     try:
         completion = router.complete(
@@ -97,7 +162,7 @@ def step_agent_run(
                 model=run.model,
                 prompt=prompt,
                 backend=run.backend,
-                system=f"agent={run.agent}",
+                system=loop_system_prompt(policy),
             )
         )
     except PermissionError as exc:
@@ -112,6 +177,17 @@ def step_agent_run(
         run.updated_at = utcnow()
         store_put(run)
         return run
+    except Exception as exc:
+        from .cloud_backends import CloudUnavailable
+        from .ollama_backend import OllamaUnavailable
+
+        if isinstance(exc, (OllamaUnavailable, CloudUnavailable)):
+            run.status = AgentRunStatus.FAILED
+            run.error = f"provider_unavailable:{exc}"
+            run.updated_at = utcnow()
+            store_put(run)
+            return run
+        raise
 
     _merge_usage(run, completion.usage)
     run.traces.append(
@@ -136,6 +212,26 @@ def step_agent_run(
     tool_name = turn["name"]
     tool_args = turn.get("args") or {}
     action_id = str(uuid4())
+
+    # Stop thrashing on live models that re-call the same tool with new args.
+    prior_same = [t for t in tool_traces if t.get("tool") == tool_name]
+    if prior_same:
+        run.status = AgentRunStatus.COMPLETED
+        last_obs = prior_same[-1].get("observation") or ""
+        run.final_result = (
+            f"(stopped repeating {tool_name}) last observation:\n{last_obs[:1500]}"
+        )
+        run.traces.append(
+            {
+                "kind": "final",
+                "at": utcnow(),
+                "text": run.final_result,
+                "reason": "repeated_tool",
+            }
+        )
+        run.updated_at = utcnow()
+        store_put(run)
+        return run
 
     if tool_name not in policy.allowed_tools and tool_name not in policy.privileged_tools:
         run.traces.append(
@@ -302,7 +398,6 @@ def resolve_pending_action(
     run.status = AgentRunStatus.RUNNING
     run.updated_at = utcnow()
     store_put(run)
-    # Continue the loop after approval
     return run_until_idle(
         run, router=router, store_put=store_put, ctx=ctx, approved_tools=approved_tools
     )

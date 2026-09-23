@@ -17,12 +17,15 @@ from ai_lab_platform.train_refuse import main as train_main
 
 
 class ModelCatalogTests(unittest.TestCase):
-    def test_catalog_is_empty_and_honest(self) -> None:
+    def test_catalog_entries_are_honest(self) -> None:
         data = load_catalog()
         self.assertEqual(data["schema_version"], 1)
-        self.assertEqual(data["models"], [])
-        self.assertEqual(listed_ids(), [])
         self.assertIn("No automatic pulls", data["policy"])
+        for model in data["models"]:
+            self.assertNotEqual(model.get("status"), "pulled")
+            self.assertFalse(model.get("pull_authorized"))
+        # Git may list catalogued models; weights stay off-repo.
+        self.assertEqual(set(listed_ids()), {m["id"] for m in data["models"]})
 
     def test_refuse_pull(self) -> None:
         with self.assertRaises(PullRefused):

@@ -1,6 +1,6 @@
 # FEAT-010 — Mini personal-agent loop and harness
 
-- **Status:** Specified
+- **Status:** Partial (live Ollama tool loop — IWO-020)
 - **Created:** 2026-09-21
 - **Priority:** Core platform (mini-first)
 - **Owner:** human (operator)
@@ -17,8 +17,9 @@ This is **not** primarily an autonomous coding factory. Coding agents (FEAT-007)
 are optional workloads on this harness. Studio inference (FEAT-003) and Jupyter
 (FEAT-006) remain compute-plane concerns.
 
-**Honesty:** Existing `agent_plans.py` fixed plans are a foundation/test fixture.
-They are **not** evidence that this model-driven loop is implemented.
+**Honesty:** Existing `agent_plans.py` fixed plans remain a test fixture.
+The model-driven loop is live against Studio Ollama for `lab-operations`
+(IWO-020). Cloud adapters exist but stay gated (IWO-021).
 
 ## Agent loop (normative)
 
@@ -56,7 +57,7 @@ an optional small mini model, or an authorized cloud API.
 
 - Features: FEAT-002 (durable exec), FEAT-004 (UI), FEAT-011 (providers)
 - ADRs: 0009, 0016, 0018, 0020, **0036**, **0037**, **0038**
-- Live today: FastAPI + PostgresStore on mini; Studio **not** required for first slice (FakeBackend)
+- Live today: FastAPI + PostgresStore on mini; Studio Ollama for chat + tool loop (IWO-019/020)
 
 ## Proposed deliverables
 
@@ -77,15 +78,16 @@ an optional small mini model, or an authorized cloud API.
 | [IWO-005](../work-orders/IWO-005-bounded-model-tool-loop.md) | Bounded LangGraph model/tool loop | IWO-002–004 | ≥2 model/tool steps; lab-ops read-only |
 | [IWO-006](../work-orders/IWO-006-durable-async-recovery.md) | Async recovery / cancel / safe retry | IWO-005, FEAT-002 | Air closed; result retrievable |
 | [IWO-007](../work-orders/IWO-007-tool-action-approvals.md) | Action-level approval UX | IWO-003, IWO-005 | Unapproved tool stops at gate |
+| [IWO-020](../work-orders/IWO-020-live-ollama-agent-loop.md) | Live Studio Ollama tool loop | IWO-005, IWO-019 | health_read→FINAL on mini |
 
 ## Acceptance criteria
 
-- [ ] Loop defined and implemented on mini (not only deterministic plans)
-- [ ] Chat ≠ forced runtime WO; background tasks remain durable
-- [ ] Unapproved privileged tool stops at human gate
-- [ ] Provider/Studio unavailable → recoverable or visible fail (not vanish)
+- [x] Loop defined and implemented on mini (not only deterministic plans)
+- [x] Chat ≠ forced runtime WO; background tasks remain durable
+- [x] Unapproved privileged tool stops at human gate
+- [x] Provider/Studio unavailable → recoverable or visible fail (not vanish)
 - [ ] First E2E: Air UI → read-only agent → ≥2 real model/tool steps → close Air → retrieve result
-- [ ] No new privileged tools without ADR + policy change
+- [x] No new privileged tools without ADR + policy change
 
 ## Out of scope
 
@@ -99,9 +101,9 @@ an optional small mini model, or an authorized cloud API.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done (this file) | planning PR |
-| Code | **Partial** — IWO-002–007 in Git (loop + UI + approvals); not live-migrated | `agent_loop.py`, `/agents` |
-| Host deploy | n/a for docs; harness API already up; **schema migrate not applied** | mini:8088 |
-| Live verified | no — unit-tested FakeBackend/scripted only | — |
+| Code | Partial — IWO-002–007 + IWO-020 live Ollama loop | `agent_loop.py`, `/agents` |
+| Host deploy | Control plane live; Studio Ollama wired | mini:8088 |
+| Live verified | Yes — Studio Ollama tool loop (`health_read`→FINAL) | 2026-09-23 |
 
 ## Notes
 

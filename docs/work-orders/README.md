@@ -21,8 +21,8 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [WO-000](WO-000-phase-0-repository-foundation.md) | Foundation | Yes | n/a | n/a |
 | [WO-001](WO-001-phase-1-host-bootstrap.md) | Host bootstrap + network | Yes | **Partial** — M1 `--apply` + Air/mini on tailnet; Studio **not** | Mini SSH/Tailscale verified from Air |
 | [WO-002](WO-002-phase-2-control-plane.md) | Control-plane compose | Yes | **Yes** — Colima compose on `mac-mini` | Healthchecks + first iCloud dump; **live restore untested** |
-| [WO-003](WO-003-phase-3-compute.md) | Studio compute tooling | Yes | **No** | No |
-| [WO-004](WO-004-phase-4-harness.md) | Agent harness | Yes (unit + ephemeral Postgres) | **Partial** — API on `mac-mini:8088` | `/health`, status board, submit from Air; Studio path not live |
+| [WO-003](WO-003-phase-3-compute.md) | Studio compute tooling | Yes | **Partial** — Jupyter + Ollama LaunchAgents on `mac-studio` | Lab connect + Agents Ollama live |
+| [WO-004](WO-004-phase-4-harness.md) | Agent harness | Yes (unit + ephemeral Postgres) | **Partial** — API on `mac-mini:8088` | `/agents` chat + tool loop via Studio Ollama |
 | [WO-005](WO-005-phase-5-agents.md) | Three agents | Yes (deterministic plans) | **No** Studio worker | Plans tested in CI/laptop; not LLM |
 | [WO-006](WO-006-phase-6-model-lab.md) | Training/eval | Catalog + refuse-pull | **No** | No weights / no pulls |
 | [WO-007](WO-007-phase-7-hardening.md) | Hardening / recovery | CI + throwaway restore | Backup dest iCloud | First `--execute` dump written; restore drill **not** done |
@@ -42,6 +42,9 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-016](IWO-016-lab-site-connect-hub.md) | Lab site connect hub | Complete (live) |
 | [IWO-017](IWO-017-vault-scaffold.md) | Vault compose scaffold | Complete (not deployed) |
 | [IWO-018](IWO-018-browser-api-key-entry.md) | Browser API key entry | Complete (file store) |
+| [IWO-019](IWO-019-studio-ollama-provider.md) | Studio Ollama on mini router | Complete (live) |
+| [IWO-020](IWO-020-live-ollama-agent-loop.md) | Live Ollama agent tool loop | Complete (live) |
+| [IWO-021](IWO-021-cloud-provider-adapters.md) | OpenAI/Anthropic from secrets | Complete (gated; no live $) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
