@@ -53,7 +53,7 @@ moving secrets or the gateway onto the mini.
 
 - [x] Inventory records DefenseClaw on Air without secrets
 - [x] Preflight is dry-run / read-only by default
-- [ ] Cursor connector only after separate human authorization
+- [x] Cursor connector only after separate human authorization (IWO-045, action mode)
 - [ ] No DefenseClaw gateway on mini without a new ADR
 
 ## Out of scope
@@ -68,5 +68,5 @@ moving secrets or the gateway onto the mini.
 |-------|--------|----------|
 | Spec | Done | this file |
 | Code | Partial | IWO-044 preflight |
-| Deploy | No Cursor hooks yet | observed |
-| Live verified | Partial | CLI/gateway 0.8.10 on Air |
+| Deploy | Cursor hooks live (IWO-045 action) | Air 2026-09-24 |
+| Live verified | Partial | CLI/gateway; Cursor + Antigravity action |

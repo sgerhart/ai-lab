@@ -35,7 +35,7 @@ Do not treat this index as authorized implementation or deploy.
 | 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial:** IWO-040 retrieval API + memory_search | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
 | 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 tick API (no host timer yet) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
 | 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — not core harness | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
-| 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial:** live on Air; IWO-044 preflight; Cursor hooks pending auth | — |
+| 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Specified** — prefer 1B; no pull yet | — |
 
 ## Implementation Work Orders (protocol)
@@ -68,6 +68,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-041](../work-orders/IWO-041-memory-write-gates.md) | Agent memory_write gates | FEAT-008 | **Complete** (unit) |
 | [IWO-042](../work-orders/IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | FEAT-005 | **Complete** (unit) |
 | [IWO-044](../work-orders/IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | FEAT-014 | **Complete** (read-only) |
+| [IWO-045](../work-orders/IWO-045-defenseclaw-cursor-connector.md) | DefenseClaw Cursor connector | FEAT-014 | **Complete** (Air action mode) |
 
 ## Historical phase work orders
 

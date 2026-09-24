@@ -57,6 +57,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-041](IWO-041-memory-write-gates.md) | Agent memory_write gates | Complete (unit) |
 | [IWO-042](IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | Complete (unit) |
 | [IWO-044](IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | Complete (read-only) |
+| [IWO-045](IWO-045-defenseclaw-cursor-connector.md) | DefenseClaw Cursor connector | Complete (Air action) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

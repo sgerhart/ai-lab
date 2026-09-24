@@ -30,10 +30,9 @@ Not owned by this repo:
 - Host PostgreSQL listening on all interfaces
 - Host Ollama (lab-relevant, but not yet configured from this repo)
 - **DefenseClaw** on the Air (`~/.defenseclaw`, CLI 0.8.10 as of 2026-09-24) — operator
-  governance, **not** owned by this repo. Observed: connector **antigravity**,
-  `guardrail.mode=action`, `hook_fail_mode=open`; sidecar not running; Cursor
-  hooks not wired (`~/.cursor/hooks.json` absent). Do not commit
-  `config.yaml` / `device.key` / audit DB.
+  governance, **not** owned by this repo. Observed: connectors **antigravity** +
+  **cursor** both `mode=action`, `fail-mode=open`; hooks in `~/.cursor/hooks.json`
+  (IWO-045). Do not commit `config.yaml` / `device.key` / audit DB.
 
 ## Candidates under evaluation (not absorbed)
 
@@ -43,7 +42,7 @@ absorbing product stacks) a new ADR. ADR 0025 still applies.
 | Candidate | What it is | Fit in ai-lab | First step |
 |-----------|------------|---------------|------------|
 | **agentic-factory** | Adjacent Air Docker stack (orchestrator / PR watchdog / Vault) | Stay **adjacent**; optional FEAT-007 bridge only | Inventory + boundary doc; never reuse factory Vault |
-| **DefenseClaw** (already on Air) | Governance gateway: scan MCP/skills, hook agents, audit | Keep on **Air**; optionally add Cursor connector for this IDE; later scan lab MCP | IWO: `defenseclaw setup cursor` (Add) when authorized; do not move gateway to mini yet |
+| **DefenseClaw** (on Air) | Governance gateway: scan MCP/skills, hook agents, audit | Keep on **Air**; Cursor + Antigravity wired (IWO-045) | IWO-046: scan lab MCP before trust |
 | **Antares** ([fdtn-ai/antares-1b](https://huggingface.co/fdtn-ai/antares-1b) / [350m](https://huggingface.co/fdtn-ai/antares-350m)) | Cisco Foundation AI vuln-localization terminal agents (Granite 4.0) | **Studio** inference + sandboxed agent loop (not general chat) | Prefer **1B** on Studio; optional **350M** as lighter/draft; no pull until authorized |
 
 Unhealthy Clarion containers were visible at collection time. That is product hygiene, not a Phase 0 task for `ai-lab`.
