@@ -3,6 +3,42 @@
   "policy": "No automatic pulls. Bootstrap never pulls. Weights stay off Git.",
   "host": "studio",
   "default_backend": "ollama",
+  "default_profile": "fast-local",
+  "profiles": [
+    {
+      "id": "general-local",
+      "label": "General Local",
+      "billing_class": "local",
+      "backend": "ollama",
+      "catalog_model_id": "qwen3.8-27b",
+      "intended_use": "General agents, architecture, reasoning, and multimodal tasks"
+    },
+    {
+      "id": "coding-local",
+      "label": "Coding Local",
+      "billing_class": "local",
+      "backend": "ollama",
+      "catalog_model_id": "qwen3-coder-30b",
+      "intended_use": "Repository analysis, implementation, debugging, tests, and diff review"
+    },
+    {
+      "id": "fast-local",
+      "label": "Fast Local",
+      "billing_class": "local",
+      "backend": "ollama",
+      "catalog_model_id": "llama3.2-3b-instruct",
+      "intended_use": "Lightweight tasks and regression testing"
+    },
+    {
+      "id": "frontier-coding",
+      "label": "Frontier Coding",
+      "billing_class": "usage_billed_api",
+      "backend": "openai",
+      "catalog_model_id": null,
+      "model": "gpt-4.1",
+      "intended_use": "Optional difficult coding tasks with usage billing (gated)"
+    }
+  ],
   "models": [
     {
       "id": "llama3.2-3b-instruct",
@@ -14,7 +50,7 @@
       "role": "general-instruct",
       "status": "catalogued-not-pulled",
       "pull_authorized": false,
-      "notes": "First Studio smoke model. Human authorized 2026-09-23. Git must not claim pulled."
+      "notes": "Fast Local / smoke. Human authorized pull path 2026-09-23. Git must not claim pulled."
     },
     {
       "id": "llama3.2-3b-instruct-mlx-4bit",
@@ -27,6 +63,32 @@
       "status": "catalogued-not-pulled",
       "pull_authorized": false,
       "notes": "mlx_lm Jupyter path. Weights in HF cache on Studio, not Git."
+    },
+    {
+      "id": "qwen3.8-27b",
+      "backend": "ollama",
+      "host": "studio",
+      "pull_name": "qwen3.8:27b",
+      "alternate_pull_names": ["qwen3.8:27b-mlx"],
+      "license": "Apache-2.0 (verify on Ollama library page)",
+      "approx_size": "~16–20 GB quantized (record after pull)",
+      "role": "general-local",
+      "status": "catalogued-not-pulled",
+      "pull_authorized": false,
+      "notes": "General Local profile candidate. Prefer qwen3.8:27b-mlx on Apple Silicon after live verify. Do not pull without owner auth."
+    },
+    {
+      "id": "qwen3-coder-30b",
+      "backend": "ollama",
+      "host": "studio",
+      "pull_name": "qwen3-coder:30b",
+      "alternate_pull_names": ["qwen3-coder:latest", "qwen3-coder:30b-a3b-q4_K_M"],
+      "license": "Apache-2.0 (verify on Ollama library page)",
+      "approx_size": "~19 GB Q4_K_M (record after pull)",
+      "role": "coding-local",
+      "status": "catalogued-not-pulled",
+      "pull_authorized": false,
+      "notes": "Coding Local profile candidate. MoE 30B-A3B. Do not pull without owner auth. Do not assume it beats general-local without IWO-057 eval."
     }
   ]
 }

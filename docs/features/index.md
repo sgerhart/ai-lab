@@ -34,7 +34,8 @@ Do not treat this index as authorized implementation or deploy.
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Partial:** IWO-042 + Cursor (IWO-054) | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
 | 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial:** IWO-040/041 + Qdrant live (IWO-053) | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
 | 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 + LaunchAgent (IWO-052) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
-| 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — not core harness | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
+| 9 | [FEAT-016](FEAT-016-local-coding-models-and-assistant.md) | Local coding models + Coding Assistant | **Partial:** IWO-055 profiles/UI done; IWO-056+ next | — |
+| 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — later write/PR; see FEAT-016 | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 `/antares` UI live | — |
 
@@ -76,6 +77,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-052](../work-orders/IWO-052-scheduler-launchagent.md) | Scheduler LaunchAgent on mini | FEAT-009 | **Complete** (live) |
 | [IWO-053](../work-orders/IWO-053-wire-qdrant-env.md) | Wire Qdrant into control-plane env | FEAT-008 | **Complete** (live) |
 | [IWO-054](../work-orders/IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | FEAT-005 | **Complete** (Air) |
+| [IWO-055](../work-orders/IWO-055-coding-model-profiles-routing.md) | Coding model profiles + Studio routing | FEAT-016 | **Complete** (unit; no pulls) |
 
 ## Historical phase work orders
 

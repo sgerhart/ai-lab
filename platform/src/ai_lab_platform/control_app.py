@@ -503,16 +503,51 @@ def create_control_app(
     @app.get("/v1/models")
     def list_models(request: Request, authorization: str | None = Header(default=None)) -> dict[str, Any]:
         _gate(request, authorization)
+        from .model_catalog import list_studio_choices, load_catalog, summarize_profiles
+
         router: ModelRouter = app.state.model_router
         store_s: SecretStore = app.state.secret_store
         providers = router.list_providers()
         for p in providers:
             if p["id"] in PROVIDER_IDS:
                 p["key_configured"] = store_s.has_provider(p["id"])
+        ollama_p = next((p for p in providers if p["id"] == "ollama"), None)
+        installed = list((ollama_p or {}).get("models") or [])
+        usage_ok = store_s.usage_billed_authorized()
+        cloud_enabled = {
+            "openai": bool(store_s.has_provider("openai") and usage_ok),
+            "anthropic": bool(store_s.has_provider("anthropic") and usage_ok),
+            "gemini": False,
+        }
+        catalog = load_catalog()
+        profiles = summarize_profiles(installed_ollama=installed, cloud_enabled=cloud_enabled)
+        choices = list_studio_choices(installed)
+        # Frontier profile entries as non-local choices when authorized
+        for prof in profiles:
+            if prof.get("billing_class") == "usage_billed_api":
+                choices.append(
+                    {
+                        "backend": prof["backend"],
+                        "model": prof["model"],
+                        "profile_id": prof["id"],
+                        "label": prof["label"],
+                        "billing_class": prof["billing_class"],
+                        "available": bool(prof.get("available")),
+                        "intended_use": prof.get("intended_use") or "",
+                        "reason": prof.get("reason"),
+                    }
+                )
         return {
             "providers": providers,
-            "usage_billed_authorized": store_s.usage_billed_authorized(),
-            "note": "Cloud complete() stays blocked until usage_billed_authorized (ADR 0038).",
+            "profiles": profiles,
+            "choices": choices,
+            "default_profile": catalog.get("default_profile") or "fast-local",
+            "usage_billed_authorized": usage_ok,
+            "note": (
+                "Studio Ollama models come from the live /api/tags list. "
+                "Unavailable local models do not fall back to paid APIs (ADR 0038). "
+                "Cloud complete() stays blocked until usage_billed_authorized."
+            ),
         }
 
     @app.get("/v1/secrets/status")

@@ -303,6 +303,110 @@
       border-radius: 10px; background: #111; border: 1px solid var(--line); font-size: 14px;
     }
     .link-row a:hover { border-color: #555; }
+
+    /* Cursor-like in-Studio preferences shell */
+    .prefs-shell {
+      display: none; position: fixed; inset: 0; z-index: 50;
+      grid-template-columns: 240px 1fr;
+      background: var(--bg); color: var(--ink);
+    }
+    .prefs-shell.open { display: grid; }
+    .prefs-nav {
+      border-right: 1px solid var(--line); background: var(--panel);
+      padding: 14px 10px; display: flex; flex-direction: column; gap: 2px;
+      overflow-y: auto;
+    }
+    .prefs-back {
+      display: flex; align-items: center; gap: 8px;
+      border: 0; background: transparent; color: var(--ink);
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      font: inherit; text-align: left; margin-bottom: 8px;
+    }
+    .prefs-back:hover { background: rgba(255,255,255,.06); }
+    .prefs-nav-label {
+      font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); padding: 10px 12px 6px;
+    }
+    .prefs-item {
+      display: block; width: 100%; border: 0; background: transparent;
+      color: var(--ink); padding: 10px 12px; border-radius: 10px;
+      cursor: pointer; font: inherit; text-align: left;
+    }
+    .prefs-item:hover { background: rgba(255,255,255,.06); }
+    .prefs-item.active { background: rgba(255,255,255,.1); font-weight: 600; }
+    .prefs-main { overflow-y: auto; padding: 28px 36px 56px; }
+    .prefs-pane { display: none; max-width: 760px; }
+    .prefs-pane.active { display: block; }
+    .prefs-pane h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: -.02em; }
+    .prefs-pane .prefs-lead { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+    .prefs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .prefs-card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px; display: flex; flex-direction: column; gap: 10px; min-height: 160px;
+    }
+    .prefs-card h2 { margin: 0; font-size: 17px; }
+    .prefs-card p { margin: 0; color: var(--muted); font-size: 13px; flex: 1; }
+    .prefs-pill {
+      align-self: flex-start; font: 11px/1 ui-monospace, Menlo, monospace;
+      padding: 5px 8px; border-radius: 999px;
+    }
+    .prefs-pill.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+    .prefs-pill.off { background: color-mix(in srgb, #ff6b7a 16%, transparent); color: #ff6b7a; }
+    .prefs-pill.warn { background: color-mix(in srgb, #e8b45c 16%, transparent); color: #e8b45c; }
+    .prefs-meta { font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--muted); }
+    .prefs-msg { font: 12px/1.4 ui-monospace, Menlo, monospace; color: var(--muted); min-height: 1.2em; }
+    .prefs-msg.ok { color: var(--accent); }
+    .prefs-msg.err { color: #ff6b7a; }
+    .prefs-flag { margin-bottom: 14px; }
+    .prefs-flag label.inline { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+    .prefs-key-row { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: end; margin-top: 8px; }
+    .prefs-help h2 { margin: 28px 0 10px; font-size: 17px; }
+    .prefs-help p, .prefs-help li { color: var(--muted); }
+    .prefs-help ul { padding-left: 1.2em; }
+    .prefs-help code, .prefs-help pre {
+      font: 12px/1.45 ui-monospace, Menlo, monospace;
+      background: #111; border: 1px solid var(--line); border-radius: 8px;
+    }
+    .prefs-help code { padding: 2px 6px; color: var(--ink); }
+    .prefs-help pre { padding: 12px 14px; overflow-x: auto; color: var(--ink); }
+
+    .prefs-topo {
+      display: grid; grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 0; margin-bottom: 18px; align-items: stretch;
+    }
+    .prefs-node {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+      padding: 14px; position: relative; overflow: hidden;
+    }
+    .prefs-node.live { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+    .prefs-node.down { border-color: color-mix(in srgb, #ff6b7a 35%, var(--line)); }
+    .prefs-node .role {
+      font: 11px/1 ui-monospace, Menlo, monospace; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+    .prefs-node h2 { margin: 0 0 4px; font-size: 16px; }
+    .prefs-node p { margin: 0; color: var(--muted); font-size: 12px; }
+    .prefs-link { width: 36px; display: flex; align-items: center; justify-content: center; color: var(--muted); opacity: .5; }
+    .prefs-status-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 14px; }
+    .prefs-svc { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+    .prefs-svc:last-child { border-bottom: 0; }
+    .prefs-bars { display: flex; flex-direction: column; gap: 10px; }
+    .prefs-bar-row { display: grid; grid-template-columns: 110px 1fr 28px; gap: 8px; align-items: center; }
+    .prefs-bar-row span { font: 12px/1 ui-monospace, Menlo, monospace; color: var(--muted); }
+    .prefs-track { height: 8px; background: #111; border-radius: 99px; overflow: hidden; }
+    .prefs-fill { height: 100%; width: 0; background: linear-gradient(90deg, #7cb8ff, var(--accent)); transition: width .5s ease; }
+    .prefs-clock { font: 12px/1.3 ui-monospace, Menlo, monospace; color: var(--muted); margin: -12px 0 18px; }
+    @media (max-width: 720px) {
+      .prefs-topo, .prefs-status-grid { grid-template-columns: 1fr; }
+      .prefs-link { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      .prefs-shell.open { grid-template-columns: 1fr; }
+      .prefs-nav { border-right: 0; border-bottom: 1px solid var(--line); max-height: 40vh; }
+      .prefs-grid { grid-template-columns: 1fr; }
+      .prefs-key-row { grid-template-columns: 1fr; }
+    }
     @media (max-width: 720px) {
       .sidebar { position: absolute; z-index: 30; height: 100%; transform: translateX(-100%); }
       .sidebar.open { transform: none; }
@@ -329,10 +433,11 @@
       </div>
 
       <div class="op-menu" id="op-menu" role="menu">
-        <a href="/lab">Lab</a>
-        <a href="/secrets">API keys</a>
-        <button type="button" id="menu-settings">Settings</button>
-        <a href="/help">Help</a>
+        <button type="button" data-prefs="status">Status</button>
+        <button type="button" data-prefs="lab">Lab</button>
+        <button type="button" data-prefs="keys">API keys</button>
+        <button type="button" data-prefs="settings" id="menu-settings">Settings</button>
+        <button type="button" data-prefs="help">Help</button>
         <div class="sep"></div>
         <button type="button" id="menu-close">Close</button>
       </div>
@@ -478,62 +583,6 @@
         </div>
       </div>
 
-      <!-- Settings -->
-      <div class="pane" id="pane-settings">
-        <div class="pane-inner">
-          <div class="page-head">
-            <div>
-              <h1>Settings</h1>
-              <p>Operator preferences for this Studio. Lab status and API keys stay on their own pages.</p>
-            </div>
-          </div>
-
-          <div class="settings-section">
-            <h2>MCP servers</h2>
-            <p class="lead">Connect Model Context Protocol servers your agents may use. Deny-by-default — only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git). Stdio transport is live; use <code>mcp/&lt;server&gt;/&lt;tool&gt;</code> in agent runs.</p>
-            <div class="mcp-list" id="mcp-list"></div>
-            <div class="form-grid">
-              <div>
-                <label for="mcp-id">Server id</label>
-                <input id="mcp-id" type="text" placeholder="filesystem" pattern="[a-z][a-z0-9_-]*">
-              </div>
-              <div>
-                <label for="mcp-label">Label</label>
-                <input id="mcp-label" type="text" placeholder="Local filesystem">
-              </div>
-              <div>
-                <label for="mcp-transport">Transport</label>
-                <select id="mcp-transport">
-                  <option value="stdio">stdio</option>
-                  <option value="sse">sse (not yet)</option>
-                  <option value="http">http (not yet)</option>
-                </select>
-              </div>
-              <div>
-                <label for="mcp-command">Command / URL</label>
-                <input id="mcp-command" type="text" placeholder="npx -y @modelcontextprotocol/server-filesystem /path">
-              </div>
-              <div class="form-actions">
-                <button type="button" class="btn primary" id="mcp-save">Save connection</button>
-                <button type="button" class="btn" id="mcp-probe">List tools</button>
-              </div>
-            </div>
-            <pre class="trace" id="mcp-tools" style="margin-top:12px;display:none"></pre>
-            <p class="hint" id="mcp-note" style="text-align:left;margin-top:12px"></p>
-          </div>
-
-          <div class="settings-section">
-            <h2>Lab &amp; keys</h2>
-            <p class="lead">Open full pages for host status, secrets, and help.</p>
-            <div class="link-row">
-              <a href="/lab">Lab</a>
-              <a href="/secrets">API keys</a>
-              <a href="/help">Help</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="composer-dock" id="composer-dock">
         <div class="composer-inner">
           <div class="attach-chips" id="attach-list"></div>
@@ -566,6 +615,171 @@
     </section>
   </div>
 
+  <div class="prefs-shell" id="prefs-shell" aria-hidden="true">
+    <aside class="prefs-nav">
+      <button type="button" class="prefs-back" id="prefs-back" title="Back to Studio">← Back</button>
+      <div class="prefs-nav-label">Preferences</div>
+      <button type="button" class="prefs-item" data-prefs="status">Status</button>
+      <button type="button" class="prefs-item" data-prefs="lab">Lab</button>
+      <button type="button" class="prefs-item" data-prefs="keys">API keys</button>
+      <button type="button" class="prefs-item" data-prefs="settings">Settings</button>
+      <button type="button" class="prefs-item" data-prefs="help">Help</button>
+    </aside>
+    <section class="prefs-main">
+      <div class="prefs-pane" id="prefs-status">
+        <h1>Status</h1>
+        <p class="prefs-lead">Control-plane health on the mini — services, Studio worker reachability, and work-order counts.</p>
+        <div class="prefs-clock" id="prefs-status-clock">syncing…</div>
+        <section class="prefs-topo" aria-label="Three-host lab">
+          <article class="prefs-node" id="prefs-node-air">
+            <div class="role">human plane</div>
+            <h2>mac-air</h2>
+            <p>Operator. Approvals live here later.</p>
+          </article>
+          <div class="prefs-link" aria-hidden="true">—</div>
+          <article class="prefs-node live" id="prefs-node-mini">
+            <div class="role">control plane</div>
+            <h2>mac-mini</h2>
+            <p id="prefs-mini-blurb">Postgres · Redis · Qdrant · LangGraph</p>
+          </article>
+          <div class="prefs-link" aria-hidden="true">—</div>
+          <article class="prefs-node down" id="prefs-node-studio">
+            <div class="role">compute plane</div>
+            <h2>mac-studio</h2>
+            <p id="prefs-studio-blurb">Worker not deployed. Queued jobs wait.</p>
+          </article>
+        </section>
+        <div class="prefs-status-grid">
+          <div class="settings-section">
+            <h2>Loopback services</h2>
+            <div id="prefs-services"></div>
+          </div>
+          <div class="settings-section">
+            <h2>Work orders</h2>
+            <div class="prefs-bars" id="prefs-orders"></div>
+          </div>
+        </div>
+        <p class="prefs-meta" style="margin-top:14px">JSON: <code>/health</code>, <code>/v1/status</code></p>
+      </div>
+
+      <div class="prefs-pane" id="prefs-lab">
+        <h1>Lab</h1>
+        <p class="prefs-lead">Open Studio Jupyter, check Ollama, and manage foundation keys — without leaving Studio.</p>
+        <div class="prefs-grid">
+          <article class="prefs-card">
+            <span class="prefs-pill off" id="prefs-jupyter-pill">checking…</span>
+            <h2>Studio JupyterLab</h2>
+            <p>Runs on mac-studio. One click opens Lab in a new tab over Tailscale.</p>
+            <button type="button" class="btn primary" id="prefs-open-jupyter" disabled>Open Jupyter</button>
+            <div class="prefs-meta" id="prefs-jupyter-meta"></div>
+          </article>
+          <article class="prefs-card">
+            <span class="prefs-pill off" id="prefs-ollama-pill">checking…</span>
+            <h2>Studio Ollama</h2>
+            <p>Local inference on the Studio. Models listed when reachable from the mini.</p>
+            <button type="button" class="btn" id="prefs-use-ollama">Back to chat</button>
+            <div class="prefs-meta" id="prefs-ollama-meta"></div>
+          </article>
+          <article class="prefs-card">
+            <span class="prefs-pill warn" id="prefs-vault-pill">keys</span>
+            <h2>Foundation APIs</h2>
+            <p>Enter OpenAI / Anthropic / Gemini keys. Stored on the mini; never shown again.</p>
+            <button type="button" class="btn primary" data-prefs="keys">Manage API keys</button>
+            <div class="prefs-meta" id="prefs-secrets-meta">Load status after sign-in…</div>
+          </article>
+          <article class="prefs-card">
+            <span class="prefs-pill on">ready</span>
+            <h2>Personal agents</h2>
+            <p>Chat and durable runs on the mini control plane.</p>
+            <button type="button" class="btn" id="prefs-open-agents">Open Agents</button>
+          </article>
+        </div>
+      </div>
+
+      <div class="prefs-pane" id="prefs-keys">
+        <h1>API keys</h1>
+        <p class="prefs-lead">Keys stay on the mini under <code>~/.ai-lab/secrets/</code> (mode 600). Never shown again after save. Usage-billed calls stay off until you authorize spend (ADR 0038).</p>
+        <div class="settings-section prefs-flag">
+          <label class="inline">
+            <input id="prefs-authorize" type="checkbox">
+            <span>I authorize <strong>usage-billed</strong> API calls (OpenAI / Anthropic / Gemini platform billing — not ChatGPT/Claude subscriptions alone).</span>
+          </label>
+          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap">
+            <div class="prefs-msg" id="prefs-flag-msg"></div>
+            <button type="button" class="btn primary" id="prefs-save-flag">Save authorization</button>
+          </div>
+        </div>
+        <div id="prefs-providers"></div>
+        <p class="prefs-meta" style="margin-top:12px">Vault migration later (ADR 0039). Do not paste keys into Git or chat.</p>
+      </div>
+
+      <div class="prefs-pane" id="prefs-settings">
+        <h1>Settings</h1>
+        <p class="prefs-lead">Operator preferences for this Studio. MCP connections are deny-by-default.</p>
+        <div class="settings-section">
+          <h2>MCP servers</h2>
+          <p class="lead">Connect Model Context Protocol servers your agents may use. Only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git). Stdio transport is live; use <code>mcp/&lt;server&gt;/&lt;tool&gt;</code> in agent runs.</p>
+          <div class="mcp-list" id="mcp-list"></div>
+          <div class="form-grid">
+            <div>
+              <label for="mcp-id">Server id</label>
+              <input id="mcp-id" type="text" placeholder="filesystem" pattern="[a-z][a-z0-9_-]*">
+            </div>
+            <div>
+              <label for="mcp-label">Label</label>
+              <input id="mcp-label" type="text" placeholder="Local filesystem">
+            </div>
+            <div>
+              <label for="mcp-transport">Transport</label>
+              <select id="mcp-transport">
+                <option value="stdio">stdio</option>
+                <option value="sse">sse (not yet)</option>
+                <option value="http">http (not yet)</option>
+              </select>
+            </div>
+            <div>
+              <label for="mcp-command">Command / URL</label>
+              <input id="mcp-command" type="text" placeholder="npx -y @modelcontextprotocol/server-filesystem /path">
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn primary" id="mcp-save">Save connection</button>
+              <button type="button" class="btn" id="mcp-probe">List tools</button>
+            </div>
+          </div>
+          <pre class="trace" id="mcp-tools" style="margin-top:12px;display:none"></pre>
+          <p class="hint" id="mcp-note" style="text-align:left;margin-top:12px"></p>
+        </div>
+      </div>
+
+      <div class="prefs-pane prefs-help" id="prefs-help">
+        <h1>Help</h1>
+        <p class="prefs-lead">How to authenticate the lab site and open Studio without SSH tunnels.</p>
+        <h2>Sign in (username + password)</h2>
+        <div class="settings-section">
+          <p>Use the Sign in dialog (username + password). On the mini, create your operator account once:</p>
+          <pre>cd ~/workspace/github/sgerhart/ai-lab
+./scripts/set-operator-password.sh</pre>
+          <p>The password hash stays in <code>~/.ai-lab/operator.json</code> (never Git). A session token is stored in your browser only.</p>
+        </div>
+        <h2>Lab API bearer token</h2>
+        <div class="settings-section">
+          <p>Optional for scripts and non-browser clients. Prefer username/password in the browser.</p>
+          <p>With <code>AI_LAB_AUTH_MODE=trusted_tailnet</code>, Tailscale/loopback browsers can call the API without a pasted token.</p>
+          <p>Script fallback: the token lives on <strong>mac-mini</strong> (do not paste into chat):</p>
+          <pre>ssh mac-mini 'test -f ~/.ai-lab/api.token &amp;&amp; echo present'</pre>
+        </div>
+        <h2>In Studio</h2>
+        <ul>
+          <li><strong>Status</strong> — mini services and work-order counts</li>
+          <li><strong>Lab</strong> — Jupyter + Ollama status</li>
+          <li><strong>API keys</strong> — foundation provider keys (write-only)</li>
+          <li><strong>Settings</strong> — MCP server connections</li>
+          <li><strong>Agents / Runs</strong> — personal workers on the mini</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
   <script>
     const state = {
       view: "chat",
@@ -574,6 +788,9 @@
       pendingActionId: null,
       definitionId: null,
       providers: [],
+      choices: [],
+      profiles: [],
+      defaultProfile: "fast-local",
       sending: false,
       attachments: [],
       definitions: [],
@@ -609,19 +826,48 @@
       el.style.height = Math.min(el.scrollHeight, 160) + "px";
     }
     function closeOpMenu() { $("op-menu").classList.remove("open"); }
+    function closePrefs() {
+      stopPrefsStatusPoll();
+      const shell = $("prefs-shell");
+      shell.classList.remove("open");
+      shell.setAttribute("aria-hidden", "true");
+      document.querySelectorAll(".prefs-item").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".prefs-pane").forEach((p) => p.classList.remove("active"));
+    }
+    function openPrefs(section) {
+      closeOpMenu();
+      const shell = $("prefs-shell");
+      shell.classList.add("open");
+      shell.setAttribute("aria-hidden", "false");
+      document.querySelectorAll(".prefs-item").forEach((b) => {
+        b.classList.toggle("active", b.getAttribute("data-prefs") === section);
+      });
+      document.querySelectorAll(".prefs-pane").forEach((p) => {
+        p.classList.toggle("active", p.id === "prefs-" + section);
+      });
+      if (section === "settings") loadMcp().catch((e) => showErr(e));
+      if (section === "lab") refreshPrefsLab().catch((e) => showErr(e));
+      if (section === "keys") refreshPrefsKeys().catch((e) => showErr(e));
+      if (section === "status") {
+        refreshPrefsStatus().catch((e) => showErr(e));
+        startPrefsStatusPoll();
+      } else {
+        stopPrefsStatusPoll();
+      }
+    }
     function setView(view, opts = {}) {
       state.view = view;
       closeOpMenu();
+      closePrefs();
       const titles = {
         chat: "Chat",
         agents: "Agents",
         agent: opts.creating ? "New agent" : "Agent",
         runs: "Runs",
         run: "Run",
-        settings: "Settings",
       };
       $("pane-title").textContent = titles[view] || view;
-      ["chat", "agents", "agent", "runs", "run", "settings"].forEach((v) => {
+      ["chat", "agents", "agent", "runs", "run"].forEach((v) => {
         $("pane-" + v).classList.toggle("active", v === view);
       });
       $("nav-agents").classList.toggle("active", view === "agents" || view === "agent");
@@ -630,27 +876,67 @@
       if (view === "chat") $("chat").focus();
     }
 
-    function fillModels() {
-      const p = state.providers.find((x) => x.id === $("provider").value);
-      const msel = $("model");
-      msel.innerHTML = "";
-      const models = (p && p.models && p.models.length) ? p.models : ["fake-instruct"];
-      for (const m of models) {
-        const opt = document.createElement("option");
-        opt.value = m; opt.textContent = m;
-        msel.appendChild(opt);
+    function selectedChoice() {
+      const raw = $("model").value || "";
+      const [backend, ...rest] = raw.split("::");
+      const model = rest.join("::");
+      if (backend && model) {
+        const fromChoices = (state.choices || []).find((c) => c.backend === backend && c.model === model);
+        if (fromChoices) return fromChoices;
+        return { backend, model, billing_class: backend === "ollama" ? "local" : "usage_billed_api", label: model, available: true };
       }
-      if (p && p.id === "ollama") {
-        const preferred = models.find((m) => m.includes("llama3.2"));
-        if (preferred) msel.value = preferred;
+      const p = state.providers.find((x) => x.id === $("provider").value);
+      return {
+        backend: $("provider").value || "fake",
+        model: raw || "fake-instruct",
+        billing_class: (p && p.billing_class) || "local",
+        label: raw,
+        available: true,
+      };
+    }
+    function fillModels() {
+      const msel = $("model");
+      const prev = msel.value;
+      msel.innerHTML = "";
+      const choices = (state.choices || []).filter((c) => c.available !== false);
+      if (choices.length) {
+        for (const c of choices) {
+          const opt = document.createElement("option");
+          opt.value = c.backend + "::" + c.model;
+          const bill = c.billing_class === "local" ? "local" : "usage-billed";
+          const label = c.profile_id
+            ? `${c.label} · ${c.model} (${bill})`
+            : `${c.model} (${bill})`;
+          opt.textContent = label;
+          opt.title = c.intended_use || "";
+          msel.appendChild(opt);
+        }
+        const defProf = state.defaultProfile || "fast-local";
+        const preferred = choices.find((c) => c.profile_id === defProf)
+          || choices.find((c) => (c.model || "").includes("llama3.2"))
+          || choices[0];
+        const preferredVal = preferred.backend + "::" + preferred.model;
+        if (prev && [...msel.options].some((o) => o.value === prev)) msel.value = prev;
+        else msel.value = preferredVal;
+        const ch = selectedChoice();
+        $("provider").value = ch.backend;
+      } else {
+        const p = state.providers.find((x) => x.id === $("provider").value);
+        const models = (p && p.models && p.models.length) ? p.models : ["fake-instruct"];
+        for (const m of models) {
+          const opt = document.createElement("option");
+          opt.value = (p ? p.id : "fake") + "::" + m;
+          opt.textContent = m;
+          msel.appendChild(opt);
+        }
       }
       updateChips();
     }
     function updateChips() {
-      const p = state.providers.find((x) => x.id === $("provider").value);
-      const model = $("model").value || "—";
-      $("model-chip").textContent = (p ? p.id : "?") + " · " + model;
-      $("billing-foot").textContent = (p && p.billing_class ? p.billing_class : "local") + (deepResearch() ? " · deep" : " · Studio");
+      const ch = selectedChoice();
+      const bill = ch.billing_class === "local" ? "local" : (ch.billing_class || "usage_billed_api");
+      $("model-chip").textContent = (ch.backend || "?") + " · " + (ch.model || "—");
+      $("billing-foot").textContent = bill + (deepResearch() ? " · deep" : " · Studio");
     }
     function renderAttachList() {
       $("attach-list").innerHTML = state.attachments.map((a) => `<span class="chip">${a.filename}</span>`).join("");
@@ -658,6 +944,9 @@
     async function loadProviders() {
       const data = await api("/v1/models");
       state.providers = data.providers || [];
+      state.choices = data.choices || [];
+      state.profiles = data.profiles || [];
+      state.defaultProfile = data.default_profile || "fast-local";
       const sel = $("provider");
       sel.innerHTML = "";
       for (const p of state.providers) {
@@ -675,8 +964,25 @@
       const ollama = state.providers.find((p) => p.id === "ollama" && p.enabled);
       sel.value = ollama ? "ollama" : "fake";
       fillModels();
-      sel.onchange = () => fillModels();
-      $("model").onchange = updateChips;
+      sel.onchange = () => {
+        // Provider override: rebuild from that provider's live model list
+        const p = state.providers.find((x) => x.id === sel.value);
+        if (p && p.models && p.models.length) {
+          state.choices = p.models.map((m) => ({
+            backend: p.id,
+            model: m,
+            billing_class: p.billing_class || "local",
+            label: m,
+            available: true,
+          }));
+        }
+        fillModels();
+      };
+      $("model").onchange = () => {
+        const ch = selectedChoice();
+        if (ch.backend) $("provider").value = ch.backend;
+        updateChips();
+      };
       $("mode").onchange = updateChips;
     }
 
@@ -944,15 +1250,206 @@
       $("op-menu").classList.toggle("open");
     };
     $("menu-close").onclick = () => closeOpMenu();
-    $("menu-settings").onclick = () => {
-      setView("settings");
-      loadMcp().catch((e) => showErr(e));
-    };
+    $("prefs-back").onclick = () => closePrefs();
+    document.querySelectorAll("[data-prefs]").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        openPrefs(el.getAttribute("data-prefs"));
+      });
+    });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && $("prefs-shell").classList.contains("open")) closePrefs();
+    });
     document.addEventListener("click", (ev) => {
       if (!$("op-menu").contains(ev.target) && ev.target !== $("op-btn") && !$("op-btn").contains(ev.target)) {
         closeOpMenu();
       }
     });
+
+
+    const prefsStatusLabels = {
+      postgres: "PostgreSQL",
+      redis: "Redis",
+      qdrant: "Qdrant",
+      studio: "Studio worker",
+    };
+    let prefsStatusTimer = null;
+    function stopPrefsStatusPoll() {
+      if (prefsStatusTimer) { clearInterval(prefsStatusTimer); prefsStatusTimer = null; }
+    }
+    function startPrefsStatusPoll() {
+      stopPrefsStatusPoll();
+      prefsStatusTimer = setInterval(() => { refreshPrefsStatus().catch(() => {}); }, 4000);
+    }
+    async function refreshPrefsStatus() {
+      $("prefs-status-clock").textContent =
+        new Date().toISOString().replace("T", " ").replace("Z", " UTC");
+      const res = await fetch("/v1/status");
+      const d = await res.json();
+      $("prefs-mini-blurb").textContent =
+        `${d.orchestrator} · ${d.work_order_store} · checkpoints ${d.checkpoints}`;
+      const studio = (d.services && d.services.studio) || {};
+      const studioNode = $("prefs-node-studio");
+      studioNode.classList.toggle("down", !studio.open);
+      studioNode.classList.toggle("live", !!studio.open);
+      $("prefs-studio-blurb").textContent = studio.open
+        ? "Worker reachable on this host."
+        : "Worker not deployed. Queued jobs wait.";
+      const svc = $("prefs-services");
+      svc.innerHTML = "";
+      for (const [key, row] of Object.entries(d.services || {})) {
+        const el = document.createElement("div");
+        el.className = "prefs-svc";
+        el.innerHTML = `<div><div style="font-weight:600">${prefsStatusLabels[key] || key}</div>
+          <div class="prefs-meta">127.0.0.1:${row.port}</div></div>
+          <span class="prefs-pill ${row.open ? "on" : "off"}">${row.open ? "open" : "closed"}</span>`;
+        svc.appendChild(el);
+      }
+      const counts = d.work_orders || {};
+      const vals = Object.values(counts);
+      const max = Math.max(1, ...(vals.length ? vals : [0]));
+      const orders = $("prefs-orders");
+      orders.innerHTML = "";
+      for (const [name, n] of Object.entries(counts)) {
+        const row = document.createElement("div");
+        row.className = "prefs-bar-row";
+        row.innerHTML = `<span>${name}</span><div class="prefs-track"><div class="prefs-fill" style="width:${(n / max) * 100}%"></div></div><span>${n}</span>`;
+        orders.appendChild(row);
+      }
+    }
+
+    function setPrefsPill(id, ok, label) {
+      const el = $(id);
+      el.className = "prefs-pill " + (ok ? "on" : "off");
+      el.textContent = label;
+    }
+    async function refreshPrefsLab() {
+      const res = await fetch("/v1/connect/status");
+      const d = await res.json();
+      const j = d.jupyter || {};
+      const o = d.ollama || {};
+      setPrefsPill("prefs-jupyter-pill", j.http_ok || j.port_open, j.http_ok ? "reachable" : (j.port_open ? "port open" : "down"));
+      setPrefsPill("prefs-ollama-pill", o.http_ok, o.http_ok ? "reachable" : "down");
+      $("prefs-jupyter-meta").textContent = j.configured
+        ? `host ${j.url_host || "?"} · token ${j.token_configured ? "on mini" : "missing"}`
+        : "STUDIO_JUPYTER_URL not set on mini";
+      $("prefs-ollama-meta").textContent = o.http_ok
+        ? `models: ${(o.models || []).join(", ") || "(none)"}`
+        : (o.configured ? `host ${o.url_host || "?"}` : "STUDIO_OLLAMA_URL not set");
+      $("prefs-open-jupyter").disabled = !(j.configured && j.token_configured);
+      try {
+        const s = await api("/v1/secrets/status");
+        const n = (s.providers || []).filter((p) => p.configured).length;
+        setPrefsPill("prefs-vault-pill", n > 0, n ? (n + " keys") : "none");
+        $("prefs-secrets-meta").textContent = s.usage_billed_authorized
+          ? "usage-billed authorized · " + n + " key(s)"
+          : n + " key(s) · usage-billed not authorized yet";
+      } catch (_) { /* ignore */ }
+    }
+    $("prefs-open-jupyter").onclick = async () => {
+      try {
+        const res = await fetch("/v1/connect/jupyter", { headers: headers(), redirect: "manual" });
+        if (res.status === 401) { showErr("Unauthorized — sign in again."); return; }
+        if (res.status === 503) {
+          const body = await res.json().catch(() => ({}));
+          showErr(body.detail || "Jupyter not configured on mini");
+          return;
+        }
+        if (res.ok) {
+          const body = await res.json();
+          if (body.open_url) { window.open(body.open_url, "_blank", "noopener"); return; }
+        }
+        const loc = res.headers.get("Location");
+        if (loc) window.open(loc, "_blank", "noopener");
+        else showErr("Could not open Jupyter (" + res.status + ")");
+      } catch (e) { showErr(e); }
+    };
+    $("prefs-use-ollama").onclick = () => { closePrefs(); setView("chat"); };
+    $("prefs-open-agents").onclick = () => {
+      closePrefs();
+      setView("agents");
+      loadDefinitions().catch((e) => showErr(e));
+    };
+
+    function prefsProviderCard(p) {
+      const el = document.createElement("div");
+      el.className = "settings-section";
+      el.innerHTML = `
+        <span class="prefs-pill ${p.configured ? "on" : "off"}">${p.configured ? "configured" : "missing"}</span>
+        <h2 style="margin:8px 0 4px;font-size:17px;">${p.id}</h2>
+        <p class="lead" style="margin-bottom:10px">${p.hint || ""} · ${p.billing_class}</p>
+        <label for="prefs-key-${p.id}">New API key (write-only)</label>
+        <div class="prefs-key-row">
+          <input id="prefs-key-${p.id}" type="password" autocomplete="off" placeholder="${p.configured ? "•••••••• (leave blank to keep)" : "sk-…"}">
+          <button type="button" class="btn primary" data-prefs-save="${p.id}">Save</button>
+          <button type="button" class="btn" data-prefs-clear="${p.id}" ${p.configured ? "" : "disabled"}>Clear</button>
+        </div>
+        <div class="prefs-msg" id="prefs-msg-${p.id}"></div>
+      `;
+      return el;
+    }
+    async function refreshPrefsKeys() {
+      const d = await api("/v1/secrets/status");
+      $("prefs-authorize").checked = !!d.usage_billed_authorized;
+      const root = $("prefs-providers");
+      root.innerHTML = "";
+      (d.providers || []).forEach((p) => root.appendChild(prefsProviderCard(p)));
+      root.querySelectorAll("[data-prefs-save]").forEach((btn) => {
+        btn.addEventListener("click", () => savePrefsProvider(btn.getAttribute("data-prefs-save")));
+      });
+      root.querySelectorAll("[data-prefs-clear]").forEach((btn) => {
+        btn.addEventListener("click", () => clearPrefsProvider(btn.getAttribute("data-prefs-clear")));
+      });
+      $("prefs-flag-msg").textContent = "";
+      $("prefs-flag-msg").className = "prefs-msg";
+    }
+    async function savePrefsProvider(id) {
+      const msg = $("prefs-msg-" + id);
+      const input = $("prefs-key-" + id);
+      msg.className = "prefs-msg";
+      try {
+        await api("/v1/secrets/providers/" + id, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: input.value }),
+        });
+        input.value = "";
+        msg.className = "prefs-msg ok";
+        msg.textContent = "Saved (value not shown again)";
+        await refreshPrefsKeys();
+      } catch (e) {
+        msg.className = "prefs-msg err";
+        msg.textContent = String(e.message || e);
+      }
+    }
+    async function clearPrefsProvider(id) {
+      if (!confirm("Remove " + id + " key from the mini?")) return;
+      const msg = $("prefs-msg-" + id);
+      try {
+        await api("/v1/secrets/providers/" + id, { method: "DELETE" });
+        msg.className = "prefs-msg ok";
+        msg.textContent = "Cleared";
+        await refreshPrefsKeys();
+      } catch (e) {
+        msg.className = "prefs-msg err";
+        msg.textContent = String(e.message || e);
+      }
+    }
+    $("prefs-save-flag").onclick = async () => {
+      const msg = $("prefs-flag-msg");
+      try {
+        await api("/v1/secrets/usage-billed", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ authorized: $("prefs-authorize").checked }),
+        });
+        msg.className = "prefs-msg ok";
+        msg.textContent = "Authorization saved";
+      } catch (e) {
+        msg.className = "prefs-msg err";
+        msg.textContent = String(e.message || e);
+      }
+    };
 
     $("attach-btn").onclick = () => $("file").click();
     $("file").onchange = async () => {
@@ -991,15 +1488,14 @@
     $("agent-run").onclick = async () => {
       try {
         if (!state.definitionId) return;
-        const backend = $("provider").value || "fake";
-        const p = state.providers.find((x) => x.id === backend);
+        const ch = selectedChoice();
         const run = await api(`/v1/agent-definitions/${state.definitionId}/runs`, {
           method: "POST",
           body: JSON.stringify({
             objective: $("agent-objective").value.trim() || "Check lab health using tools, then summarize.",
-            model: $("model").value || "fake-instruct",
-            billing_class: (p && p.billing_class) || "local",
-            backend,
+            model: ch.model || "fake-instruct",
+            billing_class: ch.billing_class || "local",
+            backend: ch.backend || "fake",
             max_steps: 8,
           }),
         });
@@ -1078,6 +1574,7 @@
         $("messages").appendChild(asst);
         $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
 
+        const ch = selectedChoice();
         const res = await fetch(`/v1/conversations/${state.conversationId}/messages/stream`, {
           method: "POST",
           headers: headers(),
@@ -1085,8 +1582,8 @@
             content: text,
             role: "user",
             reply: true,
-            backend: $("provider").value || "fake",
-            model: $("model").value || "fake-instruct",
+            backend: ch.backend || "fake",
+            model: ch.model || "fake-instruct",
             attachment_ids: state.attachments.map((a) => a.id),
             deep_research: deepResearch(),
           }),
@@ -1150,14 +1647,15 @@
         try {
           if (!state.conversationId) await newConversation();
           const t0 = performance.now();
+          const ch = selectedChoice();
           const resp = await api(`/v1/conversations/${state.conversationId}/messages`, {
             method: "POST",
             body: JSON.stringify({
               content: text,
               role: "user",
               reply: true,
-              backend: $("provider").value || "fake",
-              model: $("model").value || "fake-instruct",
+              backend: ch.backend || "fake",
+              model: ch.model || "fake-instruct",
               attachment_ids: state.attachments.map((a) => a.id),
               deep_research: deepResearch(),
             }),

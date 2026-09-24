@@ -21,12 +21,21 @@ FEAT-001, FEAT-010, FEAT-003 (often); ADR 0018. Prefer subscription-authorized
 **official** coding clients (Claude Code / Codex) where appropriate; do not
 abuse them as generic harness APIs (ADR 0038).
 
+## Related
+
+Local model profiles + read-only Coding Assistant land under
+[FEAT-016](FEAT-016-local-coding-models-and-assistant.md) (IWO-055+). This Feature
+remains the **write / PR delivery** track after hardening gates (IWO-058).
+
 ## Proposed IWOs
 
 | ID | Title | Acceptance |
 |----|-------|------------|
-| IWO-030 | Coding agent tools behind approval | Branch for toy IWO |
-| IWO-031 | PR creation privileged tool | Human merge required |
+| IWO-055+ | See FEAT-016 (profiles, read-only, eval) | Before write/PR |
+| IWO-058 (planned) | Isolated worktree + exact-action PR tools | Human merge required |
+
+Historical note: earlier draft IWO-030/031 ids here were **reused** for scheduler
+and background worker; do not revive them for coding.
 
 ## Out of scope
 

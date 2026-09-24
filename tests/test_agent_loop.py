@@ -227,7 +227,11 @@ class MiniApiLoopTests(unittest.TestCase):
         self.assertNotIn("Lab API token", page.text)
         models = self.client.get("/v1/models", headers=self.h)
         self.assertEqual(models.status_code, 200)
-        self.assertTrue(any(p["id"] == "fake" or p["billing_class"] for p in models.json()["providers"]))
+        body = models.json()
+        self.assertTrue(any(p["id"] == "fake" or p["billing_class"] for p in body["providers"]))
+        self.assertIn("profiles", body)
+        self.assertIn("choices", body)
+        self.assertTrue(any(p["id"] == "fast-local" for p in body["profiles"]))
         conv = self.client.post("/v1/conversations", headers=self.h, json={"agent": "lab-operations"}).json()
         run = self.client.post(
             f"/v1/conversations/{conv['id']}/runs",

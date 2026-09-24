@@ -55,12 +55,32 @@ python3 -m venv .venv
 
 ## 4. Configuration
 
-Ollama must listen on loopback (or later the Tailscale IPv4), never all interfaces:
+Ollama must listen on loopback **or** this host’s Tailscale IPv4 — never `0.0.0.0` /
+all interfaces (F-003 class):
 
 ```bash
-# Example — exact launchctl/plist path is host-specific; record it in local.inventory.yaml
+# Loopback-only (CLI on Studio works with defaults):
 export OLLAMA_HOST=127.0.0.1:11434
+
+# Lab pattern when the mini must reach Studio over Tailscale:
+export OLLAMA_HOST="$(tailscale ip -4):11434"
+# Then restart `ollama serve` with that env.
 ```
+
+**Gotcha (live on this Studio):** If `ollama serve` is bound to the Tailscale
+IPv4 only, then `curl http://127.0.0.1:11434` and bare `ollama pull` fail with
+“ollama is not running” even though the process is up. Fix the **client** to
+match the serve bind:
+
+```bash
+export PATH="/opt/homebrew/bin:$PATH"
+export OLLAMA_HOST="$(tailscale ip -4):11434"
+ollama list
+# ollama pull <name>   # only after owner authorizes the pull
+```
+
+The mini already uses `STUDIO_OLLAMA_URL=http://mac-studio:11434` and does not
+need loopback on Studio.
 
 Worker URL that the **M1** will call after Tailscale join:
 
@@ -94,7 +114,8 @@ curl -sS -X POST http://127.0.0.1:8090/v1/tasks \
   -H 'Content-Type: application/json' \
   -d '{"work_order_id":"demo","agent":"lab-operations","objective":"health"}'
 
-curl -sS http://127.0.0.1:11434/api/tags   # after Ollama is running; empty list is OK
+curl -sS "http://$(tailscale ip -4):11434/api/tags"   # if serve is Tailscale-bound
+# or: curl -sS http://127.0.0.1:11434/api/tags          # if serve is loopback-bound
 ```
 
 From the M1 (when Tailscale and binds are set): POST `/v1/work-orders` on the control plane should reach this worker. If this host is down, the control plane **re-queues** the work order with `studio_unavailable` — it must not disappear. If the plan itself fails, the work order is persisted as `failed` with `plan_failed`.

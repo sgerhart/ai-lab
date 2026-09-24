@@ -12,7 +12,20 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "platform" / "src"))
 
 from ai_lab_platform.eval_dry_run import main as eval_main, run_dry_eval
-from ai_lab_platform.model_catalog import PullRefused, listed_ids, load_catalog, refuse_pull
+from ai_lab_platform.model_catalog import (
+    LocalModelUnavailable,
+    PullRefused,
+    find_installed_match,
+    list_studio_choices,
+    listed_ids,
+    load_catalog,
+    ollama_tag_matches,
+    refuse_pull,
+    require_local_available,
+    resolve_profile,
+    summarize_profiles,
+)
+from ai_lab_platform.model_router import CompletionRequest, DisabledCloudBackend, FakeBackend, ModelRouter
 from ai_lab_platform.train_refuse import main as train_main
 
 
@@ -26,6 +39,10 @@ class ModelCatalogTests(unittest.TestCase):
             self.assertFalse(model.get("pull_authorized"))
         # Git may list catalogued models; weights stay off-repo.
         self.assertEqual(set(listed_ids()), {m["id"] for m in data["models"]})
+        profiles = data.get("profiles") or []
+        self.assertGreaterEqual(len(profiles), 4)
+        ids = {p["id"] for p in profiles}
+        self.assertTrue({"general-local", "coding-local", "fast-local", "frontier-coding"} <= ids)
 
     def test_refuse_pull(self) -> None:
         with self.assertRaises(PullRefused):
@@ -60,6 +77,77 @@ class ModelCatalogTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             load_catalog(path)
+
+
+class ModelProfileTests(unittest.TestCase):
+    def test_tag_match_variants(self) -> None:
+        self.assertTrue(ollama_tag_matches("qwen3-coder:30b", "qwen3-coder:30b"))
+        self.assertTrue(ollama_tag_matches("qwen3-coder:30b-a3b-q4_K_M", "qwen3-coder:30b"))
+        self.assertTrue(ollama_tag_matches("llama3.2:3b", "llama3.2:3b"))
+        self.assertFalse(ollama_tag_matches("llama3.2:3b", "qwen3-coder:30b"))
+
+    def test_fast_local_available_when_installed(self) -> None:
+        r = resolve_profile("fast-local", installed_ollama=["llama3.2:3b"])
+        self.assertTrue(r.available)
+        self.assertEqual(r.backend, "ollama")
+        self.assertEqual(r.model, "llama3.2:3b")
+        self.assertEqual(r.billing_class, "local")
+
+    def test_coding_local_unavailable_without_install(self) -> None:
+        r = resolve_profile("coding-local", installed_ollama=["llama3.2:3b"])
+        self.assertFalse(r.available)
+        self.assertEqual(r.reason, "not_installed_on_studio")
+        with self.assertRaises(LocalModelUnavailable):
+            require_local_available(r)
+
+    def test_coding_local_matches_variant_tag(self) -> None:
+        r = resolve_profile(
+            "coding-local",
+            installed_ollama=["qwen3-coder:30b-a3b-q4_K_M", "llama3.2:3b"],
+        )
+        self.assertTrue(r.available)
+        self.assertEqual(r.model, "qwen3-coder:30b-a3b-q4_K_M")
+
+    def test_frontier_unavailable_without_cloud(self) -> None:
+        r = resolve_profile("frontier-coding", installed_ollama=[], cloud_enabled={"openai": False})
+        self.assertFalse(r.available)
+        self.assertEqual(r.billing_class, "usage_billed_api")
+
+    def test_studio_choices_list_installed(self) -> None:
+        choices = list_studio_choices(["llama3.2:3b", "custom:7b"])
+        models = {c["model"] for c in choices}
+        self.assertIn("llama3.2:3b", models)
+        self.assertIn("custom:7b", models)
+        fast = next(c for c in choices if c["model"] == "llama3.2:3b")
+        self.assertEqual(fast["profile_id"], "fast-local")
+        self.assertEqual(fast["billing_class"], "local")
+
+    def test_summarize_profiles(self) -> None:
+        rows = summarize_profiles(installed_ollama=["llama3.2:3b"], cloud_enabled={})
+        by_id = {r["id"]: r for r in rows}
+        self.assertTrue(by_id["fast-local"]["available"])
+        self.assertFalse(by_id["coding-local"]["available"])
+
+    def test_find_installed_match(self) -> None:
+        self.assertEqual(
+            find_installed_match(["qwen3.8:27b-mlx"], ["qwen3.8:27b", "qwen3.8:27b-mlx"]),
+            "qwen3.8:27b-mlx",
+        )
+
+    def test_unavailable_local_does_not_invoke_cloud(self) -> None:
+        """Selecting a missing local model must not call a paid backend."""
+        cloud = DisabledCloudBackend("openai")
+        router = ModelRouter(
+            backends={"ollama": FakeBackend(), "openai": cloud},
+            default_backend="ollama",
+            allow_fallback=False,
+        )
+        resolved = resolve_profile("coding-local", installed_ollama=["llama3.2:3b"])
+        with self.assertRaises(LocalModelUnavailable):
+            require_local_available(resolved)
+        # Explicitly still no cloud complete
+        with self.assertRaises(PermissionError):
+            router.complete(CompletionRequest(model="gpt-4.1", prompt="x", backend="openai"))
 
 
 class EvalDryRunTests(unittest.TestCase):
