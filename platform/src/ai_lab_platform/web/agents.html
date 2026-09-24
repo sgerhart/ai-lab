@@ -209,6 +209,12 @@
       text-align: center; font-size: 12px; color: var(--muted);
       margin-top: 10px;
     }
+    .perf-meter {
+      text-align: center; font-size: 12px; color: var(--muted);
+      margin: 0 0 8px; min-height: 1.2em; font-variant-numeric: tabular-nums;
+      letter-spacing: .01em;
+    }
+    .perf-meter[data-live="1"] { color: var(--accent); }
     .err {
       color: var(--down); font-size: 13px; text-align: center; margin-top: 6px;
       min-height: 1.2em;
@@ -538,6 +544,7 @@
       <div class="composer-dock" id="composer-dock">
         <div class="composer-inner">
           <div class="attach-chips" id="attach-list"></div>
+          <div class="perf-meter" id="perf-meter" aria-live="polite"></div>
           <div class="composer">
             <div>
               <input type="file" id="file" hidden accept=".pdf,.md,.txt,.png,.jpg,.jpeg,.webp">
@@ -1021,6 +1028,17 @@
       } catch (e) { showErr(e); }
     };
 
+    function setPerf(text, live) {
+      const el = $("perf-meter");
+      if (!el) return;
+      el.textContent = text || "";
+      el.dataset.live = live ? "1" : "0";
+    }
+    function approxTokens(s) {
+      // Rough client estimate until Ollama reports eval_count
+      return Math.max(1, Math.round(String(s || "").length / 4));
+    }
+
     $("chat").addEventListener("input", autosize);
     $("chat").addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" && !ev.shiftKey) {
@@ -1033,6 +1051,9 @@
       if (!text || state.sending) return;
       state.sending = true;
       $("send-chat").disabled = true;
+      setPerf("…", true);
+      let streamStarted = 0;
+      let gotOfficial = false;
       try {
         if (!state.conversationId) await newConversation();
         $("chat").value = "";
@@ -1074,14 +1095,41 @@
             let ev;
             try { ev = JSON.parse(line.slice(6)); } catch { continue; }
             if (ev.event === "token") {
+              if (!streamStarted) streamStarted = performance.now();
               ab.textContent += ev.text || "";
               $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
+              if (!gotOfficial) {
+                const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
+                const toks = approxTokens(ab.textContent);
+                setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens`, true);
+              }
+            } else if (ev.event === "metrics") {
+              gotOfficial = true;
+              const tps = ev.tokens_per_sec;
+              const n = ev.eval_count;
+              const sec = (typeof ev.eval_duration_ns === "number" && ev.eval_duration_ns > 0)
+                ? (ev.eval_duration_ns / 1e9) : null;
+              if (typeof tps === "number") {
+                const bits = [`${tps.toFixed(1)} tok/s`];
+                if (typeof n === "number") bits.push(`${n} tokens`);
+                if (sec != null) bits.push(`${sec.toFixed(1)}s eval`);
+                setPerf(bits.join(" · "), false);
+              } else if (streamStarted) {
+                const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
+                const toks = approxTokens(ab.textContent);
+                setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens · ${elapsed.toFixed(1)}s`, false);
+              }
             } else if (ev.event === "error") {
               showErr(ev.error);
             } else if (ev.event === "done") {
               showErr("");
               state.attachments = [];
               renderAttachList();
+              if (!gotOfficial && streamStarted) {
+                const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
+                const toks = approxTokens(ab.textContent);
+                setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens · ${elapsed.toFixed(1)}s`, false);
+              }
               await loadConversations();
             }
           }
@@ -1089,6 +1137,7 @@
       } catch (e) {
         try {
           if (!state.conversationId) await newConversation();
+          const t0 = performance.now();
           const resp = await api(`/v1/conversations/${state.conversationId}/messages`, {
             method: "POST",
             body: JSON.stringify({
@@ -1106,7 +1155,11 @@
           renderAttachList();
           await refreshMessages();
           await loadConversations();
-        } catch (e2) { showErr(e2); }
+          const elapsed = Math.max(0.05, (performance.now() - t0) / 1000);
+          const reply = (resp.content || resp.reply || "");
+          const toks = approxTokens(typeof reply === "string" ? reply : "");
+          setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens · ${elapsed.toFixed(1)}s (non-stream)`, false);
+        } catch (e2) { showErr(e2); setPerf("", false); }
       } finally {
         state.sending = false;
         $("send-chat").disabled = false;

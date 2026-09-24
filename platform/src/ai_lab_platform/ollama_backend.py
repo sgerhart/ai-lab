@@ -83,7 +83,13 @@ class OllamaBackend:
         )
 
     def stream_complete(self, request: CompletionRequest):
-        """Yield text chunks from Ollama streaming generate. Raises OllamaUnavailable."""
+        """Yield stream events from Ollama generate.
+
+        Each event is a dict:
+        - ``{"text": "..."}`` for response chunks
+        - ``{"done": True, "eval_count": N, "eval_duration_ns": ns}`` on completion
+          when Ollama reports timings (for tokens/sec).
+        """
         import httpx
 
         url = self.base_url + "/api/generate"
@@ -107,12 +113,25 @@ class OllamaBackend:
                         data = json.loads(line)
                     except json.JSONDecodeError:
                         continue
-                    if isinstance(data, dict):
-                        chunk = data.get("response") or ""
-                        if chunk:
-                            yield str(chunk)
-                        if data.get("done"):
-                            break
+                    if not isinstance(data, dict):
+                        continue
+                    chunk = data.get("response") or ""
+                    if chunk:
+                        yield {"text": str(chunk)}
+                    if data.get("done"):
+                        ev: dict[str, Any] = {"done": True}
+                        if data.get("eval_count") is not None:
+                            try:
+                                ev["eval_count"] = int(data["eval_count"])
+                            except (TypeError, ValueError):
+                                pass
+                        if data.get("eval_duration") is not None:
+                            try:
+                                ev["eval_duration_ns"] = int(data["eval_duration"])
+                            except (TypeError, ValueError):
+                                pass
+                        yield ev
+                        break
         except httpx.HTTPError as exc:
             raise OllamaUnavailable(str(exc)) from exc
 

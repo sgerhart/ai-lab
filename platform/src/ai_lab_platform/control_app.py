@@ -747,12 +747,39 @@ def create_control_app(
         def event_stream():
             yield f"data: {json.dumps({'event': 'user', 'message': message.to_dict()})}\n\n"
             parts: list[str] = []
+            metrics: dict[str, Any] = {}
             try:
                 backend_obj = router.backends.get(backend)
                 if isinstance(backend_obj, OllamaBackend) and hasattr(backend_obj, "stream_complete"):
-                    for chunk in backend_obj.stream_complete(req):
-                        parts.append(chunk)
-                        yield f"data: {json.dumps({'event': 'token', 'text': chunk})}\n\n"
+                    for item in backend_obj.stream_complete(req):
+                        if not isinstance(item, dict):
+                            # Back-compat if a stub yields plain strings
+                            text = str(item)
+                            if text:
+                                parts.append(text)
+                                yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
+                            continue
+                        text = item.get("text") or ""
+                        if text:
+                            parts.append(str(text))
+                            yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
+                        if item.get("done"):
+                            eval_count = item.get("eval_count")
+                            eval_ns = item.get("eval_duration_ns")
+                            tps = None
+                            if (
+                                isinstance(eval_count, int)
+                                and isinstance(eval_ns, int)
+                                and eval_ns > 0
+                            ):
+                                tps = round(eval_count / (eval_ns / 1e9), 2)
+                            metrics = {
+                                "eval_count": eval_count,
+                                "eval_duration_ns": eval_ns,
+                                "tokens_per_sec": tps,
+                                "source": "ollama",
+                            }
+                            yield f"data: {json.dumps({'event': 'metrics', **metrics})}\n\n"
                     full = "".join(parts)
                     billing = backend_obj.billing_class.value
                 else:
@@ -773,6 +800,7 @@ def create_control_app(
                     "model": model,
                     "billing_class": billing,
                     "deep_research": bool(body.deep_research),
+                    **({"perf": metrics} if metrics else {}),
                 },
             )
             store.put_message(assistant)  # type: ignore[attr-defined]
