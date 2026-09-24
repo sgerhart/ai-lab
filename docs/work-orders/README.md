@@ -56,6 +56,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-040](IWO-040-retrieval-api.md) | Retrieval API + citation policy | Complete (unit; Qdrant optional) |
 | [IWO-041](IWO-041-memory-write-gates.md) | Agent memory_write gates | Complete (unit) |
 | [IWO-042](IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | Complete (unit) |
+| [IWO-044](IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | Complete (read-only) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
