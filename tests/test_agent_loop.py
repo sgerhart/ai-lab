@@ -223,8 +223,8 @@ class MiniApiLoopTests(unittest.TestCase):
     def test_agents_page_and_execute_run(self) -> None:
         page = self.client.get("/agents")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("Lab API token", page.text)
         self.assertIn("Ask anything", page.text)
+        self.assertNotIn("Lab API token", page.text)
         models = self.client.get("/v1/models", headers=self.h)
         self.assertEqual(models.status_code, 200)
         self.assertTrue(any(p["id"] == "fake" or p["billing_class"] for p in models.json()["providers"]))
@@ -242,8 +242,15 @@ class MiniApiLoopTests(unittest.TestCase):
         )
         self.assertEqual(run.status_code, 200, run.text)
         body = run.json()
-        self.assertIn(body["status"], {"completed", "awaiting_approval", "failed"})
-        self.assertTrue(any(t.get("kind") == "tool_result" for t in body["traces"]))
+        self.assertEqual(body["status"], "queued")
+        drained = self.client.post("/v1/agent-runs/worker/tick", headers=self.h)
+        self.assertEqual(drained.status_code, 200, drained.text)
+        self.assertTrue(drained.json()["processed"])
+        done = self.client.get(f"/v1/agent-runs/{body['id']}", headers=self.h)
+        self.assertEqual(done.status_code, 200)
+        final = done.json()
+        self.assertIn(final["status"], {"completed", "awaiting_approval", "failed"})
+        self.assertTrue(any(t.get("kind") == "tool_result" for t in final["traces"]))
 
     def test_unauthenticated_mutate(self) -> None:
         denied = self.client.post("/v1/conversations", json={"agent": "lab-operations"})

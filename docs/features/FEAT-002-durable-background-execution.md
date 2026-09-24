@@ -1,6 +1,6 @@
 # FEAT-002 — Durable background execution
 
-- **Status:** Specified (partially live)
+- **Status:** Partial (IWO-031 background worker in Git)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#3](https://github.com/sgerhart/ai-lab/issues/3)
@@ -34,8 +34,8 @@ never the only copy of a job.
 ## Proposed deliverables
 
 - Already: FastAPI, PostgresStore, checkpoints, LaunchAgent, Studio-down requeue
-- Future (IWO-006): stuck-`running` reconcile, clearer cancel/retry safety,
-  conversation-linked background runs
+- IWO-006: stuck-`running` reconcile, cancel/retry safety
+- IWO-031: agent runs enqueue as `queued`; in-process worker + `/v1/agent-runs/worker/tick`
 
 ## Proposed implementation work orders
 
@@ -47,8 +47,8 @@ never the only copy of a job.
 
 - [x] Laptop closed; job still in Postgres (partial — today’s runtime WOs)
 - [x] Studio down → `queued` + visible error
-- [ ] Agent-run background path same guarantees (FEAT-010)
-- [ ] Safe retry only when idempotent / allowed
+- [x] Agent-run background path same guarantees (IWO-031 enqueue + worker)
+- [x] Safe retry only when idempotent / allowed (re-queues for worker)
 
 ## Out of scope
 
@@ -59,6 +59,6 @@ never the only copy of a job.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | platform store + slice_graph |
-| Deploy | Partial | mini:8088 |
-| Live verified | Partial | submit/health from Air |
+| Code | Partial | store + slice_graph + IWO-031 agent-run worker |
+| Deploy | Partial | mini:8088 (worker on when DATABASE_URL / AI_LAB_AGENT_WORKER) |
+| Live verified | Partial | submit/health from Air; worker unit-tested |

@@ -40,13 +40,24 @@
     <h1>Operator guide</h1>
     <p class="lead">How to authenticate the lab site and open Studio without SSH tunnels.</p>
 
+    <h2 id="login">Sign in (username + password)</h2>
+    <div class="card">
+      <p><strong>Preferred for Studio:</strong> use the Sign in dialog (username + password).
+        On the mini, create your operator account once:</p>
+      <pre>cd ~/workspace/github/sgerhart/ai-lab
+./scripts/set-operator-password.sh</pre>
+      <p>The password hash stays in <code>~/.ai-lab/operator.json</code> (never Git).
+        A session token is stored in your browser only.</p>
+    </div>
+
     <h2 id="token">Lab API bearer token (<code>AI_LAB_API_TOKEN</code>)</h2>
     <div class="card">
-      <p><strong>Preferred:</strong> with <code>AI_LAB_AUTH_MODE=trusted_tailnet</code> on the mini,
-      browsers on your Tailscale network (or loopback) do <em>not</em> need to paste a token.
-      The top nav shows “Signed in via Tailscale”.</p>
-      <p>Optional fallback (non-tailnet clients): the token lives on <strong>mac-mini</strong>:</p>
-      <pre>ssh mac-mini 'cat ~/.ai-lab/api.token'</pre>
+      <p>Optional for scripts and non-browser clients. Prefer
+        <a href="#login">username/password</a> in the browser.</p>
+      <p>With <code>AI_LAB_AUTH_MODE=trusted_tailnet</code>, Tailscale/loopback browsers
+        can also call the API without a pasted token (“Signed in via Tailscale”).</p>
+      <p>Script fallback: the token lives on <strong>mac-mini</strong> (do not paste into chat):</p>
+      <pre>ssh mac-mini 'test -f ~/.ai-lab/api.token &amp;&amp; echo present'</pre>
       <p>This is <strong>not</strong> an OpenAI/Anthropic key. Keep the API off the public Internet.</p>
     </div>
 
@@ -59,7 +70,7 @@
     </ul>
 
     <h2 id="studio">Studio Jupyter</h2>
-    <p>From <a href="/lab">Lab</a>, paste the lab token, then <strong>Open Jupyter</strong>. No <code>ssh -L</code> required when Studio listens on Tailscale.</p>
+    <p>From <a href="/lab">Lab</a>, sign in, then <strong>Open Jupyter</strong>. No <code>ssh -L</code> required when Studio listens on Tailscale.</p>
 
     <h2 id="foundation">Foundation model keys</h2>
     <p>On <a href="/secrets">API keys</a>, enter platform API keys (not ChatGPT/Claude app subscriptions). Authorize usage-billed spend separately before live paid calls.</p>

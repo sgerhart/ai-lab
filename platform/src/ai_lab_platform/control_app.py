@@ -25,10 +25,13 @@ from .agent_loop import (
     retry_agent_run,
     run_until_idle,
 )
+from .agent_scheduler import status as scheduler_status
+from .agent_scheduler import tick as scheduler_tick
+from .agent_worker import AgentRunWorker, drain_queued_runs
 from .attachments import AttachmentError, default_attachment_store
 from .auth import AuthError, auth_status, client_ip, require_auth
 from .operator_auth import login as operator_login
-from .operator_auth import operator_configured, revoke_session
+from .operator_auth import revoke_session
 from .connect import connect_status, jupyter_open_url, read_token_file
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
@@ -43,6 +46,7 @@ from .mcp_client import (
 )
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
+from .schedule_cron import CronError, parse_cron
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
 from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
@@ -245,7 +249,18 @@ def create_control_app(
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
+        worker: AgentRunWorker | None = None
+        if settings.agent_worker:
+            worker = AgentRunWorker(
+                store,
+                _app.state.model_router,
+                interval_sec=settings.agent_worker_interval_sec,
+            )
+            worker.start()
+            _app.state.agent_run_worker = worker
         yield
+        if worker is not None:
+            worker.stop()
         if pg_context is not None:
             pg_context.__exit__(None, None, None)
 
@@ -259,6 +274,7 @@ def create_control_app(
     app.state.secret_store = secrets
     app.state.attachment_store = default_attachment_store()
     app.state.agent_definition_store = default_agent_definition_store()
+    app.state.agent_run_worker = None
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -270,6 +286,7 @@ def create_control_app(
             "work_order_store": type(store).__name__,
             "checkpoints": checkpoint_backend,
             "deployed": bool(settings.database_url),
+            "agent_worker": bool(settings.agent_worker),
         }
 
     @app.get("/", response_class=HTMLResponse)
@@ -939,6 +956,20 @@ def create_control_app(
         newest = list(reversed(runs))[:lim]
         return {"runs": [r.to_dict() for r in newest]}
 
+    @app.post("/v1/agent-runs/worker/tick")
+    def worker_tick(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        limit: int = 1,
+    ) -> dict[str, Any]:
+        """Drain up to ``limit`` queued agent runs (ops / tests / no in-process worker)."""
+        _gate(request, authorization)
+        return drain_queued_runs(
+            store,
+            app.state.model_router,
+            limit=max(1, min(limit, 8)),
+        )
+
     @app.get("/v1/agent-definitions")
     def list_agent_definitions(
         request: Request,
@@ -964,6 +995,11 @@ def create_control_app(
                 require_mcp_servers(body.mcp_server_ids)
             except McpDenied as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if body.schedule_cron.strip():
+            try:
+                parse_cron(body.schedule_cron.strip())
+            except CronError as exc:
+                raise HTTPException(status_code=400, detail=f"invalid schedule_cron: {exc}") from exc
         definition = AgentDefinition.new(
             title=body.title,
             agent=body.agent,
@@ -987,24 +1023,19 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         return definition.to_dict()
 
-    @app.post("/v1/agent-definitions/{definition_id}/runs")
-    def run_agent_definition(
-        request: Request,
-        definition_id: str,
-        body: AgentDefinitionRunIn,
-        authorization: str | None = Header(default=None),
+    def _run_definition(
+        definition: AgentDefinition,
+        *,
+        objective: str = "",
+        model: str = "llama3.2:3b",
+        backend: str = "ollama",
+        billing_class: str = "local",
+        max_steps: int = 8,
+        conversation_id: str | None = None,
     ) -> dict[str, Any]:
-        """Run a deployed personal agent via the existing bounded loop."""
-        _gate(request, authorization)
-        definition = app.state.agent_definition_store.get(definition_id)
-        if definition is None:
-            raise HTTPException(status_code=404, detail="not found")
         if definition.mcp_server_ids:
-            try:
-                require_mcp_servers(definition.mcp_server_ids)
-            except McpDenied as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
-        conv_id = body.conversation_id
+            require_mcp_servers(definition.mcp_server_ids)
+        conv_id = conversation_id
         if not conv_id:
             conversation = Conversation.new(
                 agent=definition.agent, title=f"agent:{definition.title}"
@@ -1017,23 +1048,82 @@ def create_control_app(
                 raise HTTPException(status_code=404, detail="conversation not found")
         from .conversation import RunBudget
 
-        objective = body.objective or definition.system_prompt or definition.title
+        objective_text = objective or definition.system_prompt or definition.title
         run = AgentRun.new(
             agent=definition.agent,
-            objective=objective,
+            objective=objective_text,
             conversation_id=conv_id,
-            model=body.model,
-            billing_class=BillingClass(body.billing_class),
-            backend=body.backend,
-            budget=RunBudget(max_steps=body.max_steps),
+            model=model,
+            billing_class=BillingClass(billing_class),
+            backend=backend,
+            budget=RunBudget(max_steps=max_steps),
             mcp_server_ids=list(definition.mcp_server_ids or []),
         )
         run.status = AgentRunStatus.QUEUED
         store.put_agent_run(run)  # type: ignore[attr-defined]
-        run = run_until_idle(run, router=app.state.model_router, store_put=store.put_agent_run)
         out = run.to_dict()
         out["agent_definition_id"] = definition.id
+        out["note"] = "Queued for background worker (FEAT-002 / IWO-031)."
         return out
+
+    @app.get("/v1/scheduler/status")
+    def get_scheduler_status(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        defs = [
+            {
+                "id": d.id,
+                "title": d.title,
+                "schedule_cron": d.schedule_cron,
+            }
+            for d in app.state.agent_definition_store.list()
+            if (d.schedule_cron or "").strip()
+        ]
+        out = scheduler_status()
+        out["scheduled_definitions"] = defs
+        return out
+
+    @app.post("/v1/scheduler/tick")
+    def post_scheduler_tick(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Evaluate due agent-definition cron schedules and start bounded runs."""
+        _gate(request, authorization)
+
+        def runner(definition: AgentDefinition) -> dict[str, Any]:
+            return _run_definition(definition)
+
+        return scheduler_tick(app.state.agent_definition_store, run_definition=runner)
+
+    @app.post("/v1/agent-definitions/{definition_id}/runs")
+    def run_agent_definition(
+        request: Request,
+        definition_id: str,
+        body: AgentDefinitionRunIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Run a deployed personal agent via the existing bounded loop."""
+        _gate(request, authorization)
+        definition = app.state.agent_definition_store.get(definition_id)
+        if definition is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            return _run_definition(
+                definition,
+                objective=body.objective,
+                model=body.model,
+                backend=body.backend,
+                billing_class=body.billing_class,
+                max_steps=body.max_steps,
+                conversation_id=body.conversation_id,
+            )
+        except McpDenied as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/v1/conversations/{conversation_id}/runs")
     def create_agent_run(
@@ -1075,23 +1165,23 @@ def create_control_app(
             backend=body.backend,
             budget=RunBudget(max_steps=body.max_steps),
         )
-        router: ModelRouter = app.state.model_router
         if body.execute:
             run.status = AgentRunStatus.QUEUED
             store.put_agent_run(run)  # type: ignore[attr-defined]
-            run = run_until_idle(
-                run,
-                router=router,
-                store_put=store.put_agent_run,  # type: ignore[attr-defined]
+            out = run.to_dict()
+            out["kind"] = "agent_run"
+            out["note"] = (
+                "Queued for background worker. Poll GET /v1/agent-runs/{id} "
+                "or wait for AI_LAB_AGENT_WORKER. POST /v1/agent-runs/worker/tick to drain."
             )
-        else:
-            run.status = AgentRunStatus.CREATED
-            store.put_agent_run(run)  # type: ignore[attr-defined]
+            return out
+        run.status = AgentRunStatus.CREATED
+        store.put_agent_run(run)  # type: ignore[attr-defined]
         out = run.to_dict()
         out["kind"] = "agent_run"
         out["note"] = (
-            "Durable agent run. Distinct from chat messages and from "
-            "POST /v1/work-orders. Set execute=true to run the mini model/tool loop."
+            "Durable agent run created (not executing). Set execute=true to enqueue "
+            "the mini model/tool loop."
         )
         return out
 
@@ -1155,12 +1245,9 @@ def create_control_app(
             run = retry_agent_run(run, store.put_agent_run)  # type: ignore[attr-defined]
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        run = run_until_idle(
-            run,
-            router=app.state.model_router,
-            store_put=store.put_agent_run,  # type: ignore[attr-defined]
-        )
-        return run.to_dict()
+        out = run.to_dict()
+        out["note"] = "Re-queued for background worker."
+        return out
 
     @app.post("/v1/agent-runs/{run_id}/reconcile")
     def reconcile_run(

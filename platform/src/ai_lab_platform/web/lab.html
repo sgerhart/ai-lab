@@ -72,13 +72,8 @@
     <h1>Use the Studio without the tunnel CLI</h1>
     <p class="lead">
       Open Jupyter on the Studio, check Ollama, and jump to agents — all from the mini.
-      Lab token: see <a href="/help#token">Help</a>. Jupyter token never appears in page HTML.
+      Sign in once via the top bar; Jupyter’s own token never appears in page HTML.
     </p>
-
-    <div class="auth" data-auth-panel>
-      <label for="token">Lab API bearer token</label>
-      <input id="token" type="password" autocomplete="off" placeholder="only if not on Tailscale">
-    </div>
 
     <section class="grid">
       <article class="card">
@@ -100,7 +95,7 @@
         <h2>Foundation APIs</h2>
         <p>Enter OpenAI / Anthropic / Gemini keys in the browser. Stored on the mini (mode 600); never shown again. Vault later.</p>
         <a class="btn" href="/secrets">Manage API keys</a>
-        <div class="meta" id="secrets-meta">Load status after token…</div>
+        <div class="meta" id="secrets-meta">Load status after sign-in…</div>
       </article>
       <article class="card">
         <span class="pill on" id="agents-pill">ready</span>
@@ -121,19 +116,11 @@
       el.className = "pill " + (ok ? "on" : "off");
       el.textContent = label;
     }
-    function token() {
-      return sessionStorage.getItem("ai_lab_token") || $("token").value.trim();
-    }
     function authHeaders() {
       if (window.aiLabHeaders) return window.aiLabHeaders();
-      const t = token();
+      const t = sessionStorage.getItem("ai_lab_token") || "";
       return t ? { Authorization: "Bearer " + t } : {};
     }
-    $("token").addEventListener("change", () => {
-      sessionStorage.setItem("ai_lab_token", $("token").value.trim());
-      refresh();
-    });
-    $("token").value = sessionStorage.getItem("ai_lab_token") || "";
 
     async function refresh() {
       const res = await fetch("/v1/connect/status");
@@ -164,14 +151,14 @@
 
     $("open-jupyter").addEventListener("click", async () => {
       const headers = authHeaders();
-      if (window.aiLabAuth && window.aiLabAuth.paste_required && !headers.Authorization) {
-        alert("Paste the lab API token first (or join the tailnet)."); return;
+      if (window.aiLabAuth && window.aiLabAuth.login_required && !headers.Authorization) {
+        alert("Sign in first (username and password)."); return;
       }
       const res = await fetch("/v1/connect/jupyter", {
         headers,
         redirect: "manual",
       });
-      if (res.status === 401) { alert("Unauthorized — check Tailscale or lab token."); return; }
+      if (res.status === 401) { alert("Unauthorized — sign in again."); return; }
       if (res.status === 503) {
         const body = await res.json().catch(() => ({}));
         alert(body.detail || "Jupyter not configured on mini");

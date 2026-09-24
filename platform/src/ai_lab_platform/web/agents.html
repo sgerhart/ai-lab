@@ -303,15 +303,6 @@
       border-radius: 10px; background: #111; border: 1px solid var(--line); font-size: 14px;
     }
     .link-row a:hover { border-color: #555; }
-    .auth-banner {
-      display: none; background: #111; border-bottom: 1px solid var(--line);
-      padding: 8px 16px; gap: 8px; align-items: end;
-    }
-    .auth-banner.show { display: grid; grid-template-columns: 1fr auto; }
-    .auth-banner input {
-      width: 100%; background: #1a1a1a; border: 1px solid var(--line); color: var(--ink);
-      border-radius: 10px; padding: 8px 10px; font: inherit;
-    }
     @media (max-width: 720px) {
       .sidebar { position: absolute; z-index: 30; height: 100%; transform: translateX(-100%); }
       .sidebar.open { transform: none; }
@@ -321,14 +312,6 @@
   </style>
 </head>
 <body>
-  <div class="auth-banner" id="auth-banner">
-    <div>
-      <label for="token" style="font-size:12px;color:var(--muted)">Lab API token (optional)</label>
-      <input id="token" type="password" autocomplete="off" placeholder="or use Sign in modal">
-    </div>
-    <button type="button" class="ghost" id="save-token" style="border:1px solid var(--line)">Save</button>
-  </div>
-
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="side-top">
@@ -427,6 +410,14 @@
             <div>
               <label for="def-mcp">MCP servers (comma-separated ids)</label>
               <input id="def-mcp" type="text" placeholder="filesystem, github">
+            </div>
+            <div>
+              <label for="def-cron">Schedule cron (optional, local time)</label>
+              <input id="def-cron" type="text" placeholder="0 9 * * * = daily 09:00">
+              <p class="lead" style="color:var(--muted);font-size:12px;margin:6px 0 0">
+                Five fields: minute hour day-of-month month day-of-week. Fired by
+                <code>POST /v1/scheduler/tick</code> (or <code>scripts/scheduler-tick.sh</code>).
+              </p>
             </div>
             <div class="form-actions" id="agent-create-actions">
               <button type="button" class="btn primary" id="def-create">Create agent</button>
@@ -590,7 +581,7 @@
       mcp: null,
     };
     const $ = (id) => document.getElementById(id);
-    function token() { return sessionStorage.getItem("ai_lab_token") || ($("token") && $("token").value.trim()) || ""; }
+    function token() { return sessionStorage.getItem("ai_lab_token") || ""; }
     function headers(json = true) {
       const h = Object.assign({}, window.aiLabHeaders ? window.aiLabHeaders() : {});
       if (json) h["Content-Type"] = "application/json";
@@ -812,6 +803,16 @@
         $("pending").hidden = true;
       }
       setView("run");
+      const active = run.status === "queued" || run.status === "running";
+      if (active) {
+        if (state._runPoll) clearTimeout(state._runPoll);
+        state._runPoll = setTimeout(() => {
+          openRun(run.id).catch((e) => showErr(e));
+        }, 1500);
+      } else if (state._runPoll) {
+        clearTimeout(state._runPoll);
+        state._runPoll = null;
+      }
     }
     async function openRun(id) {
       const run = await api(`/v1/agent-runs/${id}`);
@@ -849,7 +850,8 @@
         card.type = "button";
         card.className = "agent-card";
         const mcp = (d.mcp_server_ids || []).map((id) => `<span class="badge">${id}</span>`).join("") || '<span class="badge">no MCP</span>';
-        card.innerHTML = `<h3>${(d.title || "agent").replace(/</g, "&lt;")}</h3><div class="meta">${d.agent} · ${d.id.slice(0, 8)}</div><div class="blurb">${(d.system_prompt || "No standing prompt yet.").replace(/</g, "&lt;")}</div><div class="badge-row"><span class="badge live">deployed</span>${mcp}</div>`;
+        const cron = d.schedule_cron ? `<span class="badge">${String(d.schedule_cron).replace(/</g, "&lt;")}</span>` : "";
+        card.innerHTML = `<h3>${(d.title || "agent").replace(/</g, "&lt;")}</h3><div class="meta">${d.agent} · ${d.id.slice(0, 8)}</div><div class="blurb">${(d.system_prompt || "No standing prompt yet.").replace(/</g, "&lt;")}</div><div class="badge-row"><span class="badge live">deployed</span>${mcp}${cron}</div>`;
         card.onclick = () => openAgent(d.id);
         box.appendChild(card);
       }
@@ -864,12 +866,13 @@
       $("def-title").value = "";
       $("def-prompt").value = "";
       $("def-mcp").value = "";
+      if ($("def-cron")) $("def-cron").value = "";
       $("def-agent").value = $("agent").value;
       $("agent-detail-title").textContent = "New agent";
       $("agent-detail-sub").textContent = "Give this worker a title, persona, and standing prompt. MCP ids must already be connected in Settings.";
       $("agent-create-actions").hidden = false;
       $("agent-run-block").hidden = true;
-      ["def-title", "def-prompt", "def-mcp", "def-agent"].forEach((id) => { $(id).disabled = false; });
+      ["def-title", "def-prompt", "def-mcp", "def-agent", "def-cron"].forEach((id) => { if ($(id)) $(id).disabled = false; });
       setView("agent", { creating: true });
     }
     function openAgent(id) {
@@ -879,12 +882,13 @@
       $("def-title").value = d.title || "";
       $("def-prompt").value = d.system_prompt || "";
       $("def-mcp").value = (d.mcp_server_ids || []).join(", ");
+      if ($("def-cron")) $("def-cron").value = d.schedule_cron || "";
       $("def-agent").value = d.agent || "lab-operations";
       $("agent-detail-title").textContent = d.title || "Agent";
       $("agent-detail-sub").textContent = `Persona ${d.agent} · id ${d.id.slice(0, 8)}`;
       $("agent-create-actions").hidden = true;
       $("agent-run-block").hidden = false;
-      ["def-title", "def-prompt", "def-mcp", "def-agent"].forEach((id) => { $(id).disabled = true; });
+      ["def-title", "def-prompt", "def-mcp", "def-agent", "def-cron"].forEach((id) => { if ($(id)) $(id).disabled = true; });
       setView("agent");
     }
 
@@ -927,11 +931,6 @@
       } catch (e) { showErr(e); }
     }
 
-    $("save-token").onclick = () => {
-      sessionStorage.setItem("ai_lab_token", $("token").value.trim());
-      showErr("");
-      boot().catch((e) => showErr(e));
-    };
     $("new-conv").onclick = () => newConversation().catch((e) => showErr(e));
     $("toggle-side").onclick = () => $("sidebar").classList.toggle("open");
     $("nav-agents").onclick = () => { setView("agents"); loadDefinitions().catch((e) => showErr(e)); };
@@ -981,6 +980,7 @@
             system_prompt: $("def-prompt").value || "",
             tools: [],
             mcp_server_ids: mcp,
+            schedule_cron: ($("def-cron") && $("def-cron").value.trim()) || "",
           }),
         });
         await loadDefinitions();
@@ -1212,11 +1212,7 @@
       autosize();
       setView("chat");
     }
-    if ($("token")) $("token").value = sessionStorage.getItem("ai_lab_token") || "";
-    document.addEventListener("ai-lab-auth-ready", (ev) => {
-      const d = ev.detail || {};
-      if (d.paste_required) $("auth-banner").classList.add("show");
-      else $("auth-banner").classList.remove("show");
+    document.addEventListener("ai-lab-auth-ready", () => {
       boot().catch(() => {});
     });
     boot().catch(() => {});

@@ -50,9 +50,6 @@
       '<input id="ai-lab-login-pass" type="password" autocomplete="current-password" />' +
       '<button type="button" id="ai-lab-login-submit">Sign in</button>' +
       '<p class="ai-lab-login-err" id="ai-lab-login-err"></p>' +
-      '<p class="ai-lab-login-alt">Advanced: paste a lab API token in session if you prefer.</p>' +
-      '<input id="ai-lab-login-token" type="password" placeholder="optional API token" autocomplete="off" />' +
-      '<button type="button" id="ai-lab-token-submit" class="secondary">Use token</button>' +
       "</div>";
     document.body.appendChild(wrap);
 
@@ -72,9 +69,7 @@
         "color:#ececec;border-radius:10px;padding:10px 12px;font:inherit}" +
         ".ai-lab-login-card button{margin-top:12px;width:100%;border:0;border-radius:10px;" +
         "padding:10px;background:#10a37f;color:#04140f;font:inherit;font-weight:650;cursor:pointer}" +
-        ".ai-lab-login-card button.secondary{background:#2a2a2a;color:#ececec;font-weight:500}" +
-        ".ai-lab-login-err{color:#ff6b7a;min-height:1.2em;margin-top:8px!important}" +
-        ".ai-lab-login-alt{margin-top:16px!important}";
+        ".ai-lab-login-err{color:#ff6b7a;min-height:1.2em;margin-top:8px!important}";
       document.head.appendChild(st);
     }
 
@@ -106,17 +101,6 @@
           err.textContent = String(e.message || e);
         });
     };
-
-    document.getElementById("ai-lab-token-submit").onclick = function () {
-      const t = document.getElementById("ai-lab-login-token").value.trim();
-      if (!t) {
-        document.getElementById("ai-lab-login-err").textContent = "token required";
-        return;
-      }
-      sessionStorage.setItem("ai_lab_token", t);
-      wrap.hidden = true;
-      window.location.reload();
-    };
   }
 
   fetch("/v1/auth/status")
@@ -129,13 +113,9 @@
       if (!d.auth_ready) {
         hint.textContent = "Auth not configured on mini";
       } else if (has) {
-        hint.textContent = d.login_available ? "Signed in" : "Token in session";
-      } else if (d.login_required || d.login_available) {
+        hint.textContent = "Signed in";
+      } else if (d.login_required || d.login_available || d.paste_required) {
         hint.textContent = "Sign in required";
-        ensureLoginModal();
-        document.getElementById("ai-lab-login-modal").hidden = false;
-      } else if (d.paste_required) {
-        hint.innerHTML = 'Token required — see <a href="/help#token">Help</a>';
         ensureLoginModal();
         document.getElementById("ai-lab-login-modal").hidden = false;
       } else {
