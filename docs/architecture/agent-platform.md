@@ -52,4 +52,5 @@ complete. Studio unavailable leaves work orders `queued` with
 `studio_unavailable`.
 
 Also live: `/agents` chat via Studio `llama3.2:3b`; schedule tick API + host
-timer; memory upsert/search against Qdrant; Cursor `lab_health` over Tailscale.
+timer; memory upsert/search against Qdrant; Cursor `lab_health` over Tailscale;
+`/antares` vuln-localize UI (Studio jobs `:8002`, human review only).

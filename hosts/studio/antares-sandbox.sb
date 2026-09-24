@@ -1,0 +1,13 @@
+(version 1)
+;; Antares agent sandbox — deny network (IWO-048 / FEAT-015).
+;; Allow reading the snapshot and writing only under the run workdir.
+(deny default)
+(allow process*)
+(allow sysctl-read)
+(allow mach-lookup)
+(allow file-read*)
+(allow file-write-data (regex #"^/private/tmp/ai-lab-antares-.*"))
+(allow file-write-create (regex #"^/private/tmp/ai-lab-antares-.*"))
+(allow file-write-unlink (regex #"^/private/tmp/ai-lab-antares-.*"))
+(allow file-write-data (regex #"^/var/folders/.*"))
+(deny network*)

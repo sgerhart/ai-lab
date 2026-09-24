@@ -1,0 +1,12 @@
+{
+  "id": "vuln-localize",
+  "isolation_tier": 1,
+  "read_only": true,
+  "allowed_tools": [
+    "memory_search",
+    "repo_read"
+  ],
+  "privileged_tools": [],
+  "network": [],
+  "notes": "Antares file-localization only. No remediation, shell write, or deploy tools. Human reviews SARIF/JSON before any fix work (FEAT-015)."
+}

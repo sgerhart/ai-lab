@@ -15,7 +15,7 @@ paths use Jupyter API and Ollama HTTP until keys are fixed.
 | Ollama | Yes — `llama3.2:3b` on Tailscale `:11434` |
 | JupyterLab | Yes — `:8888` (token on mini `~/.ai-lab/studio-jupyter.token`) |
 | MLX / transformers (Jupyter venv) | Present; used for Antares load smoke |
-| Antares-1B weights | On disk under `~/.ai-lab/antares/` (not in Git); no completions server yet |
+| Antares-1B + completions + jobs | Weights; loopback `:8001`; Tailscale jobs `:8002`; mini `/antares` |
 | Studio worker (`scripts/studio-worker.sh`) | Not running |
 | Evaluation / heavy training jobs | As authorized |
 
@@ -52,6 +52,6 @@ routine LaunchAgent and brew work.
 
 ## Antares (FEAT-015)
 
-Vulnerability-localization **terminal agent** weights (prefer 1B). CLI expects
-streaming `POST /v1/completions` (upstream docs: vLLM). Sandbox + CLI loop are
-IWO-048+. See [../runbooks/antares-vuln-localize.md](../runbooks/antares-vuln-localize.md).
+Vulnerability-localization **terminal agent** (prefer 1B). Loopback completions
+(`:8001`), Tailscale job helper (`:8002`), and mini `/antares` UI are live
+(IWO-047–049). See [../runbooks/antares-vuln-localize.md](../runbooks/antares-vuln-localize.md).

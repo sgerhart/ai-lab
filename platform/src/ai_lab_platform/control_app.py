@@ -28,6 +28,7 @@ from .agent_loop import (
 from .agent_scheduler import status as scheduler_status
 from .agent_scheduler import tick as scheduler_tick
 from .agent_worker import AgentRunWorker, drain_queued_runs
+from .antares_client import AntaresStudioClient
 from .attachments import AttachmentError, default_attachment_store
 from .auth import AuthError, auth_status, client_ip, require_auth
 from .operator_auth import login as operator_login
@@ -59,6 +60,7 @@ AGENTS_HTML = Path(__file__).resolve().parent / "web" / "agents.html"
 LAB_HTML = Path(__file__).resolve().parent / "web" / "lab.html"
 SECRETS_HTML = Path(__file__).resolve().parent / "web" / "secrets.html"
 HELP_HTML = Path(__file__).resolve().parent / "web" / "help.html"
+ANTARES_HTML = Path(__file__).resolve().parent / "web" / "antares.html"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATIC_DIR = WEB_DIR / "static"
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
@@ -169,6 +171,15 @@ class MemoryDocumentIn(BaseModel):
 class MemorySearchIn(BaseModel):
     query: str
     limit: int = Field(default=5, ge=1, le=20)
+
+
+class AntaresRunIn(BaseModel):
+    cwe: str = Field(description="CWE id, e.g. CWE-78")
+    repo: str | None = Field(
+        default=None,
+        description="Repo path on Studio under ~/.ai-lab/antares/ (default: fixture)",
+    )
+    profile: str | None = Field(default=None, description="Antares CLI profile name")
 
 
 class AgentRunIn(BaseModel):
@@ -292,6 +303,10 @@ def create_control_app(
     memory = retrieval or default_retrieval_service()
     app.state.retrieval = memory
     set_default_retrieval_service(memory)
+    app.state.antares = AntaresStudioClient(
+        job_url=settings.antares_job_url,
+        completions_url=settings.antares_completions_url,
+    )
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -328,6 +343,11 @@ def create_control_app(
     @app.get("/help", response_class=HTMLResponse)
     def help_page() -> str:
         return HELP_HTML.read_text(encoding="utf-8")
+
+    @app.get("/antares", response_class=HTMLResponse)
+    def antares_page() -> str:
+        """Antares vuln-localize UI (FEAT-015 / IWO-049). No remediation."""
+        return ANTARES_HTML.read_text(encoding="utf-8")
 
     @app.get("/v1/auth/status")
     def auth_status_endpoint(request: Request) -> dict[str, object]:
@@ -400,6 +420,81 @@ def create_control_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/v1/antares/status")
+    def antares_status(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Reachability of Studio Antares job + completions helpers (IWO-049)."""
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        return client.status()
+
+    @app.get("/v1/antares/runs")
+    def antares_list_runs(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        code, body = client.list_runs()
+        if code >= 400:
+            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
+        return body if isinstance(body, dict) else {"runs": body}
+
+    @app.post("/v1/antares/runs")
+    def antares_start_run(
+        request: Request,
+        body: AntaresRunIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        code, result = client.start_run(
+            cwe=body.cwe,
+            repo=(body.repo or "").strip(),
+            profile=(body.profile or "").strip(),
+        )
+        if code >= 400:
+            raise HTTPException(
+                status_code=code,
+                detail=result if isinstance(result, dict) else {"error": result},
+            )
+        return result if isinstance(result, dict) else {"result": result}
+
+    @app.get("/v1/antares/runs/{run_id}")
+    def antares_get_run(
+        run_id: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        code, body = client.get_run(run_id)
+        if code >= 400:
+            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
+        return body if isinstance(body, dict) else {"run": body}
+
+    @app.get("/v1/antares/runs/{run_id}/report")
+    def antares_get_report(
+        run_id: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+        format: str = "json",
+    ) -> Any:
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        fmt = (format or "json").strip().lower()
+        if fmt not in {"json", "md", "sarif"}:
+            raise HTTPException(status_code=400, detail="format must be json|md|sarif")
+        code, body = client.get_report(run_id, fmt=fmt)
+        if code >= 400:
+            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
+        if isinstance(body, dict):
+            return body
+        media = "text/markdown" if fmt == "md" else "application/json"
+        return Response(content=str(body), media_type=media)
 
     @app.get("/favicon.svg")
     def favicon() -> Response:

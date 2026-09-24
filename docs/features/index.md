@@ -36,7 +36,7 @@ Do not treat this index as authorized implementation or deploy.
 | 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 + LaunchAgent (IWO-052) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
 | 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — not core harness | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
-| 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047 weights on Studio; serve/CLI next | — |
+| 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 `/antares` UI live | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -69,6 +69,13 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-042](../work-orders/IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | FEAT-005 | **Complete** (unit) |
 | [IWO-044](../work-orders/IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | FEAT-014 | **Complete** (read-only) |
 | [IWO-045](../work-orders/IWO-045-defenseclaw-cursor-connector.md) | DefenseClaw Cursor connector | FEAT-014 | **Complete** (Air action mode) |
+| [IWO-046](../work-orders/IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | FEAT-014 | **Done** (F-014) |
+| [IWO-047](../work-orders/IWO-047-antares-1b-studio.md) | Antares-1B on Studio | FEAT-015 | **Complete** (weights) |
+| [IWO-048](../work-orders/IWO-048-antares-completions-sandbox.md) | Antares completions + sandbox | FEAT-015 | **Complete** (loopback :8001) |
+| [IWO-049](../work-orders/IWO-049-antares-studio-ui.md) | Antares Studio UI | FEAT-015 | **Complete** (`/antares`) |
+| [IWO-052](../work-orders/IWO-052-scheduler-launchagent.md) | Scheduler LaunchAgent on mini | FEAT-009 | **Complete** (live) |
+| [IWO-053](../work-orders/IWO-053-wire-qdrant-env.md) | Wire Qdrant into control-plane env | FEAT-008 | **Complete** (live) |
+| [IWO-054](../work-orders/IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | FEAT-005 | **Complete** (Air) |
 
 ## Historical phase work orders
 

@@ -12,6 +12,8 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Antares-1B weights + CLI zip on Studio via Jupyter exec; MPS load smoke (IWO-047).
 - Studio SSH from Air/mini broken — F-015; Jupyter/Ollama remain reachable.
 - Architecture docs refreshed for live control/compute/agent/data flows.
+- Antares loopback `/v1/completions` + sandbox-exec (IWO-048).
+- Antares Studio UI `/antares` + job server proxy (IWO-049).
 
 ### FEAT-013 / IWO-024–028 — Personal Agent Studio
 

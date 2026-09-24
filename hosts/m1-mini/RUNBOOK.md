@@ -104,6 +104,8 @@ Live bind is this host's Tailscale IPv4 (ADR 0034), plus compose overlay for the
 
 For retrieval (FEAT-008 / IWO-053), also export `QDRANT_URL` and `QDRANT_API_KEY` in that start script (source from `infrastructure/compose.local.env` via `./scripts/wire-qdrant-env.sh --apply`; never paste keys into chat).
 
+For Antares UI (FEAT-015 / IWO-049), export `ANTARES_JOB_URL=http://mac-studio:8002` (Studio job helper on Tailscale).
+
 Install the LaunchAgent from the example plist (replace `OPERATOR` with this host's login). Then:
 
 ```bash

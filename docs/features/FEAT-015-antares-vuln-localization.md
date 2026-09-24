@@ -1,6 +1,6 @@
 # FEAT-015 — Antares vulnerability-localization agent (Studio)
 
-- **Status:** Partial (IWO-047 weights on Studio; serve/CLI sandbox open)
+- **Status:** Partial (IWO-047–049 UI live; LaunchAgents optional)
 - **Created:** 2026-09-24
 - **Owner:** human (operator)
 - **GitHub issue:** draft only
@@ -47,13 +47,13 @@ or draft model. Findings require human review; no autonomous remediation.
 | ID | Title | Depends on | Acceptance |
 |----|-------|------------|------------|
 | [IWO-047](../work-orders/IWO-047-antares-1b-studio.md) | Antares-1B on Studio (pull gated) | FEAT-003 | **Done** — weights + load smoke |
-| IWO-048 | Network-disabled sandbox runner | IWO-047 | Repo snapshot; timeout; destroy after run |
-| IWO-049 | Studio UI / definition hook | IWO-048 | Operator can launch + retrieve SARIF |
+| [IWO-048](../work-orders/IWO-048-antares-completions-sandbox.md) | Completions server + sandbox-exec | IWO-047 | **Done** — loopback :8001 + deny-network |
+| [IWO-049](../work-orders/IWO-049-antares-studio-ui.md) | Studio UI / definition hook | IWO-048 | **Done** — `/antares` + job API |
 
 ## Acceptance criteria
 
 - [x] Prefer 1B documented; 350M optional
-- [ ] Sandbox `network=none` (or equivalent) before any live run
+- [x] Sandbox `network=none` (or equivalent) before any live run
 - [ ] No auto-remediation tools
 - [x] Weights never in Git
 
@@ -68,8 +68,8 @@ or draft model. Findings require human review; no autonomous remediation.
 | Layer | Status |
 |-------|--------|
 | Spec | Done (this file) |
-| Code | Preflight + Jupyter download helpers |
-| Live | Weights on Studio; no `/v1/completions` server yet |
+| Code | Completions + jobs + `/antares` UI + `vuln-localize` policy |
+| Live | `/antares` UI → Studio jobs; CWE-78 fixture finds `app.py` |
 
 ## Runbook
 

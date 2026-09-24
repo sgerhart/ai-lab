@@ -43,6 +43,6 @@ absorbing product stacks) a new ADR. ADR 0025 still applies.
 |-----------|------------|---------------|------------|
 | **agentic-factory** | Adjacent Air Docker stack (orchestrator / PR watchdog / Vault) | Stay **adjacent**; optional FEAT-007 bridge only | Inventory + boundary doc; never reuse factory Vault |
 | **DefenseClaw** (on Air) | Governance gateway: scan MCP/skills, hook agents, audit | Keep on **Air**; Cursor + Antigravity wired (IWO-045) | IWO-046 done (F-014 skip-scan) |
-| **Antares** ([fdtn-ai/antares-1b](https://huggingface.co/fdtn-ai/antares-1b) / [350m](https://huggingface.co/fdtn-ai/antares-350m)) | Cisco Foundation AI vuln-localization terminal agents (Granite 4.0) | **Studio** weights present (IWO-047); CLI sandbox / `/v1/completions` open | Prefer **1B**; next IWO-048 sandbox + completions serve |
+| **Antares** ([fdtn-ai/antares-1b](https://huggingface.co/fdtn-ai/antares-1b) / [350m](https://huggingface.co/fdtn-ai/antares-350m)) | Cisco Foundation AI vuln-localization terminal agents (Granite 4.0) | **Studio** weights + completions/jobs; mini `/antares` UI (IWO-047–049) | Prefer **1B**; LaunchAgents + SSH fix (F-015) next |
 
 Unhealthy Clarion containers were visible at collection time. That is product hygiene, not a Phase 0 task for `ai-lab`.

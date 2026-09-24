@@ -59,7 +59,9 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-044](IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | Complete (read-only) |
 | [IWO-045](IWO-045-defenseclaw-cursor-connector.md) | DefenseClaw Cursor connector | Complete (Air action) |
 | [IWO-046](IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | Done (F-014) |
-| [IWO-047](IWO-047-antares-1b-studio.md) | Antares-1B on Studio | Complete (weights; serve later) |
+| [IWO-047](IWO-047-antares-1b-studio.md) | Antares-1B on Studio | Complete (weights) |
+| [IWO-048](IWO-048-antares-completions-sandbox.md) | Antares completions + sandbox | Complete (loopback :8001) |
+| [IWO-049](IWO-049-antares-studio-ui.md) | Antares Studio UI | Complete (`/antares`) |
 | [IWO-052](IWO-052-scheduler-launchagent.md) | Scheduler LaunchAgent on mini | Complete (live) |
 | [IWO-053](IWO-053-wire-qdrant-env.md) | Wire Qdrant into control-plane env | Complete (live) |
 | [IWO-054](IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | Complete (Air) |

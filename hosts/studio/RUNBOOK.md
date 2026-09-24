@@ -116,3 +116,14 @@ Weights are rebuildable via catalog + `ollama pull` unless you choose a backup t
 ## 9. Rollback
 
 Stop the worker (Ctrl-C / launchd). Leave Ollama installed. Do not delete `~/.ollama` unless you intend to drop weights.
+
+## Antares (FEAT-015)
+
+Weights under `~/.ai-lab/antares/antares-1b/` (not in Git). Operator helpers:
+
+- Completions: `127.0.0.1:8001` (`scripts/antares-completions-server.py`)
+- Jobs: Tailscale `:8002` (`scripts/antares-job-server.py`) for mini `/antares`
+- Sandbox profile: `hosts/studio/antares-sandbox.sb`
+
+See [../../docs/runbooks/antares-vuln-localize.md](../../docs/runbooks/antares-vuln-localize.md).
+

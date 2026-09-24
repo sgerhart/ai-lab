@@ -13,6 +13,8 @@ class Settings:
     studio_jupyter_url: str = ""
     studio_ollama_url: str = ""
     studio_jupyter_token_file: str = ""
+    antares_job_url: str = ""
+    antares_completions_url: str = ""
     api_token: str = ""
     auth_mode: str = "token"
     bind_address: str = "127.0.0.1"
@@ -41,6 +43,8 @@ class Settings:
             studio_jupyter_token_file=os.environ.get(
                 "STUDIO_JUPYTER_TOKEN_FILE", default_token_file
             ).strip(),
+            antares_job_url=os.environ.get("ANTARES_JOB_URL", "").strip(),
+            antares_completions_url=os.environ.get("ANTARES_COMPLETIONS_URL", "").strip(),
             api_token=os.environ.get("AI_LAB_API_TOKEN", "").strip(),
             auth_mode=os.environ.get("AI_LAB_AUTH_MODE", "token").strip().lower() or "token",
             bind_address=os.environ.get("AI_LAB_BIND_ADDRESS", "127.0.0.1").strip(),

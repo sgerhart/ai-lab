@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ai-lab · Antares</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/chrome.css">
+  <style>
+    :root {
+      --bg: #0c1014;
+      --panel: #141b22;
+      --line: #243040;
+      --ink: #e8eef6;
+      --muted: #8ea0b5;
+      --live: #3ee0a8;
+      --warn: #e8b45c;
+      --down: #ff6b7a;
+      --accent: #7cb8ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background-image:
+        radial-gradient(900px 400px at 10% -10%, #1e2a22 0%, transparent 55%),
+        linear-gradient(180deg, transparent 0%, #0c1014 40%);
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 28px 22px 64px; }
+    .eyebrow { font: 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+    h1 { margin: 8px 0 6px; font-size: 28px; font-weight: 620; letter-spacing: -.03em; }
+    .lead { color: var(--muted); margin: 0 0 20px; max-width: 40rem; }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+      padding: 16px 18px; margin-bottom: 16px;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input, select {
+      width: 100%; background: #0c1218; border: 1px solid var(--line); color: var(--ink);
+      border-radius: 10px; padding: 10px 12px; font: 13px/1.3 ui-monospace, Menlo, monospace;
+    }
+    button {
+      appearance: none; border: 0; border-radius: 10px; padding: 10px 14px;
+      background: var(--accent); color: #061018; font-weight: 650; cursor: pointer; margin-top: 8px;
+    }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .pill {
+      font: 11px/1 ui-monospace, Menlo, monospace; padding: 5px 8px; border-radius: 999px;
+    }
+    .pill.on { background: color-mix(in srgb, var(--live) 16%, transparent); color: var(--live); }
+    .pill.off { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down); }
+    .pill.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-weight: 560; }
+    pre {
+      background: #0c1218; border: 1px solid var(--line); border-radius: 12px;
+      padding: 12px; overflow: auto; max-height: 320px; font: 12px/1.4 ui-monospace, Menlo, monospace;
+    }
+    .err { color: var(--down); font-size: 13px; min-height: 1.2em; }
+    .meta { color: var(--muted); font: 12px/1.4 ui-monospace, Menlo, monospace; }
+    .warn-banner {
+      border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--line));
+      background: color-mix(in srgb, var(--warn) 10%, var(--panel));
+      color: var(--ink); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: 13px;
+    }
+    @media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">FEAT-015 · Studio</div>
+    <h1>Antares vulnerability localize</h1>
+    <p class="lead">
+      File-level localization only — no remediation. Results are leads for human review.
+      Runs on the Studio against a repo under <code>~/.ai-lab/antares/</code>.
+    </p>
+    <div class="warn-banner">
+      Do not treat findings as proof. Review SARIF/JSON before any fix work.
+    </div>
+
+    <div class="pills">
+      <span class="pill off" id="pill-jobs">jobs…</span>
+      <span class="pill off" id="pill-completions">completions…</span>
+    </div>
+
+    <section class="panel">
+      <div class="row">
+        <div>
+          <label for="cwe">CWE ID</label>
+          <input id="cwe" value="CWE-78" autocomplete="off">
+        </div>
+        <div>
+          <label for="profile">Profile</label>
+          <input id="profile" value="lab-antares-1b" autocomplete="off">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label for="repo">Repo path on Studio (under ~/.ai-lab/antares/)</label>
+        <input id="repo" placeholder="leave blank for fixture-cwe78" autocomplete="off">
+      </div>
+      <button type="button" id="run-btn">Start localize</button>
+      <p class="err" id="form-err"></p>
+      <p class="meta" id="form-meta"></p>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin:0 0 10px;font-size:16px">Recent runs</h2>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Status</th><th>CWE</th><th>Findings</th><th></th></tr>
+        </thead>
+        <tbody id="runs-body">
+          <tr><td colspan="5" class="meta">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel" id="detail" hidden>
+      <h2 style="margin:0 0 10px;font-size:16px">Run detail</h2>
+      <p class="meta" id="detail-meta"></p>
+      <div id="findings-wrap"></div>
+      <p class="meta">Report JSON</p>
+      <pre id="report-pre">—</pre>
+    </section>
+  </div>
+  <script src="/static/chrome.js"></script>
+  <script>
+    function hdr() { return Object.assign({ "Content-Type": "application/json" }, window.aiLabHeaders()); }
+    function setPill(id, ok, label) {
+      const el = document.getElementById(id);
+      el.className = "pill " + (ok ? "on" : "off");
+      el.textContent = label;
+    }
+    let activeId = null;
+    let pollTimer = null;
+
+    function refreshStatus() {
+      return fetch("/v1/antares/status", { headers: hdr() })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+        .then(function (x) {
+          const j = x.b.jobs;
+          const c = x.b.completions;
+          setPill("pill-jobs", !!(j && j.http === 200), j && j.http === 200 ? "jobs up" : "jobs down");
+          setPill("pill-completions", !!(c && c.http === 200), c && c.http === 200 ? "completions up" : "completions down");
+          if (!x.b.configured) {
+            document.getElementById("form-err").textContent =
+              "ANTARES_JOB_URL not set on mini — set to http://mac-studio:8002 (Tailscale).";
+          }
+        })
+        .catch(function () {
+          setPill("pill-jobs", false, "jobs ?");
+          setPill("pill-completions", false, "completions ?");
+        });
+    }
+
+    function refreshRuns() {
+      return fetch("/v1/antares/runs", { headers: hdr() })
+        .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, b: b }; }); })
+        .then(function (x) {
+          const body = document.getElementById("runs-body");
+          const runs = (x.b && x.b.runs) || [];
+          if (!x.ok) {
+            body.innerHTML = "<tr><td colspan=5 class=err>" + (x.b.error || "failed") + "</td></tr>";
+            return;
+          }
+          if (!runs.length) {
+            body.innerHTML = "<tr><td colspan=5 class=meta>No runs yet</td></tr>";
+            return;
+          }
+          body.innerHTML = runs.map(function (run) {
+            const n = (run.findings || []).length;
+            return "<tr>" +
+              "<td class=meta>" + run.id + "</td>" +
+              "<td>" + run.status + "</td>" +
+              "<td>" + (run.cwe || "") + "</td>" +
+              "<td>" + n + "</td>" +
+              "<td><button type=button data-id=\"" + run.id + "\">Open</button></td>" +
+              "</tr>";
+          }).join("");
+          body.querySelectorAll("button[data-id]").forEach(function (btn) {
+            btn.onclick = function () { openRun(btn.getAttribute("data-id")); };
+          });
+        });
+    }
+
+    function openRun(id) {
+      activeId = id;
+      document.getElementById("detail").hidden = false;
+      fetch("/v1/antares/runs/" + id, { headers: hdr() })
+        .then(function (r) { return r.json(); })
+        .then(function (run) {
+          document.getElementById("detail-meta").textContent =
+            id + " · " + run.status + (run.error ? " · " + run.error : "");
+          const findings = run.findings || [];
+          const wrap = document.getElementById("findings-wrap");
+          if (!findings.length) {
+            wrap.innerHTML = "<p class=meta>No findings yet (or still running).</p>";
+          } else {
+            wrap.innerHTML = "<table><thead><tr><th>File</th><th>CWE</th><th>Title</th><th>Rank</th></tr></thead><tbody>" +
+              findings.map(function (f) {
+                return "<tr><td>" + (f.file_path || "") + "</td><td>" +
+                  ((f.cwe_ids || []).join(", ")) + "</td><td>" + (f.title || "") +
+                  "</td><td>" + (f.submission_rank || "") + "</td></tr>";
+              }).join("") + "</tbody></table>";
+          }
+          if (run.status === "running" || run.status === "queued") {
+            if (pollTimer) clearTimeout(pollTimer);
+            pollTimer = setTimeout(function () { openRun(id); refreshRuns(); }, 2500);
+          }
+        });
+      fetch("/v1/antares/runs/" + id + "/report?format=json", { headers: hdr() })
+        .then(function (r) {
+          if (!r.ok) return r.json().then(function (b) { throw new Error(b.error || r.statusText); });
+          return r.json();
+        })
+        .then(function (rep) {
+          document.getElementById("report-pre").textContent = JSON.stringify(rep, null, 2);
+        })
+        .catch(function (e) {
+          document.getElementById("report-pre").textContent = String(e.message || e);
+        });
+    }
+
+    document.getElementById("run-btn").onclick = function () {
+      const err = document.getElementById("form-err");
+      err.textContent = "";
+      const cwe = document.getElementById("cwe").value.trim();
+      const repo = document.getElementById("repo").value.trim();
+      const profile = document.getElementById("profile").value.trim();
+      const btn = document.getElementById("run-btn");
+      btn.disabled = true;
+      fetch("/v1/antares/runs", {
+        method: "POST",
+        headers: hdr(),
+        body: JSON.stringify({ cwe: cwe, repo: repo || null, profile: profile || null }),
+      })
+        .then(function (r) {
+          return r.json().then(function (b) {
+            if (!r.ok) throw new Error(b.error || b.detail || r.statusText);
+            return b;
+          });
+        })
+        .then(function (job) {
+          document.getElementById("form-meta").textContent = "Started " + job.id;
+          refreshRuns().then(function () { openRun(job.id); });
+        })
+        .catch(function (e) { err.textContent = String(e.message || e); })
+        .finally(function () { btn.disabled = false; });
+    };
+
+    function boot() {
+      refreshStatus();
+      refreshRuns();
+    }
+    document.addEventListener("ai-lab-auth-ready", boot);
+    if (sessionStorage.getItem("ai_lab_token")) boot();
+    else setTimeout(boot, 400);
+  </script>
+</body>
+</html>

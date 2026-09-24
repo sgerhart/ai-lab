@@ -9,8 +9,13 @@
 - Antares-1B downloaded to Studio `~/.ai-lab/antares/antares-1b/`.
 - CLI zip at `~/.ai-lab/antares/cli/antares-cli.zip`.
 - Transformers MPS load smoke passed.
-- Still needed: streaming `POST /v1/completions` server (CLI contract;
-  upstream docs use vLLM) + network-disabled sandbox (IWO-048).
+- Completions server live on Studio **loopback** `127.0.0.1:8001` (IWO-048;
+  Mac stdlib/transformers path, not vLLM).
+- `sandbox-exec` deny-network profile in `hosts/studio/antares-sandbox.sb`.
+- Antares CLI installed (`uv tool install`); profile `lab-antares-1b`.
+- Smoke: `antares query` on fixture CWE-78 → finding `app.py` (~11s).
+- `/antares` UI on mini proxies Studio job server `:8002` (IWO-049).
+- Still needed: LaunchAgents so completions/jobs survive Studio reboot; F-015 SSH.
 
 ## Prerequisites
 
@@ -41,19 +46,48 @@ $VENV/bin/python scripts/studio-jupyter-exec.py \
 Writes under Studio `~/.ai-lab/antares/antares-1b/` and copies
 `assets/antares-cli.zip` to `~/.ai-lab/antares/cli/`.
 
-## Serve (OpenAI-compatible)
+## Serve (OpenAI-compatible completions)
 
-Antares CLI expects an OpenAI-compatible chat endpoint — not general Studio
-chat. Exact serve command depends on MLX vs transformers; record the chosen
-command in the host overlay after first success. Do not bind `0.0.0.0`.
+Antares CLI needs streaming `POST /v1/completions` (not chat). On Studio:
+
+```bash
+# dry-run
+./scripts/antares-completions-server.sh
+# foreground (or LaunchAgent later)
+AI_LAB_BIND_ADDRESS=127.0.0.1 ./scripts/antares-completions-server.sh --apply
+```
+
+Live process: `~/.ai-lab/antares/completions.pid` / `completions.log`.
+Served model id: `antares-1b`. Do not bind `0.0.0.0`.
+
+## Sandbox
+
+```bash
+./scripts/antares-sandbox-run.sh --repo /path/to/repo --apply -- /bin/ls
+```
+
+Uses `hosts/studio/antares-sandbox.sb` (`deny network*`).
 
 ## Agent loop
 
-Use the Antares CLI against a **read-only** repo snapshot in a network-disabled
-sandbox (IWO-048). Human reviews SARIF/JSON before any remediation (FEAT-007).
+Prefer the mini UI (`/antares`) or CLI. Optional: wrap CLI under
+`antares-sandbox-run.sh` (deny-network). Human reviews SARIF/JSON before any
+remediation (FEAT-007).
 
 ## Verify
 
 - `~/.ai-lab/antares/DOWNLOAD_OK` exists on Studio
 - CLI zip present under `~/.ai-lab/antares/cli/`
 - No Antares weights under the `ai-lab` Git tree
+
+## CLI smoke (Studio)
+
+```bash
+export ANTARES_ENDPOINT=http://127.0.0.1:8001/v1/completions
+export ANTARES_API_KEY=local-no-auth   # server has no auth today
+antares query ~/.ai-lab/antares/fixture-cwe78 \
+  --cwe CWE-78 --profile lab-antares-1b --format json \
+  --output ~/.ai-lab/antares/runs/smoke-cwe78
+```
+
+Human must review SARIF/JSON before any remediation.

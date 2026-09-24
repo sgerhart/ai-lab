@@ -4,6 +4,7 @@
     { href: "/", label: "Status", match: /^\/$/ },
     { href: "/lab", label: "Lab", match: /^\/lab$/ },
     { href: "/agents", label: "Studio", match: /^\/agents$/ },
+    { href: "/antares", label: "Antares", match: /^\/antares$/ },
     { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
     { href: "/help", label: "Help", match: /^\/help$/ },
   ];
