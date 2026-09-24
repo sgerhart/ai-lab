@@ -26,7 +26,7 @@ from .agent_loop import (
     run_until_idle,
 )
 from .attachments import AttachmentError, default_attachment_store
-from .auth import auth_status, client_ip, require_auth
+from .auth import AuthError, auth_status, client_ip, require_auth
 from .connect import connect_status, jupyter_open_url, read_token_file
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
@@ -226,12 +226,15 @@ def create_control_app(
     auth_mode = settings.auth_mode
 
     def _gate(request: Request, authorization: str | None = None) -> None:
-        require_auth(
-            mode=auth_mode,
-            expected_token=token,
-            authorization=authorization,
-            request=request,
-        )
+        try:
+            require_auth(
+                mode=auth_mode,
+                expected_token=token,
+                authorization=authorization,
+                request=request,
+            )
+        except AuthError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):

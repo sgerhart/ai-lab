@@ -43,7 +43,8 @@ Do not expose PostgreSQL, Redis, Qdrant, Jupyter, model APIs, agent admin, or mo
 | F-005 | Medium | `gh` active account `dentroio` vs `sgerhart` repo | No |
 | F-006 | Info | Product Docker/Postgres on the Air | Adjacent |
 | F-007 | Design | Compose loopback is unreachable across tailnet | Documented; bind address at deploy |
-| F-012 | Medium | Mini control-plane start script exposed in operator chat | **Rotate** API token + DB password; [findings/F-012](findings/F-012-control-plane-start-script-exposure.md) |
+| F-012 | Medium | Mini control-plane start script exposed in operator chat | **Open** until operator runs rotation; script: `scripts/rotate-control-plane-secrets.sh --apply`; [findings/F-012](findings/F-012-control-plane-start-script-exposure.md) |
+| F-013 | Medium | `trusted_tailnet` waived bearer for CGNAT peers | **Mitigated in Git** — bearer always required when token set; fail closed if unset |
 
 Details of F-001–F-006: recorded 2026-09-19 on the operator workstation. F-012: 2026-09-23.
 

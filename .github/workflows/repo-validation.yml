@@ -28,10 +28,10 @@ jobs:
           python-version: "3.11"
       - name: Structure and secret scan
         run: bash scripts/validate-repo.sh
-      - name: Stdlib harness tests
-        run: python3 -m unittest discover -s tests -v
       - name: Install control-plane extras
         run: python3 -m pip install -r platform/requirements.txt
+      - name: Unit tests
+        run: PYTHONPATH=platform/src python3 -m unittest discover -s tests -v
       - name: LangGraph slice tests
         run: PYTHONPATH=platform/src python3 -m unittest tests.test_langgraph_slice tests.test_studio_worker -v
       - name: Postgres checkpoint slice tests

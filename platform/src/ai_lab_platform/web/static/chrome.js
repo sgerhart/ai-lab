@@ -29,10 +29,8 @@
 
   window.aiLabHeaders = function () {
     const h = {};
-    if (window.aiLabAuth && window.aiLabAuth.paste_required) {
-      const t = sessionStorage.getItem("ai_lab_token") || "";
-      if (t) h.Authorization = "Bearer " + t;
-    }
+    const t = sessionStorage.getItem("ai_lab_token") || "";
+    if (t) h.Authorization = "Bearer " + t;
     return h;
   };
 
@@ -42,13 +40,15 @@
       window.aiLabAuth = d;
       const hint = document.getElementById("ai-lab-auth-hint");
       if (!hint) return;
-      if (!d.paste_required) {
-        hint.textContent = "Signed in via Tailscale (no token paste)";
-        document.querySelectorAll("[data-auth-panel]").forEach(function (el) {
-          el.hidden = true;
-        });
+      if (!d.token_configured) {
+        hint.textContent = "API token not configured on mini (fail closed)";
+      } else if (d.paste_required) {
+        const has = !!(sessionStorage.getItem("ai_lab_token") || "");
+        hint.innerHTML = has
+          ? "Token in session"
+          : 'Token required — see <a href="/help#token">Help</a>';
       } else {
-        hint.innerHTML = 'Token required — see <a href="/help#token">Help</a>';
+        hint.textContent = "Auth ready";
       }
       document.dispatchEvent(new CustomEvent("ai-lab-auth-ready", { detail: d }));
     })
