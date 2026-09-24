@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -45,10 +46,27 @@ class OllamaUnavailable(RuntimeError):
 class OllamaBackend:
     billing_class = BillingClass.LOCAL
 
-    def __init__(self, base_url: str = "http://127.0.0.1:11434", timeout_seconds: float = 120.0) -> None:
+    def __init__(
+        self,
+        base_url: str = "http://127.0.0.1:11434",
+        timeout_seconds: float = 600.0,
+        num_predict: int | None = None,
+    ) -> None:
         require_lab_ollama_url(base_url)
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = timeout_seconds
+        # Ollama: -1 = no cap (stop on EOS); -2 = fill remaining context.
+        # Default -1 so replies are not clipped at an arbitrary 512.
+        if num_predict is None:
+            raw = os.environ.get("AI_LAB_OLLAMA_NUM_PREDICT", "-1").strip()
+            try:
+                num_predict = int(raw)
+            except ValueError:
+                num_predict = -1
+        self.num_predict = num_predict
+
+    def _generate_options(self) -> dict[str, Any]:
+        return {"num_predict": self.num_predict, "temperature": 0.1}
 
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         import httpx
@@ -58,7 +76,7 @@ class OllamaBackend:
             "model": request.model,
             "prompt": request.prompt,
             "stream": False,
-            "options": {"num_predict": 512, "temperature": 0.1},
+            "options": self._generate_options(),
         }
         if request.system:
             payload["system"] = request.system
@@ -97,7 +115,7 @@ class OllamaBackend:
             "model": request.model,
             "prompt": request.prompt,
             "stream": True,
-            "options": {"num_predict": 512, "temperature": 0.1},
+            "options": self._generate_options(),
         }
         if request.system:
             payload["system"] = request.system
