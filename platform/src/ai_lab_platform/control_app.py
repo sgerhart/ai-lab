@@ -27,6 +27,8 @@ from .agent_loop import (
 )
 from .attachments import AttachmentError, default_attachment_store
 from .auth import AuthError, auth_status, client_ip, require_auth
+from .operator_auth import login as operator_login
+from .operator_auth import operator_configured, revoke_session
 from .connect import connect_status, jupyter_open_url, read_token_file
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
@@ -145,6 +147,11 @@ class McpServerIn(BaseModel):
     command: str = ""
     args: list[str] = Field(default_factory=list)
     enabled: bool = True
+
+
+class LoginIn(BaseModel):
+    username: str
+    password: str
 
 
 class AgentRunIn(BaseModel):
@@ -290,12 +297,33 @@ def create_control_app(
 
     @app.get("/v1/auth/status")
     def auth_status_endpoint(request: Request) -> dict[str, object]:
-        """Public: whether the browser must paste a bearer token."""
+        """Public: whether the browser must sign in or paste a bearer token."""
         return auth_status(
             mode=auth_mode,
             token_configured=bool(token),
             peer_ip=client_ip(request),
         )
+
+    @app.post("/v1/auth/login")
+    def auth_login(body: LoginIn) -> dict[str, Any]:
+        """Username/password → opaque session bearer (stored under ~/.ai-lab/)."""
+        try:
+            return operator_login(body.username, body.password)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except PermissionError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    @app.post("/v1/auth/logout")
+    def auth_logout(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Revoke the current session bearer (no-op for static API token)."""
+        _ = request
+        if authorization and authorization.startswith("Bearer "):
+            revoke_session(authorization[7:].strip())
+        return {"ok": True}
 
     @app.get("/favicon.svg")
     def favicon() -> Response:

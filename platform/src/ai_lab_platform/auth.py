@@ -1,15 +1,14 @@
 """Control-plane auth helpers.
 
-Modes (AI_LAB_AUTH_MODE):
+Accepts either:
 
-- ``token`` (default): require ``Authorization: Bearer <AI_LAB_API_TOKEN>``.
-- ``trusted_tailnet``: same bearer requirement when a token is configured.
-  ``peer_trusted`` is informational only (Tailscale CGNAT / loopback). Tailnet
-  membership is **not** a substitute for application authentication.
+- ``Authorization: Bearer <AI_LAB_API_TOKEN>`` (scripts / legacy), or
+- ``Authorization: Bearer <session>`` from username/password login
+  (``~/.ai-lab/operator.json`` + ``sessions.json``).
 
-Fail closed: if ``AI_LAB_API_TOKEN`` is unset, authenticated routes refuse
-(401). Public endpoints (`/health`, `/v1/auth/status`) must not call
-``require_auth``.
+Fail closed when neither an API token nor an operator login is configured.
+Public endpoints (`/health`, `/v1/auth/status`, `/v1/auth/login`) must not
+call ``require_auth``.
 
 Keep the API off ``0.0.0.0``.
 """
@@ -17,7 +16,9 @@ Keep the API off ``0.0.0.0``.
 from __future__ import annotations
 
 import ipaddress
-from typing import Any
+from typing import Any, Callable
+
+from .operator_auth import operator_configured, session_valid
 
 _TAILNET = ipaddress.ip_network("100.64.0.0/10")
 _LOOPBACK = ipaddress.ip_network("127.0.0.0/8")
@@ -49,20 +50,27 @@ def is_trusted_peer(ip: str) -> bool:
 def auth_status(*, mode: str, token_configured: bool, peer_ip: str) -> dict[str, Any]:
     trusted = is_trusted_peer(peer_ip)
     mode_n = (mode or "token").strip().lower() or "token"
-    # Bearer is always required when a token is configured (all modes).
-    paste_required = bool(token_configured)
+    login_ok = operator_configured()
+    auth_ready = bool(token_configured) or login_ok
     note = (
-        "Bearer token required for API routes when AI_LAB_API_TOKEN is set. "
-        "Tailnet peer trust is informational only."
-        if token_configured
-        else "AI_LAB_API_TOKEN is unset — authenticated routes refuse (fail closed)."
+        "Sign in with username and password, or use a lab API bearer token."
+        if login_ok
+        else (
+            "Bearer token required when AI_LAB_API_TOKEN is set."
+            if token_configured
+            else "No operator login or API token configured — authenticated routes refuse."
+        )
     )
     return {
         "ok": True,
         "mode": mode_n if mode_n in {"token", "trusted_tailnet"} else "token",
-        "token_configured": token_configured,
+        "token_configured": bool(token_configured),
+        "login_available": login_ok,
+        "auth_ready": auth_ready,
         "peer_trusted": trusted,
-        "paste_required": paste_required,
+        # Prefer login UI when operator account exists; else token paste.
+        "paste_required": auth_ready and not login_ok,
+        "login_required": login_ok,
         "note": note,
     }
 
@@ -73,17 +81,30 @@ def require_auth(
     expected_token: str,
     authorization: str | None,
     request: Any,
+    session_checker: Callable[[str], bool] | None = None,
 ) -> None:
-    """Raise AuthError when the caller is not allowed.
-
-    When a token is configured, a matching Bearer header is always required —
-    including for Tailscale CGNAT and loopback peers.
-    When no token is configured, refuse (fail closed).
-    """
-    _ = mode  # retained for status / future policy; not a peer waiver
+    """Raise AuthError when the caller is not allowed."""
+    _ = mode
     _ = request
-    if not expected_token:
+    login_ok = operator_configured()
+    if not expected_token and not login_ok:
         raise AuthError("api_token_not_configured")
-    if authorization == f"Bearer {expected_token}":
+
+    bearer = ""
+    if authorization and authorization.startswith("Bearer "):
+        bearer = authorization[7:].strip()
+
+    if expected_token and bearer and hmac_safe_eq(bearer, expected_token):
         return
+
+    checker = session_checker or session_valid
+    if bearer and checker(bearer):
+        return
+
     raise AuthError("unauthorized")
+
+
+def hmac_safe_eq(a: str, b: str) -> bool:
+    import hmac
+
+    return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))

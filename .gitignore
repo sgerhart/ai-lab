@@ -35,6 +35,8 @@ api-token.rotated
 **/api-token.rotated
 **/mcp-servers.json
 **/studio-jupyter.token
+**/operator.json
+**/sessions.json
 
 # Secret directories (keep the README only)
 **/secrets/**
