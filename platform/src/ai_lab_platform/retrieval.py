@@ -335,6 +335,21 @@ def memory_search_tool(query: str, *, limit: int = 5, service: RetrievalService 
     return json.dumps(result, indent=2)
 
 
+def memory_write_tool(
+    text: str,
+    source: str,
+    *,
+    doc_id: str | None = None,
+    service: RetrievalService | None = None,
+) -> str:
+    """Agent-facing observation for privileged ``memory_write`` (IWO-041)."""
+    import json
+
+    svc = service or default_retrieval_service()
+    doc = svc.upsert(text=text, source=source, doc_id=doc_id)
+    return json.dumps({"ok": True, "written": doc}, indent=2)
+
+
 _default_service: RetrievalService | None = None
 
 
@@ -362,5 +377,6 @@ __all__ = [
     "default_retrieval_service",
     "hash_embed",
     "memory_search_tool",
+    "memory_write_tool",
     "set_default_retrieval_service",
 ]

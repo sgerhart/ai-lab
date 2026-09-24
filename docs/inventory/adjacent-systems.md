@@ -30,4 +30,15 @@ Not owned by this repo:
 - Host PostgreSQL listening on all interfaces
 - Host Ollama (lab-relevant, but not yet configured from this repo)
 
+## Candidates under evaluation (not absorbed)
+
+These are **not** lab hosts yet. Adding any of them needs an IWO + (for
+absorbing product stacks) a new ADR. ADR 0025 still applies.
+
+| Candidate | What it is | Fit in ai-lab | First step |
+|-----------|------------|---------------|------------|
+| **agentic-factory** | Adjacent Air Docker stack (orchestrator / PR watchdog / Vault) | Stay **adjacent**; optional FEAT-007 bridge only | Inventory + boundary doc; never reuse factory Vault |
+| **DefenseClaw** ([cisco-ai-defense/defenseclaw](https://github.com/cisco-ai-defense/defenseclaw)) | Governance gateway: scan MCP/skills, hook Cursor/OpenClaw, audit | Air operator plane first (`observe`); later gate Studio tools / lab MCP | Draft FEAT; `defenseclaw setup cursor --mode observe` with explicit auth |
+| **Antares** ([fdtn-ai/antares-1b](https://huggingface.co/fdtn-ai/antares-1b) / [350m](https://huggingface.co/fdtn-ai/antares-350m)) | Cisco Foundation AI vuln-localization terminal agents (Granite 4.0) | **Studio** inference + sandboxed agent loop (not general chat) | Prefer **1B** on Studio; optional **350M** as lighter/draft; no pull until authorized |
+
 Unhealthy Clarion containers were visible at collection time. That is product hygiene, not a Phase 0 task for `ai-lab`.

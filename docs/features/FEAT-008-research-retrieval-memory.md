@@ -19,7 +19,7 @@ FEAT-010, FEAT-003; Qdrant live on mini.
 | ID | Title | Acceptance |
 |----|-------|------------|
 | [IWO-040](../work-orders/IWO-040-retrieval-api.md) | Retrieval API + citation policy | Search returns sources; empty stays empty |
-| IWO-041 | Memory write gates (agent tool) | Audited writes only |
+| [IWO-041](../work-orders/IWO-041-memory-write-gates.md) | Memory write gates (agent tool) | Audited writes only |
 
 ## Out of scope
 
@@ -30,5 +30,5 @@ Unrestricted crawl; Clarion production DB ingestion.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Partial — `/v1/memory/*`, `memory_search` tool, hash embeds; Qdrant optional |
+| Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041) |
 | Live | Partial — API after sync; Qdrant when `QDRANT_API_KEY` set on mini |

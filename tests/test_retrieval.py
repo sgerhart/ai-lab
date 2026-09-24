@@ -79,6 +79,42 @@ class MemoryToolTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertIn("Qdrant", result.observation)
 
+    def test_memory_write_requires_approval(self) -> None:
+        from ai_lab_platform.approvals import is_privileged
+        from ai_lab_platform.retrieval import set_default_retrieval_service
+        from ai_lab_platform.tool_runtime import tool_needs_human_gate
+
+        self.assertTrue(is_privileged("memory_write"))
+        policy = load_policy("research")
+        self.assertIn("memory_write", policy.privileged_tools)
+        self.assertTrue(
+            tool_needs_human_gate(
+                "memory_write",
+                list(policy.allowed_tools),
+                set(),
+                privileged_tools=list(policy.privileged_tools),
+            )
+        )
+        svc = RetrievalService(InMemoryStore())
+        set_default_retrieval_service(svc)
+        denied = execute_allowed_tool(
+            "memory_write",
+            {"text": "note", "source": "test"},
+            allowed_tools=list(policy.allowed_tools),
+            approved_tools=set(),
+        )
+        self.assertTrue(denied.denied)
+        ok = execute_allowed_tool(
+            "memory_write",
+            {"text": "note about lab", "source": "IWO-041"},
+            allowed_tools=list(policy.allowed_tools),
+            approved_tools={"memory_write"},
+        )
+        self.assertTrue(ok.ok)
+        found = svc.search("lab")
+        self.assertTrue(found["matches"])
+        self.assertEqual(found["matches"][0]["source"], "IWO-041")
+
 
 try:
     from fastapi.testclient import TestClient

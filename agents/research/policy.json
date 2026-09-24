@@ -4,9 +4,12 @@
   "allowed_tools": [
     "http_get_allowlist",
     "write_report_artifact",
-    "memory_search"
+    "memory_search",
+    "memory_write"
   ],
-  "privileged_tools": [],
+  "privileged_tools": [
+    "memory_write"
+  ],
   "network": ["allowlist"],
   "citation_policy": "no-fabrication"
 }

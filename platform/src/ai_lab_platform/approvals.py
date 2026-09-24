@@ -14,6 +14,7 @@ PRIVILEGED_TOOLS = frozenset(
         "rotate_credentials",
         "firewall_change",
         "ssh_config_write",
+        "memory_write",
     }
 )
 

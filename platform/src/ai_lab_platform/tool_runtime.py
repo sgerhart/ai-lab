@@ -8,7 +8,7 @@ from typing import Any, Callable
 
 from .approvals import is_privileged, requires_approval
 from .mcp_client import call_mcp_tool, parse_mcp_tool_name
-from .retrieval import default_retrieval_service, memory_search_tool
+from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
 from .tools import ToolContext, ToolError, compose_ps_read, git_status, health_read, repo_read
 
 
@@ -55,6 +55,12 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "memory_search": lambda ctx, **a: memory_search_tool(
         str(a.get("query") or a.get("q") or ""),
         limit=int(a.get("limit", 5)),
+        service=default_retrieval_service(),
+    ),
+    "memory_write": lambda ctx, **a: memory_write_tool(
+        str(a.get("text") or ""),
+        str(a.get("source") or ""),
+        doc_id=(str(a["id"]) if a.get("id") else None),
         service=default_retrieval_service(),
     ),
     "git_push": lambda ctx, **_a: _refuse_privileged("git_push"),
