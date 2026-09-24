@@ -23,6 +23,8 @@ class WorkOrderStore(Protocol):
 class ConversationStore(Protocol):
     def put_conversation(self, conversation: Conversation) -> None: ...
     def get_conversation(self, conversation_id: str) -> Conversation | None: ...
+    def list_conversations(self, *, limit: int = 50) -> list[Conversation]: ...
+    def delete_conversation(self, conversation_id: str) -> bool: ...
     def put_message(self, message: Message) -> None: ...
     def list_messages(self, conversation_id: str) -> list[Message]: ...
     def put_agent_run(self, run: AgentRun) -> None: ...
@@ -191,6 +193,30 @@ class SqliteStore:
         if row is None:
             return None
         return Conversation.from_dict(json.loads(row["payload"]))
+
+    def list_conversations(self, *, limit: int = 50) -> list[Conversation]:
+        lim = max(1, min(int(limit), 200))
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT payload FROM conversations
+                ORDER BY updated_at DESC
+                LIMIT ?
+                """,
+                (lim,),
+            ).fetchall()
+        return [Conversation.from_dict(json.loads(r["payload"])) for r in rows]
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        with self._connect() as conn:
+            conn.execute(
+                "DELETE FROM conversation_messages WHERE conversation_id = ?",
+                (conversation_id,),
+            )
+            cur = conn.execute(
+                "DELETE FROM conversations WHERE id = ?", (conversation_id,)
+            )
+            return cur.rowcount > 0
 
     def put_message(self, message: Message) -> None:
         with self._connect() as conn:

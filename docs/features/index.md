@@ -26,8 +26,9 @@ Do not treat this index as authorized implementation or deploy.
 | 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Partial:** Ollama live; OpenAI/Anthropic gated (IWO-021) | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
 | 1 | [FEAT-001](FEAT-001-work-order-planning-and-approval.md) | Feature backlog and WO planning | **Partial (docs)** + protocol IWO-001 | [#2](https://github.com/sgerhart/ai-lab/issues/2) |
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live)** | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
-| 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (live):** chat-first `/agents` + tool loop | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
+| 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (live):** Personal Agent Studio shell | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
 | 3 | [FEAT-012](FEAT-012-lab-site-and-secret-vault.md) | Lab site + Vault (frictionless Studio) | **Partial (live):** `/lab` `/secrets` `/help`; trusted_tailnet; Vault scaffold only | — |
+| 3 | [FEAT-013](FEAT-013-personal-agent-studio.md) | Personal Agent Studio | **Partial:** IWO-024–028 shell/attach/deploy/MCP stub/deep research | — |
 | 4 | [FEAT-003](FEAT-003-studio-worker-and-models.md) | Studio inference and worker | **Partial:** Ollama+Jupyter live; IWO-019 router | [#4](https://github.com/sgerhart/ai-lab/issues/4) |
 | 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Partial (live):** Studio Lab + MLX/Ollama; Air opens via mini `/lab` | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Specified** | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
@@ -53,6 +54,11 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-019](../work-orders/IWO-019-studio-ollama-provider.md) | Studio Ollama on mini router | FEAT-011/003 | **Complete** (live: llama3.2:3b) |
 | [IWO-020](../work-orders/IWO-020-live-ollama-agent-loop.md) | Live Ollama agent tool loop | FEAT-010/003 | **Complete** (live: health_read→FINAL) |
 | [IWO-021](../work-orders/IWO-021-cloud-provider-adapters.md) | OpenAI/Anthropic from secrets | FEAT-011 | **Complete** (gated; no live $ in tests) |
+| [IWO-024](../work-orders/IWO-024-personal-agent-studio-shell.md) | Personal Agent Studio shell + SSE | FEAT-013/004 | **Complete** |
+| [IWO-025](../work-orders/IWO-025-conversation-attachments.md) | Attachments | FEAT-013 | **Complete** |
+| [IWO-026](../work-orders/IWO-026-personal-agent-definitions.md) | Personal agent definitions | FEAT-013 | **Complete** |
+| [IWO-027](../work-orders/IWO-027-mcp-client-allowlist.md) | MCP client allowlist stub | FEAT-013 | **Complete** (no live transport) |
+| [IWO-028](../work-orders/IWO-028-deep-research-mode.md) | Deep research mode | FEAT-013/011 | **Complete** (gated) |
 
 ## Historical phase work orders
 

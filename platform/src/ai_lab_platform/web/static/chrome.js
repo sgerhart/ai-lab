@@ -3,7 +3,7 @@
   const links = [
     { href: "/", label: "Status", match: /^\/$/ },
     { href: "/lab", label: "Lab", match: /^\/lab$/ },
-    { href: "/agents", label: "Agents", match: /^\/agents$/ },
+    { href: "/agents", label: "Studio", match: /^\/agents$/ },
     { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
     { href: "/help", label: "Help", match: /^\/help$/ },
   ];

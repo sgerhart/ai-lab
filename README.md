@@ -12,7 +12,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
-**Deployment status:** M1 Postgres/Redis/Qdrant and the FastAPI control plane are **up** on `mac-mini` over Tailscale (API port **8088**). Studio Jupyter + Ollama are **up** on `mac-studio`. Lab site `/lab` live. `/agents` chat and tool loop use Studio `llama3.2:3b` (IWO-019/020). OpenAI/Anthropic adapters are gated behind `/secrets` authorize + keys (IWO-021; no live $ until you enable). See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
+**Deployment status:** M1 control plane **up** on `mac-mini` (:8088). Studio Jupyter + Ollama **up**. Personal Agent Studio at `/agents` (IWO-024–028 in Git). Cloud/deep research gated on `/secrets`. See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
 
 ## Three areas
 

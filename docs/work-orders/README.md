@@ -45,6 +45,11 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-019](IWO-019-studio-ollama-provider.md) | Studio Ollama on mini router | Complete (live) |
 | [IWO-020](IWO-020-live-ollama-agent-loop.md) | Live Ollama agent tool loop | Complete (live) |
 | [IWO-021](IWO-021-cloud-provider-adapters.md) | OpenAI/Anthropic from secrets | Complete (gated; no live $) |
+| [IWO-024](IWO-024-personal-agent-studio-shell.md) | Personal Agent Studio shell | Complete |
+| [IWO-025](IWO-025-conversation-attachments.md) | Attachments | Complete |
+| [IWO-026](IWO-026-personal-agent-definitions.md) | Agent definitions | Complete |
+| [IWO-027](IWO-027-mcp-client-allowlist.md) | MCP client allowlist | Complete (stub transport) |
+| [IWO-028](IWO-028-deep-research-mode.md) | Deep research mode | Complete (gated) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

@@ -4,6 +4,14 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### FEAT-013 / IWO-024–028 — Personal Agent Studio
+
+- ChatGPT-like `/agents` shell: conversation sidebar, SSE streaming chat,
+  Studio Ollama default.
+- Attachments (PDF/MD/TXT/images) under `~/.ai-lab/uploads/`.
+- Personal agent definitions + run; MCP client allowlist stub; deep research
+  toggle gated on usage-billed authorize + keys.
+
 ### IWO-021 — OpenAI / Anthropic adapters (gated)
 
 - Adapters read keys from `~/.ai-lab/secrets/`; enabled only with usage-billed

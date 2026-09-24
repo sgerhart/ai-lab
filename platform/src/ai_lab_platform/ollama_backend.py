@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import json
 from typing import Any
 from urllib.parse import urlparse
 
@@ -57,7 +58,7 @@ class OllamaBackend:
             "model": request.model,
             "prompt": request.prompt,
             "stream": False,
-            "options": {"num_predict": 256, "temperature": 0.1},
+            "options": {"num_predict": 512, "temperature": 0.1},
         }
         if request.system:
             payload["system"] = request.system
@@ -80,6 +81,40 @@ class OllamaBackend:
                 "estimated_cost_usd": 0.0,
             },
         )
+
+    def stream_complete(self, request: CompletionRequest):
+        """Yield text chunks from Ollama streaming generate. Raises OllamaUnavailable."""
+        import httpx
+
+        url = self.base_url + "/api/generate"
+        payload: dict[str, Any] = {
+            "model": request.model,
+            "prompt": request.prompt,
+            "stream": True,
+            "options": {"num_predict": 512, "temperature": 0.1},
+        }
+        if request.system:
+            payload["system"] = request.system
+        try:
+            with httpx.stream(
+                "POST", url, json=payload, timeout=self.timeout_seconds
+            ) as response:
+                response.raise_for_status()
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(data, dict):
+                        chunk = data.get("response") or ""
+                        if chunk:
+                            yield str(chunk)
+                        if data.get("done"):
+                            break
+        except httpx.HTTPError as exc:
+            raise OllamaUnavailable(str(exc)) from exc
 
     def list_models(self) -> list[str]:
         import httpx

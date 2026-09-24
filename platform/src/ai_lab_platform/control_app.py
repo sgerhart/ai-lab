@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import socket
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -9,13 +10,14 @@ from typing import Any
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from fastapi import FastAPI, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
+from .agent_definitions import AgentDefinition, default_agent_definition_store
 from .agent_loop import (
     cancel_agent_run,
     reconcile_stuck_running,
@@ -23,10 +25,18 @@ from .agent_loop import (
     retry_agent_run,
     run_until_idle,
 )
+from .attachments import AttachmentError, default_attachment_store
 from .auth import auth_status, client_ip, require_auth
 from .connect import connect_status, jupyter_open_url, read_token_file
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
 from .dispatch import DispatchFn, http_dispatch
+from .mcp_client import (
+    McpDenied,
+    delete_local_server,
+    mcp_client_status,
+    require_mcp_servers,
+    upsert_local_server,
+)
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
@@ -101,6 +111,38 @@ class MessageIn(BaseModel):
     )
     backend: str = Field(default="fake", description="Provider id when reply=true")
     model: str = Field(default="fake-instruct", description="Model id when reply=true")
+    attachment_ids: list[str] = Field(default_factory=list)
+    deep_research: bool = Field(
+        default=False,
+        description="If true, prefer usage-billed frontier backend when authorized (IWO-028)",
+    )
+
+
+class AgentDefinitionIn(BaseModel):
+    title: str
+    agent: str = "lab-operations"
+    system_prompt: str = ""
+    tools: list[str] = Field(default_factory=list)
+    mcp_server_ids: list[str] = Field(default_factory=list)
+    schedule_cron: str = ""
+
+
+class AgentDefinitionRunIn(BaseModel):
+    objective: str = ""
+    model: str = "llama3.2:3b"
+    backend: str = "ollama"
+    billing_class: str = "local"
+    max_steps: int = Field(default=8, ge=1, le=64)
+    conversation_id: str | None = None
+
+
+class McpServerIn(BaseModel):
+    id: str
+    label: str = ""
+    transport: str = "stdio"
+    command: str = ""
+    args: list[str] = Field(default_factory=list)
+    enabled: bool = True
 
 
 class AgentRunIn(BaseModel):
@@ -203,6 +245,8 @@ def create_control_app(
     app.state.settings = settings
     app.state.model_router = model_router or build_router_from_settings(settings, secret_store=secrets)
     app.state.secret_store = secrets
+    app.state.attachment_store = default_attachment_store()
+    app.state.agent_definition_store = default_agent_definition_store()
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -462,6 +506,18 @@ def create_control_app(
         store.put_conversation(conversation)  # type: ignore[attr-defined]
         return conversation.to_dict()
 
+    @app.get("/v1/conversations")
+    def list_conversations(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        limit: int = 50,
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not hasattr(store, "list_conversations"):
+            raise HTTPException(status_code=501, detail="conversation list unavailable")
+        items = store.list_conversations(limit=limit)  # type: ignore[attr-defined]
+        return {"conversations": [c.to_dict() for c in items]}
+
     @app.get("/v1/conversations/{conversation_id}")
     def get_conversation(
         request: Request,
@@ -473,6 +529,20 @@ def create_control_app(
         if conversation is None:
             raise HTTPException(status_code=404, detail="not found")
         return conversation.to_dict()
+
+    @app.delete("/v1/conversations/{conversation_id}")
+    def delete_conversation(
+        request: Request,
+        conversation_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not hasattr(store, "delete_conversation"):
+            raise HTTPException(status_code=501, detail="conversation delete unavailable")
+        ok = store.delete_conversation(conversation_id)  # type: ignore[attr-defined]
+        if not ok:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True, "id": conversation_id}
 
     @app.post("/v1/conversations/{conversation_id}/messages")
     def post_message(
@@ -494,7 +564,11 @@ def create_control_app(
             conversation_id=conversation_id,
             role=role,
             content=body.content,
-            meta={"kind": "chat_turn"},
+            meta={
+                "kind": "chat_turn",
+                "attachment_ids": list(body.attachment_ids or []),
+                "deep_research": bool(body.deep_research),
+            },
         )
         store.put_message(message)  # type: ignore[attr-defined]
 
@@ -504,20 +578,61 @@ def create_control_app(
         from .cloud_backends import CloudUnavailable
         from .ollama_backend import OllamaUnavailable
 
+        att_store = app.state.attachment_store
+        attachment_ctx = ""
+        if body.attachment_ids:
+            attachment_ctx = att_store.extract_text_for_prompt(
+                conversation_id, list(body.attachment_ids)
+            )
+
         prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
-        # Build a short transcript prompt (exclude the just-stored user turn duplicate at end).
         lines: list[str] = []
         for m in prior[-12:]:
             lines.append(f"{m.role.value}: {m.content}")
         prompt = "\n".join(lines) if lines else body.content
+        if attachment_ctx:
+            prompt = prompt + "\n\nAttached materials:\n" + attachment_ctx
+
+        backend = body.backend
+        model = body.model
+        secrets_s: SecretStore = app.state.secret_store
+        if body.deep_research:
+            # IWO-028: prefer anthropic then openai when authorized + keyed.
+            if secrets_s.usage_billed_authorized():
+                if secrets_s.has_provider("anthropic"):
+                    backend = "anthropic"
+                    model = model if body.backend == "anthropic" else "claude-3-5-haiku-latest"
+                elif secrets_s.has_provider("openai"):
+                    backend = "openai"
+                    model = model if body.backend == "openai" else "gpt-4o-mini"
+                else:
+                    return {
+                        "message": message.to_dict(),
+                        "reply": None,
+                        "error": "deep_research_requires_frontier_key",
+                    }
+            else:
+                return {
+                    "message": message.to_dict(),
+                    "reply": None,
+                    "error": "deep_research_requires_usage_billed_authorize",
+                }
+
+        system = f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly."
+        if body.deep_research:
+            system = (
+                f"You are performing deep research for the {conversation.agent} agent. "
+                "Synthesize carefully; note uncertainty; do not invent citations."
+            )
+
         router: ModelRouter = app.state.model_router
         try:
             completion = router.complete(
                 CompletionRequest(
-                    model=body.model,
+                    model=model,
                     prompt=prompt,
-                    backend=body.backend,
-                    system=f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly.",
+                    backend=backend,
+                    system=system,
                 )
             )
         except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
@@ -535,6 +650,7 @@ def create_control_app(
                 "backend": completion.backend,
                 "model": completion.model,
                 "billing_class": completion.billing_class.value,
+                "deep_research": bool(body.deep_research),
             },
         )
         store.put_message(assistant)  # type: ignore[attr-defined]
@@ -560,6 +676,284 @@ def create_control_app(
             "messages": [m.to_dict() for m in messages],
             "note": "Ordinary chat turns only; not runtime work orders.",
         }
+
+    @app.post("/v1/conversations/{conversation_id}/messages/stream")
+    def stream_message(
+        request: Request,
+        conversation_id: str,
+        body: MessageIn,
+        authorization: str | None = Header(default=None),
+    ) -> StreamingResponse:
+        """SSE chat reply. Prefer Ollama stream; other backends emit one chunk."""
+        _gate(request, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        if body.role != "user":
+            raise HTTPException(status_code=400, detail="stream only supports role=user")
+
+        from .cloud_backends import CloudUnavailable
+        from .ollama_backend import OllamaBackend, OllamaUnavailable
+
+        att_store = app.state.attachment_store
+        message = Message.new(
+            conversation_id=conversation_id,
+            role=MessageRole.USER,
+            content=body.content,
+            meta={
+                "kind": "chat_turn",
+                "attachment_ids": list(body.attachment_ids or []),
+                "deep_research": bool(body.deep_research),
+            },
+        )
+        store.put_message(message)  # type: ignore[attr-defined]
+
+        attachment_ctx = ""
+        if body.attachment_ids:
+            attachment_ctx = att_store.extract_text_for_prompt(
+                conversation_id, list(body.attachment_ids)
+            )
+        prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
+        lines = [f"{m.role.value}: {m.content}" for m in prior[-12:]]
+        prompt = "\n".join(lines) if lines else body.content
+        if attachment_ctx:
+            prompt = prompt + "\n\nAttached materials:\n" + attachment_ctx
+
+        backend = body.backend
+        model = body.model
+        secrets_s: SecretStore = app.state.secret_store
+        if body.deep_research:
+            if not secrets_s.usage_billed_authorized():
+                raise HTTPException(
+                    status_code=400,
+                    detail="deep_research_requires_usage_billed_authorize",
+                )
+            if secrets_s.has_provider("anthropic"):
+                backend, model = "anthropic", "claude-3-5-haiku-latest"
+            elif secrets_s.has_provider("openai"):
+                backend, model = "openai", "gpt-4o-mini"
+            else:
+                raise HTTPException(status_code=400, detail="deep_research_requires_frontier_key")
+
+        system = f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly."
+        if body.deep_research:
+            system = (
+                f"You are performing deep research for the {conversation.agent} agent. "
+                "Synthesize carefully; note uncertainty; do not invent citations."
+            )
+        req = CompletionRequest(model=model, prompt=prompt, backend=backend, system=system)
+        router: ModelRouter = app.state.model_router
+
+        def event_stream():
+            yield f"data: {json.dumps({'event': 'user', 'message': message.to_dict()})}\n\n"
+            parts: list[str] = []
+            try:
+                backend_obj = router.backends.get(backend)
+                if isinstance(backend_obj, OllamaBackend) and hasattr(backend_obj, "stream_complete"):
+                    for chunk in backend_obj.stream_complete(req):
+                        parts.append(chunk)
+                        yield f"data: {json.dumps({'event': 'token', 'text': chunk})}\n\n"
+                    full = "".join(parts)
+                    billing = backend_obj.billing_class.value
+                else:
+                    completion = router.complete(req)
+                    full = completion.text
+                    billing = completion.billing_class.value
+                    yield f"data: {json.dumps({'event': 'token', 'text': full})}\n\n"
+            except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
+                yield f"data: {json.dumps({'event': 'error', 'error': f'provider_unavailable:{exc}'})}\n\n"
+                return
+            assistant = Message.new(
+                conversation_id=conversation_id,
+                role=MessageRole.ASSISTANT,
+                content=full,
+                meta={
+                    "kind": "chat_reply",
+                    "backend": backend,
+                    "model": model,
+                    "billing_class": billing,
+                    "deep_research": bool(body.deep_research),
+                },
+            )
+            store.put_message(assistant)  # type: ignore[attr-defined]
+            yield f"data: {json.dumps({'event': 'done', 'reply': assistant.to_dict()})}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+    @app.post("/v1/conversations/{conversation_id}/attachments")
+    async def upload_attachment(
+        request: Request,
+        conversation_id: str,
+        authorization: str | None = Header(default=None),
+        file: UploadFile = File(...),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        raw = await file.read()
+        try:
+            meta = app.state.attachment_store.save(
+                conversation_id=conversation_id,
+                filename=file.filename or "upload.bin",
+                data=raw,
+                content_type=file.content_type or "",
+            )
+        except AttachmentError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return meta
+
+    @app.get("/v1/mcp/status")
+    def mcp_status(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return mcp_client_status()
+
+    @app.put("/v1/mcp/servers/{server_id}")
+    def put_mcp_server(
+        request: Request,
+        server_id: str,
+        body: McpServerIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Register or update a local MCP connection (~/.ai-lab/mcp-servers.json)."""
+        _gate(request, authorization)
+        if body.id and body.id != server_id:
+            raise HTTPException(status_code=400, detail="id mismatch")
+        try:
+            return upsert_local_server(
+                server_id=server_id,
+                label=body.label,
+                transport=body.transport,
+                command=body.command,
+                args=body.args,
+                enabled=body.enabled,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.delete("/v1/mcp/servers/{server_id}")
+    def remove_mcp_server(
+        request: Request,
+        server_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not delete_local_server(server_id):
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True, "id": server_id}
+
+    @app.get("/v1/agent-runs")
+    def list_all_agent_runs(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        limit: int = 40,
+    ) -> dict[str, Any]:
+        """Recent agent-loop runs across conversations (Studio Runs view)."""
+        _gate(request, authorization)
+        if not hasattr(store, "list_agent_runs"):
+            raise HTTPException(status_code=501, detail="agent runs unavailable")
+        runs = store.list_agent_runs(None)  # type: ignore[attr-defined]
+        lim = max(1, min(int(limit), 100))
+        newest = list(reversed(runs))[:lim]
+        return {"runs": [r.to_dict() for r in newest]}
+
+    @app.get("/v1/agent-definitions")
+    def list_agent_definitions(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        items = app.state.agent_definition_store.list()
+        return {"definitions": [d.to_dict() for d in items]}
+
+    @app.post("/v1/agent-definitions")
+    def create_agent_definition(
+        request: Request,
+        body: AgentDefinitionIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            load_policy(body.agent)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if body.mcp_server_ids:
+            try:
+                require_mcp_servers(body.mcp_server_ids)
+            except McpDenied as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        definition = AgentDefinition.new(
+            title=body.title,
+            agent=body.agent,
+            system_prompt=body.system_prompt,
+            tools=body.tools,
+            mcp_server_ids=body.mcp_server_ids,
+            schedule_cron=body.schedule_cron,
+        )
+        app.state.agent_definition_store.put(definition)
+        return definition.to_dict()
+
+    @app.get("/v1/agent-definitions/{definition_id}")
+    def get_agent_definition(
+        request: Request,
+        definition_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        definition = app.state.agent_definition_store.get(definition_id)
+        if definition is None:
+            raise HTTPException(status_code=404, detail="not found")
+        return definition.to_dict()
+
+    @app.post("/v1/agent-definitions/{definition_id}/runs")
+    def run_agent_definition(
+        request: Request,
+        definition_id: str,
+        body: AgentDefinitionRunIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Run a deployed personal agent via the existing bounded loop."""
+        _gate(request, authorization)
+        definition = app.state.agent_definition_store.get(definition_id)
+        if definition is None:
+            raise HTTPException(status_code=404, detail="not found")
+        if definition.mcp_server_ids:
+            try:
+                require_mcp_servers(definition.mcp_server_ids)
+            except McpDenied as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        conv_id = body.conversation_id
+        if not conv_id:
+            conversation = Conversation.new(
+                agent=definition.agent, title=f"agent:{definition.title}"
+            )
+            store.put_conversation(conversation)  # type: ignore[attr-defined]
+            conv_id = conversation.id
+        else:
+            conversation = store.get_conversation(conv_id)  # type: ignore[attr-defined]
+            if conversation is None:
+                raise HTTPException(status_code=404, detail="conversation not found")
+        from .conversation import RunBudget
+
+        objective = body.objective or definition.system_prompt or definition.title
+        run = AgentRun.new(
+            agent=definition.agent,
+            objective=objective,
+            conversation_id=conv_id,
+            model=body.model,
+            billing_class=BillingClass(body.billing_class),
+            backend=body.backend,
+            budget=RunBudget(max_steps=body.max_steps),
+        )
+        run.status = AgentRunStatus.QUEUED
+        store.put_agent_run(run)  # type: ignore[attr-defined]
+        run = run_until_idle(run, router=app.state.model_router, store_put=store.put_agent_run)
+        out = run.to_dict()
+        out["agent_definition_id"] = definition.id
+        return out
 
     @app.post("/v1/conversations/{conversation_id}/runs")
     def create_agent_run(

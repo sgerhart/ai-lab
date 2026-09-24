@@ -165,6 +165,36 @@ class PostgresStore:
             payload = json.loads(payload)
         return Conversation.from_dict(payload)
 
+    def list_conversations(self, *, limit: int = 50) -> list[Conversation]:
+        lim = max(1, min(int(limit), 200))
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT payload FROM conversations
+                ORDER BY updated_at DESC
+                LIMIT %s
+                """,
+                (lim,),
+            ).fetchall()
+        out: list[Conversation] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            out.append(Conversation.from_dict(payload))
+        return out
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        with self._connect() as conn:
+            conn.execute(
+                "DELETE FROM conversation_messages WHERE conversation_id = %s",
+                (conversation_id,),
+            )
+            cur = conn.execute(
+                "DELETE FROM conversations WHERE id = %s", (conversation_id,)
+            )
+            return cur.rowcount > 0
+
     def put_message(self, message: Message) -> None:
         payload = message.to_dict()
         with self._connect() as conn:
