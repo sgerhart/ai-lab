@@ -32,7 +32,9 @@ from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, 
 from .dispatch import DispatchFn, http_dispatch
 from .mcp_client import (
     McpDenied,
+    McpTransportError,
     delete_local_server,
+    list_mcp_tools,
     mcp_client_status,
     require_mcp_servers,
     upsert_local_server,
@@ -873,6 +875,24 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         return {"ok": True, "id": server_id}
 
+    @app.get("/v1/mcp/servers/{server_id}/tools")
+    def mcp_server_tools(
+        request: Request,
+        server_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """List tools from a local stdio MCP server (IWO-029)."""
+        _gate(request, authorization)
+        try:
+            tools = list_mcp_tools(server_id)
+        except McpDenied as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except McpTransportError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"server_id": server_id, "tools": tools}
+
     @app.get("/v1/agent-runs")
     def list_all_agent_runs(
         request: Request,
@@ -975,6 +995,7 @@ def create_control_app(
             billing_class=BillingClass(body.billing_class),
             backend=body.backend,
             budget=RunBudget(max_steps=body.max_steps),
+            mcp_server_ids=list(definition.mcp_server_ids or []),
         )
         run.status = AgentRunStatus.QUEUED
         store.put_agent_run(run)  # type: ignore[attr-defined]

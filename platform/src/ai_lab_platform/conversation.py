@@ -135,6 +135,8 @@ class AgentRun:
     pending_action: dict[str, Any] | None = None
     error: str | None = None
     final_result: str | None = None
+    # MCP servers this run may call (IWO-029). Empty = built-in tools only.
+    mcp_server_ids: list[str] = field(default_factory=list)
     created_at: str = field(default_factory=utcnow)
     updated_at: str = field(default_factory=utcnow)
 
@@ -150,6 +152,7 @@ class AgentRun:
         billing_class: BillingClass | str = BillingClass.LOCAL,
         backend: str = "fake",
         budget: RunBudget | dict[str, Any] | None = None,
+        mcp_server_ids: list[str] | None = None,
     ) -> AgentRun:
         bc = (
             billing_class
@@ -172,6 +175,7 @@ class AgentRun:
             billing_class=bc,
             backend=backend,
             budget=bud,
+            mcp_server_ids=list(mcp_server_ids or []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -191,4 +195,5 @@ class AgentRun:
         payload.setdefault("traces", [])
         payload.setdefault("usage", {})
         payload.setdefault("pending_action", None)
+        payload.setdefault("mcp_server_ids", [])
         return cls(**payload)

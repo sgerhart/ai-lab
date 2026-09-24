@@ -14,6 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 from .conversation import AgentRun, AgentRunStatus
+from .mcp_client import list_mcp_agent_tools, parse_mcp_tool_name
 from .model_router import CompletionRequest, ModelRouter
 from .policy import AgentPolicy, load_policy
 from .tool_runtime import (
@@ -34,21 +35,24 @@ _JSON_TOOL_RE = re.compile(
 )
 
 
-def loop_system_prompt(policy: AgentPolicy) -> str:
+def loop_system_prompt(policy: AgentPolicy, mcp_tools: list[str] | None = None) -> str:
     """Instruct live models (Ollama) to emit the harness TOOL/FINAL protocol."""
     allowed = ", ".join(policy.allowed_tools) or "(none)"
     privileged = ", ".join(policy.privileged_tools) or "(none)"
+    mcp = ", ".join(mcp_tools or []) or "(none)"
     return (
         f"You are the {policy.id} agent for ai-lab on the Mac mini control plane.\n"
         f"Isolation tier {policy.isolation_tier}; read_only={policy.read_only}.\n"
         f"Allowed tools (no approval): {allowed}.\n"
         f"Privileged tools (need human approval): {privileged}.\n"
+        f"MCP tools (operator-listed servers): {mcp}.\n"
         "Respond with exactly one of these forms — no markdown fences, no commentary outside the line:\n"
         '  TOOL <tool_name> {"arg": "value"}\n'
         "  FINAL <short answer for the operator>\n"
-        "Use tools when you need facts (health, compose, repo). "
+        "Use tools when you need facts (health, compose, repo, or MCP). "
         "After observations appear in the user message, call more tools or FINAL.\n"
-        "Never invent tool results. Prefer health_read first for health questions."
+        "Never invent tool results. Prefer health_read first for health questions. "
+        "MCP tool names look like mcp/<server>/<tool>."
     )
 
 
@@ -156,13 +160,16 @@ def step_agent_run(
     else:
         prompt = prompt + "\n\nNo observations yet. Emit one TOOL … line, or FINAL if no tool is needed."
 
+    mcp_tools = list_mcp_agent_tools(list(run.mcp_server_ids or [])) if run.mcp_server_ids else []
+    effective_allowed = list(policy.allowed_tools) + list(policy.privileged_tools) + mcp_tools
+
     try:
         completion = router.complete(
             CompletionRequest(
                 model=run.model,
                 prompt=prompt,
                 backend=run.backend,
-                system=loop_system_prompt(policy),
+                system=loop_system_prompt(policy, mcp_tools=mcp_tools),
             )
         )
     except PermissionError as exc:
@@ -233,7 +240,12 @@ def step_agent_run(
         store_put(run)
         return run
 
-    if tool_name not in policy.allowed_tools and tool_name not in policy.privileged_tools:
+    if (
+        tool_name not in policy.allowed_tools
+        and tool_name not in policy.privileged_tools
+        and tool_name not in mcp_tools
+        and parse_mcp_tool_name(tool_name) is None
+    ):
         run.traces.append(
             {
                 "kind": "tool_denied",
@@ -249,9 +261,55 @@ def step_agent_run(
         store_put(run)
         return run
 
+    # MCP tools on listed servers are operator-trusted for this run (no extra gate).
+    mcp_parsed = parse_mcp_tool_name(tool_name)
+    if mcp_parsed is not None:
+        sid, _ = mcp_parsed
+        if sid not in (run.mcp_server_ids or []):
+            run.traces.append(
+                {
+                    "kind": "tool_denied",
+                    "at": utcnow(),
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "reason": "mcp_server_not_on_run",
+                }
+            )
+            run.status = AgentRunStatus.FAILED
+            run.error = f"tool_denied:{tool_name}"
+            run.updated_at = utcnow()
+            store_put(run)
+            return run
+        if tool_name not in effective_allowed:
+            effective_allowed.append(tool_name)
+        result = execute_allowed_tool(
+            tool_name,
+            tool_args,
+            allowed_tools=effective_allowed,
+            approved_tools=approved_tools | {tool_name},
+            ctx=ctx,
+        )
+        run.traces.append(
+            {
+                "kind": "tool_result",
+                "at": utcnow(),
+                "tool": tool_name,
+                "args": tool_args,
+                "ok": result.ok,
+                "denied": result.denied,
+                "observation": result.observation[:4000],
+            }
+        )
+        if result.denied:
+            run.status = AgentRunStatus.FAILED
+            run.error = f"tool_denied:{tool_name}"
+        run.updated_at = utcnow()
+        store_put(run)
+        return run
+
     if tool_needs_human_gate(
         tool_name,
-        list(policy.allowed_tools),
+        list(policy.allowed_tools) + mcp_tools,
         approved_tools,
         list(policy.privileged_tools),
     ):
@@ -278,7 +336,7 @@ def step_agent_run(
     result = execute_allowed_tool(
         tool_name,
         tool_args,
-        allowed_tools=list(policy.allowed_tools) + list(policy.privileged_tools),
+        allowed_tools=effective_allowed,
         approved_tools=approved_tools,
         ctx=ctx,
     )

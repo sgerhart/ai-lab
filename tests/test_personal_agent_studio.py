@@ -16,12 +16,18 @@ from ai_lab_platform.agent_definitions import AgentDefinition, AgentDefinitionSt
 from ai_lab_platform.attachments import AttachmentError, AttachmentStore
 from ai_lab_platform.conversation import Conversation
 from ai_lab_platform.mcp_client import (
+    call_mcp_tool,
+    list_mcp_tools,
     mcp_client_status,
+    mcp_tool_name,
     require_mcp_servers,
     upsert_local_server,
 )
 from ai_lab_platform.mcp import McpDenied
 from ai_lab_platform.store import SqliteStore
+from ai_lab_platform.tool_runtime import execute_allowed_tool
+
+FAKE_MCP = ROOT / "tests" / "fixtures" / "fake_mcp_server.py"
 
 
 class ListConversationsTests(unittest.TestCase):
@@ -113,7 +119,35 @@ class McpClientTests(unittest.TestCase):
             )
             status = mcp_client_status()
             self.assertIn("filesystem", status["listed_servers"])
+            self.assertIn(status["transport"], {"stdio", "stdio-ready"})
             require_mcp_servers(["filesystem"])
+
+    def test_stdio_list_and_call(self) -> None:
+        path = Path(tempfile.mkdtemp()) / "mcp-servers.json"
+        cmd = f"{sys.executable} {FAKE_MCP}"
+        with mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(path)}):
+            upsert_local_server(server_id="fake", label="Fake", command=cmd, transport="stdio")
+            tools = list_mcp_tools("fake")
+            self.assertTrue(any(t["name"] == "echo" for t in tools))
+            self.assertEqual(tools[0]["agent_tool"], "mcp/fake/echo")
+            result = call_mcp_tool("fake", "echo", {"text": "hi"})
+            self.assertTrue(result["ok"])
+            self.assertIn("echo:hi", result["observation"])
+
+    def test_tool_runtime_mcp_route(self) -> None:
+        path = Path(tempfile.mkdtemp()) / "mcp-servers.json"
+        cmd = f"{sys.executable} {FAKE_MCP}"
+        with mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(path)}):
+            upsert_local_server(server_id="fake", label="Fake", command=cmd)
+            name = mcp_tool_name("fake", "echo")
+            result = execute_allowed_tool(
+                name,
+                {"text": "lab"},
+                allowed_tools=[name],
+                approved_tools=set(),
+            )
+            self.assertTrue(result.ok)
+            self.assertIn("echo:lab", result.observation)
 
 
 if __name__ == "__main__":

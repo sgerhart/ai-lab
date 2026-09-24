@@ -28,7 +28,7 @@ Do not treat this index as authorized implementation or deploy.
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live)** | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
 | 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (live):** Personal Agent Studio shell | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
 | 3 | [FEAT-012](FEAT-012-lab-site-and-secret-vault.md) | Lab site + Vault (frictionless Studio) | **Partial (live):** `/lab` `/secrets` `/help`; trusted_tailnet; Vault scaffold only | — |
-| 3 | [FEAT-013](FEAT-013-personal-agent-studio.md) | Personal Agent Studio | **Partial:** IWO-024–028 shell/attach/deploy/MCP stub/deep research | — |
+| 3 | [FEAT-013](FEAT-013-personal-agent-studio.md) | Personal Agent Studio | **Partial:** IWO-024–029 shell/attach/deploy/stdio MCP/deep research | — |
 | 4 | [FEAT-003](FEAT-003-studio-worker-and-models.md) | Studio inference and worker | **Partial:** Ollama+Jupyter live; IWO-019 router | [#4](https://github.com/sgerhart/ai-lab/issues/4) |
 | 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Partial (live):** Studio Lab + MLX/Ollama; Air opens via mini `/lab` | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Specified** | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
@@ -59,6 +59,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-026](../work-orders/IWO-026-personal-agent-definitions.md) | Personal agent definitions | FEAT-013 | **Complete** |
 | [IWO-027](../work-orders/IWO-027-mcp-client-allowlist.md) | MCP client allowlist stub | FEAT-013 | **Complete** (no live transport) |
 | [IWO-028](../work-orders/IWO-028-deep-research-mode.md) | Deep research mode | FEAT-013/011 | **Complete** (gated) |
+| [IWO-029](../work-orders/IWO-029-live-mcp-stdio-transport.md) | Live MCP stdio transport | FEAT-013 | **Complete** (unit; SSE/HTTP later) |
 
 ## Historical phase work orders
 

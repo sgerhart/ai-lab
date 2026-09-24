@@ -499,7 +499,7 @@
 
           <div class="settings-section">
             <h2>MCP servers</h2>
-            <p class="lead">Connect Model Context Protocol servers your agents may use. Deny-by-default — only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git).</p>
+            <p class="lead">Connect Model Context Protocol servers your agents may use. Deny-by-default — only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git). Stdio transport is live; use <code>mcp/&lt;server&gt;/&lt;tool&gt;</code> in agent runs.</p>
             <div class="mcp-list" id="mcp-list"></div>
             <div class="form-grid">
               <div>
@@ -514,8 +514,8 @@
                 <label for="mcp-transport">Transport</label>
                 <select id="mcp-transport">
                   <option value="stdio">stdio</option>
-                  <option value="sse">sse</option>
-                  <option value="http">http</option>
+                  <option value="sse">sse (not yet)</option>
+                  <option value="http">http (not yet)</option>
                 </select>
               </div>
               <div>
@@ -524,8 +524,10 @@
               </div>
               <div class="form-actions">
                 <button type="button" class="btn primary" id="mcp-save">Save connection</button>
+                <button type="button" class="btn" id="mcp-probe">List tools</button>
               </div>
             </div>
+            <pre class="trace" id="mcp-tools" style="margin-top:12px;display:none"></pre>
             <p class="hint" id="mcp-note" style="text-align:left;margin-top:12px"></p>
           </div>
 
@@ -1020,10 +1022,20 @@
             enabled: true,
           }),
         });
-        $("mcp-id").value = "";
-        $("mcp-label").value = "";
-        $("mcp-command").value = "";
         await loadMcp();
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
+    $("mcp-probe").onclick = async () => {
+      try {
+        const id = ($("mcp-id").value || "").trim();
+        if (!id) throw new Error("enter a server id (save first if new)");
+        const data = await api(`/v1/mcp/servers/${encodeURIComponent(id)}/tools`);
+        const box = $("mcp-tools");
+        box.style.display = "block";
+        box.textContent = (data.tools || []).map((t) =>
+          `${t.agent_tool || t.name}${(t.description ? " — " + t.description : "")}`
+        ).join("\n") || "(no tools)";
         showErr("");
       } catch (e) { showErr(e); }
     };

@@ -48,8 +48,9 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-024](IWO-024-personal-agent-studio-shell.md) | Personal Agent Studio shell | Complete |
 | [IWO-025](IWO-025-conversation-attachments.md) | Attachments | Complete |
 | [IWO-026](IWO-026-personal-agent-definitions.md) | Agent definitions | Complete |
-| [IWO-027](IWO-027-mcp-client-allowlist.md) | MCP client allowlist | Complete (stub transport) |
+| [IWO-027](IWO-027-mcp-client-allowlist.md) | MCP client allowlist | Complete (stub → listed by IWO-029) |
 | [IWO-028](IWO-028-deep-research-mode.md) | Deep research mode | Complete (gated) |
+| [IWO-029](IWO-029-live-mcp-stdio-transport.md) | Live MCP stdio transport | Complete (unit) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

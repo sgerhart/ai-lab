@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .approvals import is_privileged, requires_approval
+from .mcp_client import call_mcp_tool, parse_mcp_tool_name
 from .tools import ToolContext, ToolError, compose_ps_read, git_status, health_read, repo_read
 
 
@@ -75,6 +76,19 @@ def execute_allowed_tool(
             ok=False,
             observation=f"tool requires approval: {name}",
             denied=True,
+        )
+    mcp = parse_mcp_tool_name(name)
+    if mcp is not None:
+        server_id, tool = mcp
+        try:
+            result = call_mcp_tool(server_id, tool, args or {})
+        except Exception as exc:  # noqa: BLE001
+            return ToolResult(name=name, ok=False, observation=str(exc))
+        return ToolResult(
+            name=name,
+            ok=bool(result.get("ok")),
+            observation=str(result.get("observation") or ""),
+            denied=bool(result.get("denied")),
         )
     if name not in _HANDLERS:
         return ToolResult(name=name, ok=False, observation=f"unknown tool: {name}", denied=True)

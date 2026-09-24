@@ -74,6 +74,7 @@ research).
 | [IWO-026](../work-orders/IWO-026-personal-agent-definitions.md) | Personal agent deploy definitions | IWO-024, FEAT-009 | Create/list/run durable agent configs |
 | [IWO-027](../work-orders/IWO-027-mcp-client-allowlist.md) | MCP client allowlist for agents | IWO-026 | Only listed servers; deny-unlisted |
 | [IWO-028](../work-orders/IWO-028-deep-research-mode.md) | Deep research mode (Studio + frontier) | IWO-021 | Explicit mode; billing visible |
+| [IWO-029](../work-orders/IWO-029-live-mcp-stdio-transport.md) | Live MCP stdio transport | IWO-027 | List/call tools; agent `mcp/<id>/<tool>` |
 
 ## Acceptance criteria (Feature-level)
 
@@ -83,6 +84,7 @@ research).
 - [x] Agents and Runs are full main-pane views (not drawers); Lab / API keys / Help live under Operator → Settings
 - [x] Chats can be deleted from the sidebar
 - [x] MCP only via allowlist + local `~/.ai-lab/mcp-servers.json`; unlisted refused; Settings has connect UI
+- [x] Stdio MCP list/call live (IWO-029); SSE/HTTP still out of scope
 - [x] Deep research uses frontier only when selected + authorized
 - [x] No secrets or attachment bytes in Git
 
@@ -92,13 +94,13 @@ research).
 - Unrestricted web crawl without a research IWO
 - Replacing Clarion / factory products inside this repo
 - Auto-enabling paid APIs
-- Live MCP stdio/SSE transport (stub registers connections only)
+- SSE / HTTP MCP transports (stdio only in IWO-029)
 
 ## Implementation status (honest)
 
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | IWO-024–028 in Git (MCP transport stub; PDF text stub); Studio IA: Settings menu, Agents/Runs panes, delete chat |
+| Code | Partial | IWO-024–029 in Git (PDF text stub; SSE/HTTP MCP not wired); Studio IA + stdio MCP |
 | Deploy | Partial | live on mini after operator sync |
-| Live verified | Partial | health + list conversations + Studio HTML 2026-09-23 |
+| Live verified | Partial | health + Studio chat/tok/s 2026-09-23; MCP stdio unit-tested |
