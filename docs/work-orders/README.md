@@ -58,6 +58,11 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-042](IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | Complete (unit) |
 | [IWO-044](IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | Complete (read-only) |
 | [IWO-045](IWO-045-defenseclaw-cursor-connector.md) | DefenseClaw Cursor connector | Complete (Air action) |
+| [IWO-046](IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | Done (F-014) |
+| [IWO-047](IWO-047-antares-1b-studio.md) | Antares-1B on Studio | Complete (weights; serve later) |
+| [IWO-052](IWO-052-scheduler-launchagent.md) | Scheduler LaunchAgent on mini | Complete (live) |
+| [IWO-053](IWO-053-wire-qdrant-env.md) | Wire Qdrant into control-plane env | Complete (live) |
+| [IWO-054](IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | Complete (Air) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

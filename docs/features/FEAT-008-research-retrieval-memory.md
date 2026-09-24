@@ -1,6 +1,6 @@
 # FEAT-008 — Scoped research and retrieval memory
 
-- **Status:** Partial (IWO-040 retrieval API in Git)
+- **Status:** Partial (IWO-040/041 + IWO-053 Qdrant live on mini)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#9](https://github.com/sgerhart/ai-lab/issues/9)
@@ -31,4 +31,4 @@ Unrestricted crawl; Clarion production DB ingestion.
 |-------|--------|
 | Spec | Done |
 | Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041) |
-| Live | Partial — API after sync; Qdrant when `QDRANT_API_KEY` set on mini |
+| Live | Qdrant wired on mini 2026-09-24 (`backend=qdrant`); hash embeds |

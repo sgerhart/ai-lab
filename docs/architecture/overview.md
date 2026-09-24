@@ -1,28 +1,34 @@
 # Architecture overview
 
-**Status:** Data plane and FastAPI control plane live on the M1 mini (Tailscale, canonical ports). Studio **not** deployed. Docker Desktop uninstalled.  
-**Updated:** 2026-09-21
+**Status:** Control plane live on `mac-mini`; Studio compute (Ollama + Jupyter)
+live; Personal Agent Studio + retrieval + scheduler + lab MCP in use. Antares-1B
+weights on Studio (serve/CLI sandbox still open).  
+**Updated:** 2026-09-24
 
-A personal, three-host Apple Silicon lab with Tailscale as the private network. Durable control-plane state lives on the M1 mini. Inference and training live on the Studio. The M3 Air is the human interface.
+A personal, three-host Apple Silicon lab with Tailscale as the private network.
+Durable control-plane state lives on the M1 mini. Inference and heavy models
+live on the Studio. The M3 Air is the human interface (IDE, approvals,
+DefenseClaw).
 
 ```mermaid
 flowchart TB
   subgraph human [Human plane]
-    air["M3 MacBook Air\nIDE / Git / approvals"]
+    air["M3 MacBook Air\nIDE / Cursor / approvals\nDefenseClaw"]
   end
   subgraph ts [Tailscale tailnet]
-    magic["MagicDNS\nmac-mini / mac-studio / mac-air\n+ {{TAILNET_NAME}}.ts.net"]
+    magic["MagicDNS\nmac-mini / mac-studio / mac-air"]
   end
   subgraph control [Control plane]
-    mini["M1 Mac mini 16 GB\nPostgres / Qdrant / Redis\nHarness API / scheduler"]
+    mini["M1 Mac mini 16 GB\nPostgres / Qdrant / Redis\nHarness API :8088\nLaunchAgent scheduler tick"]
   end
   subgraph compute [Compute plane]
-    studio["Studio M5 Max 64 GB\nOllama / MLX / workers\nJupyterLab"]
+    studio["Studio M5 Max 64 GB\nOllama / Jupyter\nAntares-1B weights\n(optional workers)"]
   end
+  air -->|"Studio UI / MCP stdio"| mini
   air --> magic
   magic --> mini
   magic --> studio
-  mini -->|"work items / model route"| studio
+  mini -->|"STUDIO_OLLAMA_URL / Jupyter"| studio
   studio -->|"status / artifacts"| mini
 ```
 
@@ -34,20 +40,25 @@ flowchart TB
 | `studio` | Mac Studio | Apple M5 Max, 18 CPU / 40 GPU | **64 GB** (confirmed) | 1 TB | Compute plane |
 | `m3-air` | MacBook Air | Apple M3 | **16 GB** (attested, ADR 0031) | 512 GB | Human plane |
 
-Observed on the workspace host (2026-09-19) and attested by the owner (2026-09-21, ADR 0031): 16 GB unified memory.
-
 ## What is implemented in Git vs live
 
 | Piece | In Git | Running on lab hosts |
 |-------|--------|----------------------|
 | Docs, ADRs, runbooks | Yes | n/a |
 | Host Brewfiles + dry-run setup | Yes | **m1-mini `--apply` done** |
-| Compose Postgres/Redis/Qdrant | Yes | **Up on mac-mini** (5432/6379/6333, loopback + Tailscale IPv4) |
-| Agent harness + three catalog plans | Yes (deterministic; not LLM) | **API on mac-mini:8088** |
-| Models | `catalog.json` (empty of pulls) + FakeBackend dry-run | None pulled from this repo |
-| MCP allowlist | Yes (empty / deny-unlisted) | No servers |
-| Ollama HTTP client | Loopback only; pull refused | Not pointed at Studio |
-| Tailscale | Documented (`mac-mini` / `mac-studio` / `mac-air`; suffix not in Git) | Air + mini on tailnet; Studio not seen |
+| Compose Postgres/Redis/Qdrant | Yes | **Up on mac-mini** (5432/6379/6333) |
+| FastAPI control plane + LangGraph | Yes | **LaunchAgent `com.ai-lab.control-plane` :8088** |
+| Personal Agent Studio (`/agents`, login) | Yes | **Live** (operator sessions) |
+| Scheduler tick + LaunchAgent | Yes (IWO-030/052) | **`com.ai-lab.scheduler-tick` on mini** |
+| Retrieval / Qdrant memory API | Yes (IWO-040/041/053) | **`backend=qdrant` on mini** |
+| Lab as MCP server (IDE) | Yes (IWO-042/054) | **Cursor `ai-lab` on Air** |
+| DefenseClaw (adjacent) | Preflight docs | **Air: Cursor + Antigravity action** |
+| Studio Ollama | Catalog + provider | **`llama3.2:3b` on `mac-studio:11434`** |
+| Studio Jupyter | Host scripts | **Up (`:8888`); token on mini** |
+| Antares-1B | Runbook + download cell | **Weights on Studio**; no `/v1/completions` yet |
+| Studio SSH from Air/mini | Documented | **Broken (F-015)** — Jupyter path used |
+| Studio worker `:8090` | Scripts | **Not running** |
+| Cloud LLM / deep research | Gated adapters | Off until `/secrets` authorize |
 
 ## Read next
 
@@ -57,3 +68,4 @@ Observed on the workspace host (2026-09-19) and attested by the owner (2026-09-2
 - [data-flows.md](data-flows.md)
 - [diagrams.md](diagrams.md)
 - [../deployment/network.md](../deployment/network.md)
+- [../inventory/adjacent-systems.md](../inventory/adjacent-systems.md)

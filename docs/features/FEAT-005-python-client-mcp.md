@@ -1,6 +1,6 @@
 # FEAT-005 — Python client and IDE MCP adapter
 
-- **Status:** Partial (IWO-042 lab MCP server in Git)
+- **Status:** Partial (IWO-042 server + IWO-054 Cursor wired on Air)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#6](https://github.com/sgerhart/ai-lab/issues/6)
@@ -39,4 +39,4 @@ Org-wide tokens; Clarion factory MCP.
 |-------|--------|
 | Spec | Done |
 | Code | Partial — `lab_mcp_server` + `LabApiClient` (IWO-042) |
-| Live | Operator wires Cursor locally; not auto-installed |
+| Live | Cursor `ai-lab` MCP on Air 2026-09-24 (token via `~/.ai-lab/mac-mini-api.token`) |

@@ -102,6 +102,8 @@ Live bind is this host's Tailscale IPv4 (ADR 0034), plus compose overlay for the
 
 `STUDIO_OLLAMA_URL` must be set for `/agents` to use live Studio Ollama (IWO-019). Put the same exports in `~/.ai-lab/start-control-plane.sh` (gitignored), not in the plist.
 
+For retrieval (FEAT-008 / IWO-053), also export `QDRANT_URL` and `QDRANT_API_KEY` in that start script (source from `infrastructure/compose.local.env` via `./scripts/wire-qdrant-env.sh --apply`; never paste keys into chat).
+
 Install the LaunchAgent from the example plist (replace `OPERATOR` with this host's login). Then:
 
 ```bash
@@ -111,6 +113,19 @@ launchctl enable "gui/$(id -u)/com.ai-lab.control-plane"
 ```
 
 Do not put `AI_LAB_API_TOKEN` or `DATABASE_URL` in the plist; `~/.ai-lab/start-control-plane.sh` already exports them.
+
+### Scheduler tick (IWO-052 / FEAT-009)
+
+Minute timer for `POST /v1/scheduler/tick` (needs control plane + `~/.ai-lab/api.token`):
+
+```bash
+./scripts/install-scheduler-launchagent.sh          # dry-run
+./scripts/install-scheduler-launchagent.sh --apply  # install LaunchAgent
+./scripts/scheduler-tick.sh --apply                 # manual one-shot
+tail -f ~/.ai-lab/scheduler-tick.log
+```
+
+`scheduler-tick.sh` prefers loopback if `/health` answers, else this host's Tailscale IPv4 (ADR 0034). Override with `AI_LAB_SCHEDULER_HOST`.
 
 ## 6. Verification
 

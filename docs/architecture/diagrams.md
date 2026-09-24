@@ -4,12 +4,12 @@
 
 ```mermaid
 flowchart LR
-  air[M3 Air\nhuman]
-  m1[M1 mini\ncontrol]
-  st[Studio\ncompute]
-  air -->|Tailscale SSH / UI| m1
-  air -->|Tailscale SSH / Jupyter client| st
-  m1 -->|jobs / route| st
+  air[M3 Air\nhuman / Cursor / DefenseClaw]
+  m1[M1 mini\ncontrol :8088]
+  st[Studio\nOllama / Jupyter / Antares weights]
+  air -->|Tailscale UI + MCP| m1
+  air -->|Tailscale Jupyter client| st
+  m1 -->|inference route| st
 ```
 
 ## Trust zones
@@ -19,10 +19,11 @@ flowchart TB
   subgraph public [Public Internet]
     gh[GitHub]
     cloud[Optional LLM APIs]
+    hf[Hugging Face gated models]
   end
   subgraph tailnet [Tailscale - untrusted for app auth]
-    m1[M1 services]
-    st[Studio Ollama]
+    m1[M1 API + Qdrant + Postgres]
+    st[Studio Ollama + Jupyter]
     air[Air clients]
   end
   subgraph loopback [Host loopback]
@@ -32,7 +33,8 @@ flowchart TB
   air --> st
   m1 --> st
   m1 --> gh
-  st --> cloud
+  st --> hf
+  st -.->|gated| cloud
 ```
 
 ## Work-order states
@@ -55,4 +57,17 @@ stateDiagram-v2
   failed --> [*]
   completed --> [*]
   cancelled --> [*]
+```
+
+## Lab MCP (IDE → mini)
+
+```mermaid
+sequenceDiagram
+  participant Cursor as Cursor on Air
+  participant MCP as lab-mcp-server.sh
+  participant API as mac-mini:8088
+  Cursor->>MCP: stdio tools/call
+  MCP->>API: HTTPS/HTTP + bearer
+  API-->>MCP: JSON
+  MCP-->>Cursor: tool result
 ```

@@ -31,12 +31,12 @@ Do not treat this index as authorized implementation or deploy.
 | 3 | [FEAT-013](FEAT-013-personal-agent-studio.md) | Personal Agent Studio | **Partial:** IWO-024–029 shell/attach/deploy/stdio MCP/deep research | — |
 | 4 | [FEAT-003](FEAT-003-studio-worker-and-models.md) | Studio inference and worker | **Partial:** Ollama+Jupyter live; IWO-019 router | [#4](https://github.com/sgerhart/ai-lab/issues/4) |
 | 5 | [FEAT-006](FEAT-006-studio-jupyterlab.md) | Studio JupyterLab (direct access first) | **Partial (live):** Studio Lab + MLX/Ollama; Air opens via mini `/lab` | [#7](https://github.com/sgerhart/ai-lab/issues/7) |
-| 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Partial:** IWO-042 lab MCP server | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
-| 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial:** IWO-040 retrieval API + memory_search | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
-| 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 tick API (no host timer yet) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
+| 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Partial:** IWO-042 + Cursor (IWO-054) | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
+| 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial:** IWO-040/041 + Qdrant live (IWO-053) | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
+| 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 + LaunchAgent (IWO-052) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
 | 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — not core harness | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
-| 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Specified** — prefer 1B; no pull yet | — |
+| 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047 weights on Studio; serve/CLI next | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -62,9 +62,9 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-027](../work-orders/IWO-027-mcp-client-allowlist.md) | MCP client allowlist stub | FEAT-013 | **Complete** (no live transport) |
 | [IWO-028](../work-orders/IWO-028-deep-research-mode.md) | Deep research mode | FEAT-013/011 | **Complete** (gated) |
 | [IWO-029](../work-orders/IWO-029-live-mcp-stdio-transport.md) | Live MCP stdio transport | FEAT-013 | **Complete** (unit; SSE/HTTP later) |
-| [IWO-030](../work-orders/IWO-030-personal-agent-scheduler.md) | Personal agent schedule tick | FEAT-009/013 | **Complete** (unit; host timer later) |
+| [IWO-030](../work-orders/IWO-030-personal-agent-scheduler.md) | Personal agent schedule tick | FEAT-009/013 | **Complete** (unit + live tick) |
 | [IWO-031](../work-orders/IWO-031-background-agent-run-worker.md) | Background agent-run worker | FEAT-002/010 | **Complete** (unit; mini when DATABASE_URL) |
-| [IWO-040](../work-orders/IWO-040-retrieval-api.md) | Retrieval API + citation policy | FEAT-008 | **Complete** (unit; Qdrant optional) |
+| [IWO-040](../work-orders/IWO-040-retrieval-api.md) | Retrieval API + citation policy | FEAT-008 | **Complete** (unit; Qdrant live via IWO-053) |
 | [IWO-041](../work-orders/IWO-041-memory-write-gates.md) | Agent memory_write gates | FEAT-008 | **Complete** (unit) |
 | [IWO-042](../work-orders/IWO-042-lab-mcp-server.md) | Lab MCP server for IDEs | FEAT-005 | **Complete** (unit) |
 | [IWO-044](../work-orders/IWO-044-defenseclaw-preflight.md) | DefenseClaw preflight (Air) | FEAT-014 | **Complete** (read-only) |

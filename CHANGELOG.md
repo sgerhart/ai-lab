@@ -4,6 +4,15 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### Mini / Studio live path (IWO-046–054, IWO-047)
+
+- Scheduler LaunchAgent `com.ai-lab.scheduler-tick` on mini (IWO-052).
+- Qdrant wired into control-plane env; `/v1/memory` uses `backend=qdrant` (IWO-053).
+- Cursor `ai-lab` MCP on Air; DefenseClaw scan skip recorded as F-014 (IWO-046/054).
+- Antares-1B weights + CLI zip on Studio via Jupyter exec; MPS load smoke (IWO-047).
+- Studio SSH from Air/mini broken — F-015; Jupyter/Ollama remain reachable.
+- Architecture docs refreshed for live control/compute/agent/data flows.
+
 ### FEAT-013 / IWO-024–028 — Personal Agent Studio
 
 - ChatGPT-like `/agents` shell: conversation sidebar, SSE streaming chat,

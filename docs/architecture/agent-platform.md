@@ -1,42 +1,55 @@
 # Agent platform
 
 **Code:** [`platform/`](../../platform/README.md)  
-**Status:** LangGraph vertical slice + FastAPI control plane are **implemented, unit-tested, and running on `mac-mini:8088`**. Studio worker is **not** deployed. Live restore drill is **not** done.
+**Status:** LangGraph control plane **live** on `mac-mini:8088` with Personal
+Agent Studio, scheduled ticks, Qdrant memory, and IDE MCP. Studio supplies
+Ollama inference; Antares CLI loop not live yet.
 
-LangGraph orchestrates **workflow steps and resume** (ADR 0020). It does not replace PostgreSQL work-order records, tool permissions, model serving, or Studio workers.
+LangGraph orchestrates **workflow steps and resume** (ADR 0020). It does not
+replace PostgreSQL work-order records, tool permissions, model serving, or
+Studio workers.
 
-**Forward direction (ADR 0037 / FEAT-010):** the mini owns the **personal-agent loop**
-(model → tool validate → execute/approve → observe). Studio supplies inference
-and heavy workers. Deterministic `agent_plans.py` is a fixture until the
-model-driven loop lands—not proof that loop exists.
+**Forward direction (ADR 0037 / FEAT-010):** the mini owns the **personal-agent
+loop** (model → tool validate → execute/approve → observe). Studio supplies
+inference and heavy workers.
 
 ## Separation
 
 ```text
-Human / UI (M3 Air)
+Human / UI (M3 Air) + Cursor MCP + DefenseClaw (adjacent)
     |
-FastAPI control plane (M1) + LangGraph agent loop (FEAT-010)
+FastAPI control plane (M1) + LangGraph agent loop
     |
-    +-- Conversations / agent runs   PostgreSQL
-    +-- Work-order intake            FastAPI
-    +-- Durable task state           PostgreSQL (SQLite in tests)
-    +-- Workflow + checkpoints       LangGraph (Postgres saver on M1)
-    +-- Model router                 FEAT-011 (local / API; cloud disabled default)
-    +-- Job dispatch                 HTTP → Studio worker / Ollama (optional)
-    +-- Tool permissions             policy.json + approvals.py
-    +-- Human approvals              graph interrupt + UI/API (action-level)
+    +-- Conversations / agent runs     PostgreSQL
+    +-- Work-order intake              FastAPI
+    +-- Durable task state             PostgreSQL
+    +-- Workflow + checkpoints         LangGraph (Postgres saver)
+    +-- Model router                   Studio Ollama (+ gated cloud)
+    +-- Scheduler tick                 LaunchAgent → POST /v1/scheduler/tick
+    +-- Retrieval / memory             Qdrant (+ hash embeds); gated memory_write
+    +-- Lab MCP server (stdio)         IDE tools → HTTP API (FEAT-005)
+    +-- Agent MCP client               deny-unlisted allowlist (FEAT-013)
+    +-- Tool permissions               policy.json + approvals
+    +-- Human approvals                graph interrupt + UI/API
     |
 Studio (M5 Max)
     |
-Ollama / MLX / Jupyter / optional isolated workers
+Ollama / Jupyter / Antares weights / optional workers
 ```
 
 Do not add CrewAI, AutoGen, Temporal, or Celery without a new ADR.
 
-## Vertical slice (tested today)
+## MCP: two directions
 
-Submit work order → persist → LangGraph → Studio worker **runs the agent plan** → pause (`awaiting_approval`) → resume → complete.
+1. **Lab as MCP server** (FEAT-005) — `scripts/lab-mcp-server.sh` for Cursor/IDEs
+   (`lab_health`, `lab_memory_*`, `lab_scheduler_status`). Wired on Air (IWO-054).
+2. **Agents as MCP clients** (FEAT-013) — deny-unlisted; not the same allowlist.
 
-Also tested: control-plane restart using the same checkpointer; Studio unavailable leaves the work order `queued` with `studio_unavailable` (it does not vanish); a failed plan leaves the work order `failed` with `plan_failed` (it does not vanish); Postgres store + checkpoint round-trip on a throwaway local database.
+## Vertical slice (tested)
 
-Planned E2E (FEAT-010): Air UI → read-only personal agent → ≥2 model/tool steps → close Air → retrieve result.
+Submit work order → persist → LangGraph → (optional Studio worker) → approval →
+complete. Studio unavailable leaves work orders `queued` with
+`studio_unavailable`.
+
+Also live: `/agents` chat via Studio `llama3.2:3b`; schedule tick API + host
+timer; memory upsert/search against Qdrant; Cursor `lab_health` over Tailscale.

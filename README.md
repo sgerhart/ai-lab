@@ -12,7 +12,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
-**Deployment status:** M1 control plane **up** on `mac-mini` (:8088). Studio Jupyter + Ollama **up**. Personal Agent Studio at `/agents` (IWO-024–028 in Git). Cloud/deep research gated on `/secrets`. See [docs/phases/repo-complete.md](docs/phases/repo-complete.md).
+**Deployment status:** M1 control plane **up** on `mac-mini` (:8088) with Qdrant memory, scheduler LaunchAgent, and Personal Agent Studio. Studio Jupyter + Ollama (`llama3.2:3b`) **up**; Antares-1B **weights on Studio** (completions server / CLI sandbox open). Cursor lab MCP on Air. Cloud/deep research gated on `/secrets`. See [docs/architecture/overview.md](docs/architecture/overview.md).
 
 ## Three areas
 

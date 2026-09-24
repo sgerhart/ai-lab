@@ -16,14 +16,27 @@ export AI_LAB_API_TOKEN=...                    # or rely on ~/.ai-lab/api.token
 
 Cursor (operator machine only — do not commit tokens):
 
+Prefer DefenseClaw on Air:
+
+```bash
+defenseclaw mcp set ai-lab --connector cursor \
+  --command "$PWD/scripts/lab-mcp-server.sh" \
+  --env AI_LAB_API_BASE=http://mac-mini:8088
+```
+
+If scan refuses a local bash launcher (npx/uvx only), record a finding and use
+`--skip-scan` only after a manual `lab_health` smoke (F-014 / IWO-046).
+
+Example `~/.cursor/mcp.json` (no token — script reads `~/.ai-lab/api.token` or
+`mac-mini-api.token`):
+
 ```json
 {
   "mcpServers": {
     "ai-lab": {
       "command": "/ABS/PATH/ai-lab/scripts/lab-mcp-server.sh",
       "env": {
-        "AI_LAB_API_BASE": "http://mac-mini:8088",
-        "AI_LAB_API_TOKEN": "(paste locally)"
+        "AI_LAB_API_BASE": "http://mac-mini:8088"
       }
     }
   }

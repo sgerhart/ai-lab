@@ -47,7 +47,7 @@ moving secrets or the gateway onto the mini.
 |----|-------|------------|------------|
 | [IWO-044](../work-orders/IWO-044-defenseclaw-preflight.md) | Preflight + docs | — | Script reports status; no host mutate |
 | IWO-045 | Cursor connector (Add) | IWO-044 | Hooks present; Antigravity kept — **deploy auth** |
-| IWO-046 | Scan lab MCP before Cursor trust | IWO-045 | Finding recorded; allow/block policy explicit |
+| [IWO-046](../work-orders/IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | IWO-045 | Done — F-014 skip-scan accepted |
 
 ## Acceptance criteria
 

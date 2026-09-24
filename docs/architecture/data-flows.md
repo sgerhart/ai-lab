@@ -1,6 +1,10 @@
 # Data flows
 
-**Status:** Control-plane compose and API are **live** on `mac-mini` (2026-09-21). Studio worker path **not** live. Sequence below still shows the target end-to-end flow including Studio.
+**Status:** Control plane, Studio Ollama/Jupyter, Qdrant memory, scheduler tick,
+and lab MCP are **live** (2026-09-24). Studio worker `:8090` and Antares CLI
+sandbox are **not** live.
+
+## Personal agent / work order (target + live core)
 
 ```mermaid
 sequenceDiagram
@@ -8,41 +12,37 @@ sequenceDiagram
   participant Air as M3 Air
   participant API as M1 Agent API
   participant PG as PostgreSQL
-  participant Redis as Redis queue
-  participant Worker as Studio worker
+  participant Q as Qdrant
+  participant Tick as Scheduler LaunchAgent
   participant LLM as Studio Ollama
-  Human->>Air: submit work order
-  Air->>API: POST /work-orders
-  API->>PG: insert status=created
-  API->>PG: transition queued
-  API->>Redis: enqueue id
-  Worker->>Redis: dequeue
-  Worker->>PG: running + attempt
-  alt privileged tool
-    Worker->>PG: awaiting_approval
-    Human->>API: approve
-    API->>PG: queued/running
-  end
-  Worker->>LLM: completion
-  LLM-->>Worker: tokens
-  Worker->>PG: completed + artifacts
+  Human->>Air: Studio UI / Cursor MCP
+  Air->>API: chat / agent-run / memory
+  API->>PG: conversations / runs / WOs
+  API->>Q: memory search / upsert
+  API->>LLM: completion (STUDIO_OLLAMA_URL)
+  LLM-->>API: tokens
+  Tick->>API: POST /v1/scheduler/tick
+  API->>PG: start due agent runs
 ```
 
 ## Persistence vs cache
 
 ```mermaid
 flowchart LR
-  WO[Work order] --> PG[(PostgreSQL)]
+  WO[Work order / agent run] --> PG[(PostgreSQL)]
   WO --> Redis[(Redis queue)]
-  Mem[Agent memory chunks] --> Q[(Qdrant)]
+  Mem[Memory chunks] --> Q[(Qdrant)]
   Mem --> PG
   Redis -.->|loss is OK| PG
 ```
 
 ## Model bytes
 
-Weights stay on Studio disk (`$AI_LAB_MODEL_ROOT`, default under a configurable home path). Git never sees them. The M1 stores *model ids* and routing policy only.
+Weights stay on Studio disk (Ollama library; Antares under `~/.ai-lab/antares/`).
+Git never sees them. The M1 stores *model ids* and routing policy only.
 
 ## Adjacent product data
 
-Clarion/Oryntra/VolexSwarm data planes are **out of flow** unless a future work order defines a scoped MCP tool. Do not pipe production databases into Qdrant from this repo.
+Clarion / agentic-factory / DefenseClaw data planes are **out of flow** unless a
+future work order defines a scoped bridge. Do not pipe production databases into
+Qdrant from this repo. See [../inventory/adjacent-systems.md](../inventory/adjacent-systems.md).
