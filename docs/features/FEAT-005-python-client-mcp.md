@@ -1,6 +1,6 @@
 # FEAT-005 — Python client and IDE MCP adapter
 
-- **Status:** Specified
+- **Status:** Partial (IWO-042 lab MCP server in Git)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#6](https://github.com/sgerhart/ai-lab/issues/6)
@@ -23,10 +23,11 @@ FEAT-002, FEAT-010; new ADR if enabling first MCP server.
 
 | ID | Title | Acceptance |
 |----|-------|------------|
-| IWO-022 | Python client package | Submit/fetch against test API |
-| IWO-023 | Optional MCP server allowlist entry | Deny-unlisted still holds |
+| [IWO-042](../work-orders/IWO-042-lab-mcp-server.md) | Lab stdio MCP server + LabApiClient | IDE tools hit mini API |
+| IWO-043 | Richer Python client (submit/approve/chat) | Scripted WO lifecycle |
 
-Note: IWO-020/021 are taken (live Ollama tool loop; cloud adapters).
+Note: IWO-020/021/022/023 numbering collided with other tracks; IWO-042 supersedes
+the old IWO-022/023 titles for the MCP server slice.
 
 ## Out of scope
 
@@ -37,5 +38,5 @@ Org-wide tokens; Clarion factory MCP.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Not started (allowlist empty) |
-| Live | No |
+| Code | Partial — `lab_mcp_server` + `LabApiClient` (IWO-042) |
+| Live | Operator wires Cursor locally; not auto-installed |
