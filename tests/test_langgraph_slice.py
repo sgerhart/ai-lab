@@ -175,9 +175,19 @@ class ControlPlaneApiTests(unittest.TestCase):
         def dispatch(_payload: dict) -> dict:
             raise StudioUnavailable("timeout")
 
-        app = create_control_app(store=store, dispatch=dispatch, checkpointer=MemorySaver())
+        app = create_control_app(
+            store=store,
+            dispatch=dispatch,
+            checkpointer=MemorySaver(),
+            token="t",
+        )
         client = TestClient(app)
-        created = client.post("/v1/work-orders", json={"agent": "lab-operations", "objective": "x"})
+        created = client.post(
+            "/v1/work-orders",
+            json={"agent": "lab-operations", "objective": "x"},
+            headers={"Authorization": "Bearer t"},
+        )
+        self.assertEqual(created.status_code, 200, created.text)
         self.assertEqual(created.json()["status"], "queued")
         self.assertIn("studio_unavailable", created.json()["log_refs"])
 

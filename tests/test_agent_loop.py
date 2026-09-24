@@ -223,7 +223,8 @@ class MiniApiLoopTests(unittest.TestCase):
     def test_agents_page_and_execute_run(self) -> None:
         page = self.client.get("/agents")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("API bearer token", page.text)
+        self.assertIn("Lab API token", page.text)
+        self.assertIn("Ask anything", page.text)
         models = self.client.get("/v1/models", headers=self.h)
         self.assertEqual(models.status_code, 200)
         self.assertTrue(any(p["id"] == "fake" or p["billing_class"] for p in models.json()["providers"]))
