@@ -1,6 +1,6 @@
 # FEAT-008 — Scoped research and retrieval memory
 
-- **Status:** Specified
+- **Status:** Partial (IWO-040 retrieval API in Git)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#9](https://github.com/sgerhart/ai-lab/issues/9)
@@ -18,8 +18,8 @@ FEAT-010, FEAT-003; Qdrant live on mini.
 
 | ID | Title | Acceptance |
 |----|-------|------------|
-| IWO-040 | Retrieval API + citation policy | Report with sources |
-| IWO-041 | Memory write gates | Audited writes only |
+| [IWO-040](../work-orders/IWO-040-retrieval-api.md) | Retrieval API + citation policy | Search returns sources; empty stays empty |
+| IWO-041 | Memory write gates (agent tool) | Audited writes only |
 
 ## Out of scope
 
@@ -30,5 +30,5 @@ Unrestricted crawl; Clarion production DB ingestion.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Partial (report plan; Qdrant healthy; no retrieval API) |
-| Live | Partial (Qdrant container) |
+| Code | Partial — `/v1/memory/*`, `memory_search` tool, hash embeds; Qdrant optional |
+| Live | Partial — API after sync; Qdrant when `QDRANT_API_KEY` set on mini |

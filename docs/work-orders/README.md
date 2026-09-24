@@ -53,6 +53,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-029](IWO-029-live-mcp-stdio-transport.md) | Live MCP stdio transport | Complete (unit) |
 | [IWO-030](IWO-030-personal-agent-scheduler.md) | Personal agent schedule tick | Complete (unit; no host timer) |
 | [IWO-031](IWO-031-background-agent-run-worker.md) | Background agent-run worker | Complete (unit) |
+| [IWO-040](IWO-040-retrieval-api.md) | Retrieval API + citation policy | Complete (unit; Qdrant optional) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

@@ -46,6 +46,7 @@ from .mcp_client import (
 )
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
+from .retrieval import RetrievalService, default_retrieval_service, set_default_retrieval_service
 from .schedule_cron import CronError, parse_cron
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
 from .settings import Settings
@@ -158,6 +159,18 @@ class LoginIn(BaseModel):
     password: str
 
 
+class MemoryDocumentIn(BaseModel):
+    text: str
+    source: str
+    id: str | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class MemorySearchIn(BaseModel):
+    query: str
+    limit: int = Field(default=5, ge=1, le=20)
+
+
 class AgentRunIn(BaseModel):
     """Durable agent-run request. Distinct from an ordinary chat message."""
 
@@ -211,6 +224,7 @@ def create_control_app(
     settings: Settings | None = None,
     model_router: ModelRouter | None = None,
     secret_store: SecretStore | None = None,
+    retrieval: RetrievalService | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     token = token or settings.api_token
@@ -275,6 +289,9 @@ def create_control_app(
     app.state.attachment_store = default_attachment_store()
     app.state.agent_definition_store = default_agent_definition_store()
     app.state.agent_run_worker = None
+    memory = retrieval or default_retrieval_service()
+    app.state.retrieval = memory
+    set_default_retrieval_service(memory)
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -341,6 +358,48 @@ def create_control_app(
         if authorization and authorization.startswith("Bearer "):
             revoke_session(authorization[7:].strip())
         return {"ok": True}
+
+    @app.get("/v1/memory/status")
+    def memory_status(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return app.state.retrieval.status()
+
+    @app.post("/v1/memory/documents")
+    def memory_upsert(
+        request: Request,
+        body: MemoryDocumentIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Operator upsert of a cited memory document (IWO-040). Agent writes = IWO-041."""
+        _gate(request, authorization)
+        try:
+            return app.state.retrieval.upsert(
+                text=body.text,
+                source=body.source,
+                doc_id=body.id,
+                meta=body.meta,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.post("/v1/memory/search")
+    def memory_search(
+        request: Request,
+        body: MemorySearchIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            return app.state.retrieval.search(body.query, limit=body.limit)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     @app.get("/favicon.svg")
     def favicon() -> Response:

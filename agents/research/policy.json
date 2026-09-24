@@ -3,7 +3,8 @@
   "isolation_tier": 1,
   "allowed_tools": [
     "http_get_allowlist",
-    "write_report_artifact"
+    "write_report_artifact",
+    "memory_search"
   ],
   "privileged_tools": [],
   "network": ["allowlist"],

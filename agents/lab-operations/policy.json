@@ -5,7 +5,8 @@
   "allowed_tools": [
     "health_read",
     "compose_ps_read",
-    "repo_read"
+    "repo_read",
+    "memory_search"
   ],
   "privileged_tools": [],
   "network": ["tailscale-health"],
