@@ -28,6 +28,14 @@ kubeconfig
 *.tskey
 tailscale-*.json
 
+# Operator runtime on hosts (API tokens, MCP registry, uploads) — never Git
+.ai-lab/
+**/.ai-lab/
+api-token.rotated
+**/api-token.rotated
+**/mcp-servers.json
+**/studio-jupyter.token
+
 # Secret directories (keep the README only)
 **/secrets/**
 !**/secrets/README.md
