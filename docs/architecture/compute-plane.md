@@ -2,9 +2,8 @@
 
 **Host directory:** [`hosts/studio/`](../../hosts/studio/README.md)  
 **Status:** Ollama + JupyterLab **live** on `mac-studio` (Tailscale). Studio
-worker API (`:8090`) **not** running. SSH from Air/mini currently fails
-([F-015](../security/findings/F-015-studio-ssh-auth-failure.md)); operator
-paths use Jupyter API and Ollama HTTP until keys are fixed.
+worker API (`:8090`) **not** running. SSH as `stevengerhart@mac-studio` works
+from Air and mini ([F-015](../security/findings/F-015-studio-ssh-auth-failure.md) closed).
 
 **Chip:** M5 Max (attested).
 
@@ -46,9 +45,8 @@ a Tailscale-scoped listen (deploy-time).
 
 ## Jupyter as operator path
 
-While SSH is broken (F-015), mini can run short cells via
-`scripts/studio-jupyter-exec.py` (token never printed). Prefer restoring SSH for
-routine LaunchAgent and brew work.
+`scripts/studio-jupyter-exec.py` remains available (token never printed). Prefer
+SSH (`stevengerhart@mac-studio`) for LaunchAgent and brew work now that F-015 is closed.
 
 ## Antares (FEAT-015)
 

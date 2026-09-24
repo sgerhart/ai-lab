@@ -10,7 +10,7 @@ All notable repository changes. Host deployments are recorded in phase completio
 - Qdrant wired into control-plane env; `/v1/memory` uses `backend=qdrant` (IWO-053).
 - Cursor `ai-lab` MCP on Air; DefenseClaw scan skip recorded as F-014 (IWO-046/054).
 - Antares-1B weights + CLI zip on Studio via Jupyter exec; MPS load smoke (IWO-047).
-- Studio SSH from Air/mini broken — F-015; Jupyter/Ollama remain reachable.
+- Studio SSH: document `stevengerhart` on Studio/Air vs `sgerhart` on mini; mini→Studio key trusted (F-015 closed).
 - Architecture docs refreshed for live control/compute/agent/data flows.
 - Antares loopback `/v1/completions` + sandbox-exec (IWO-048).
 - Antares Studio UI `/antares` + job server proxy (IWO-049).

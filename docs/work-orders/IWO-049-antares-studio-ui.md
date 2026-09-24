@@ -33,7 +33,7 @@ path to launch a localize job or retrieve SARIF/JSON without SSH/Jupyter.
 
 ## Out Of Scope
 
-- Fixing F-015 SSH
+- (none for SSH — F-015 closed)
 - LaunchAgent for completions server (optional follow-on)
 - Cloud Antares endpoints
 
@@ -59,4 +59,4 @@ path to launch a localize job or retrieve SARIF/JSON without SSH/Jupyter.
   - Unit: `tests.test_antares_ui`.
 - Host deploy performed? Yes — job server on Studio; `ANTARES_JOB_URL` in mini
   start script; control plane restarted.
-- Residual: LaunchAgents for completions/jobs (survive reboot); F-015 SSH.
+- Residual: LaunchAgents for completions/jobs (survive reboot).

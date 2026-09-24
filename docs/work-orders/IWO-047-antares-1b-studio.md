@@ -55,7 +55,7 @@ endpoint for the Antares CLI. Studio Ollama currently only serves
   - Snapshot at `~/.ai-lab/antares/antares-1b/` (`model.safetensors` ~3.67 GB).
   - CLI zip copied to `~/.ai-lab/antares/cli/antares-cli.zip`.
   - Transformers load on Studio MPS + short `generate` smoke (`load_ok`).
-- Host deploy performed? Yes via Jupyter exec (SSH still F-015).
+- Host deploy performed? Yes via Jupyter exec (SSH later fixed — F-015 closed).
 - Residual: Antares CLI wants streaming `POST /v1/completions` (validated with
   vLLM). Mac-native completions server + sandbox runner → IWO-048 / follow-on.
   Do not claim the CLI agent loop is live yet.

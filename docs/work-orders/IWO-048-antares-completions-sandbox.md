@@ -11,7 +11,7 @@
 
 Antares-1B weights are on Studio (IWO-047), but the CLI needs streaming
 `POST /v1/completions` and a network-disabled repo sandbox. Upstream docs assume
-vLLM; Studio has no Docker/Colima and SSH is broken (F-015).
+vLLM; Studio has no Docker/Colima. SSH as `stevengerhart@mac-studio` is OK (F-015 closed).
 
 ## Decision Context
 
@@ -33,7 +33,7 @@ vLLM; Studio has no Docker/Colima and SSH is broken (F-015).
 
 - Studio UI hook (IWO-049)
 - Auto-remediation / exploit generation
-- Fixing Studio SSH (F-015) beyond documenting
+- (Historical) Studio SSH username confusion — closed as F-015
 
 ## Acceptance Criteria
 
@@ -47,7 +47,7 @@ vLLM; Studio has no Docker/Colima and SSH is broken (F-015).
 
 - **Host mutate?** Yes — Studio process start under Continue for FEAT-015 next
   step (2026-09-24). Bind not `0.0.0.0`.
-- Jupyter path OK while F-015 open.
+- Jupyter path optional; SSH preferred for host ops.
 
 ## Closeout
 
@@ -61,5 +61,4 @@ vLLM; Studio has no Docker/Colima and SSH is broken (F-015).
 - Follow-on live verify (same day): `uv tool install` Antares CLI on Studio;
   profile `lab-antares-1b` → `http://127.0.0.1:8001/v1/completions`;
   `antares query` on CWE-78 fixture found `app.py` (report.json/md/sarif).
-- Follow-on: IWO-049 UI **done**. Residual: F-015 SSH; LaunchAgents for
-  completions/jobs across reboot.
+- Follow-on: IWO-049 UI **done**. Residual: LaunchAgents for completions/jobs across reboot.

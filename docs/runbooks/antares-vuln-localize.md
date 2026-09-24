@@ -15,7 +15,7 @@
 - Antares CLI installed (`uv tool install`); profile `lab-antares-1b`.
 - Smoke: `antares query` on fixture CWE-78 → finding `app.py` (~11s).
 - `/antares` UI on mini proxies Studio job server `:8002` (IWO-049).
-- Still needed: LaunchAgents so completions/jobs survive Studio reboot; F-015 SSH.
+- Still needed: LaunchAgents so completions/jobs survive Studio reboot.
 
 ## Prerequisites
 
@@ -23,8 +23,7 @@
    [fdtn-ai/antares-1b](https://huggingface.co/fdtn-ai/antares-1b)
 2. HF access token on Studio only: `~/.ai-lab/hf.token` (`chmod 600`).
 3. Studio Jupyter reachable from mini (`~/.ai-lab/studio-jupyter.token`).
-4. Prefer fixing [F-015](../security/findings/F-015-studio-ssh-auth-failure.md)
-   (Studio SSH) for routine ops; Jupyter exec is the temporary path.
+4. SSH as `stevengerhart@mac-studio` (F-015 closed). Jupyter exec remains optional.
 
 ## Preflight (mini)
 

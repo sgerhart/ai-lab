@@ -8,7 +8,7 @@ A new engineer clones `ai-lab` and follows this file only.
 
 ## Status of this runbook
 
-**SSH from Air/mini currently fails (F-015).** Ollama and Jupyter remain reachable on Tailscale. Prefer fixing `authorized_keys` on console; Antares work uses Jupyter exec until then.
+**SSH:** use `stevengerhart@mac-studio` (not `sgerhart`). Air and mini publickey OK (F-015 closed). Ollama/Jupyter also on Tailscale.
 
 ## Status of this runbook
 

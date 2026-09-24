@@ -56,7 +56,7 @@ flowchart TB
 | Studio Ollama | Catalog + provider | **`llama3.2:3b` on `mac-studio:11434`** |
 | Studio Jupyter | Host scripts | **Up (`:8888`); token on mini** |
 | Antares-1B | Runbook + `/antares` UI + jobs | **Live** UI → Studio `:8002` jobs / `:8001` completions |
-| Studio SSH from Air/mini | Documented | **Broken (F-015)** — Jupyter path used |
+| Studio SSH | Documented | **OK** — `stevengerhart@mac-studio` from Air and mini (F-015 closed) |
 | Studio worker `:8090` | Scripts | **Not running** |
 | Cloud LLM / deep research | Gated adapters | Off until `/secrets` authorize |
 

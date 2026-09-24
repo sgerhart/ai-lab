@@ -39,12 +39,13 @@ code="$(curl -sS -m 8 -o /dev/null -w '%{http_code}' "$STUDIO_JUPYTER/" || true)
 echo "jupyter_http=$code"
 
 echo -n "ssh_batchmode="
+STUDIO_SSH_USER="${AI_LAB_STUDIO_SSH_USER:-stevengerhart}"
 if ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=accept-new \
-  sgerhart@mac-studio 'echo ok' >/dev/null 2>&1; then
-  echo ok
+  "${STUDIO_SSH_USER}@mac-studio" 'echo ok' >/dev/null 2>&1; then
+  echo "ok user=${STUDIO_SSH_USER}"
 else
-  echo fail
-  echo "note: see docs/security/findings/F-015-studio-ssh-auth-failure.md"
+  echo "fail user=${STUDIO_SSH_USER}"
+  echo "note: Studio login is stevengerhart (mini is sgerhart). See F-015."
 fi
 
 if [[ "$APPLY_JUPYTER" -eq 1 ]]; then
