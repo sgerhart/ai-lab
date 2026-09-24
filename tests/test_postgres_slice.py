@@ -101,18 +101,27 @@ class PostgresSliceTests(unittest.TestCase):
             dispatch=dispatch,
             checkpointer=self.saver,
             settings=settings,
+            token="t",
         )
         client = TestClient(app)
+        headers = {"Authorization": "Bearer t"}
         health = client.get("/health").json()
         self.assertEqual(health["work_order_store"], "PostgresStore")
         self.assertEqual(health["checkpoints"], "postgres")
         created = client.post(
             "/v1/work-orders",
             json={"agent": "lab-operations", "objective": "pg api"},
+            headers=headers,
         )
+        self.assertEqual(created.status_code, 200, created.text)
         self.assertEqual(created.json()["status"], "awaiting_approval")
         order_id = created.json()["id"]
-        done = client.post(f"/v1/work-orders/{order_id}/approve", json={"decision": "approved"})
+        done = client.post(
+            f"/v1/work-orders/{order_id}/approve",
+            json={"decision": "approved"},
+            headers=headers,
+        )
+        self.assertEqual(done.status_code, 200, done.text)
         self.assertEqual(done.json()["status"], "completed")
 
 
