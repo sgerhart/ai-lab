@@ -4,12 +4,14 @@
 live with several Ollama tags; Personal Agent Studio, retrieval, scheduler, and
 lab MCP in use. Antares-1B UI and services live. Coding Assistant can read and,
 after approval, patch an isolated worktree.  
-**Updated:** 2026-09-24
+**Updated:** 2026-09-25
 
 A personal, three-host Apple Silicon lab with Tailscale as the private network.
 Durable control-plane state lives on the M1 mini. Inference and heavy models
 live on the Studio. The M3 Air is the human interface (IDE, approvals,
-DefenseClaw).
+DefenseClaw). The security testing ground is documented in
+[security-plane.md](security-plane.md) ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)):
+that page is direction, not a running gateway.
 
 ```mermaid
 flowchart TB
@@ -69,5 +71,6 @@ flowchart TB
 - [agent-platform.md](agent-platform.md)
 - [data-flows.md](data-flows.md)
 - [diagrams.md](diagrams.md)
+- [security-plane.md](security-plane.md)
 - [../deployment/network.md](../deployment/network.md)
 - [../inventory/adjacent-systems.md](../inventory/adjacent-systems.md)

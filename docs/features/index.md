@@ -19,7 +19,8 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Lab MCP for Cursor on the Air | Yes | Wired (IWO-054) |
 | Deep research / cloud models | Gated adapters | Off until `/secrets` authorizes them |
 | Studio Jupyter | Host scripts | Up on `:8888` |
-| Antares-1B completions, jobs, `/antares` | Yes | UI and services live. Reboot LaunchAgents not set |
+| Antares-1B completions, jobs, `/antares` | Yes | UI and services live. Reboot LaunchAgents not set. Repo choice beyond the Studio fixture is direction ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)) |
+| Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | Specified ([security-plane.md](../architecture/security-plane.md)) | DefenseClaw live on the Air only. Gateway not built |
 | Studio worker `:8090` | Scripts | Not running |
 | Model comparison on coding fixtures (IWO-057) | Not started | No |
 | Pull requests from an agent (FEAT-007) | Not started | No |

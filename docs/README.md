@@ -4,7 +4,7 @@ Canonical written record. If documentation and files disagree, fix one of them i
 
 | Area | Path |
 |------|------|
-| Architecture | [architecture/](architecture/overview.md) |
+| Architecture | [architecture/](architecture/overview.md), including the [security plane](architecture/security-plane.md) |
 | Decisions (ADRs) | [decisions/](decisions/README.md) |
 | Deployment | [deployment/](deployment/README.md) |
 | Operations | [operations/](operations/README.md) |

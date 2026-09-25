@@ -54,7 +54,7 @@ moving secrets or the gateway onto the mini.
 - [x] Inventory records DefenseClaw on Air without secrets
 - [x] Preflight is dry-run / read-only by default
 - [x] Cursor connector only after separate human authorization (IWO-045, action mode)
-- [ ] No DefenseClaw gateway on mini without a new ADR
+- [ ] No DefenseClaw process on the mini (the Air keeps the install). A separate API gateway may live on the mini ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)).
 
 ## Out of scope
 

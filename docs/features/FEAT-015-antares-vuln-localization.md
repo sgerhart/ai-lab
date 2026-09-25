@@ -62,6 +62,7 @@ or draft model. Findings require human review; no autonomous remediation.
 - General-purpose chat with Antares
 - Exploit generation
 - Pulling models without explicit authorization
+- Treating a Clarion (or other adjacent) scan as absorbing that product. A read-only snapshot on the Studio is the allowed use ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)).
 
 ## Implementation status
 

@@ -9,8 +9,10 @@ flowchart LR
   st[Studio\nOllama / Jupyter / Antares weights]
   air -->|Tailscale UI + MCP| m1
   air -->|Tailscale Jupyter client| st
-  m1 -->|inference route| st
+  m1 -->|local inference| st
 ```
+
+Planned security hops (not deployed): [security-plane.md](security-plane.md).
 
 ## Trust zones
 
