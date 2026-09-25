@@ -87,7 +87,7 @@ research).
 - [x] Stdio MCP list/call live (IWO-029); SSE/HTTP still out of scope
 - [x] Deep research uses frontier only when selected + authorized
 - [x] No secrets or attachment bytes in Git
-- [x] Operator menus stay inside Studio. The sidebar is Status Dashboard, Jupyter Labs, Agents, MCP, Security (Antares), New chat, Search, Projects, Chats, Configure, Operator. The old `/lab` hub is retired
+- [x] Operator menus stay inside Studio. Status Dashboard and New chat stay fixed. Under the line, Jupyter Labs, Agents, MCP, Security, Configure, Projects, and Chats scroll together. Search is the magnifying glass beside AI LAB. The old `/lab` hub is retired
 - [x] Chat model list comes from installed Studio Ollama tags
 - [ ] Agent create/run layout accepted by the operator (D-019)
 
@@ -106,4 +106,4 @@ research).
 | Spec | Done | this file |
 | Code | Partial | IWO-024–029 and IWO-059 in Git. Studio is `/`. SSE/HTTP MCP not wired |
 | Deploy | Partial | live on mini after operator sync |
-| Live verified | Partial | Studio chat and settings used 2026-09-24. Agent form UX not accepted |
+| Live verified | Partial | Studio chat and settings used 2026-09-25. Agent and project screens still need refinement |

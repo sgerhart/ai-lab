@@ -15,6 +15,7 @@ Chat cannot include operator documents or images for context.
 - `AttachmentStore` under `~/.ai-lab/uploads/{conversation_id}/`
 - `POST /v1/conversations/{id}/attachments` (PDF/MD/TXT/PNG/JPEG/WebP, 8 MiB)
 - Chat/stream prompts include extracted text (MD/TXT) or honest image/PDF stubs
+- A file stays on later turns in that chat until the prompt no longer fits the window (`llama3.2:3b` is 131072 tokens on Studio, with reply room reserved). The filename sits inside the prompt box until you send.
 - UI Attach button on Personal Agent Studio
 
 ## Out Of Scope

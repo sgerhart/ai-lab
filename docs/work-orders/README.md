@@ -69,6 +69,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-056](IWO-056-readonly-coding-assistant.md) | Read-only Coding Assistant | Complete (unit) |
 | [IWO-058](IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | Complete (unit) |
 | [IWO-059](IWO-059-chat-first-studio.md) | Chat-first Studio shell | In progress (live lab-health pass open) |
+| [IWO-060](IWO-060-project-documents.md) | Project document library | In progress (unit; live cite pass open) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

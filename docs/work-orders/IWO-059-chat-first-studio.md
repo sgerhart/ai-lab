@@ -15,7 +15,7 @@ Send remains an ordinary chat reply. **Run in background** stores the prompt and
 
 The Studio is the site root. `GET /` serves the chat workspace. `GET /agents` and `GET /lab` redirect to `/` (307). The old Lab connection hub is no longer a page. Jupyter still opens from **Jupyter Labs** in the sidebar. `/antares` stays its own page.
 
-The sidebar is Status Dashboard, a divider, Jupyter Labs, Agents, MCP, Security, a divider, New chat, Search, then Projects and Chats (each list scrolls). Configure sits above Operator. Search is a centered dialog that filters chats by name. Security has one badge, Antares, linking to `/antares`. Configure shows the AI badge. The sidebar brand is the flask icon plus a small AI LAB wordmark. Chat replies use the orb, and that image is the tab icon.
+The sidebar keeps Status Dashboard and New chat fixed. A line sits under New chat, and another under Configure. Everything under the first line scrolls together: Jupyter Labs, Agents, MCP, Security, Configure, Projects, and Chats. Search is a magnifying-glass button beside AI LAB. The dialog looks across chats by name, and a project menu can narrow that list. All projects is the default, and a matching chat shows its project name. The menu button collapses the sidebar; the same button in the chat header opens it. Security has one badge, Antares, linking to `/antares`. Configure shows the AI badge. The sidebar brand is the flask icon plus a small AI LAB wordmark. Chat replies use the orb, and that image is the tab icon.
 
 A project has a name, a description, and the chats added to it. After the first reply, a generic chat title is replaced by a short name from the same model. The payload stays a conversation title only.
 

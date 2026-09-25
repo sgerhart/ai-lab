@@ -30,5 +30,5 @@ Unrestricted crawl; Clarion production DB ingestion.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041) |
+| Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041). Project documents (IWO-060) index text per project and a chat in that project searches only those files |
 | Live | Qdrant wired on mini 2026-09-24 (`backend=qdrant`); hash embeds |

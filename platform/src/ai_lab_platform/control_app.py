@@ -29,7 +29,12 @@ from .agent_scheduler import status as scheduler_status
 from .agent_scheduler import tick as scheduler_tick
 from .agent_worker import AgentRunWorker, drain_queued_runs
 from .antares_client import AntaresStudioClient
-from .attachments import AttachmentError, default_attachment_store
+from .attachments import (
+    AttachmentError,
+    build_chat_prompt,
+    default_attachment_store,
+    document_text,
+)
 from .auth import AuthError, auth_status, client_ip, require_auth
 from .capabilities import assistant_name, capability_catalog
 from .chat_title import propose_chat_title, title_is_generic
@@ -148,6 +153,33 @@ def _remember_chat_title(
     conversation.title = title
     store.put_conversation(conversation)
     return title
+
+
+def _with_project_documents(app: Any, prompt: str, project_id: str, query: str) -> str:
+    if not (project_id or "").strip():
+        return prompt
+    try:
+        extra = app.state.retrieval.project_context(query, project_id)
+    except (ValueError, RuntimeError):
+        return prompt
+    if not extra:
+        return prompt
+    return prompt + "\n\n" + extra
+
+
+def _chat_prompt(att_store, conversation_id: str, messages: list[Any]) -> str:
+    """Replay chat turns and the files attached to them, newest first within the window."""
+    turns: list[tuple[str, str, list[str]]] = []
+    for message in messages:
+        meta = message.meta or {}
+        ids = [str(item) for item in (meta.get("attachment_ids") or []) if item]
+        role = message.role.value if hasattr(message.role, "value") else str(message.role)
+        turns.append((role, message.content or "", ids))
+
+    def attachment_text(ids: list[str]) -> str:
+        return att_store.extract_text_for_prompt(conversation_id, ids)
+
+    return build_chat_prompt(turns, attachment_text)
 
 
 def default_sqlite_path() -> Path:
@@ -1017,6 +1049,64 @@ def create_control_app(
         store.delete_project(project_id)  # type: ignore[attr-defined]
         return {"ok": True, "id": project_id}
 
+    @app.get("/v1/projects/{project_id}/documents")
+    def list_project_documents(
+        request: Request,
+        project_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if store.get_project(project_id) is None:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            documents = app.state.retrieval.list_project_documents(project_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return {"project_id": project_id, "documents": documents}
+
+    @app.post("/v1/projects/{project_id}/documents")
+    async def add_project_document(
+        request: Request,
+        project_id: str,
+        authorization: str | None = Header(default=None),
+        file: UploadFile = File(...),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if store.get_project(project_id) is None:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=404, detail="not found")
+        raw = await file.read()
+        try:
+            source, text = document_text(file.filename or "upload.bin", raw)
+            saved = app.state.retrieval.add_project_document(
+                project_id=project_id,
+                text=text,
+                source=source,
+                filename=source,
+            )
+        except AttachmentError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return saved
+
+    @app.delete("/v1/projects/{project_id}/documents/{document_id}")
+    def delete_project_document(
+        request: Request,
+        project_id: str,
+        document_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if store.get_project(project_id) is None:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            removed = app.state.retrieval.delete_document(document_id, project_id=project_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        if not removed:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True, "id": document_id}
+
     @app.post("/v1/conversations/{conversation_id}/messages")
     def post_message(
         request: Request,
@@ -1052,19 +1142,9 @@ def create_control_app(
         from .ollama_backend import OllamaUnavailable
 
         att_store = app.state.attachment_store
-        attachment_ctx = ""
-        if body.attachment_ids:
-            attachment_ctx = att_store.extract_text_for_prompt(
-                conversation_id, list(body.attachment_ids)
-            )
-
         prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
-        lines: list[str] = []
-        for m in prior[-12:]:
-            lines.append(f"{m.role.value}: {m.content}")
-        prompt = "\n".join(lines) if lines else body.content
-        if attachment_ctx:
-            prompt = prompt + "\n\nAttached materials:\n" + attachment_ctx
+        prompt = _chat_prompt(att_store, conversation_id, prior) or body.content
+        prompt = _with_project_documents(app, prompt, conversation.project_id, body.content)
 
         backend = body.backend
         model = body.model
@@ -1191,16 +1271,9 @@ def create_control_app(
         )
         store.put_message(message)  # type: ignore[attr-defined]
 
-        attachment_ctx = ""
-        if body.attachment_ids:
-            attachment_ctx = att_store.extract_text_for_prompt(
-                conversation_id, list(body.attachment_ids)
-            )
         prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
-        lines = [f"{m.role.value}: {m.content}" for m in prior[-12:]]
-        prompt = "\n".join(lines) if lines else body.content
-        if attachment_ctx:
-            prompt = prompt + "\n\nAttached materials:\n" + attachment_ctx
+        prompt = _chat_prompt(att_store, conversation_id, prior) or body.content
+        prompt = _with_project_documents(app, prompt, conversation.project_id, body.content)
 
         backend = body.backend
         model = body.model

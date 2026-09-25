@@ -1,6 +1,6 @@
 # Future capabilities index
 
-**Updated:** 2026-09-24  
+**Updated:** 2026-09-25  
 **Plan:** [PLAN-mini-first.md](PLAN-mini-first.md)  
 **GitHub:** [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#10](https://github.com/sgerhart/ai-lab/issues/10); [#11](https://github.com/sgerhart/ai-lab/issues/11) (FEAT-010); [#12](https://github.com/sgerhart/ai-lab/issues/12) (FEAT-011).
 
@@ -11,11 +11,11 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Capability | In Git | Live on the lab |
 |------------|--------|-----------------|
 | Control plane API + LangGraph (`mac-mini:8088`, login) | Yes | Yes |
-| Studio chat at `/` (sidebar: dashboard, Jupyter, Agents, MCP, Security, search, projects, chats). `/agents` and `/lab` redirect home. Presets stay in the operator menu (IWO-059) | Yes | Synced to the mini. Live lab-health pass not recorded |
+| Studio chat at `/`. Dashboard and New chat stay fixed. Under the line: Jupyter Labs, Agents, MCP, Security, Configure, then Projects and Chats in one scroll. Search is the icon beside AI LAB and can filter chats by project. The sidebar collapses from the menu button. `/agents` and `/lab` redirect home (IWO-059) | Yes | Synced to the mini. Agent and project screens still need refinement. Live lab-health pass not recorded |
 | Model picker from Studio Ollama tags; no silent paid fallback | Yes (IWO-055) | Yes. Installed tags seen 2026-09-24: `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b`. Git catalog `status` stays `catalogued-not-pulled` |
 | Standing agents (lab check, research, coding) with optional schedule | Yes | Scheduler LaunchAgent ticks the mini. Create/run screen copy is provisional |
 | Coding Assistant reads a workspace; patches and commits only in a separate git worktree after exact approval | Yes (IWO-056, IWO-058) | Unit-tested. Studio can prepare the copy. Operator has not finished a live patch. Push, PR, and tests stay denied |
-| Retrieval memory (Qdrant) and gated `memory_write` | Yes | Qdrant live on mini |
+| Retrieval memory (Qdrant) and gated `memory_write`. A project can index its own Markdown and text files; a chat in that project searches only those (IWO-060) | Yes | Qdrant live on mini. Project-document cite on the live lab not recorded |
 | Lab MCP for Cursor on the Air | Yes | Wired (IWO-054) |
 | Deep research / cloud models | Gated adapters | Off until `/secrets` authorizes them |
 | Studio Jupyter | Host scripts | Up on `:8888` |
@@ -101,6 +101,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-056](../work-orders/IWO-056-readonly-coding-assistant.md) | Read-only Coding Assistant | FEAT-016 | **Complete** (unit; no writes on the primary checkout) |
 | [IWO-058](../work-orders/IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | FEAT-016 | **Complete** (unit; approval + worktree only) |
 | [IWO-059](../work-orders/IWO-059-chat-first-studio.md) | Chat-first Studio shell | FEAT-013 | **In progress** (code; live operator pass open) |
+| [IWO-060](../work-orders/IWO-060-project-documents.md) | Project document library | FEAT-008 | **In progress** (unit; live cite pass open) |
 
 ## Historical phase work orders
 

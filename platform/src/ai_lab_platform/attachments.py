@@ -19,6 +19,12 @@ ALLOWED_EXTENSIONS = {
     ".webp": "image/webp",
 }
 MAX_BYTES = 8 * 1024 * 1024  # 8 MiB
+# llama3.2:3b on Studio Ollama 0.34 allocates llama.context_length (131072).
+# The lab does not override num_ctx. Leave room for the reply; older turns fall off.
+DEFAULT_CONTEXT_TOKENS = 131072
+REPLY_RESERVE_TOKENS = 2048
+CHARS_PER_TOKEN = 4
+MAX_ATTACHMENT_TEXT_CHARS = 200_000
 
 
 class AttachmentError(ValueError):
@@ -118,7 +124,7 @@ class AttachmentStore:
             name = meta.get("filename") or att_id
             ext = str(meta.get("ext") or "").lower()
             if ext in {".md", ".txt"}:
-                text = data.decode("utf-8", errors="replace")[:12000]
+                text = data.decode("utf-8", errors="replace")[:MAX_ATTACHMENT_TEXT_CHARS]
                 parts.append(f"[attachment {name}]\n{text}")
             elif ext == ".pdf":
                 # No PDF parser dependency yet — honest stub.
@@ -134,6 +140,76 @@ class AttachmentStore:
             else:
                 parts.append(f"[attachment {name}: unsupported for context]")
         return "\n\n".join(parts)
+
+
+def document_text(filename: str, data: bytes) -> tuple[str, str]:
+    """Return (citation source, text) for a project document. Images and PDFs stay honest stubs."""
+    if len(data) > MAX_BYTES:
+        raise AttachmentError(f"file too large (max {MAX_BYTES} bytes)")
+    if not data:
+        raise AttachmentError("empty file")
+    base = Path(filename).name
+    if not _SAFE_NAME.match(base):
+        base = re.sub(r"[^A-Za-z0-9._-]+", "_", base)[:128] or "upload.bin"
+    ext = Path(base).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise AttachmentError(f"unsupported type {ext!r}; allowed: {sorted(ALLOWED_EXTENSIONS)}")
+    if ext in {".md", ".txt"}:
+        return base, data.decode("utf-8", errors="replace")[:MAX_ATTACHMENT_TEXT_CHARS]
+    if ext == ".pdf":
+        return base, f"[PDF {base}: {len(data)} bytes; text extraction not installed]"
+    if ext in {".png", ".jpg", ".jpeg", ".webp"}:
+        return base, f"[image {base}: {len(data)} bytes; vision not enabled]"
+    raise AttachmentError(f"unsupported type {ext!r}")
+
+
+def prompt_char_budget(
+    context_tokens: int = DEFAULT_CONTEXT_TOKENS,
+    reply_reserve: int = REPLY_RESERVE_TOKENS,
+) -> int:
+    """Characters of chat history that stay inside the model window."""
+    usable = max(256, int(context_tokens) - int(reply_reserve))
+    return usable * CHARS_PER_TOKEN
+
+
+def build_chat_prompt(
+    turns: list[tuple[str, str, list[str]]],
+    attachment_text,
+    *,
+    max_chars: int | None = None,
+) -> str:
+    """Newest turns first into the budget. Each turn is (role, content, attachment ids).
+
+    ``attachment_text(ids)`` returns the cited file text for those ids.
+    A turn that does not fit is shortened from its attachment, then older turns drop.
+    """
+    budget = prompt_char_budget() if max_chars is None else max(1, int(max_chars))
+    chosen: list[str] = []
+    used = 0
+    for role, content, ids in reversed(turns):
+        block = ""
+        if ids:
+            block = attachment_text(list(ids)) or ""
+        gap = 2 if chosen else 0
+        remaining = budget - used - gap
+        if remaining <= 0:
+            break
+        segment = _fit_turn(role, content or "", block, remaining)
+        if not segment:
+            break
+        chosen.append(segment)
+        used += len(segment) + gap
+    return "\n".join(reversed(chosen))
+
+
+def _fit_turn(role: str, content: str, block: str, budget: int) -> str:
+    head = f"{role}: {content}"
+    if not block:
+        return head[:budget]
+    prefix = head + "\n\nAttached materials:\n"
+    if len(prefix) >= budget:
+        return head[:budget]
+    return prefix + block[: budget - len(prefix)]
 
 
 def default_attachment_store() -> AttachmentStore:

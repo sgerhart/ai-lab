@@ -56,26 +56,24 @@
     .icon-btn {
       width: 36px; height: 36px; border: 0; border-radius: 8px;
       background: transparent; color: var(--muted); cursor: pointer; font-size: 16px;
+      display: grid; place-items: center; flex-shrink: 0;
     }
     .icon-btn:hover { background: var(--side-hover); color: var(--ink); }
+    .side-fixed { flex: 0 0 auto; padding: 0 8px; }
     .new-chat {
-      margin: 8px 0 2px; width: 100%;
+      margin: 2px 0 8px; width: 100%;
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px; border-radius: 10px;
-      border: 1px solid var(--line); background: transparent;
+      border: 0; background: transparent;
       color: var(--ink); cursor: pointer; font: inherit;
     }
     .new-chat:hover { background: var(--side-hover); }
-    .side-scroll { flex: 0 0 auto; overflow: visible; padding: 0 8px; }
-    .side-lists {
-      flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
-      padding: 4px 8px 0; gap: 4px;
+    .side-scroll {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto;
+      padding: 0 8px 8px;
     }
-    .side-section {
-      flex: 1 1 0; min-height: 72px; display: flex; flex-direction: column; min-width: 0;
-    }
-    .side-scrollbox { flex: 1; min-height: 0; overflow-y: auto; margin-left: 14px; }
-    .side-pin { flex-shrink: 0; padding: 4px 8px 8px; }
+    .side-section { min-width: 0; }
+    .side-scrollbox { margin-left: 14px; }
     .side-label {
       margin: 0; padding: 9px 10px; font: inherit; color: var(--ink);
       display: flex; align-items: center; gap: 10px;
@@ -97,15 +95,17 @@
       box-shadow: 0 24px 80px rgba(0,0,0,.45);
     }
     .search-card h2 { margin: 0; font-size: 18px; }
-    .search-card input {
+    .search-card input, .search-card select {
       width: 100%; background: #111; border: 1px solid var(--line); color: var(--ink);
       border-radius: 10px; padding: 12px 14px; font: inherit;
     }
+    .search-filter { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 13px; }
     #search-results { overflow-y: auto; min-height: 120px; }
     .search-hit {
       width: 100%; text-align: left; border: 0; background: transparent; color: var(--ink);
       padding: 10px 12px; border-radius: 10px; cursor: pointer; font: inherit;
     }
+    .search-hit-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
     .search-hit:hover, .search-hit.active { background: var(--side-active); }
     .side-rule { height: 1px; margin: 10px 10px; background: var(--line); border: 0; }
     .side-nest { margin: 2px 0 10px 14px; }
@@ -130,6 +130,7 @@
     .conv-item:hover .del { opacity: 1; }
     .conv-item .del:hover { color: var(--down); background: rgba(255,107,122,.12); }
     .side-foot {
+      flex-shrink: 0;
       border-top: 1px solid var(--line); padding: 10px 12px;
       display: flex; align-items: center; gap: 10px;
       width: 100%; background: transparent;
@@ -174,6 +175,9 @@
       min-width: 0;
     }
     .main-top .title { font-size: 14px; color: var(--muted); }
+    .top-lead { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .sidebar.collapsed { width: 0; overflow: hidden; }
+    #show-side[hidden] { display: none !important; }
     .ghost {
       border: 0; background: transparent; color: var(--muted);
       padding: 8px 12px; border-radius: 999px; cursor: pointer; font: inherit;
@@ -235,9 +239,8 @@
     .health-ok { color: var(--accent); }
     .health-down { color: #ff8b96; }
     .composer-inner { pointer-events: auto; max-width: 768px; margin: 0 auto; }
-    .attach-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .chip {
-      font-size: 12px; color: var(--ink); background: var(--composer);
+      font-size: 12px; color: var(--ink); background: rgba(255,255,255,.08);
       border-radius: 999px; padding: 4px 10px;
     }
     .composer {
@@ -250,6 +253,12 @@
       align-items: end;
       box-shadow: 0 0 0 1px rgba(255,255,255,.04);
     }
+    .composer .attach-chips {
+      grid-column: 1 / -1;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin: 2px 8px 2px 12px;
+    }
+    .composer .attach-chips:empty { display: none; }
     .composer textarea {
       width: 100%; border: 0; outline: none; resize: none;
       background: transparent; color: var(--ink);
@@ -542,8 +551,6 @@
       .prefs-key-row { grid-template-columns: 1fr; }
     }
     @media (max-width: 720px) {
-      .sidebar { position: absolute; z-index: 30; height: 100%; transform: translateX(-100%); }
-      .sidebar.open { transform: none; }
       .msg { grid-template-columns: 1fr; }
       .msg .avatar-sm { display: none; }
     }
@@ -554,20 +561,21 @@
     <aside class="sidebar" id="sidebar">
       <div class="side-top">
         <a class="brand" href="/"><img class="brand-mark" src="/static/ai-lab-icon.jpg" alt=""><img class="brand-word" src="/static/ai-lab-wordmark.jpg" alt="AI Lab"></a>
+        <button type="button" class="icon-btn" id="nav-search" title="Search chats" aria-label="Search chats"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
         <button type="button" class="icon-btn" id="toggle-side" title="Toggle sidebar">☰</button>
       </div>
-      <div class="side-scroll">
+      <div class="side-fixed">
         <button type="button" class="side-link" id="nav-status" data-prefs="status"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Status Dashboard</button>
-        <hr class="side-rule">
+        <button type="button" class="new-chat" id="new-conv"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>New chat</button>
+      </div>
+      <hr class="side-rule">
+      <div class="side-scroll">
         <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
         <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agents</button>
         <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
         <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
+        <button type="button" class="side-link" id="nav-configure" data-prefs="configure"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="17" r="1.6" fill="currentColor" stroke="none"/></svg>Configure</button>
         <hr class="side-rule">
-        <button type="button" class="new-chat" id="new-conv"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>New chat</button>
-        <button type="button" class="side-link" id="nav-search"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search</button>
-      </div>
-      <div class="side-lists">
         <section class="side-section" aria-label="Projects">
           <button type="button" class="side-link" id="nav-projects" data-view="projects"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>Projects</button>
           <div class="side-scrollbox" id="side-projects"></div>
@@ -576,9 +584,6 @@
           <div class="side-label"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H8l-5 3V12a8 8 0 1 1 18 0z"/></svg>Chats</div>
           <div class="side-scrollbox" id="conv-list"></div>
         </section>
-      </div>
-      <div class="side-pin">
-        <button type="button" class="side-link" id="nav-configure" data-prefs="configure"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="17" r="1.6" fill="currentColor" stroke="none"/></svg>Configure</button>
       </div>
 
       <div class="side-foot" id="op-btn">
@@ -594,6 +599,11 @@
       <div class="search-card" role="dialog" aria-modal="true" aria-labelledby="search-title">
         <h2 id="search-title">Search chats</h2>
         <input id="search-q" type="search" placeholder="Search by name" autocomplete="off">
+        <label class="search-filter">Project
+          <select id="search-project" aria-label="Filter by project">
+            <option value="">All projects</option>
+          </select>
+        </label>
         <div id="search-results"></div>
       </div>
     </div>
@@ -601,7 +611,10 @@
     <section class="main">
       <div class="main-head">
       <div class="main-top">
-        <span class="title" id="pane-title">AI Lab Assistant</span>
+        <div class="top-lead">
+          <button type="button" class="icon-btn" id="show-side" title="Show sidebar" aria-label="Show sidebar" hidden>☰</button>
+          <span class="title" id="pane-title">AI Lab Assistant</span>
+        </div>
         <div class="top-meta">
           <span class="perf-meter" id="perf-meter" aria-live="polite"></span>
         </div>
@@ -657,6 +670,15 @@
                 <select id="project-add-chat"></select>
                 <button type="button" class="btn primary" id="project-add">Add chat</button>
                 <button type="button" class="btn" id="project-new-chat">New chat here</button>
+              </div>
+            </div>
+            <div class="settings-section">
+              <h2>Documents</h2>
+              <p class="prefs-lead">Files here are for this project. A chat in the project can use them. Other projects stay separate.</p>
+              <div id="project-docs"></div>
+              <div class="form-actions" style="margin-top:12px">
+                <input id="project-doc-file" type="file" accept=".md,.txt,.pdf,.png,.jpg,.jpeg,.webp">
+                <button type="button" class="btn primary" id="project-doc-add">Add document</button>
               </div>
             </div>
           </div>
@@ -976,8 +998,8 @@
 
       <div class="composer-dock" id="composer-dock">
         <div class="composer-inner">
-          <div class="attach-chips" id="attach-list"></div>
           <div class="composer">
+            <div class="attach-chips" id="attach-list"></div>
             <div>
               <input type="file" id="file" hidden accept=".pdf,.md,.txt,.png,.jpg,.jpeg,.webp">
               <button type="button" class="round" id="attach-btn" title="Attach">+</button>
@@ -1659,15 +1681,36 @@
     }
 
     $("new-conv").onclick = () => newConversation().catch((e) => showErr(e));
+    function fillSearchProjects() {
+      const sel = $("search-project");
+      const current = sel.value;
+      sel.innerHTML = "";
+      const all = document.createElement("option");
+      all.value = "";
+      all.textContent = "All projects";
+      sel.appendChild(all);
+      for (const project of state.projects || []) {
+        const opt = document.createElement("option");
+        opt.value = project.id;
+        opt.textContent = project.name;
+        sel.appendChild(opt);
+      }
+      if ([...sel.options].some((opt) => opt.value === current)) sel.value = current;
+    }
     function renderSearchResults() {
       const q = ($("search-q").value || "").trim().toLowerCase();
+      const projectId = $("search-project").value || "";
       const box = $("search-results");
       box.innerHTML = "";
-      const matches = (state.conversations || []).filter((c) => !q || chatTitle(c).toLowerCase().includes(q));
+      const source = state.searchConversations || state.conversations || [];
+      const matches = source.filter((c) => {
+        if (projectId && (c.project_id || "") !== projectId) return false;
+        return !q || chatTitle(c).toLowerCase().includes(q);
+      });
       if (!matches.length) {
         const empty = document.createElement("p");
         empty.className = "prefs-lead";
-        empty.textContent = "No chats match.";
+        empty.textContent = projectId && !q ? "No chats in this project." : "No chats match.";
         box.appendChild(empty);
         return;
       }
@@ -1675,7 +1718,18 @@
         const hit = document.createElement("button");
         hit.type = "button";
         hit.className = "search-hit";
-        hit.textContent = chatTitle(c);
+        const name = document.createElement("div");
+        name.textContent = chatTitle(c);
+        hit.appendChild(name);
+        if (!projectId && c.project_id) {
+          const project = (state.projects || []).find((p) => p.id === c.project_id);
+          if (project) {
+            const meta = document.createElement("div");
+            meta.className = "search-hit-meta";
+            meta.textContent = project.name;
+            hit.appendChild(meta);
+          }
+        }
         hit.onclick = () => {
           closeSearch();
           selectConversation(c.id);
@@ -1683,21 +1737,39 @@
         box.appendChild(hit);
       }
     }
+    async function refreshSearchIndex() {
+      const data = await api("/v1/conversations?limit=200");
+      state.searchConversations = data.conversations || [];
+      fillSearchProjects();
+      renderSearchResults();
+    }
     function openSearch() {
       $("search-pop").hidden = false;
       $("search-q").value = "";
+      $("search-project").value = "";
+      fillSearchProjects();
       renderSearchResults();
       $("search-q").focus();
+      Promise.all([
+        fetchProjects().catch((e) => showErr(e)),
+        refreshSearchIndex().catch((e) => showErr(e)),
+      ]);
     }
     function closeSearch() {
       $("search-pop").hidden = true;
     }
     $("nav-search").onclick = () => openSearch();
     $("search-q").addEventListener("input", () => renderSearchResults());
+    $("search-project").addEventListener("change", () => renderSearchResults());
     $("search-pop").addEventListener("click", (ev) => {
       if (ev.target === $("search-pop")) closeSearch();
     });
-    $("toggle-side").onclick = () => $("sidebar").classList.toggle("open");
+    function toggleSidebar() {
+      const collapsed = $("sidebar").classList.toggle("collapsed");
+      $("show-side").hidden = !collapsed;
+    }
+    $("toggle-side").onclick = toggleSidebar;
+    $("show-side").onclick = toggleSidebar;
     $("nav-jupyter").onclick = () => { openJupyter(); };
     if ($("nav-chat")) $("nav-chat").onclick = () => setView("chat");
     $("nav-projects").onclick = () => setView("projects");
@@ -1817,7 +1889,52 @@
         select.appendChild(opt);
       }
       renderSideProjects();
+      await renderProjectDocuments(id);
     }
+    async function renderProjectDocuments(id) {
+      const box = $("project-docs");
+      if (!box) return;
+      box.innerHTML = "";
+      const data = await api(`/v1/projects/${id}/documents`);
+      const docs = data.documents || [];
+      if (!docs.length) {
+        const empty = document.createElement("p");
+        empty.className = "prefs-lead";
+        empty.textContent = "No documents yet.";
+        box.appendChild(empty);
+        return;
+      }
+      for (const doc of docs) {
+        const row = document.createElement("div");
+        row.className = "prefs-svc";
+        const name = document.createElement("span");
+        name.textContent = doc.filename || doc.source;
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn";
+        remove.textContent = "Remove";
+        remove.onclick = async () => {
+          await api(`/v1/projects/${id}/documents/${doc.id}`, { method: "DELETE" });
+          await renderProjectDocuments(id);
+        };
+        row.appendChild(name);
+        row.appendChild(remove);
+        box.appendChild(row);
+      }
+    }
+    $("project-doc-add").onclick = async () => {
+      try {
+        if (!state.projectId) return;
+        const file = $("project-doc-file").files && $("project-doc-file").files[0];
+        if (!file) throw new Error("Choose a file");
+        const fd = new FormData();
+        fd.append("file", file);
+        await api(`/v1/projects/${state.projectId}/documents`, { method: "POST", body: fd });
+        $("project-doc-file").value = "";
+        await renderProjectDocuments(state.projectId);
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
     $("project-create").onclick = async () => {
       try {
         await api("/v1/projects", {

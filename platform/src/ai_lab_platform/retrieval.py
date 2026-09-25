@@ -80,7 +80,13 @@ class MemoryHit:
 class MemoryStore(Protocol):
     def upsert(self, doc: MemoryDocument, vector: list[float]) -> None: ...
 
-    def search(self, vector: list[float], *, limit: int = 5) -> list[MemoryHit]: ...
+    def search(
+        self, vector: list[float], *, limit: int = 5, project_id: str | None = None
+    ) -> list[MemoryHit]: ...
+
+    def list_documents(self, *, project_id: str) -> list[MemoryHit]: ...
+
+    def delete(self, doc_id: str) -> bool: ...
 
     def status(self) -> dict[str, Any]: ...
 
@@ -95,9 +101,13 @@ class InMemoryStore:
         self._rows = [(d, v) for d, v in self._rows if d.id != doc.id]
         self._rows.append((doc, list(vector)))
 
-    def search(self, vector: list[float], *, limit: int = 5) -> list[MemoryHit]:
+    def search(
+        self, vector: list[float], *, limit: int = 5, project_id: str | None = None
+    ) -> list[MemoryHit]:
         scored: list[MemoryHit] = []
         for doc, vec in self._rows:
+            if project_id and str(doc.meta.get("project_id") or "") != project_id:
+                continue
             score = _cosine(vector, vec)
             scored.append(
                 MemoryHit(
@@ -110,6 +120,26 @@ class InMemoryStore:
             )
         scored.sort(key=lambda h: h.score, reverse=True)
         return scored[: max(1, limit)]
+
+    def list_documents(self, *, project_id: str) -> list[MemoryHit]:
+        found = [
+            MemoryHit(
+                id=doc.id,
+                text=doc.text,
+                source=doc.source,
+                score=0.0,
+                meta=dict(doc.meta),
+            )
+            for doc, _vec in self._rows
+            if str(doc.meta.get("project_id") or "") == project_id
+        ]
+        found.sort(key=lambda hit: hit.source)
+        return found
+
+    def delete(self, doc_id: str) -> bool:
+        before = len(self._rows)
+        self._rows = [(doc, vec) for doc, vec in self._rows if doc.id != doc_id]
+        return len(self._rows) < before
 
     def status(self) -> dict[str, Any]:
         return {
@@ -207,16 +237,21 @@ class QdrantStore:
             },
         )
 
-    def search(self, vector: list[float], *, limit: int = 5) -> list[MemoryHit]:
+    def search(
+        self, vector: list[float], *, limit: int = 5, project_id: str | None = None
+    ) -> list[MemoryHit]:
         self.ensure_collection()
+        body: dict[str, Any] = {
+            "vector": vector,
+            "limit": max(1, limit),
+            "with_payload": True,
+        }
+        if project_id:
+            body["filter"] = qdrant_project_filter(project_id)
         data = self._request(
             "POST",
             f"/collections/{self.collection}/points/search",
-            {
-                "vector": vector,
-                "limit": max(1, limit),
-                "with_payload": True,
-            },
+            body,
         )
         hits: list[MemoryHit] = []
         for row in data.get("result") or []:
@@ -230,7 +265,50 @@ class QdrantStore:
                     meta=dict(payload.get("meta") or {}),
                 )
             )
+        if project_id:
+            hits = [hit for hit in hits if str(hit.meta.get("project_id") or "") == project_id]
         return hits
+
+    def list_documents(self, *, project_id: str) -> list[MemoryHit]:
+        self.ensure_collection()
+        data = self._request(
+            "POST",
+            f"/collections/{self.collection}/points/scroll",
+            {
+                "filter": qdrant_project_filter(project_id),
+                "limit": 100,
+                "with_payload": True,
+                "with_vector": False,
+            },
+        )
+        result = data.get("result") or {}
+        points = result.get("points") if isinstance(result, dict) else []
+        hits: list[MemoryHit] = []
+        for row in points or []:
+            payload = row.get("payload") or {}
+            meta = dict(payload.get("meta") or {})
+            if str(meta.get("project_id") or "") != project_id:
+                continue
+            hits.append(
+                MemoryHit(
+                    id=str(row.get("id")),
+                    text=str(payload.get("text") or ""),
+                    source=str(payload.get("source") or ""),
+                    score=0.0,
+                    meta=meta,
+                )
+            )
+        hits.sort(key=lambda hit: hit.source)
+        return hits
+
+    def delete(self, doc_id: str) -> bool:
+        self.ensure_collection()
+        self._request(
+            "POST",
+            f"/collections/{self.collection}/points/delete?wait=true",
+            {"points": [doc_id]},
+        )
+        return True
 
     def status(self) -> dict[str, Any]:
         try:
@@ -255,6 +333,10 @@ class QdrantStore:
                 "error": str(exc),
                 "vector_size": VECTOR_SIZE,
             }
+
+
+def qdrant_project_filter(project_id: str) -> dict[str, Any]:
+    return {"must": [{"key": "meta.project_id", "match": {"value": project_id}}]}
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -304,17 +386,69 @@ class RetrievalService:
         self.store.upsert(doc, hash_embed(body))
         return doc.to_dict()
 
-    def search(self, query: str, *, limit: int = 5) -> dict[str, Any]:
+    def search(
+        self, query: str, *, limit: int = 5, project_id: str | None = None
+    ) -> dict[str, Any]:
         q = (query or "").strip()
         if not q:
             raise ValueError("query required")
-        hits = self.store.search(hash_embed(q), limit=limit)
+        scoped = (project_id or "").strip() or None
+        hits = self.store.search(hash_embed(q), limit=limit, project_id=scoped)
         return {
             "ok": True,
             "query": q,
+            "project_id": scoped or "",
             "matches": [h.to_dict() for h in hits],
             "note": NO_MATCH_NOTE if not hits else "cite only sources listed in matches",
         }
+
+    def add_project_document(
+        self,
+        *,
+        project_id: str,
+        text: str,
+        source: str,
+        filename: str = "",
+    ) -> dict[str, Any]:
+        saved = self.upsert(
+            text=text,
+            source=source,
+            meta={"project_id": project_id, "filename": filename or source},
+        )
+        return saved
+
+    def list_project_documents(self, project_id: str) -> list[dict[str, Any]]:
+        hits = self.store.list_documents(project_id=project_id)
+        return [
+            {
+                "id": hit.id,
+                "source": hit.source,
+                "filename": str(hit.meta.get("filename") or hit.source),
+                "bytes": len(hit.text.encode("utf-8")),
+            }
+            for hit in hits
+        ]
+
+    def delete_document(self, doc_id: str, *, project_id: str) -> bool:
+        owned = any(hit.id == doc_id for hit in self.store.list_documents(project_id=project_id))
+        if not owned:
+            return False
+        return self.store.delete(doc_id)
+
+    def project_context(self, query: str, project_id: str, *, limit: int = 3) -> str:
+        scoped = (project_id or "").strip()
+        if not scoped or not (query or "").strip():
+            return ""
+        result = self.search(query, limit=limit, project_id=scoped)
+        parts: list[str] = []
+        for hit in result["matches"]:
+            source = hit.get("source") or hit.get("id")
+            text = str(hit.get("text") or "")[:4000]
+            if text:
+                parts.append(f"[{source}]\n{text}")
+        if not parts:
+            return ""
+        return "Project documents (cite only these sources):\n" + "\n\n".join(parts)
 
     def status(self) -> dict[str, Any]:
         st = self.store.status()
