@@ -144,6 +144,28 @@ class JobStore:
 STORE = JobStore()
 
 
+def _host_report() -> dict[str, Any]:
+    """Local chip, memory, and disk for the status dashboard. No addresses."""
+    root = Path(__file__).resolve().parents[1]
+    src = root / "platform" / "src"
+    sibling = Path(__file__).resolve().parent / "host_resources.py"
+    if src.is_dir():
+        sys.path.insert(0, str(src))
+        from ai_lab_platform.host_resources import collect
+    elif sibling.is_file():
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location("ai_lab_host_resources", sibling)
+        if spec is None or spec.loader is None:
+            return {"available": False, "reason": "This machine did not report memory or disk."}
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        collect = module.collect
+    else:
+        return {"available": False, "reason": "This machine did not report memory or disk."}
+    return collect()
+
+
 def make_handler(store: JobStore):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -168,6 +190,9 @@ def make_handler(store: JobStore):
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             path = parsed.path
+            if path == "/resources":
+                self._json(200, _host_report())
+                return
             if path in ("/health", "/v1/health"):
                 completions_ok = False
                 try:

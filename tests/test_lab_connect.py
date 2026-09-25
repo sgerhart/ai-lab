@@ -77,9 +77,9 @@ class LabConnectAppTests(unittest.TestCase):
         self.client = TestClient(app)
 
     def test_lab_page(self) -> None:
-        res = self.client.get("/lab")
-        self.assertEqual(res.status_code, 200)
-        self.assertIn("Open Jupyter", res.text)
+        res = self.client.get("/lab", follow_redirects=False)
+        self.assertEqual(res.status_code, 307)
+        self.assertEqual(res.headers.get("location"), "/")
 
     def test_connect_status_public(self) -> None:
         res = self.client.get("/v1/connect/status")

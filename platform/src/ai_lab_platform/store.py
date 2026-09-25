@@ -7,7 +7,7 @@ import sqlite3
 from pathlib import Path
 from typing import Protocol
 
-from .conversation import AgentRun, Conversation, Message
+from .conversation import AgentRun, Conversation, Message, Project
 from .state_machine import transition
 from .work_order import Status, WorkOrder, utcnow
 
@@ -82,6 +82,15 @@ class SqliteStore:
                     conversation_id TEXT NOT NULL,
                     payload TEXT NOT NULL,
                     created_at TEXT NOT NULL
+                )
+                """
+            )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS projects (
+                    id TEXT PRIMARY KEY,
+                    payload TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
                 )
                 """
             )
@@ -251,6 +260,41 @@ class SqliteStore:
                 (conversation_id,),
             ).fetchall()
         return [Message.from_dict(json.loads(r["payload"])) for r in rows]
+
+    def put_project(self, project: Project) -> None:
+        project.updated_at = utcnow()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO projects (id, payload, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    payload = excluded.payload,
+                    updated_at = excluded.updated_at
+                """,
+                (project.id, json.dumps(project.to_dict()), project.updated_at),
+            )
+
+    def get_project(self, project_id: str) -> Project | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT payload FROM projects WHERE id = ?", (project_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        return Project.from_dict(json.loads(row["payload"]))
+
+    def list_projects(self) -> list[Project]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT payload FROM projects ORDER BY updated_at DESC"
+            ).fetchall()
+        return [Project.from_dict(json.loads(row["payload"])) for row in rows]
+
+    def delete_project(self, project_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+            return cur.rowcount > 0
 
     def put_agent_run(self, run: AgentRun) -> None:
         run.updated_at = utcnow()

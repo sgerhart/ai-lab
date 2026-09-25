@@ -75,14 +75,24 @@ def connect_status(
         ollama_http = http_probe(f"{ollama_url.rstrip('/')}/api/tags")
 
     models: list[str] = []
+    installed: list[dict[str, Any]] = []
+    loaded: list[dict[str, Any]] = []
     if ollama_http.get("ok"):
         try:
             req = Request(f"{ollama_url.rstrip('/')}/api/tags", method="GET")
             with urlopen(req, timeout=0.8) as resp:  # noqa: S310
                 data = json.loads(resp.read().decode("utf-8"))
-            models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
-        except (URLError, OSError, ValueError, json.JSONDecodeError):
+            installed = parse_ollama_installed(data)
+            models = [m["name"] for m in installed]
+        except (URLError, OSError, ValueError, json.JSONDecodeError, TypeError):
             models = []
+            installed = []
+        try:
+            req = Request(f"{ollama_url.rstrip('/')}/api/ps", method="GET")
+            with urlopen(req, timeout=0.8) as resp:  # noqa: S310
+                loaded = parse_ollama_loaded(json.loads(resp.read().decode("utf-8")))
+        except (URLError, OSError, ValueError, json.JSONDecodeError, TypeError):
+            loaded = []
 
     worker_ok = False
     if studio_worker_url:
@@ -103,10 +113,54 @@ def connect_status(
             "port_open": ollama_port,
             "http_ok": bool(ollama_http.get("ok")),
             "models": models,
+            "installed": installed,
+            "loaded": loaded,
         },
         "studio_worker": {"http_ok": worker_ok},
         "note": "Secret values are never included in this response.",
     }
+
+
+def parse_ollama_installed(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Names and sizes from Ollama /api/tags. Digests are omitted."""
+    out: list[dict[str, Any]] = []
+    for row in data.get("models") or []:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("name") or "").strip()
+        if not name:
+            continue
+        details = row.get("details") if isinstance(row.get("details"), dict) else {}
+        size = row.get("size")
+        out.append(
+            {
+                "name": name,
+                "size_bytes": size if isinstance(size, int) else None,
+                "parameter_size": str(details.get("parameter_size") or "") or None,
+                "quantization": str(details.get("quantization_level") or "") or None,
+            }
+        )
+    return out
+
+
+def parse_ollama_loaded(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Models currently in memory from Ollama /api/ps."""
+    out: list[dict[str, Any]] = []
+    for row in data.get("models") or []:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("name") or row.get("model") or "").strip()
+        if not name:
+            continue
+        size = row.get("size")
+        out.append(
+            {
+                "name": name,
+                "size_bytes": size if isinstance(size, int) else None,
+                "expires_at": str(row.get("expires_at") or "") or None,
+            }
+        )
+    return out
 
 
 def _host_port(url: str, *, default_port: int) -> tuple[str, int]:

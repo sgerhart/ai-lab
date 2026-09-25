@@ -65,6 +65,10 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-052](IWO-052-scheduler-launchagent.md) | Scheduler LaunchAgent on mini | Complete (live) |
 | [IWO-053](IWO-053-wire-qdrant-env.md) | Wire Qdrant into control-plane env | Complete (live) |
 | [IWO-054](IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | Complete (Air) |
+| [IWO-055](IWO-055-coding-model-profiles-routing.md) | Coding model profiles + Studio routing | Complete (unit; no pulls) |
+| [IWO-056](IWO-056-readonly-coding-assistant.md) | Read-only Coding Assistant | Complete (unit) |
+| [IWO-058](IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | Complete (unit) |
+| [IWO-059](IWO-059-chat-first-studio.md) | Chat-first Studio shell | In progress (live lab-health pass open) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

@@ -23,9 +23,13 @@
   align-items: center; justify-content: space-between;
 }
 .ai-lab-brand {
+  display: inline-flex; align-items: center; gap: 8px;
   font: 12px/1 ui-monospace, Menlo, monospace;
   letter-spacing: .14em; text-transform: uppercase;
   color: var(--accent); text-decoration: none;
+}
+.ai-lab-mark {
+  width: 28px; height: 28px; border-radius: 8px; object-fit: cover; display: block;
 }
 .ai-lab-links { display: flex; flex-wrap: wrap; gap: 4px; }
 .ai-lab-links a {

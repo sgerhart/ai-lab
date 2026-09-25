@@ -51,6 +51,8 @@ Submit work order → persist → LangGraph → (optional Studio worker) → app
 complete. Studio unavailable leaves work orders `queued` with
 `studio_unavailable`.
 
-Also live: `/agents` chat via Studio `llama3.2:3b`; schedule tick API + host
-timer; memory upsert/search against Qdrant; Cursor `lab_health` over Tailscale;
-`/antares` vuln-localize UI (Studio jobs `:8002`, human review only).
+Also live: Studio chat at `/` via Studio Ollama (picker lists installed tags; `/agents` redirects);
+schedule tick API + host timer; memory upsert/search against Qdrant; Cursor
+`lab_health` over Tailscale; `/antares` vuln-localize UI (Studio jobs `:8002`,
+human review only). Coding Assistant reads a workspace and can patch a separate
+worktree after approval. Capability table: [../features/index.md](../features/index.md).

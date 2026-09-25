@@ -7,6 +7,8 @@ PRIVILEGED_TOOLS = frozenset(
         "git_push",
         "gh_pr_merge",
         "deploy",
+        "apply_patch",
+        "git_commit",
         "brew_apply",
         "compose_up",
         "compose_down_volumes",

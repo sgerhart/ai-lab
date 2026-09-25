@@ -50,9 +50,9 @@ Paste into Lab / Agents / API keys. Details: http://mac-mini:8088/help#token
 
 Then on Air:
 
-1. Open `http://mac-mini:8088/lab` (or the mini Tailscale name/IP you use).
+1. Open `http://mac-mini:8088/` (or the mini Tailscale name/IP you use). `/lab` redirects here.
 2. Paste the lab API token from above.
-3. Click **Open Jupyter**.
+3. Click **Jupyter Labs** in the sidebar.
 
 ## Access from Air (legacy SSH tunnel)
 
@@ -128,7 +128,9 @@ Expect `Device(gpu, 0)` (or similar) from MLX and `mps:0` from PyTorch.
 ### Inference smoke (Ollama + MLX-LM)
 
 First models (authorized 2026-09-23): Ollama `llama3.2:3b` (~2.0 GB) and
-`mlx-community/Llama-3.2-3B-Instruct-4bit` (HF cache). Sample notebook on Studio:
+`mlx-community/Llama-3.2-3B-Instruct-4bit` (HF cache). Later Studio Ollama tags
+(2026-09-24): `qwen3.8:27b` and `qwen3-coder:30b`. The smoke notebook below still
+uses the small tag. Sample notebook on Studio:
 `~/ai-lab-notebooks/studio-inference-smoke.ipynb`.
 
 **Ollama (loopback on Studio):**

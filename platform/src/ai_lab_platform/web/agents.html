@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ai-lab · Studio</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
   <link rel="stylesheet" href="/static/chrome.css">
   <style>
     :root {
@@ -46,8 +46,12 @@
       color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px;
     }
     .brand-mark {
-      width: 28px; height: 28px; border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #3ee0a8, #0b6b55);
+      width: 28px; height: 28px; border-radius: 8px;
+      object-fit: cover; display: block; flex-shrink: 0;
+    }
+    .brand-word {
+      height: 26px; width: auto; max-width: 128px;
+      object-fit: contain; display: block; mix-blend-mode: screen;
     }
     .icon-btn {
       width: 36px; height: 36px; border: 0; border-radius: 8px;
@@ -55,17 +59,58 @@
     }
     .icon-btn:hover { background: var(--side-hover); color: var(--ink); }
     .new-chat {
-      margin: 4px 12px 8px; width: calc(100% - 24px);
+      margin: 8px 0 2px; width: 100%;
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px; border-radius: 10px;
       border: 1px solid var(--line); background: transparent;
       color: var(--ink); cursor: pointer; font: inherit;
     }
     .new-chat:hover { background: var(--side-hover); }
-    .side-scroll { flex: 1; overflow-y: auto; padding: 0 8px 12px; }
-    .side-label {
-      margin: 14px 10px 6px; font-size: 12px; color: var(--muted); font-weight: 500;
+    .side-scroll { flex: 0 0 auto; overflow: visible; padding: 0 8px; }
+    .side-lists {
+      flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
+      padding: 4px 8px 0; gap: 4px;
     }
+    .side-section {
+      flex: 1 1 0; min-height: 72px; display: flex; flex-direction: column; min-width: 0;
+    }
+    .side-scrollbox { flex: 1; min-height: 0; overflow-y: auto; margin-left: 14px; }
+    .side-pin { flex-shrink: 0; padding: 4px 8px 8px; }
+    .side-label {
+      margin: 0; padding: 9px 10px; font: inherit; color: var(--ink);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-ico {
+      width: 16px; height: 16px; flex-shrink: 0;
+      stroke: currentColor; fill: none; stroke-width: 1.75;
+      stroke-linecap: round; stroke-linejoin: round;
+    }
+    .search-pop {
+      position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.55);
+      display: grid; place-items: center; padding: 24px;
+    }
+    .search-pop[hidden] { display: none; }
+    .search-card {
+      width: min(520px, 100%); max-height: min(70vh, 560px);
+      background: #1e1e1e; border: 1px solid var(--line); border-radius: 16px;
+      padding: 18px; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.45);
+    }
+    .search-card h2 { margin: 0; font-size: 18px; }
+    .search-card input {
+      width: 100%; background: #111; border: 1px solid var(--line); color: var(--ink);
+      border-radius: 10px; padding: 12px 14px; font: inherit;
+    }
+    #search-results { overflow-y: auto; min-height: 120px; }
+    .search-hit {
+      width: 100%; text-align: left; border: 0; background: transparent; color: var(--ink);
+      padding: 10px 12px; border-radius: 10px; cursor: pointer; font: inherit;
+    }
+    .search-hit:hover, .search-hit.active { background: var(--side-active); }
+    .side-rule { height: 1px; margin: 10px 10px; background: var(--line); border: 0; }
+    .side-nest { margin: 2px 0 10px 14px; }
+    .side-link.sub, .new-chat.sub { font-size: 14px; }
+    .new-chat.sub { margin-top: 0; }
     .side-link, .conv-item {
       width: 100%; display: flex; align-items: center; gap: 10px;
       text-align: left; border: 0; background: transparent; color: var(--ink);
@@ -76,7 +121,7 @@
     .side-link.active, .conv-item.active { background: var(--side-active); }
     .conv-item .t {
       flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      font-size: 14px;
+      font-size: inherit;
     }
     .conv-item .del {
       opacity: 0; border: 0; background: transparent; color: var(--muted);
@@ -87,10 +132,9 @@
     .side-foot {
       border-top: 1px solid var(--line); padding: 10px 12px;
       display: flex; align-items: center; gap: 10px;
-      width: 100%; background: transparent; border-left: 0; border-right: 0; border-bottom: 0;
-      color: inherit; cursor: pointer; font: inherit; text-align: left;
+      width: 100%; background: transparent;
+      color: inherit; font: inherit; text-align: left;
     }
-    .side-foot:hover { background: var(--side-hover); }
     .avatar {
       width: 32px; height: 32px; border-radius: 999px;
       background: #444; display: grid; place-items: center;
@@ -114,14 +158,20 @@
     .op-menu button:hover, .op-menu a:hover { background: rgba(255,255,255,.06); }
     .op-menu .sep { height: 1px; background: var(--line); margin: 4px 6px; }
     .main {
-      flex: 1; min-width: 0; min-height: 0;
-      display: grid; grid-template-rows: auto 1fr auto;
+      flex: 1; min-width: 0; min-height: 0; height: 100%;
+      display: flex; flex-direction: column;
+      overflow: hidden;
       background: var(--bg);
       position: relative;
     }
     .main-top {
-      height: 52px; display: flex; align-items: center; justify-content: space-between;
-      gap: 8px; padding: 0 16px;
+      flex: 0 0 auto;
+      min-height: 52px; display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 8px 16px;
+    }
+    .top-meta {
+      display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+      min-width: 0;
     }
     .main-top .title { font-size: 14px; color: var(--muted); }
     .ghost {
@@ -129,7 +179,7 @@
       padding: 8px 12px; border-radius: 999px; cursor: pointer; font: inherit;
     }
     .ghost:hover { background: var(--side-active); color: var(--ink); }
-    .pane { min-height: 0; overflow-y: auto; padding: 8px 16px 140px; display: none; }
+    .pane { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 8px 16px 20px; display: none; }
     .pane.active { display: block; }
     .pane-inner { max-width: 880px; margin: 0 auto; }
     .pane-inner.narrow { max-width: 768px; }
@@ -145,8 +195,8 @@
     .msg.user { grid-template-columns: 1fr; }
     .msg .avatar-sm {
       width: 32px; height: 32px; border-radius: 999px;
-      background: linear-gradient(135deg, #3ee0a8, #0b6b55);
-      margin-top: 2px;
+      object-fit: cover; display: block; margin-top: 2px;
+      background: #05060d;
     }
     .msg.user .bubble {
       justify-self: end; max-width: 85%;
@@ -158,12 +208,32 @@
       padding-top: 4px; line-height: 1.6;
     }
     .composer-dock {
-      position: absolute; left: 0; right: 0; bottom: 0;
-      padding: 0 16px 18px;
-      background: linear-gradient(180deg, transparent, var(--bg) 28%);
+      flex: 0 0 auto;
+      padding: 8px 16px 12px;
+      background: var(--bg);
       pointer-events: none;
     }
     .composer-dock.hidden { display: none; }
+    .main-head { flex: 0 0 auto; }
+    .cap-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 8px; }
+    .cap-badge {
+      border: 1px solid var(--line); background: transparent; color: var(--muted);
+      border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer;
+    }
+    .cap-badge.connected { border-color: var(--accent); color: var(--accent); }
+    .cap-badge.permission_required { border-style: dashed; }
+    .cap-detail {
+      margin: 0 16px 8px; padding: 10px 12px; border: 1px solid var(--line);
+      border-radius: 12px; color: var(--muted); font-size: 13px; white-space: pre-wrap;
+    }
+    .run-card {
+      border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin: 12px 0;
+      background: var(--panel);
+    }
+    .run-card h3 { margin: 0 0 6px; font-size: 14px; }
+    .run-card .tool-line { margin: 4px 0; color: var(--muted); font-size: 13px; }
+    .health-ok { color: var(--accent); }
+    .health-down { color: #ff8b96; }
     .composer-inner { pointer-events: auto; max-width: 768px; margin: 0 auto; }
     .attach-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
     .chip {
@@ -193,12 +263,16 @@
       display: grid; place-items: center; font-size: 20px;
     }
     .round:hover { background: rgba(255,255,255,.06); color: var(--ink); }
-    .composer-actions { display: flex; align-items: center; gap: 4px; }
-    .mode-select {
-      appearance: none; border: 0; background: transparent; color: var(--ink);
-      font: 13px/1 inherit; padding: 8px 6px; cursor: pointer; border-radius: 999px;
+    .composer-meta {
+      display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
+      gap: 4px 10px; margin-top: 8px;
     }
-    .mode-select:hover { background: rgba(255,255,255,.06); }
+    .mode-select {
+      appearance: none; border: 0; background: transparent; color: var(--muted);
+      font: 13px/1 inherit; padding: 6px 8px; cursor: pointer; border-radius: 999px;
+      max-width: min(100%, 22rem);
+    }
+    .mode-select:hover { background: rgba(255,255,255,.06); color: var(--ink); }
     .send {
       width: 36px; height: 36px; border-radius: 999px; border: 0;
       background: var(--send); color: var(--send-ink); cursor: pointer;
@@ -210,9 +284,9 @@
       margin-top: 10px;
     }
     .perf-meter {
-      text-align: center; font-size: 12px; color: var(--muted);
-      margin: 0 0 8px; min-height: 1.2em; font-variant-numeric: tabular-nums;
-      letter-spacing: .01em;
+      text-align: right; font-size: 12px; color: var(--muted);
+      margin: 0; min-height: 1.2em; font-variant-numeric: tabular-nums;
+      letter-spacing: .01em; white-space: nowrap;
     }
     .perf-meter[data-live="1"] { color: var(--accent); }
     .err {
@@ -256,13 +330,37 @@
       background: #2a2a2a; color: var(--muted);
     }
     .badge.live { color: var(--accent); background: rgba(16,163,127,.12); }
+    .kind-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .kind-btn {
+      text-align: left; border: 1px solid var(--line); background: #111; color: var(--ink);
+      border-radius: 12px; padding: 12px; cursor: pointer; font: inherit;
+    }
+    .kind-btn strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .kind-btn span { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
+    .kind-btn.active { border-color: var(--accent); background: rgba(16,163,127,.1); }
+    .kind-row.locked { pointer-events: none; }
+    .kind-help { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    details.advanced { margin-top: 4px; }
+    details.advanced summary { cursor: pointer; color: var(--muted); font-size: 13px; margin-bottom: 10px; }
     .form-grid { display: grid; gap: 10px; max-width: 560px; }
     .form-grid label { font-size: 12px; color: var(--muted); }
     .form-grid input, .form-grid textarea, .form-grid select {
       width: 100%; background: #111; border: 1px solid var(--line); color: var(--ink);
       border-radius: 10px; padding: 10px 12px; font: inherit;
     }
-    .form-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .form-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+    #project-add-chat {
+      min-width: 220px; flex: 1; background: #111; border: 1px solid var(--line);
+      color: var(--ink); border-radius: 10px; padding: 10px 12px; font: inherit;
+    }
+    .project-card {
+      width: 100%; text-align: left; border: 1px solid var(--line); background: var(--panel);
+      color: inherit; font: inherit; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .project-card:hover { border-color: #555; }
+    .project-card h2 { margin: 0 0 4px; font-size: 16px; }
+    .project-card p { margin: 0; color: var(--muted); font-size: 13px; }
     .run-row {
       width: 100%; display: grid; grid-template-columns: 1fr auto auto;
       gap: 12px; align-items: center; text-align: left;
@@ -306,16 +404,18 @@
 
     /* Cursor-like in-Studio preferences shell */
     .prefs-shell {
-      display: none; position: fixed; inset: 0; z-index: 50;
-      grid-template-columns: 240px 1fr;
-      background: var(--bg); color: var(--ink);
+      display: none;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      background: var(--bg);
     }
-    .prefs-shell.open { display: grid; }
-    .prefs-nav {
-      border-right: 1px solid var(--line); background: var(--panel);
-      padding: 14px 10px; display: flex; flex-direction: column; gap: 2px;
-      overflow-y: auto;
+    .prefs-shell.open { display: block; }
+    .config-badge {
+      text-align: left; color: inherit; font: inherit; cursor: pointer; min-height: 140px;
+      text-decoration: none;
     }
+    .config-badge h2 { font-size: 18px; }
     .prefs-back {
       display: flex; align-items: center; gap: 8px;
       border: 0; background: transparent; color: var(--ink);
@@ -337,6 +437,7 @@
     .prefs-main { overflow-y: auto; padding: 28px 36px 56px; }
     .prefs-pane { display: none; max-width: 760px; }
     .prefs-pane.active { display: block; }
+    #prefs-status.prefs-pane { max-width: none; }
     .prefs-pane h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: -.02em; }
     .prefs-pane .prefs-lead { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
     .prefs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -385,7 +486,8 @@
       text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
     }
     .prefs-node h2 { margin: 0 0 4px; font-size: 16px; }
-    .prefs-node p { margin: 0; color: var(--muted); font-size: 12px; }
+    .prefs-node p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+    .prefs-node .prefs-pill { margin-top: 8px; }
     .prefs-link { width: 36px; display: flex; align-items: center; justify-content: center; color: var(--muted); opacity: .5; }
     .prefs-status-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 14px; }
     .prefs-svc { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -395,9 +497,41 @@
     .prefs-bar-row span { font: 12px/1 ui-monospace, Menlo, monospace; color: var(--muted); }
     .prefs-track { height: 8px; background: #111; border-radius: 99px; overflow: hidden; }
     .prefs-fill { height: 100%; width: 0; background: linear-gradient(90deg, #7cb8ff, var(--accent)); transition: width .5s ease; }
+    .prefs-fill.low { background: linear-gradient(90deg, #e8b45c, #ff6b7a); }
     .prefs-clock { font: 12px/1.3 ui-monospace, Menlo, monospace; color: var(--muted); margin: -12px 0 18px; }
+    .dash-meter { margin-top: 12px; }
+    .dash-meter .lab {
+      display: flex; justify-content: space-between; gap: 8px;
+      font: 11px/1.3 ui-monospace, Menlo, monospace; color: var(--muted); margin-bottom: 5px;
+    }
+    .dash-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
+    .dash-h { margin: 8px 0 12px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .dash-mods { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .dash-mod {
+      text-align: left; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 16px; padding: 14px 14px 16px; min-height: 118px;
+      color: inherit; font: inherit; display: flex; flex-direction: column; gap: 6px;
+    }
+    button.dash-mod { cursor: pointer; }
+    button.dash-mod:hover { border-color: #555; }
+    .dash-mod h3 { margin: 0; font-size: 15px; }
+    .dash-mod p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .model-block { margin-top: 8px; }
+    .model-block h3 {
+      margin: 10px 0 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600;
+    }
+    .model-row {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+      padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px;
+    }
+    .model-row:last-child { border-bottom: 0; }
+    .model-row .sub { color: var(--muted); font: 11px/1.3 ui-monospace, Menlo, monospace; }
+    @media (max-width: 1100px) {
+      .dash-mods { grid-template-columns: 1fr 1fr; }
+    }
     @media (max-width: 720px) {
-      .prefs-topo, .prefs-status-grid { grid-template-columns: 1fr; }
+      .prefs-topo, .prefs-status-grid, .dash-mods { grid-template-columns: 1fr; }
       .prefs-link { display: none; }
     }
 
@@ -419,44 +553,59 @@
   <div class="app">
     <aside class="sidebar" id="sidebar">
       <div class="side-top">
-        <a class="brand" href="/agents"><span class="brand-mark"></span> ai-lab</a>
+        <a class="brand" href="/"><img class="brand-mark" src="/static/ai-lab-icon.jpg" alt=""><img class="brand-word" src="/static/ai-lab-wordmark.jpg" alt="AI Lab"></a>
         <button type="button" class="icon-btn" id="toggle-side" title="Toggle sidebar">☰</button>
       </div>
-      <button type="button" class="new-chat" id="new-conv"><span>✎</span> New chat</button>
       <div class="side-scroll">
-        <div class="side-label">Studio</div>
-        <button type="button" class="side-link" id="nav-agents" data-view="agents">Agents</button>
-        <button type="button" class="side-link" id="nav-runs" data-view="runs">Runs</button>
-
-        <div class="side-label">Chats</div>
-        <div id="conv-list"></div>
+        <button type="button" class="side-link" id="nav-status" data-prefs="status"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Status Dashboard</button>
+        <hr class="side-rule">
+        <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
+        <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agents</button>
+        <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
+        <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
+        <hr class="side-rule">
+        <button type="button" class="new-chat" id="new-conv"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>New chat</button>
+        <button type="button" class="side-link" id="nav-search"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Search</button>
+      </div>
+      <div class="side-lists">
+        <section class="side-section" aria-label="Projects">
+          <button type="button" class="side-link" id="nav-projects" data-view="projects"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>Projects</button>
+          <div class="side-scrollbox" id="side-projects"></div>
+        </section>
+        <section class="side-section" aria-label="Chats">
+          <div class="side-label"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H8l-5 3V12a8 8 0 1 1 18 0z"/></svg>Chats</div>
+          <div class="side-scrollbox" id="conv-list"></div>
+        </section>
+      </div>
+      <div class="side-pin">
+        <button type="button" class="side-link" id="nav-configure" data-prefs="configure"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="17" r="1.6" fill="currentColor" stroke="none"/></svg>Configure</button>
       </div>
 
-      <div class="op-menu" id="op-menu" role="menu">
-        <button type="button" data-prefs="status">Status</button>
-        <button type="button" data-prefs="lab">Lab</button>
-        <button type="button" data-prefs="keys">API keys</button>
-        <button type="button" data-prefs="settings" id="menu-settings">Settings</button>
-        <button type="button" data-prefs="help">Help</button>
-        <div class="sep"></div>
-        <button type="button" id="menu-close">Close</button>
-      </div>
-
-      <button type="button" class="side-foot" id="op-btn" title="Operator menu">
+      <div class="side-foot" id="op-btn">
         <div class="avatar">SG</div>
         <div class="foot-meta">
           <div class="name">Operator</div>
           <div class="sub" id="billing-foot">local · Studio</div>
         </div>
-      </button>
+      </div>
     </aside>
 
+    <div class="search-pop" id="search-pop" hidden>
+      <div class="search-card" role="dialog" aria-modal="true" aria-labelledby="search-title">
+        <h2 id="search-title">Search chats</h2>
+        <input id="search-q" type="search" placeholder="Search by name" autocomplete="off">
+        <div id="search-results"></div>
+      </div>
+    </div>
+
     <section class="main">
+      <div class="main-head">
       <div class="main-top">
-        <span class="title" id="pane-title">Chat</span>
-        <div>
-          <span class="ghost" id="model-chip" title="Active model">—</span>
+        <span class="title" id="pane-title">AI Lab Assistant</span>
+        <div class="top-meta">
+          <span class="perf-meter" id="perf-meter" aria-live="polite"></span>
         </div>
+      </div>
       </div>
 
       <!-- Chat -->
@@ -465,7 +614,50 @@
           <div class="thread" id="messages">
             <div class="empty" id="empty">
               <strong>Where should we start?</strong>
-              Chat with Studio Ollama by default. Attach files, run deep research when authorized, or open Agents to deploy a personal worker.
+              Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects -->
+      <div class="pane" id="pane-projects">
+        <div class="pane-inner">
+          <div id="project-home">
+            <div class="page-head">
+              <div>
+                <h1>Projects</h1>
+                <p>Name a project, describe it, then add chats so related work stays together.</p>
+              </div>
+            </div>
+            <div class="settings-section form-grid">
+              <label for="project-name">Name</label>
+              <input id="project-name" type="text" maxlength="80" placeholder="Lab notebook notes">
+              <label for="project-description">Description</label>
+              <textarea id="project-description" rows="3" maxlength="500" placeholder="What this group of chats is for"></textarea>
+              <div class="form-actions">
+                <button type="button" class="btn primary" id="project-create">Create project</button>
+              </div>
+            </div>
+            <div id="project-list"></div>
+          </div>
+          <div id="project-detail" hidden>
+            <div class="page-head">
+              <div>
+                <button type="button" class="btn" id="project-back">← Projects</button>
+                <h1 id="project-detail-name">Project</h1>
+                <p id="project-detail-desc"></p>
+              </div>
+              <button type="button" class="btn" id="project-delete">Delete project</button>
+            </div>
+            <div class="settings-section">
+              <h2>Chats in this project</h2>
+              <div id="project-chats"></div>
+              <div class="form-actions" style="margin-top:12px">
+                <select id="project-add-chat"></select>
+                <button type="button" class="btn primary" id="project-add">Add chat</button>
+                <button type="button" class="btn" id="project-new-chat">New chat here</button>
+              </div>
             </div>
           </div>
         </div>
@@ -476,10 +668,13 @@
         <div class="pane-inner">
           <div class="page-head">
             <div>
-              <h1>Agents</h1>
-              <p>Deploy personal workers with a standing prompt, tools, and MCP servers. Run them from here — not from a popup.</p>
+              <h1>Agents Studio</h1>
+              <p>Build an agent here. Chat does not require one. A coding agent still waits for your approval before it changes a separate copy.</p>
             </div>
-            <button type="button" class="btn primary" id="agents-new">New agent</button>
+            <div style="display:flex;gap:8px">
+              <button type="button" class="btn" id="agents-activity">Activity</button>
+              <button type="button" class="btn primary" id="agents-new">New agent</button>
+            </div>
           </div>
           <div class="agent-grid" id="agent-grid"></div>
         </div>
@@ -497,47 +692,62 @@
           </div>
           <div class="form-grid">
             <div>
-              <label for="def-title">Title</label>
-              <input id="def-title" type="text" placeholder="Morning lab check">
-            </div>
-            <div>
-              <label for="def-agent">Persona</label>
-              <select id="def-agent">
-                <option value="lab-operations">lab-operations</option>
-                <option value="development">development</option>
-                <option value="research">research</option>
+              <label>What is this for?</label>
+              <div class="kind-row" id="kind-row">
+                <button type="button" class="kind-btn" data-kind="coding-assistant"><strong>Coding</strong><span>Change a separate copy. You approve every file edit.</span></button>
+                <button type="button" class="kind-btn" data-kind="lab-operations"><strong>Lab check</strong><span>Read health and summarize. No file edits.</span></button>
+                <button type="button" class="kind-btn" data-kind="research"><strong>Research</strong><span>Search memory and write a report.</span></button>
+              </div>
+              <p class="kind-help" id="kind-help"></p>
+              <select id="def-agent" hidden>
+                <option value="coding-assistant">Coding</option>
+                <option value="lab-operations">Lab check</option>
+                <option value="development">Development</option>
+                <option value="research">Research</option>
               </select>
             </div>
             <div>
-              <label for="def-prompt">Standing system prompt</label>
-              <textarea id="def-prompt" rows="4" placeholder="You check lab health and summarize clearly."></textarea>
+              <label for="def-title">Name</label>
+              <input id="def-title" type="text" placeholder="Fix the lab status page">
             </div>
             <div>
-              <label for="def-mcp">MCP servers (comma-separated ids)</label>
-              <input id="def-mcp" type="text" placeholder="filesystem, github">
+              <label for="def-prompt">Standing instructions</label>
+              <textarea id="def-prompt" rows="4" placeholder="Explain the change, name the files, and wait for approval before patching."></textarea>
             </div>
-            <div>
-              <label for="def-cron">Schedule cron (optional, local time)</label>
-              <input id="def-cron" type="text" placeholder="0 9 * * * = daily 09:00">
-              <p class="lead" style="color:var(--muted);font-size:12px;margin:6px 0 0">
-                Five fields: minute hour day-of-month month day-of-week. Fired by
-                <code>POST /v1/scheduler/tick</code> (or <code>scripts/scheduler-tick.sh</code>).
-              </p>
-            </div>
+            <details class="advanced" id="agent-advanced">
+              <summary>Schedule and connections</summary>
+              <div class="form-grid">
+                <div>
+                  <label for="def-mcp">Connected tools</label>
+                  <input id="def-mcp" type="text" placeholder="Leave blank unless you added a tool in Settings">
+                </div>
+                <div>
+                  <label for="def-cron">Repeat on a schedule</label>
+                  <input id="def-cron" type="text" placeholder="Optional. Example: 0 9 * * * for 09:00 daily">
+                </div>
+              </div>
+            </details>
             <div class="form-actions" id="agent-create-actions">
               <button type="button" class="btn primary" id="def-create">Create agent</button>
             </div>
           </div>
           <div id="agent-run-block" hidden style="margin-top:28px">
-            <h2 style="font-size:16px;margin:0 0 8px">Run this agent</h2>
-            <p class="lead" style="color:var(--muted);font-size:13px;margin:0 0 12px">Starts a bounded tool loop. Approvals and traces stay on this screen.</p>
+            <h2 style="font-size:16px;margin:0 0 8px">Start a task</h2>
+            <p class="lead" style="color:var(--muted);font-size:13px;margin:0 0 12px">Describe what you want. You will see each step, and any file change waits for your approval.</p>
+            <div id="coding-worktree" hidden style="margin-bottom:12px">
+              <p class="lead" style="color:var(--muted);font-size:13px;margin:0 0 8px">This agent can read the lab. File changes happen only in a separate copy, and only after you approve that exact change.</p>
+              <div class="form-actions">
+                <button type="button" class="btn" id="prepare-worktree">Prepare a separate copy</button>
+              </div>
+              <p class="lead" id="worktree-note" style="color:var(--muted);font-size:12px;margin:8px 0 0">No separate copy yet. A run can still read the lab. It cannot change files until you prepare a copy.</p>
+            </div>
             <div class="form-grid">
               <div>
-                <label for="agent-objective">Objective</label>
-                <textarea id="agent-objective" rows="3">Check lab health using tools, then summarize.</textarea>
+                <label for="agent-objective">Task</label>
+                <textarea id="agent-objective" rows="4" placeholder="Describe the change. Example: explain why the status page overlaps the token stats, then propose a patch."></textarea>
               </div>
               <div class="form-actions">
-                <button type="button" class="btn primary" id="agent-run">Run loop</button>
+                <button type="button" class="btn primary" id="agent-run">Start</button>
               </div>
             </div>
           </div>
@@ -549,8 +759,8 @@
         <div class="pane-inner">
           <div class="page-head">
             <div>
-              <h1>Runs</h1>
-              <p>Agent loop history across chats and deployed agents. Open a run to approve tools or read the trace.</p>
+              <h1>Activity</h1>
+              <p>Tasks the mini is running or has finished. Open one to approve a tool or read the trace. Closing this browser does not cancel a task that is already queued.</p>
             </div>
             <button type="button" class="btn" id="runs-refresh">Refresh</button>
           </div>
@@ -583,121 +793,105 @@
         </div>
       </div>
 
-      <div class="composer-dock" id="composer-dock">
-        <div class="composer-inner">
-          <div class="attach-chips" id="attach-list"></div>
-          <div class="perf-meter" id="perf-meter" aria-live="polite"></div>
-          <div class="composer">
-            <div>
-              <input type="file" id="file" hidden accept=".pdf,.md,.txt,.png,.jpg,.jpeg,.webp">
-              <button type="button" class="round" id="attach-btn" title="Attach">+</button>
-            </div>
-            <textarea id="chat" rows="1" placeholder="Ask anything"></textarea>
-            <div class="composer-actions">
-              <select id="mode" class="mode-select" title="Response mode">
-                <option value="studio">Studio</option>
-                <option value="deep">Deep research</option>
-              </select>
-              <select id="provider" class="mode-select" title="Provider" hidden></select>
-              <select id="model" class="mode-select" title="Model"></select>
-              <select id="agent" class="mode-select" title="Agent persona" hidden>
-                <option value="lab-operations">lab-operations</option>
-                <option value="development">development</option>
-                <option value="research">research</option>
-              </select>
-              <button type="button" class="send" id="send-chat" title="Send">↑</button>
-            </div>
-          </div>
-          <div class="hint">Studio-first. Deep research uses frontier APIs only when authorized on API keys.</div>
-        </div>
-      </div>
-      <div class="err" id="error" style="position:absolute;left:0;right:0;bottom:4px;pointer-events:none"></div>
-    </section>
-  </div>
-
   <div class="prefs-shell" id="prefs-shell" aria-hidden="true">
-    <aside class="prefs-nav">
-      <button type="button" class="prefs-back" id="prefs-back" title="Back to Studio">← Back</button>
-      <div class="prefs-nav-label">Preferences</div>
-      <button type="button" class="prefs-item" data-prefs="status">Status</button>
-      <button type="button" class="prefs-item" data-prefs="lab">Lab</button>
-      <button type="button" class="prefs-item" data-prefs="keys">API keys</button>
-      <button type="button" class="prefs-item" data-prefs="settings">Settings</button>
-      <button type="button" class="prefs-item" data-prefs="help">Help</button>
-    </aside>
     <section class="prefs-main">
       <div class="prefs-pane" id="prefs-status">
-        <h1>Status</h1>
-        <p class="prefs-lead">Control-plane health on the mini — services, Studio worker reachability, and work-order counts.</p>
-        <div class="prefs-clock" id="prefs-status-clock">syncing…</div>
+        <div class="page-head">
+          <div>
+            <h1>Status Dashboard</h1>
+            <p class="prefs-lead" id="prefs-status-clock">Checking the lab…</p>
+          </div>
+          <button type="button" class="btn" id="status-refresh">Check now</button>
+        </div>
         <section class="prefs-topo" aria-label="Three-host lab">
-          <article class="prefs-node" id="prefs-node-air">
-            <div class="role">human plane</div>
+          <article class="prefs-node live" id="prefs-node-air">
+            <div class="role">You</div>
             <h2>mac-air</h2>
-            <p>Operator. Approvals live here later.</p>
+            <span class="prefs-pill on" id="status-air-pill">Here</span>
+            <p id="status-air-cap">You are here. Chat and approvals stay in this browser.</p>
           </article>
           <div class="prefs-link" aria-hidden="true">—</div>
-          <article class="prefs-node live" id="prefs-node-mini">
-            <div class="role">control plane</div>
+          <article class="prefs-node" id="prefs-node-mini">
+            <div class="role">Control</div>
             <h2>mac-mini</h2>
-            <p id="prefs-mini-blurb">Postgres · Redis · Qdrant · LangGraph</p>
+            <span class="prefs-pill off" id="status-mini-pill">…</span>
+            <div id="status-mini"></div>
           </article>
           <div class="prefs-link" aria-hidden="true">—</div>
-          <article class="prefs-node down" id="prefs-node-studio">
-            <div class="role">compute plane</div>
+          <article class="prefs-node" id="prefs-node-studio">
+            <div class="role">Compute</div>
             <h2>mac-studio</h2>
-            <p id="prefs-studio-blurb">Worker not deployed. Queued jobs wait.</p>
+            <span class="prefs-pill off" id="status-studio-pill">…</span>
+            <div id="status-studio"></div>
           </article>
         </section>
-        <div class="prefs-status-grid">
-          <div class="settings-section">
-            <h2>Loopback services</h2>
-            <div id="prefs-services"></div>
-          </div>
-          <div class="settings-section">
-            <h2>Work orders</h2>
-            <div class="prefs-bars" id="prefs-orders"></div>
-          </div>
-        </div>
-        <p class="prefs-meta" style="margin-top:14px">JSON: <code>/health</code>, <code>/v1/status</code></p>
+        <h2 class="dash-h">You can use</h2>
+        <div class="dash-mods" id="dash-mods"></div>
       </div>
 
       <div class="prefs-pane" id="prefs-lab">
-        <h1>Lab</h1>
-        <p class="prefs-lead">Open Studio Jupyter, check Ollama, and manage foundation keys — without leaving Studio.</p>
-        <div class="prefs-grid">
+        <h1>Models</h1>
+        <p class="prefs-lead">Local models run on the Studio. A cloud model is used only when you choose it and API spend is authorized.</p>
+        <div class="prefs-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 18px">
+          <article class="prefs-card" style="min-height:0">
+            <h2>What this is</h2>
+            <p>The model that answers chat, chosen under the message box.</p>
+          </article>
+          <article class="prefs-card" style="min-height:0">
+            <h2>Current</h2>
+            <p id="models-current">Checking Studio…</p>
+          </article>
+          <article class="prefs-card" style="min-height:0">
+            <h2>Next</h2>
+            <p>Pick a local model for chat. Add a cloud key only if you want a billed model.</p>
+          </article>
+        </div>
+        <h2 style="font-size:16px;margin:0 0 10px">Providers</h2>
+        <div id="model-providers"></div>
+        <div class="prefs-grid" style="margin-top:18px">
           <article class="prefs-card">
             <span class="prefs-pill off" id="prefs-jupyter-pill">checking…</span>
-            <h2>Studio JupyterLab</h2>
-            <p>Runs on mac-studio. One click opens Lab in a new tab over Tailscale.</p>
+            <h2>Jupyter</h2>
+            <p>Notebooks on the Studio, separate from this chat.</p>
             <button type="button" class="btn primary" id="prefs-open-jupyter" disabled>Open Jupyter</button>
             <div class="prefs-meta" id="prefs-jupyter-meta"></div>
           </article>
           <article class="prefs-card">
             <span class="prefs-pill off" id="prefs-ollama-pill">checking…</span>
             <h2>Studio Ollama</h2>
-            <p>Local inference on the Studio. Models listed when reachable from the mini.</p>
-            <button type="button" class="btn" id="prefs-use-ollama">Back to chat</button>
-            <div class="prefs-meta" id="prefs-ollama-meta"></div>
-          </article>
-          <article class="prefs-card">
-            <span class="prefs-pill warn" id="prefs-vault-pill">keys</span>
-            <h2>Foundation APIs</h2>
-            <p>Enter OpenAI / Anthropic / Gemini keys. Stored on the mini; never shown again.</p>
-            <button type="button" class="btn primary" data-prefs="keys">Manage API keys</button>
-            <div class="prefs-meta" id="prefs-secrets-meta">Load status after sign-in…</div>
-          </article>
-          <article class="prefs-card">
-            <span class="prefs-pill on">ready</span>
-            <h2>Personal agents</h2>
-            <p>Chat and durable runs on the mini control plane.</p>
-            <button type="button" class="btn" id="prefs-open-agents">Open Agents</button>
+            <p id="prefs-ollama-meta">Local inference on the Studio.</p>
+            <button type="button" class="btn" id="prefs-use-ollama">Use in chat</button>
           </article>
         </div>
       </div>
 
+      <div class="prefs-pane" id="prefs-security">
+        <h1>Security</h1>
+        <p class="prefs-lead">Separate from chat. These checks run on the Studio when you start them.</p>
+        <div class="prefs-grid">
+          <a class="prefs-card config-badge" id="badge-antares" href="/antares">
+            <span class="prefs-pill">Studio</span>
+            <h2>Antares</h2>
+            <p>Localize a finding. This does not change the repo.</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="prefs-pane" id="prefs-configure">
+        <h1>Configure</h1>
+        <p class="prefs-lead">Frontier models. The chat model stays on the Studio unless you choose otherwise.</p>
+        <div class="prefs-grid">
+          <button type="button" class="prefs-card config-badge" id="badge-ai">
+            <span class="prefs-pill warn">Frontier</span>
+            <h2>AI</h2>
+            <p>Frontier LLMs. Keys stay on the mini. Spend stays off until you authorize it.</p>
+          </button>
+        </div>
+      </div>
+
       <div class="prefs-pane" id="prefs-keys">
-        <h1>API keys</h1>
+        <button type="button" class="btn" id="back-configure-keys">← Configure</button>
+        <h1>AI</h1>
         <p class="prefs-lead">Keys stay on the mini under <code>~/.ai-lab/secrets/</code> (mode 600). Never shown again after save. Usage-billed calls stay off until you authorize spend (ADR 0038).</p>
         <div class="settings-section prefs-flag">
           <label class="inline">
@@ -714,8 +908,8 @@
       </div>
 
       <div class="prefs-pane" id="prefs-settings">
-        <h1>Settings</h1>
-        <p class="prefs-lead">Operator preferences for this Studio. MCP connections are deny-by-default.</p>
+        <h1>MCP services</h1>
+        <p class="prefs-lead">Extra tools the lab can call. Nothing here is on until you add it. A saved connection is not permission to use it.</p>
         <div class="settings-section">
           <h2>MCP servers</h2>
           <p class="lead">Connect Model Context Protocol servers your agents may use. Only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git). Stdio transport is live; use <code>mcp/&lt;server&gt;/&lt;tool&gt;</code> in agent runs.</p>
@@ -780,6 +974,39 @@
     </section>
   </div>
 
+      <div class="composer-dock" id="composer-dock">
+        <div class="composer-inner">
+          <div class="attach-chips" id="attach-list"></div>
+          <div class="composer">
+            <div>
+              <input type="file" id="file" hidden accept=".pdf,.md,.txt,.png,.jpg,.jpeg,.webp">
+              <button type="button" class="round" id="attach-btn" title="Attach">+</button>
+            </div>
+            <textarea id="chat" rows="1" placeholder="Ask anything"></textarea>
+            <button type="button" class="send" id="send-chat" title="Send">↑</button>
+          </div>
+          <div class="composer-meta">
+            <select id="mode" class="mode-select" title="Response mode">
+              <option value="studio">Studio</option>
+              <option value="deep">Deep research</option>
+            </select>
+            <select id="provider" class="mode-select" title="Provider" hidden></select>
+            <select id="model" class="mode-select" title="Model"></select>
+            <button type="button" class="btn" id="run-bg" title="Queue this task on the mini">Run in background</button>
+            <select id="agent" class="mode-select" title="Agent persona" hidden>
+              <option value="lab-operations">lab-operations</option>
+              <option value="coding-assistant">coding-assistant</option>
+              <option value="development">development</option>
+              <option value="research">research</option>
+            </select>
+          </div>
+          <div class="hint">Send stays a conversation. Run in background asks the mini to use tools and keeps the result in this chat. It does not approve file changes. Restart recovery is not verified.</div>
+        </div>
+      </div>
+      <div class="err" id="error" style="position:absolute;left:0;right:0;bottom:4px;pointer-events:none"></div>
+    </section>
+  </div>
+
   <script>
     const state = {
       view: "chat",
@@ -794,8 +1021,12 @@
       sending: false,
       attachments: [],
       definitions: [],
+      worktreeId: "",
       runs: [],
       mcp: null,
+      conversations: [],
+      projects: [],
+      projectId: "",
     };
     const $ = (id) => document.getElementById(id);
     function token() { return sessionStorage.getItem("ai_lab_token") || ""; }
@@ -825,7 +1056,12 @@
       el.style.height = "auto";
       el.style.height = Math.min(el.scrollHeight, 160) + "px";
     }
-    function closeOpMenu() { $("op-menu").classList.remove("open"); }
+    function closeOpMenu() {}
+    function markNav(id) {
+      document.querySelectorAll(".side-link").forEach((btn) => {
+        btn.classList.toggle("active", btn.id === id);
+      });
+    }
     function closePrefs() {
       stopPrefsStatusPoll();
       const shell = $("prefs-shell");
@@ -845,6 +1081,30 @@
       document.querySelectorAll(".prefs-pane").forEach((p) => {
         p.classList.toggle("active", p.id === "prefs-" + section);
       });
+      ["chat", "projects", "agents", "agent", "runs", "run"].forEach((v) => {
+        $("pane-" + v).classList.remove("active");
+      });
+      $("composer-dock").classList.add("hidden");
+      const titles = {
+        status: "Status Dashboard",
+        configure: "Configure",
+        keys: "AI",
+        settings: "MCP services",
+        security: "Security",
+        help: "Help",
+        lab: "Models",
+      };
+      const navs = {
+        status: "nav-status",
+        configure: "nav-configure",
+        keys: "nav-configure",
+        settings: "nav-mcp",
+        security: "nav-security",
+        help: "nav-configure",
+        lab: "nav-configure",
+      };
+      $("pane-title").textContent = titles[section] || section;
+      markNav(navs[section] || "");
       if (section === "settings") loadMcp().catch((e) => showErr(e));
       if (section === "lab") refreshPrefsLab().catch((e) => showErr(e));
       if (section === "keys") refreshPrefsKeys().catch((e) => showErr(e));
@@ -860,18 +1120,20 @@
       closeOpMenu();
       closePrefs();
       const titles = {
-        chat: "Chat",
-        agents: "Agents",
+        chat: "AI Lab Assistant",
+        projects: "Projects",
+        agents: "Agents Studio",
         agent: opts.creating ? "New agent" : "Agent",
-        runs: "Runs",
+        runs: "Activity",
         run: "Run",
       };
       $("pane-title").textContent = titles[view] || view;
-      ["chat", "agents", "agent", "runs", "run"].forEach((v) => {
+      ["chat", "projects", "agents", "agent", "runs", "run"].forEach((v) => {
         $("pane-" + v).classList.toggle("active", v === view);
       });
-      $("nav-agents").classList.toggle("active", view === "agents" || view === "agent");
-      $("nav-runs").classList.toggle("active", view === "runs" || view === "run");
+      const navFor = { chat: "nav-chat", projects: "nav-projects", agents: "nav-agents", agent: "nav-agents" };
+      if (view === "projects" && !opts.keepDetail) loadProjects().catch((e) => showErr(e));
+      markNav(navFor[view] || "");
       $("composer-dock").classList.toggle("hidden", view !== "chat");
       if (view === "chat") $("chat").focus();
     }
@@ -935,7 +1197,6 @@
     function updateChips() {
       const ch = selectedChoice();
       const bill = ch.billing_class === "local" ? "local" : (ch.billing_class || "usage_billed_api");
-      $("model-chip").textContent = (ch.backend || "?") + " · " + (ch.model || "—");
       $("billing-foot").textContent = bill + (deepResearch() ? " · deep" : " · Studio");
     }
     function renderAttachList() {
@@ -986,16 +1247,22 @@
       $("mode").onchange = updateChips;
     }
 
+    function chatTitle(c) {
+      const title = (c.title || "").trim();
+      if (!title || title === "chat" || title === "ui" || title === "New chat") return "New chat";
+      return title;
+    }
     async function loadConversations() {
       const data = await api("/v1/conversations?limit=40");
       const list = data.conversations || [];
+      state.conversations = list;
       const box = $("conv-list");
       box.innerHTML = "";
       for (const c of list) {
         const row = document.createElement("div");
         row.className = "conv-item" + (c.id === state.conversationId && state.view === "chat" ? " active" : "");
         row.style.display = "flex";
-        const title = c.title && c.title !== "chat" && c.title !== "ui" ? c.title : (c.agent + " · " + c.id.slice(0, 8));
+        const title = chatTitle(c);
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "t";
@@ -1031,7 +1298,7 @@
       const box = $("messages");
       box.innerHTML = "";
       if (!list || !list.length) {
-        box.innerHTML = '<div class="empty" id="empty"><strong>Where should we start?</strong>Chat with Studio Ollama by default. Attach files, run deep research when authorized, or open Agents to deploy a personal worker.</div>';
+        box.innerHTML = '<div class="empty" id="empty"><strong>Where should we start?</strong>Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.</div>';
         return;
       }
       for (const m of list) box.appendChild(messageEl(m.role, m.content));
@@ -1046,8 +1313,10 @@
         bubble.textContent = content || "";
         el.appendChild(bubble);
       } else {
-        const av = document.createElement("div");
+        const av = document.createElement("img");
         av.className = "avatar-sm";
+        av.src = "/static/ai-lab-orb.jpg";
+        av.alt = "";
         const bubble = document.createElement("div");
         bubble.className = "bubble";
         bubble.textContent = content || "";
@@ -1057,9 +1326,137 @@
       return el;
     }
     async function refreshMessages() {
+      await refreshThread();
+    }
+    async function refreshThread() {
+      const box = $("messages");
       if (!state.conversationId) { renderMessages([]); return; }
+      if (state.sending) return;
       const data = await api(`/v1/conversations/${state.conversationId}/messages`);
-      renderMessages(data.messages || []);
+      let runs = [];
+      try {
+        const packed = await api(`/v1/conversations/${state.conversationId}/runs`);
+        runs = packed.runs || [];
+      } catch (_) { runs = []; }
+      renderTimeline(data.messages || [], runs);
+      const active = runs.some((r) => r.status === "queued" || r.status === "running" || r.status === "awaiting_approval");
+      if (state._threadPoll) clearTimeout(state._threadPoll);
+      state._threadPoll = active && state.view === "chat"
+        ? setTimeout(() => { refreshThread().catch((e) => showErr(e)); }, 2000)
+        : null;
+    }
+    function renderTimeline(messages, runs) {
+      const box = $("messages");
+      const items = [];
+      for (const m of messages || []) items.push({ at: m.created_at || "", kind: "message", item: m });
+      for (const r of runs || []) items.push({ at: r.created_at || "", kind: "run", item: r });
+      items.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+      box.innerHTML = "";
+      if (!items.length) {
+        box.innerHTML = '<div class="empty" id="empty"><strong>Where should we start?</strong>Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.</div>';
+        return;
+      }
+      for (const row of items) {
+        box.appendChild(row.kind === "run" ? runCard(row.item) : messageEl(row.item.role, row.item.content));
+      }
+      $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
+    }
+    function runCard(run) {
+      const el = document.createElement("div");
+      el.className = "run-card";
+      const title = document.createElement("h3");
+      title.textContent = "Background task · " + (run.status || "unknown");
+      el.appendChild(title);
+      const meta = document.createElement("div");
+      meta.className = "tool-line";
+      meta.textContent = (run.backend || "?") + " · " + (run.model || "?") + (run.objective ? " · " + run.objective : "");
+      el.appendChild(meta);
+      if (run.error) {
+        const err = document.createElement("div");
+        err.className = "tool-line";
+        err.textContent = "Error: " + run.error;
+        el.appendChild(err);
+      }
+      const traces = run.traces || [];
+      const used = traces.filter((t) => t.kind === "tool_result");
+      if (!used.length) {
+        const none = document.createElement("div");
+        none.className = "tool-line";
+        none.textContent = run.status === "queued" || run.status === "running"
+          ? "No tool has run yet."
+          : "No tools were used.";
+        el.appendChild(none);
+      }
+      for (const t of used) {
+        const line = document.createElement("div");
+        line.className = "tool-line";
+        line.textContent = (t.tool || "tool") + " · " + (t.ok ? "ok" : "failed");
+        el.appendChild(line);
+      }
+      if (run.final_result) {
+        const done = document.createElement("div");
+        done.className = "tool-line";
+        done.textContent = run.final_result;
+        el.appendChild(done);
+      }
+      if (run.pending_action) {
+        const ask = document.createElement("div");
+        ask.className = "tool-line";
+        const action = run.pending_action;
+        ask.textContent = "Approval needed: " + (action.tool || action.name || "action")
+          + " · " + (action.id || "");
+        el.appendChild(ask);
+        const actions = document.createElement("div");
+        actions.className = "form-actions";
+        const ok = document.createElement("button");
+        ok.type = "button";
+        ok.className = "btn primary";
+        ok.textContent = "Approve";
+        ok.onclick = () => decideAction(run, "approved");
+        const no = document.createElement("button");
+        no.type = "button";
+        no.className = "btn danger";
+        no.textContent = "Deny";
+        no.onclick = () => decideAction(run, "denied");
+        actions.appendChild(ok);
+        actions.appendChild(no);
+        el.appendChild(actions);
+      }
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "btn";
+      more.textContent = "View details";
+      more.onclick = () => openRun(run.id);
+      el.appendChild(more);
+      return el;
+    }
+    async function decideAction(run, decision) {
+      try {
+        await api(`/v1/agent-runs/${run.id}/approve-action`, {
+          method: "POST",
+          body: JSON.stringify({ decision, action_id: (run.pending_action || {}).id || null }),
+        });
+        showErr("");
+        await refreshThread();
+      } catch (e) { showErr(e); }
+    }
+    async function openJupyter() {
+      try {
+        const res = await fetch("/v1/connect/jupyter", { headers: headers(), redirect: "manual" });
+        if (res.status === 401) { showErr("Unauthorized — sign in again."); return; }
+        if (res.status === 503) {
+          const body = await res.json().catch(() => ({}));
+          showErr(body.detail || "Jupyter not configured on mini");
+          return;
+        }
+        if (res.ok) {
+          const body = await res.json();
+          if (body.open_url) { window.open(body.open_url, "_blank", "noopener"); return; }
+        }
+        const loc = res.headers.get("Location");
+        if (loc) window.open(loc, "_blank", "noopener");
+        else showErr("Could not open Jupyter (" + res.status + ")");
+      } catch (e) { showErr(e); }
     }
     async function selectConversation(id) {
       state.conversationId = id;
@@ -1069,10 +1466,10 @@
       await loadConversations();
       await refreshMessages();
     }
-    async function newConversation() {
+    async function newConversation(projectId) {
       const body = await api("/v1/conversations", {
         method: "POST",
-        body: JSON.stringify({ agent: $("agent").value, title: "chat" }),
+        body: JSON.stringify({ agent: "lab-operations", title: "", project_id: projectId || "" }),
       });
       state.conversationId = body.id;
       state.attachments = [];
@@ -1130,7 +1527,7 @@
       const box = $("runs-list");
       box.innerHTML = "";
       if (!state.runs.length) {
-        box.innerHTML = '<p style="color:var(--muted)">No agent runs yet. Create an agent and run a loop, or start one from an agent detail page.</p>';
+        box.innerHTML = '<p style="color:var(--muted)">No background tasks yet. From chat, use Run in background when you want the mini to use tools.</p>';
         return;
       }
       for (const r of state.runs) {
@@ -1144,20 +1541,38 @@
       }
     }
 
+    const personaLabel = {
+      "coding-assistant": "Coding",
+      "lab-operations": "Lab check",
+      "research": "Research",
+      "development": "Development",
+    };
+    function syncKind(agent) {
+      document.querySelectorAll(".kind-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-kind") === agent);
+      });
+      const help = {
+        "coding-assistant": "Use this for a code change. On the next screen, prepare a separate copy, describe the task, and approve each file edit before it is saved.",
+        "lab-operations": "Use this to check the lab. It reads status and does not edit files.",
+        "research": "Use this to search what the lab remembers and write a report.",
+      };
+      const note = $("kind-help");
+      if (note) note.textContent = help[agent] || "";
+    }
     function renderAgentGrid() {
       const box = $("agent-grid");
       box.innerHTML = "";
       if (!state.definitions.length) {
-        box.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">No personal agents yet. Create one to give Studio a standing worker with its own prompt and MCP allowlist.</p>';
+        box.innerHTML = '<p style="color:var(--muted);grid-column:1/-1">No agents yet. Create a Coding agent when you want a tracked code change.</p>';
         return;
       }
       for (const d of state.definitions) {
         const card = document.createElement("button");
         card.type = "button";
         card.className = "agent-card";
-        const mcp = (d.mcp_server_ids || []).map((id) => `<span class="badge">${id}</span>`).join("") || '<span class="badge">no MCP</span>';
-        const cron = d.schedule_cron ? `<span class="badge">${String(d.schedule_cron).replace(/</g, "&lt;")}</span>` : "";
-        card.innerHTML = `<h3>${(d.title || "agent").replace(/</g, "&lt;")}</h3><div class="meta">${d.agent} · ${d.id.slice(0, 8)}</div><div class="blurb">${(d.system_prompt || "No standing prompt yet.").replace(/</g, "&lt;")}</div><div class="badge-row"><span class="badge live">deployed</span>${mcp}${cron}</div>`;
+        const kind = personaLabel[d.agent] || d.agent;
+        const when = d.schedule_cron ? `<span class="badge">scheduled</span>` : "";
+        card.innerHTML = `<h3>${(d.title || "agent").replace(/</g, "&lt;")}</h3><div class="meta">${kind}</div><div class="blurb">${(d.system_prompt || "No standing instructions yet.").replace(/</g, "&lt;")}</div><div class="badge-row"><span class="badge live">ready</span>${when}</div>`;
         card.onclick = () => openAgent(d.id);
         box.appendChild(card);
       }
@@ -1170,12 +1585,14 @@
     function openAgentCreate() {
       state.definitionId = null;
       $("def-title").value = "";
-      $("def-prompt").value = "";
+      $("def-prompt").value = "Explain the change, name the files, and wait for approval before patching.";
       $("def-mcp").value = "";
       if ($("def-cron")) $("def-cron").value = "";
-      $("def-agent").value = $("agent").value;
+      $("def-agent").value = "coding-assistant";
+      syncKind("coding-assistant");
+      $("kind-row").classList.remove("locked");
       $("agent-detail-title").textContent = "New agent";
-      $("agent-detail-sub").textContent = "Give this worker a title, persona, and standing prompt. MCP ids must already be connected in Settings.";
+      $("agent-detail-sub").textContent = "Pick what it is for, name it, and add instructions you want every run to follow.";
       $("agent-create-actions").hidden = false;
       $("agent-run-block").hidden = true;
       ["def-title", "def-prompt", "def-mcp", "def-agent", "def-cron"].forEach((id) => { if ($(id)) $(id).disabled = false; });
@@ -1190,10 +1607,14 @@
       $("def-mcp").value = (d.mcp_server_ids || []).join(", ");
       if ($("def-cron")) $("def-cron").value = d.schedule_cron || "";
       $("def-agent").value = d.agent || "lab-operations";
+      syncKind($("def-agent").value);
+      $("kind-row").classList.add("locked");
       $("agent-detail-title").textContent = d.title || "Agent";
-      $("agent-detail-sub").textContent = `Persona ${d.agent} · id ${d.id.slice(0, 8)}`;
+      $("agent-detail-sub").textContent = personaLabel[d.agent] || d.agent;
       $("agent-create-actions").hidden = true;
       $("agent-run-block").hidden = false;
+      const coding = ($("def-agent").value || "") === "coding-assistant";
+      $("coding-worktree").hidden = !coding;
       ["def-title", "def-prompt", "def-mcp", "def-agent", "def-cron"].forEach((id) => { if ($(id)) $(id).disabled = true; });
       setView("agent");
     }
@@ -1238,19 +1659,208 @@
     }
 
     $("new-conv").onclick = () => newConversation().catch((e) => showErr(e));
+    function renderSearchResults() {
+      const q = ($("search-q").value || "").trim().toLowerCase();
+      const box = $("search-results");
+      box.innerHTML = "";
+      const matches = (state.conversations || []).filter((c) => !q || chatTitle(c).toLowerCase().includes(q));
+      if (!matches.length) {
+        const empty = document.createElement("p");
+        empty.className = "prefs-lead";
+        empty.textContent = "No chats match.";
+        box.appendChild(empty);
+        return;
+      }
+      for (const c of matches) {
+        const hit = document.createElement("button");
+        hit.type = "button";
+        hit.className = "search-hit";
+        hit.textContent = chatTitle(c);
+        hit.onclick = () => {
+          closeSearch();
+          selectConversation(c.id);
+        };
+        box.appendChild(hit);
+      }
+    }
+    function openSearch() {
+      $("search-pop").hidden = false;
+      $("search-q").value = "";
+      renderSearchResults();
+      $("search-q").focus();
+    }
+    function closeSearch() {
+      $("search-pop").hidden = true;
+    }
+    $("nav-search").onclick = () => openSearch();
+    $("search-q").addEventListener("input", () => renderSearchResults());
+    $("search-pop").addEventListener("click", (ev) => {
+      if (ev.target === $("search-pop")) closeSearch();
+    });
     $("toggle-side").onclick = () => $("sidebar").classList.toggle("open");
+    $("nav-jupyter").onclick = () => { openJupyter(); };
+    if ($("nav-chat")) $("nav-chat").onclick = () => setView("chat");
+    $("nav-projects").onclick = () => setView("projects");
+    function showProjectHome() {
+      state.projectId = "";
+      $("project-home").hidden = false;
+      $("project-detail").hidden = true;
+    }
+    function renderSideProjects() {
+      const box = $("side-projects");
+      if (!box) return;
+      box.innerHTML = "";
+      const items = state.projects || [];
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "conv-item";
+        empty.style.color = "var(--muted)";
+        empty.textContent = "No projects yet";
+        box.appendChild(empty);
+        return;
+      }
+      for (const project of items) {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "conv-item" + (project.id === state.projectId ? " active" : "");
+        row.textContent = project.name;
+        row.onclick = () => {
+          setView("projects", { keepDetail: true });
+          openProject(project.id).catch((e) => showErr(e));
+        };
+        box.appendChild(row);
+      }
+    }
+    async function fetchProjects() {
+      const data = await api("/v1/projects");
+      state.projects = data.projects || [];
+      renderSideProjects();
+      return state.projects;
+    }
+    async function loadProjects() {
+      showProjectHome();
+      const items = await fetchProjects();
+      const box = $("project-list");
+      box.innerHTML = "";
+      if (!items.length) {
+        const empty = document.createElement("p");
+        empty.className = "prefs-lead";
+        empty.textContent = "No projects yet.";
+        box.appendChild(empty);
+        return;
+      }
+      for (const project of items) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "project-card";
+        const h = document.createElement("h2");
+        h.textContent = project.name;
+        const p = document.createElement("p");
+        p.textContent = project.description || "No description.";
+        card.appendChild(h);
+        card.appendChild(p);
+        card.onclick = () => openProject(project.id).catch((e) => showErr(e));
+        box.appendChild(card);
+      }
+    }
+    async function openProject(id) {
+      if (!state.conversations.length) await loadConversations();
+      const data = await api("/v1/projects");
+      const project = (data.projects || []).find((item) => item.id === id);
+      if (!project) throw new Error("Project not found");
+      state.projectId = id;
+      $("project-home").hidden = true;
+      $("project-detail").hidden = false;
+      $("project-detail-name").textContent = project.name;
+      $("project-detail-desc").textContent = project.description || "No description.";
+      const chats = $("project-chats");
+      chats.innerHTML = "";
+      const mine = state.conversations.filter((c) => c.project_id === id);
+      if (!mine.length) {
+        const empty = document.createElement("p");
+        empty.className = "prefs-lead";
+        empty.textContent = "No chats in this project yet.";
+        chats.appendChild(empty);
+      }
+      for (const c of mine) {
+        const row = document.createElement("div");
+        row.className = "prefs-svc";
+        const name = document.createElement("button");
+        name.type = "button";
+        name.className = "btn";
+        name.textContent = chatTitle(c);
+        name.onclick = () => selectConversation(c.id);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn";
+        remove.textContent = "Remove";
+        remove.onclick = async () => {
+          await api(`/v1/conversations/${c.id}`, { method: "PATCH", body: JSON.stringify({ project_id: "" }) });
+          await loadConversations();
+          await openProject(id);
+        };
+        row.appendChild(name);
+        row.appendChild(remove);
+        chats.appendChild(row);
+      }
+      const select = $("project-add-chat");
+      select.innerHTML = "";
+      const others = state.conversations.filter((c) => c.project_id !== id);
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = others.length ? "Choose a chat" : "No other chats";
+      select.appendChild(blank);
+      for (const c of others) {
+        const opt = document.createElement("option");
+        opt.value = c.id;
+        opt.textContent = chatTitle(c);
+        select.appendChild(opt);
+      }
+      renderSideProjects();
+    }
+    $("project-create").onclick = async () => {
+      try {
+        await api("/v1/projects", {
+          method: "POST",
+          body: JSON.stringify({
+            name: $("project-name").value,
+            description: $("project-description").value,
+          }),
+        });
+        $("project-name").value = "";
+        $("project-description").value = "";
+        await loadProjects();
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
+    $("project-back").onclick = () => loadProjects().catch((e) => showErr(e));
+    $("project-delete").onclick = async () => {
+      if (!state.projectId || !confirm("Delete this project? Its chats stay in Chat.")) return;
+      try {
+        await api(`/v1/projects/${state.projectId}`, { method: "DELETE" });
+        await loadConversations();
+        await loadProjects();
+      } catch (e) { showErr(e); }
+    };
+    $("project-add").onclick = async () => {
+      const id = $("project-add-chat").value;
+      if (!id || !state.projectId) return;
+      try {
+        await api(`/v1/conversations/${id}`, { method: "PATCH", body: JSON.stringify({ project_id: state.projectId }) });
+        await loadConversations();
+        await openProject(state.projectId);
+      } catch (e) { showErr(e); }
+    };
+    $("project-new-chat").onclick = () => newConversation(state.projectId).catch((e) => showErr(e));
     $("nav-agents").onclick = () => { setView("agents"); loadDefinitions().catch((e) => showErr(e)); };
-    $("nav-runs").onclick = () => { setView("runs"); loadRuns().catch((e) => showErr(e)); };
+    $("agents-activity").onclick = () => { setView("runs"); loadRuns().catch((e) => showErr(e)); };
     $("agents-new").onclick = () => openAgentCreate();
     $("agent-back").onclick = () => { setView("agents"); loadDefinitions().catch((e) => showErr(e)); };
     $("run-back").onclick = () => { setView("runs"); loadRuns().catch((e) => showErr(e)); };
     $("runs-refresh").onclick = () => loadRuns().catch((e) => showErr(e));
-    $("op-btn").onclick = (ev) => {
-      ev.stopPropagation();
-      $("op-menu").classList.toggle("open");
-    };
-    $("menu-close").onclick = () => closeOpMenu();
-    $("prefs-back").onclick = () => closePrefs();
+    if ($("prefs-back")) $("prefs-back").onclick = () => setView("chat");
+    $("badge-ai").onclick = () => openPrefs("keys");
+    $("back-configure-keys").onclick = () => openPrefs("configure");
     document.querySelectorAll("[data-prefs]").forEach((el) => {
       el.addEventListener("click", (ev) => {
         ev.preventDefault();
@@ -1258,118 +1868,266 @@
       });
     });
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape" && $("prefs-shell").classList.contains("open")) closePrefs();
-    });
-    document.addEventListener("click", (ev) => {
-      if (!$("op-menu").contains(ev.target) && ev.target !== $("op-btn") && !$("op-btn").contains(ev.target)) {
-        closeOpMenu();
-      }
+      if (ev.key === "Escape" && !$("search-pop").hidden) { closeSearch(); return; }
+      if (ev.key === "Escape" && $("prefs-shell").classList.contains("open")) setView("chat");
     });
 
 
-    const prefsStatusLabels = {
-      postgres: "PostgreSQL",
-      redis: "Redis",
-      qdrant: "Qdrant",
-      studio: "Studio worker",
-    };
     let prefsStatusTimer = null;
     function stopPrefsStatusPoll() {
       if (prefsStatusTimer) { clearInterval(prefsStatusTimer); prefsStatusTimer = null; }
     }
     function startPrefsStatusPoll() {
       stopPrefsStatusPoll();
-      prefsStatusTimer = setInterval(() => { refreshPrefsStatus().catch(() => {}); }, 4000);
+      prefsStatusTimer = setInterval(() => { refreshPrefsStatus().catch(() => {}); }, 5 * 60 * 1000);
+    }
+    function fmtBytes(n) {
+      if (typeof n !== "number" || !isFinite(n) || n < 0) return "—";
+      const gb = n / 1073741824;
+      if (gb >= 100) return Math.round(gb) + " GB";
+      if (gb >= 10) return Math.round(gb) + " GB";
+      return gb.toFixed(1) + " GB";
+    }
+    function paintResources(parent, resources) {
+      if (!resources || !resources.available) {
+        const note = document.createElement("p");
+        note.className = "dash-note";
+        note.textContent = (resources && resources.reason) || "Memory and disk are not reported.";
+        parent.appendChild(note);
+        return;
+      }
+      const chip = document.createElement("p");
+      chip.className = "dash-note";
+      const parts = [];
+      if (resources.chip) parts.push(resources.chip);
+      if (resources.cpu_count) parts.push(resources.cpu_count + " cores");
+      chip.textContent = parts.join(" · ");
+      if (chip.textContent) parent.appendChild(chip);
+      meter(parent, "Memory free", resources.memory_free_percent, resources.memory_bytes);
+      const diskFree = resources.disk_free_bytes;
+      const diskTotal = resources.disk_bytes;
+      const diskPct = diskTotal ? Math.round((diskFree / diskTotal) * 100) : null;
+      meter(parent, "Disk free", diskPct, diskTotal, diskFree);
+    }
+    function meter(parent, label, freePct, totalBytes, freeBytes) {
+      const wrap = document.createElement("div");
+      wrap.className = "dash-meter";
+      const lab = document.createElement("div");
+      lab.className = "lab";
+      const name = document.createElement("span");
+      name.textContent = label;
+      const value = document.createElement("span");
+      const free = freeBytes != null ? freeBytes : (typeof freePct === "number" && totalBytes
+        ? Math.round(totalBytes * (freePct / 100)) : null);
+      value.textContent = (free != null ? fmtBytes(free) : "—") + " of " + fmtBytes(totalBytes);
+      lab.appendChild(name);
+      lab.appendChild(value);
+      const track = document.createElement("div");
+      track.className = "prefs-track";
+      const fill = document.createElement("div");
+      fill.className = "prefs-fill";
+      const shown = typeof freePct === "number" ? Math.max(0, Math.min(100, freePct)) : 0;
+      fill.style.width = shown + "%";
+      if (typeof freePct === "number" && freePct < 20) fill.classList.add("low");
+      track.appendChild(fill);
+      wrap.appendChild(lab);
+      wrap.appendChild(track);
+      parent.appendChild(wrap);
+    }
+    function svcRow(parent, name, up) {
+      const el = document.createElement("div");
+      el.className = "prefs-svc";
+      const label = document.createElement("div");
+      label.textContent = name;
+      const pill = document.createElement("span");
+      pill.className = "prefs-pill " + (up ? "on" : "off");
+      pill.textContent = up ? "Up" : "Down";
+      el.appendChild(label);
+      el.appendChild(pill);
+      parent.appendChild(el);
+    }
+    function hostPill(id, nodeId, up) {
+      const pill = $(id);
+      pill.className = "prefs-pill " + (up ? "on" : "off");
+      pill.textContent = up ? "Up" : "Down";
+      const node = $(nodeId);
+      node.classList.toggle("live", !!up);
+      node.classList.toggle("down", !up);
+    }
+    function modelBlock(parent, title, rows, empty) {
+      const block = document.createElement("div");
+      block.className = "model-block";
+      const h = document.createElement("h3");
+      h.textContent = title;
+      block.appendChild(h);
+      if (!rows.length) {
+        const note = document.createElement("p");
+        note.className = "dash-note";
+        note.textContent = empty;
+        block.appendChild(note);
+      }
+      for (const row of rows) {
+        const line = document.createElement("div");
+        line.className = "model-row";
+        const left = document.createElement("div");
+        left.textContent = row.name;
+        const sub = document.createElement("div");
+        sub.className = "sub";
+        const bits = [];
+        if (row.parameter_size) bits.push(row.parameter_size);
+        if (row.size_bytes) bits.push(fmtBytes(row.size_bytes));
+        if (row.quantization) bits.push(row.quantization);
+        sub.textContent = bits.join(" · ");
+        left.appendChild(sub);
+        const pill = document.createElement("span");
+        pill.className = "prefs-pill " + (title === "In memory" ? "on" : "warn");
+        pill.textContent = title === "In memory" ? "Loaded" : "On disk";
+        line.appendChild(left);
+        line.appendChild(pill);
+        block.appendChild(line);
+      }
+      parent.appendChild(block);
+    }
+    function paintModules(mods) {
+      const box = $("dash-mods");
+      box.innerHTML = "";
+      const stateLabel = { ready: "Ready", limited: "Partial", off: "Down" };
+      const stateClass = { ready: "on", limited: "warn", off: "off" };
+      for (const mod of mods || []) {
+        const click = mod.open === "chat" || mod.open === "jupyter" || mod.open === "agents"
+          || mod.open === "keys" || mod.open === "settings";
+        const el = document.createElement(click ? "button" : "article");
+        if (click) el.type = "button";
+        el.className = "dash-mod";
+        const pill = document.createElement("span");
+        pill.className = "prefs-pill " + (stateClass[mod.state] || "off");
+        pill.textContent = stateLabel[mod.state] || mod.state;
+        const h = document.createElement("h3");
+        h.textContent = mod.label || mod.id;
+        const p = document.createElement("p");
+        p.textContent = mod.detail || "";
+        el.appendChild(pill);
+        el.appendChild(h);
+        el.appendChild(p);
+        if (click) {
+          el.onclick = () => {
+            if (mod.open === "chat") setView("chat");
+            else if (mod.open === "jupyter") openJupyter();
+            else if (mod.open === "agents") { setView("agents"); loadDefinitions().catch((e) => showErr(e)); }
+            else if (mod.open === "keys" || mod.open === "settings") openPrefs(mod.open);
+          };
+        }
+        box.appendChild(el);
+      }
     }
     async function refreshPrefsStatus() {
-      $("prefs-status-clock").textContent =
-        new Date().toISOString().replace("T", " ").replace("Z", " UTC");
-      const res = await fetch("/v1/status");
-      const d = await res.json();
-      $("prefs-mini-blurb").textContent =
-        `${d.orchestrator} · ${d.work_order_store} · checkpoints ${d.checkpoints}`;
-      const studio = (d.services && d.services.studio) || {};
-      const studioNode = $("prefs-node-studio");
-      studioNode.classList.toggle("down", !studio.open);
-      studioNode.classList.toggle("live", !!studio.open);
-      $("prefs-studio-blurb").textContent = studio.open
-        ? "Worker reachable on this host."
-        : "Worker not deployed. Queued jobs wait.";
-      const svc = $("prefs-services");
-      svc.innerHTML = "";
-      for (const [key, row] of Object.entries(d.services || {})) {
-        const el = document.createElement("div");
-        el.className = "prefs-svc";
-        el.innerHTML = `<div><div style="font-weight:600">${prefsStatusLabels[key] || key}</div>
-          <div class="prefs-meta">127.0.0.1:${row.port}</div></div>
-          <span class="prefs-pill ${row.open ? "on" : "off"}">${row.open ? "open" : "closed"}</span>`;
-        svc.appendChild(el);
-      }
-      const counts = d.work_orders || {};
-      const vals = Object.values(counts);
-      const max = Math.max(1, ...(vals.length ? vals : [0]));
-      const orders = $("prefs-orders");
-      orders.innerHTML = "";
-      for (const [name, n] of Object.entries(counts)) {
-        const row = document.createElement("div");
-        row.className = "prefs-bar-row";
-        row.innerHTML = `<span>${name}</span><div class="prefs-track"><div class="prefs-fill" style="width:${(n / max) * 100}%"></div></div><span>${n}</span>`;
-        orders.appendChild(row);
+      const clock = $("prefs-status-clock");
+      const mini = $("status-mini");
+      const studioBox = $("status-studio");
+      mini.innerHTML = "";
+      studioBox.innerHTML = "";
+      try {
+        const d = await api("/v1/dashboard");
+        const hosts = d.hosts || {};
+        const miniHost = hosts.mini || {};
+        const studioHost = hosts.studio || {};
+        hostPill("status-mini-pill", "prefs-node-mini", miniHost.up);
+        paintResources(mini, miniHost.resources);
+        for (const svc of miniHost.services || []) svcRow(mini, svc.label, !!svc.up);
+        hostPill("status-studio-pill", "prefs-node-studio", studioHost.up);
+        paintResources(studioBox, studioHost.resources);
+        svcRow(studioBox, "Ollama", !!studioHost.ollama_up);
+        svcRow(studioBox, "Jupyter", !!studioHost.jupyter_up);
+        if (!studioHost.worker_up) {
+          const note = document.createElement("p");
+          note.className = "dash-note";
+          note.textContent = "The Studio worker is not running.";
+          studioBox.appendChild(note);
+        }
+        const loadedNames = new Set((studioHost.loaded || []).map((row) => row.name));
+        const onDisk = (studioHost.installed || []).filter((row) => !loadedNames.has(row.name));
+        modelBlock(studioBox, "In memory", studioHost.loaded || [], "Nothing is loaded. The next chat loads a model for a few minutes.");
+        modelBlock(studioBox, "On disk", onDisk, "No local models are installed.");
+        paintModules(d.modules);
+        clock.textContent = "Checked " + new Date().toLocaleTimeString() + ". Next check in 5 minutes.";
+      } catch (e) {
+        hostPill("status-mini-pill", "prefs-node-mini", false);
+        hostPill("status-studio-pill", "prefs-node-studio", false);
+        clock.textContent = "Could not read the lab. " + (e && e.message ? e.message : "");
+        paintModules([]);
       }
     }
+    $("status-refresh").onclick = () => { refreshPrefsStatus().catch((e) => showErr(e)); };
 
     function setPrefsPill(id, ok, label) {
       const el = $(id);
+      if (!el) return;
       el.className = "prefs-pill " + (ok ? "on" : "off");
       el.textContent = label;
+    }
+    function renderModelProviders() {
+      const box = $("model-providers");
+      const current = $("models-current");
+      if (!box || !current) return;
+      box.innerHTML = "";
+      const ch = selectedChoice();
+      const bill = ch.billing_class === "local" ? "local" : "usage-billed";
+      current.textContent = (ch.model || "—") + " · " + bill;
+      const locals = (state.choices || []).filter((c) => c.available !== false && c.billing_class === "local");
+      if (!locals.length) {
+        const empty = document.createElement("p");
+        empty.className = "prefs-lead";
+        empty.textContent = "No local model is reachable from the mini.";
+        box.appendChild(empty);
+        return;
+      }
+      for (const c of locals) {
+        const row = document.createElement("div");
+        row.className = "prefs-svc";
+        const name = document.createElement("div");
+        const selected = ch.backend === c.backend && ch.model === c.model;
+        name.textContent = (c.label || c.model) + " · " + c.model;
+        const pill = document.createElement("span");
+        pill.className = "prefs-pill on";
+        pill.textContent = selected ? "In chat" : "Available";
+        const use = document.createElement("button");
+        use.type = "button";
+        use.className = "btn";
+        use.textContent = "Use";
+        use.onclick = () => {
+          $("model").value = c.backend + "::" + c.model;
+          if (c.backend) $("provider").value = c.backend;
+          updateChips();
+          setView("chat");
+        };
+        row.appendChild(name);
+        row.appendChild(pill);
+        row.appendChild(use);
+        box.appendChild(row);
+      }
     }
     async function refreshPrefsLab() {
       const res = await fetch("/v1/connect/status");
       const d = await res.json();
       const j = d.jupyter || {};
       const o = d.ollama || {};
-      setPrefsPill("prefs-jupyter-pill", j.http_ok || j.port_open, j.http_ok ? "reachable" : (j.port_open ? "port open" : "down"));
-      setPrefsPill("prefs-ollama-pill", o.http_ok, o.http_ok ? "reachable" : "down");
-      $("prefs-jupyter-meta").textContent = j.configured
-        ? `host ${j.url_host || "?"} · token ${j.token_configured ? "on mini" : "missing"}`
-        : "STUDIO_JUPYTER_URL not set on mini";
-      $("prefs-ollama-meta").textContent = o.http_ok
-        ? `models: ${(o.models || []).join(", ") || "(none)"}`
-        : (o.configured ? `host ${o.url_host || "?"}` : "STUDIO_OLLAMA_URL not set");
-      $("prefs-open-jupyter").disabled = !(j.configured && j.token_configured);
-      try {
-        const s = await api("/v1/secrets/status");
-        const n = (s.providers || []).filter((p) => p.configured).length;
-        setPrefsPill("prefs-vault-pill", n > 0, n ? (n + " keys") : "none");
-        $("prefs-secrets-meta").textContent = s.usage_billed_authorized
-          ? "usage-billed authorized · " + n + " key(s)"
-          : n + " key(s) · usage-billed not authorized yet";
-      } catch (_) { /* ignore */ }
+      setPrefsPill("prefs-jupyter-pill", j.http_ok || j.port_open, j.http_ok ? "Up" : "Down");
+      setPrefsPill("prefs-ollama-pill", o.http_ok, o.http_ok ? "Up" : "Down");
+      if ($("prefs-jupyter-meta")) {
+        $("prefs-jupyter-meta").textContent = j.configured
+          ? (j.token_configured ? "Ready to open" : "Token missing on the mini")
+          : "Not configured";
+      }
+      if ($("prefs-ollama-meta")) {
+        $("prefs-ollama-meta").textContent = o.http_ok
+          ? ((o.models || []).join(", ") || "Reachable, no models listed")
+          : "Not reachable from the mini";
+      }
+      if ($("prefs-open-jupyter")) $("prefs-open-jupyter").disabled = !(j.configured && j.token_configured);
+      renderModelProviders();
     }
-    $("prefs-open-jupyter").onclick = async () => {
-      try {
-        const res = await fetch("/v1/connect/jupyter", { headers: headers(), redirect: "manual" });
-        if (res.status === 401) { showErr("Unauthorized — sign in again."); return; }
-        if (res.status === 503) {
-          const body = await res.json().catch(() => ({}));
-          showErr(body.detail || "Jupyter not configured on mini");
-          return;
-        }
-        if (res.ok) {
-          const body = await res.json();
-          if (body.open_url) { window.open(body.open_url, "_blank", "noopener"); return; }
-        }
-        const loc = res.headers.get("Location");
-        if (loc) window.open(loc, "_blank", "noopener");
-        else showErr("Could not open Jupyter (" + res.status + ")");
-      } catch (e) { showErr(e); }
-    };
-    $("prefs-use-ollama").onclick = () => { closePrefs(); setView("chat"); };
-    $("prefs-open-agents").onclick = () => {
-      closePrefs();
-      setView("agents");
-      loadDefinitions().catch((e) => showErr(e));
-    };
+    $("prefs-open-jupyter").onclick = () => { openJupyter(); };
+    $("prefs-use-ollama").onclick = () => setView("chat");
 
     function prefsProviderCard(p) {
       const el = document.createElement("div");
@@ -1485,6 +2243,32 @@
         showErr("");
       } catch (e) { showErr(e); }
     };
+    const kindPrompts = {
+      "coding-assistant": "Explain the change, name the files, and wait for approval before patching.",
+      "lab-operations": "Check lab health and summarize what needs attention.",
+      "research": "Search memory and write a short report.",
+    };
+    document.querySelectorAll(".kind-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if ($("kind-row").classList.contains("locked")) return;
+        const next = btn.getAttribute("data-kind");
+        const prompt = $("def-prompt");
+        const current = prompt.value.trim();
+        if (!current || Object.values(kindPrompts).includes(current)) prompt.value = kindPrompts[next] || "";
+        $("def-agent").value = next;
+        syncKind(next);
+      });
+    });
+    $("prepare-worktree").onclick = async () => {
+      try {
+        const created = await api("/v1/coding/worktrees", { method: "POST", body: "{}" });
+        state.worktreeId = created.id || "";
+        $("worktree-note").textContent = state.worktreeId
+          ? `Separate copy ${state.worktreeId} is ready. This run can change that copy after you approve the exact edit.`
+          : "Prepare failed.";
+        showErr("");
+      } catch (e) { showErr(e); }
+    };
     $("agent-run").onclick = async () => {
       try {
         if (!state.definitionId) return;
@@ -1497,6 +2281,7 @@
             billing_class: ch.billing_class || "local",
             backend: ch.backend || "fake",
             max_steps: 8,
+            worktree_id: ($("def-agent").value === "coding-assistant" && state.worktreeId) ? state.worktreeId : "",
           }),
         });
         showRun(run);
@@ -1676,6 +2461,42 @@
         $("chat").focus();
       }
     };
+    $("run-bg").onclick = async () => {
+      const text = $("chat").value.trim();
+      if (!text || state.sending) return;
+      state.sending = true;
+      $("run-bg").disabled = true;
+      try {
+        if (!state.conversationId) await newConversation();
+        const ch = selectedChoice();
+        await api(`/v1/conversations/${state.conversationId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ content: text, role: "user", reply: false }),
+        });
+        await api(`/v1/conversations/${state.conversationId}/runs`, {
+          method: "POST",
+          body: JSON.stringify({
+            objective: text,
+            execute: true,
+            backend: ch.backend || "fake",
+            model: ch.model || "fake-instruct",
+            billing_class: ch.billing_class || "local",
+            max_steps: 6,
+          }),
+        });
+        $("chat").value = "";
+        autosize();
+        showErr("");
+        state.sending = false;
+        await refreshThread();
+        await loadConversations();
+      } catch (e) {
+        showErr(e);
+      } finally {
+        state.sending = false;
+        $("run-bg").disabled = false;
+      }
+    };
     $("approve-action").onclick = async () => {
       try {
         showRun(await api(`/v1/agent-runs/${state.runId}/approve-action`, {
@@ -1706,6 +2527,7 @@
     async function boot() {
       await loadProviders();
       await loadConversations();
+      await fetchProjects();
       await loadDefinitions();
       autosize();
       setView("chat");

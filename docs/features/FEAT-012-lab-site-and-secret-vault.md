@@ -1,6 +1,6 @@
 # FEAT-012 — Lab site (frictionless Studio access) and secret vault
 
-- **Status:** Partial (live on mini; Vault not up)
+- **Status:** Partial (live on mini; Vault not up). The connection hub at `/lab` now redirects to the Studio at `/`. Jupyter opens from **Jupyter Labs** in that sidebar.
 - **Created:** 2026-09-23
 - **Owner:** human (operator)
 - **Priority:** Core platform (post Studio bring-up)
@@ -15,9 +15,9 @@ safely.
 
 ## User workflow
 
-1. Open mini lab site over Tailscale (`/lab`).
-2. Authenticate with the lab API token (same as `/agents`).
-3. One click: **Open Studio Jupyter** (no `ssh -L`).
+1. Open the Studio over Tailscale (`/`). `/lab` and `/agents` redirect there.
+2. Authenticate with the lab API token.
+3. **Jupyter Labs** in the sidebar opens Studio Jupyter (no `ssh -L`).
 4. See Studio Ollama / Jupyter / worker reachability.
 5. (Follow-on) Configure / confirm OpenAI · Anthropic · Gemini keys in Vault;
    select them from `/agents` with billing class visible.
@@ -73,5 +73,5 @@ safely.
 |-------|--------|----------|
 | Spec | Done | this file |
 | Code | Done | IWO-016–018 in Git |
-| Deploy | Partial | Lab/secrets/help live on mini; Vault not `up` |
-| Live verified | Partial | Air `/lab` + trusted_tailnet; keys UI write-only |
+| Deploy | Partial | Studio `/`, secrets, and help live on mini; Vault not `up` |
+| Live verified | Partial | Jupyter opens from the Studio sidebar; keys UI write-only |

@@ -26,26 +26,23 @@ Status columns (do not collapse them):
 
 Evidence: [phases/repo-complete.md](phases/repo-complete.md), [`features/index.md`](features/index.md), [`features/PLAN-mini-first.md`](features/PLAN-mini-first.md).
 
-## Mini-first personal-agent platform (forward)
+## Mini-first personal-agent platform (current)
 
-Core purpose: always-on personal agents + AI experimentation—not an autonomous coding factory.
+Core purpose: always-on personal agents + AI experimentation. Current capability table: [features/index.md](features/index.md).
 
 | Slice | Work | Code | Deploy | Live |
 |-------|------|------|--------|------|
-| Planning | Protocol + FEAT-010/011 + IWOs | Docs | n/a | n/a |
-| Mini 1 | IWO-002 + IWO-003 (contract + auth UI, FakeBackend) | **Done in Git** | Schema migrate needs auth | — |
-| Mini 2 | IWO-004 + IWO-005 (router + model/tool loop) | **Done in Git** (Fake/scripted) | Cloud $ needs auth | — |
-| Mini 3 | IWO-006 + IWO-007 (recovery + action approvals) | **Done in Git** | — | — |
-| Studio Jupyter | FEAT-006 / IWO-011…015 | Planned | Host auth | — |
-| Studio inference | FEAT-003 + Ollama provider | Partial code | Host auth | — |
-| Later | FEAT-005/008/009; optional FEAT-007 | — | — | — |
+| Harness | IWO-002–007, 020, 031 | Done | Mini `:8088` | Chat and tool loop |
+| Studio UI | FEAT-004 / FEAT-013 / IWO-059 | Chat-first shell at `/` | Mini `/` | Used. Live lab-health pass still open (D-019) |
+| Models | FEAT-003 / IWO-055 | Profiles in Git; catalog not marked pulled | Studio Ollama | Three tags installed 2026-09-24 |
+| Coding | FEAT-016 IWO-055/056/058 | Read + isolated patch/commit | HTML on mini | Unit only for the patch path |
+| Coding eval / PR | IWO-057, FEAT-007 | Not started | — | — |
+| Memory / schedule / IDE MCP | IWO-040–042, 052–054 | Done | Mini + Air | Live |
+| Jupyter / Antares | FEAT-006 / FEAT-015 | Done for current UI and services | Studio | Live. Antares not set to survive reboot |
+| Studio worker `:8090` | FEAT-003 optional | Scripts | No | No |
 
-## Feature list
+## Next
 
-Full table: [features/index.md](features/index.md).
+Operator is deciding the agent create/run screen (D-019). Do not treat the current form as final. Do not pull more models, enable paid APIs, or deploy hosts without a separate yes.
 
-## Next recommended work
-
-1. Merge planning PR; then implement **IWO-002** (conversation/agent-run contract).
-2. Do **not** deploy hosts, pull models, or enable paid APIs without separate auth.
-3. Parallel when authorized: Studio Tailscale + Jupyter (FEAT-006).
+Still open after that decision: coding-model eval (IWO-057), pull-request delivery (FEAT-007), and the thin hardening notes on FEAT-016. Live M1 restore is still untested.

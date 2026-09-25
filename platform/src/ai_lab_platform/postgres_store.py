@@ -8,7 +8,7 @@ from pathlib import Path
 import psycopg
 from psycopg.types.json import Jsonb
 
-from .conversation import AgentRun, Conversation, Message
+from .conversation import AgentRun, Conversation, Message, Project
 from .state_machine import transition
 from .work_order import Status, WorkOrder, utcnow
 
@@ -193,6 +193,60 @@ class PostgresStore:
             cur = conn.execute(
                 "DELETE FROM conversations WHERE id = %s", (conversation_id,)
             )
+            return cur.rowcount > 0
+
+    def put_project(self, project: Project) -> None:
+        project.updated_at = utcnow()
+        payload = project.to_dict()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO projects (id, name, description, payload, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s::timestamptz, %s::timestamptz)
+                ON CONFLICT (id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    description = EXCLUDED.description,
+                    payload = EXCLUDED.payload,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                (
+                    project.id,
+                    project.name,
+                    project.description,
+                    Jsonb(payload),
+                    project.created_at,
+                    project.updated_at,
+                ),
+            )
+
+    def get_project(self, project_id: str) -> Project | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT payload FROM projects WHERE id = %s", (project_id,)
+            ).fetchone()
+        if row is None:
+            return None
+        payload = row[0]
+        if isinstance(payload, str):
+            payload = json.loads(payload)
+        return Project.from_dict(payload)
+
+    def list_projects(self) -> list[Project]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT payload FROM projects ORDER BY updated_at DESC"
+            ).fetchall()
+        out: list[Project] = []
+        for row in rows:
+            payload = row[0]
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            out.append(Project.from_dict(payload))
+        return out
+
+    def delete_project(self, project_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute("DELETE FROM projects WHERE id = %s", (project_id,))
             return cur.rowcount > 0
 
     def put_message(self, message: Message) -> None:

@@ -35,15 +35,56 @@ def resolve_scope(ctx: ToolContext) -> Path:
     return target
 
 
-def repo_read(ctx: ToolContext, limit: int = 50) -> str:
-    target = resolve_scope(ctx)
+def repo_read(ctx: ToolContext, limit: int = 50, path: str = "") -> str:
+    root = resolve_scope(ctx)
+    target = _resolve_relative(root, path) if path else root
     if not target.exists():
-        raise ToolError(f"path does not exist: {target}")
+        raise ToolError(f"path does not exist: {path or '.'}")
     if target.is_file():
         text = target.read_text(encoding="utf-8", errors="replace")
         return text[:4000]
-    names = sorted(p.name for p in target.iterdir())[:limit]
+    names = sorted(p.name for p in target.iterdir() if p.name != ".git")[:limit]
     return "\n".join(names)
+
+
+def repo_search(ctx: ToolContext, query: str, limit: int = 20) -> str:
+    """Filename-and-content search inside the authorized workspace. Read-only."""
+    needle = (query or "").strip()
+    if not needle or len(needle) > 200:
+        raise ToolError("query required (max 200 chars)")
+    root = resolve_scope(ctx)
+    if not root.is_dir():
+        raise ToolError("workspace is not a directory")
+    hits: list[str] = []
+    skip = {".git", "__pycache__", "node_modules", ".venv"}
+    for path in sorted(root.rglob("*")):
+        if any(part in skip or part.startswith(".") for part in path.relative_to(root).parts):
+            continue
+        if not path.is_file():
+            continue
+        try:
+            if path.stat().st_size > 200_000:
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if needle in text or needle in path.name:
+            hits.append(str(path.relative_to(root)))
+            if len(hits) >= max(1, min(limit, 50)):
+                break
+    return "\n".join(hits) if hits else "(no matches)"
+
+
+def _resolve_relative(root: Path, rel: str) -> Path:
+    raw = (rel or "").strip()
+    if not raw or raw.startswith("~") or raw.startswith("/") or "\x00" in raw:
+        raise PathEscape(f"path not allowed: {rel!r}")
+    target = (root / raw).resolve()
+    try:
+        target.relative_to(root)
+    except ValueError as exc:
+        raise PathEscape(f"path escapes workspace: {rel}") from exc
+    return target
 
 
 def git_status(ctx: ToolContext) -> str:
@@ -58,6 +99,35 @@ def git_status(ctx: ToolContext) -> str:
     if result.returncode != 0:
         raise ToolError(result.stderr.strip() or "git status failed")
     return result.stdout or "(clean)"
+
+
+def git_diff(ctx: ToolContext) -> str:
+    """Read-only diff of the authorized workspace. Does not stage or commit."""
+    target = resolve_scope(ctx)
+    result = subprocess.run(
+        ["git", "-C", str(target), "diff", "--stat", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=8,
+        check=False,
+    )
+    if result.returncode != 0:
+        err = (result.stderr or "").strip()
+        if "not a git repository" in err.lower():
+            raise ToolError("not a git repository")
+        raise ToolError(err or "git diff failed")
+    stat = result.stdout.strip() or "(no unstaged diff)"
+    patch = subprocess.run(
+        ["git", "-C", str(target), "diff", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=8,
+        check=False,
+    )
+    body = (patch.stdout or "").strip()
+    if len(body) > 4000:
+        body = body[:4000] + "\n…(truncated)"
+    return stat if not body else f"{stat}\n\n{body}"
 
 
 def write_report_artifact(ctx: ToolContext, body: str, name: str = "report.md") -> str:

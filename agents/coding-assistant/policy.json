@@ -1,0 +1,14 @@
+{
+  "id": "coding-assistant",
+  "isolation_tier": 1,
+  "read_only": true,
+  "allowed_tools": [
+    "repo_read",
+    "repo_search",
+    "git_status",
+    "git_diff"
+  ],
+  "privileged_tools": ["apply_patch", "git_commit"],
+  "network": [],
+  "notes": "Reads are allowlisted. apply_patch and git_commit run only inside an isolated git worktree and only after approval of that exact action. Push, PR, and deploy stay denied."
+}

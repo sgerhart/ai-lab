@@ -9,7 +9,8 @@ from typing import Any, Callable
 from .approvals import is_privileged, requires_approval
 from .mcp_client import call_mcp_tool, parse_mcp_tool_name
 from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
-from .tools import ToolContext, ToolError, compose_ps_read, git_status, health_read, repo_read
+from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, repo_read, repo_search
+from .workspace_isolation import apply_patch, git_commit_isolated
 
 
 @dataclass
@@ -47,11 +48,29 @@ def _refuse_privileged(name: str) -> str:
     )
 
 
+WRITE_TOOLS = frozenset(
+    {
+        "repo_write_bounded",
+        "run_tests",
+        "git_commit",
+        "git_add",
+        "git_push",
+        "gh_pr_merge",
+        "deploy",
+        "apply_patch",
+        "git_commit",
+    }
+)
+
 _HANDLERS: dict[str, Callable[..., str]] = {
     "health_read": lambda ctx, **_a: health_read(),
     "compose_ps_read": lambda ctx, **_a: compose_ps_read(),
-    "repo_read": lambda ctx, **a: repo_read(ctx, limit=int(a.get("limit", 50))),
+    "repo_read": lambda ctx, **a: repo_read(ctx, limit=int(a.get("limit", 50)), path=str(a.get("path") or "")),
+    "repo_search": lambda ctx, **a: repo_search(ctx, str(a.get("query") or a.get("q") or ""), limit=int(a.get("limit", 20))),
     "git_status": lambda ctx, **_a: git_status(ctx),
+    "git_diff": lambda ctx, **_a: git_diff(ctx),
+    "apply_patch": lambda ctx, **a: apply_patch(ctx, str(a.get("patch") or "")),
+    "git_commit": lambda ctx, **a: git_commit_isolated(ctx, str(a.get("message") or "")),
     "memory_search": lambda ctx, **a: memory_search_tool(
         str(a.get("query") or a.get("q") or ""),
         limit=int(a.get("limit", 5)),
@@ -81,6 +100,13 @@ def execute_allowed_tool(
     if name in approved_tools and name not in effective_allowed:
         effective_allowed.append(name)
     if name not in effective_allowed:
+        if name in WRITE_TOOLS:
+            return ToolResult(
+                name=name,
+                ok=False,
+                observation=f"write tool denied in read-only harness: {name}",
+                denied=True,
+            )
         return ToolResult(name=name, ok=False, observation=f"tool not allowed: {name}", denied=True)
     if requires_approval(name, effective_allowed, approved_tools):
         return ToolResult(

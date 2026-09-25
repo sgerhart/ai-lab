@@ -75,6 +75,6 @@ large dashboard framework.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | Personal Agent Studio `/agents` (sidebar, stream, attach, deploy) |
+| Code | Partial | Personal Agent Studio at `/` (chat, stream, attach, agents, in-app settings) |
 | Deploy | Partial | live on mini:8088 |
-| Live verified | Partial | pre-Studio shell verified; Studio shell pending deploy |
+| Live verified | Partial | Chat and settings used. Agent create layout not accepted (D-019) |

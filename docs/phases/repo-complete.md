@@ -2,7 +2,7 @@
 
 **Updated:** 2026-09-21
 
-Git work for phases 0–7 is **done**. M1 data plane and FastAPI control plane are **up** on `mac-mini` (Tailscale, canonical ports, LaunchAgent). First iCloud dump written. Studio and live restore remain. Forward capabilities: [../features/index.md](../features/index.md).
+Git work for phases 0–7 is **done**. M1 data plane and FastAPI control plane are **up** on `mac-mini` (Tailscale, canonical ports, LaunchAgent). First iCloud dump written. Later live work (Studio models, Personal Agent Studio, coding tools, Antares, Qdrant, scheduler) is recorded in [../features/index.md](../features/index.md), not in the tables below. Studio and live restore were still open on this date.
 
 ## Done in Git
 

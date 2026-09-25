@@ -1,6 +1,6 @@
 # FEAT-007 — Optional coding-agent and GitHub PR workflow
 
-- **Status:** Specified (optional workload)
+- **Status:** Specified for pull-request delivery. Isolated patch/commit is FEAT-016, not this Feature.
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#8](https://github.com/sgerhart/ai-lab/issues/8)
@@ -23,16 +23,16 @@ abuse them as generic harness APIs (ADR 0038).
 
 ## Related
 
-Local model profiles + read-only Coding Assistant land under
-[FEAT-016](FEAT-016-local-coding-models-and-assistant.md) (IWO-055+). This Feature
-remains the **write / PR delivery** track after hardening gates (IWO-058).
+Local model profiles, read-only inspect, and isolated patch/commit land under
+[FEAT-016](FEAT-016-local-coding-models-and-assistant.md). This Feature remains
+**pull-request delivery**. `git_push` and PR tools are still denied.
 
 ## Proposed IWOs
 
 | ID | Title | Acceptance |
 |----|-------|------------|
-| IWO-055+ | See FEAT-016 (profiles, read-only, eval) | Before write/PR |
-| IWO-058 (planned) | Isolated worktree + exact-action PR tools | Human merge required |
+| IWO-055+ | See FEAT-016 (profiles, read tools, isolated patch/commit) | Done in that Feature except eval |
+| Later | Pull-request tools | Human merge required. Not started |
 
 Historical note: earlier draft IWO-030/031 ids here were **reused** for scheduler
 and background worker; do not revive them for coding.
@@ -46,5 +46,5 @@ Self-merge; silent product-repo writes; replacing FEAT-010.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | deterministic `development` plan |
+| Code | Not started for PR tools | Isolated patch/commit is FEAT-016, not a PR |
 | Live | No | — |

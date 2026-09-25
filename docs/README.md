@@ -14,7 +14,7 @@ Canonical written record. If documentation and files disagree, fix one of them i
 | Runbooks | [runbooks/](runbooks/README.md) |
 | Work orders | [work-orders/](work-orders/README.md) |
 | Work Order Protocol (IWOs) | [work-order-protocol/](work-order-protocol/README.md) |
-| Features (future capabilities) | [features/](features/README.md) |
+| Features (capabilities and backlog) | [features/](features/README.md) |
 | Inventory | [inventory/](inventory/README.md) |
 | Roadmap | [roadmap.md](roadmap.md) |
 | Glossary | [glossary.md](glossary.md) |

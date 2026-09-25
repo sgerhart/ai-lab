@@ -6,11 +6,13 @@ One run at a time. State of truth remains Postgres/SQLite agent_runs rows.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 from typing import Any
 
 from .agent_loop import run_until_idle
 from .conversation import AgentRun, AgentRunStatus
 from .model_router import ModelRouter
+from .tools import ToolContext
 
 _lock = threading.Lock()
 
@@ -43,10 +45,15 @@ def drain_queued_runs(
                 current = store.get_agent_run(run.id)
                 if current is None or current.status != AgentRunStatus.QUEUED:
                     continue
+                ctx = None
+                if (current.workspace_root or "").strip():
+                    root = Path(current.workspace_root)
+                    ctx = ToolContext(workspace_root=root, artifact_root=root / "artifacts")
                 finished = run_until_idle(
                     current,
                     router=router,
                     store_put=store.put_agent_run,
+                    ctx=ctx,
                 )
                 processed.append(
                     {

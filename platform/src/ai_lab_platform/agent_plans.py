@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .approvals import requires_approval
-from .tools import ToolContext, ToolError, compose_ps_read, git_status, health_read, http_get_allowlist, repo_read, write_report_artifact
+from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, http_get_allowlist, repo_read, repo_search, write_report_artifact
 from .work_order import WorkOrder
 
 
@@ -29,6 +29,8 @@ def plan_for(agent: str) -> list[str]:
         return ["write_report_artifact"]
     if agent == "development":
         return ["repo_read", "git_status"]
+    if agent == "coding-assistant":
+        return ["repo_read", "repo_search", "git_status", "git_diff"]
     raise ToolError(f"no local plan for agent {agent}")
 
 
@@ -93,8 +95,12 @@ def _execute(tool: str, ctx: ToolContext, objective: str, artifacts: list[str]) 
         return compose_ps_read()
     if tool == "repo_read":
         return repo_read(ctx)
+    if tool == "repo_search":
+        return repo_search(ctx, objective[:80] or "def ")
     if tool == "git_status":
         return git_status(ctx)
+    if tool == "git_diff":
+        return git_diff(ctx)
     if tool == "write_report_artifact":
         body = (
             f"# Research report\n\nObjective: {objective}\n\n"

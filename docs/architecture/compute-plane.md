@@ -11,7 +11,7 @@ from Air and mini ([F-015](../security/findings/F-015-studio-ssh-auth-failure.md
 
 | Component | Live |
 |-----------|------|
-| Ollama | Yes — `llama3.2:3b` on Tailscale `:11434` |
+| Ollama | Yes — `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b` on Tailscale `:11434`. Install is not the same as loaded; idle models stay resident for a short window |
 | JupyterLab | Yes — `:8888` (token on mini `~/.ai-lab/studio-jupyter.token`) |
 | MLX / transformers (Jupyter venv) | Present; used for Antares load smoke |
 | Antares-1B + completions + jobs | Weights; loopback `:8001`; Tailscale jobs `:8002`; mini `/antares` |

@@ -1,6 +1,6 @@
 # FEAT-003 — Studio inference and worker integration
 
-- **Status:** Partial (Studio Ollama live; mini router IWO-019)
+- **Status:** Partial (Studio Ollama live with several tags; mini router IWO-019 / profiles IWO-055)
 - **Created:** 2026-09-21
 - **Owner:** human (operator)
 - **GitHub issue:** [#4](https://github.com/sgerhart/ai-lab/issues/4)
@@ -62,7 +62,7 @@ Studio provides **inference bytes** and compute—not the work-order database.
 | Spec | Done | this file |
 | Code | Done for Ollama path | `OllamaBackend` + `build_router_from_settings` |
 | Deploy | Partial | Studio Ollama LaunchAgent + mini `STUDIO_OLLAMA_URL` |
-| Live verified | Yes (Ollama) | 2026-09-23 Agents/API `backend=ollama` `llama3.2:3b` |
+| Live verified | Yes (Ollama) | 2026-09-24 Studio `ollama list`: `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b`. Git catalog stays `catalogued-not-pulled`. Worker `:8090` not running |
 
 ## Notes
 

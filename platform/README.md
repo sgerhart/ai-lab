@@ -20,9 +20,9 @@ PYTHONPATH=platform/src platform/.venv/bin/python -m unittest tests.test_langgra
 |---------|----------------|
 | Work-order record | `store.py` (SQLite tests) / `postgres_store.py` (Postgres) |
 | Conversations / agent runs | `conversation.py` + store methods |
-| Personal-agent loop | `agent_loop.py` (mini; FakeBackend/scripted tests) |
+| Personal-agent loop | `agent_loop.py` (live Studio Ollama; FakeBackend/scripted tests) |
 | Tool runtime | `tool_runtime.py` (allowlist + approval gate) |
-| Agent UI | `web/agents.html` at `/agents` |
+| Agent UI | `web/agents.html` at `/` (`/agents` redirects) |
 | Workflow / resume | `slice_graph.py` (LangGraph work-order slice) |
 | HTTP control plane | `control_app.py` (FastAPI, M1) |
 | Studio dispatch | `dispatch.py` |

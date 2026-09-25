@@ -1,13 +1,13 @@
 # FEAT-013 — Personal Agent Studio (chat, agents, MCP, attachments)
 
-- **Status:** Partial (shell live — IWO-024–028)
+- **Status:** Partial (shell live — chat, attachments, in-app settings, model picker. Agent create/run layout is open: D-019)
 - **Created:** 2026-09-23
 - **Owner:** human (operator)
 - **Priority:** Core product surface (extends FEAT-004 / 010 / 011)
 
 ## Purpose
 
-Evolve `/agents` from a lab control panel into a **Personal Agent Studio**: a
+Evolve the mini UI into a **Personal Agent Studio** at `/`: a
 ChatGPT / Cursor-like conversation UI on the mini where the operator can chat,
 attach documents and images, run or deploy personal agents, and (later) connect
 allowlisted MCP servers—while **Studio Ollama remains the default LLM** and
@@ -31,7 +31,7 @@ research).
 
 ## User workflow (target)
 
-1. Open Personal Agent Studio over Tailscale (evolves `/agents`).
+1. Open Personal Agent Studio over Tailscale at `/` (`/agents` and `/lab` redirect here).
 2. Pick or create a conversation; optional agent persona.
 3. Chat with Studio model; stream tokens; attach PDF/Markdown/images.
 4. Toggle **Deep research** when a frontier pass is warranted (visible
@@ -87,6 +87,9 @@ research).
 - [x] Stdio MCP list/call live (IWO-029); SSE/HTTP still out of scope
 - [x] Deep research uses frontier only when selected + authorized
 - [x] No secrets or attachment bytes in Git
+- [x] Operator menus stay inside Studio. The sidebar is Status Dashboard, Jupyter Labs, Agents, MCP, Security (Antares), New chat, Search, Projects, Chats, Configure, Operator. The old `/lab` hub is retired
+- [x] Chat model list comes from installed Studio Ollama tags
+- [ ] Agent create/run layout accepted by the operator (D-019)
 
 ## Out of scope
 
@@ -101,6 +104,6 @@ research).
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | IWO-024–029 in Git (PDF text stub; SSE/HTTP MCP not wired); Studio IA + stdio MCP |
+| Code | Partial | IWO-024–029 and IWO-059 in Git. Studio is `/`. SSE/HTTP MCP not wired |
 | Deploy | Partial | live on mini after operator sync |
-| Live verified | Partial | health + Studio chat/tok/s 2026-09-23; MCP stdio unit-tested |
+| Live verified | Partial | Studio chat and settings used 2026-09-24. Agent form UX not accepted |

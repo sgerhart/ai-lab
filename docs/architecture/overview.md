@@ -1,8 +1,9 @@
 # Architecture overview
 
 **Status:** Control plane live on `mac-mini`; Studio compute (Ollama + Jupyter)
-live; Personal Agent Studio + retrieval + scheduler + lab MCP in use. Antares-1B
-weights on Studio (serve/CLI sandbox still open).  
+live with several Ollama tags; Personal Agent Studio, retrieval, scheduler, and
+lab MCP in use. Antares-1B UI and services live. Coding Assistant can read and,
+after approval, patch an isolated worktree.  
 **Updated:** 2026-09-24
 
 A personal, three-host Apple Silicon lab with Tailscale as the private network.
@@ -48,12 +49,13 @@ flowchart TB
 | Host Brewfiles + dry-run setup | Yes | **m1-mini `--apply` done** |
 | Compose Postgres/Redis/Qdrant | Yes | **Up on mac-mini** (5432/6379/6333) |
 | FastAPI control plane + LangGraph | Yes | **LaunchAgent `com.ai-lab.control-plane` :8088** |
-| Personal Agent Studio (`/agents`, login) | Yes | **Live** (operator sessions) |
+| Personal Agent Studio (`/`, login) | Yes | **Live** (operator sessions). `/agents` and `/lab` redirect to `/` |
 | Scheduler tick + LaunchAgent | Yes (IWO-030/052) | **`com.ai-lab.scheduler-tick` on mini** |
 | Retrieval / Qdrant memory API | Yes (IWO-040/041/053) | **`backend=qdrant` on mini** |
 | Lab as MCP server (IDE) | Yes (IWO-042/054) | **Cursor `ai-lab` on Air** |
 | DefenseClaw (adjacent) | Preflight docs | **Air: Cursor + Antigravity action** |
-| Studio Ollama | Catalog + provider | **`llama3.2:3b` on `mac-studio:11434`** |
+| Studio Ollama | Catalog + provider + profiles | **`llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b` on `mac-studio:11434` (Tailscale). Git catalog still `catalogued-not-pulled`** |
+| Coding Assistant | Read tools + isolated patch/commit | **Unit-tested.** Studio can prepare a worktree. No recorded live approved patch. Push denied |
 | Studio Jupyter | Host scripts | **Up (`:8888`); token on mini** |
 | Antares-1B | Runbook + `/antares` UI + jobs | **Live** UI → Studio `:8002` jobs / `:8001` completions |
 | Studio SSH | Documented | **OK** — `stevengerhart@mac-studio` from Air and mini (F-015 closed) |

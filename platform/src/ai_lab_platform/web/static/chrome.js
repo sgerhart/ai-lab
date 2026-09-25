@@ -1,9 +1,7 @@
 (function () {
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
   const links = [
-    { href: "/", label: "Status", match: /^\/$/ },
-    { href: "/lab", label: "Lab", match: /^\/lab$/ },
-    { href: "/agents", label: "Studio", match: /^\/agents$/ },
+    { href: "/", label: "AI Lab", match: /^\/$/ },
     { href: "/antares", label: "Antares", match: /^\/antares$/ },
     { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
     { href: "/help", label: "Help", match: /^\/help$/ },
@@ -13,7 +11,7 @@
   nav.setAttribute("aria-label", "Primary");
   nav.innerHTML =
     '<div class="inner">' +
-    '<a class="ai-lab-brand" href="/lab">ai-lab · mini</a>' +
+    '<a class="ai-lab-brand" href="/"><img class="ai-lab-mark" src="/static/ai-lab-icon.jpg" alt="">AI Lab</a>' +
     '<div class="ai-lab-links">' +
     links
       .map(function (l) {

@@ -11,7 +11,7 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
@@ -31,10 +31,14 @@ from .agent_worker import AgentRunWorker, drain_queued_runs
 from .antares_client import AntaresStudioClient
 from .attachments import AttachmentError, default_attachment_store
 from .auth import AuthError, auth_status, client_ip, require_auth
+from .capabilities import assistant_name, capability_catalog
+from .chat_title import propose_chat_title, title_is_generic
 from .operator_auth import login as operator_login
 from .operator_auth import revoke_session
 from .connect import connect_status, jupyter_open_url, read_token_file
-from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole
+from .host_resources import collect as collect_host_resources
+from .lab_dashboard import build_lab_dashboard, fetch_remote_resources
+from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole, Project
 from .dispatch import DispatchFn, http_dispatch
 from .mcp_client import (
     McpDenied,
@@ -82,12 +86,68 @@ def _port_open(host: str, port: int, timeout: float = 0.2) -> bool:
         sock.close()
 
 
+def _antares_flags(job_url: str) -> tuple[bool, bool]:
+    """Short reachability check. Does not include the Studio address in the result."""
+    if not job_url:
+        return False, False
+    from urllib.parse import urlparse
+
+    parsed = urlparse(job_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username:
+        return False, False
+    try:
+        with urlopen(f"{parsed.scheme}://{parsed.netloc}/health", timeout=1.2) as resp:  # noqa: S310
+            body = json.loads(resp.read().decode("utf-8"))
+    except (URLError, OSError, ValueError, json.JSONDecodeError):
+        return False, False
+    if not isinstance(body, dict):
+        return False, False
+    return bool(body.get("ok")), bool(body.get("completions_local"))
+
+
 def _http_ok(url: str, timeout: float = 0.4) -> bool:
     try:
         with urlopen(url, timeout=timeout) as resp:  # noqa: S310 — operator-set loopback worker
             return 200 <= getattr(resp, "status", 0) < 300
     except (URLError, OSError, ValueError):
         return False
+
+
+def _project_fields(name: str, description: str) -> tuple[str, str]:
+    clean_name = " ".join((name or "").split())
+    clean_desc = " ".join((description or "").split())
+    if not clean_name or len(clean_name) > 80:
+        raise ValueError("Project name is required and must be 80 characters or fewer.")
+    if len(clean_desc) > 500:
+        raise ValueError("Description must be 500 characters or fewer.")
+    return clean_name, clean_desc
+
+
+def _remember_chat_title(
+    store: Any,
+    conversation: Conversation,
+    router: ModelRouter,
+    *,
+    backend: str,
+    model: str,
+    user_text: str,
+    assistant_text: str,
+) -> str:
+    """Replace a generic title with the model's topic name. Keep the old title on failure."""
+    if not title_is_generic(conversation.title):
+        return conversation.title
+    title = propose_chat_title(
+        router,
+        backend=backend,
+        model=model,
+        user_text=user_text,
+        assistant_text=assistant_text,
+    )
+    if not title:
+        return conversation.title
+    conversation.title = title
+    store.put_conversation(conversation)
+    return title
 
 
 def default_sqlite_path() -> Path:
@@ -109,6 +169,16 @@ class ApproveIn(BaseModel):
 class ConversationIn(BaseModel):
     agent: str
     title: str = ""
+    project_id: str = ""
+
+
+class ConversationPatch(BaseModel):
+    project_id: str = ""
+
+
+class ProjectIn(BaseModel):
+    name: str
+    description: str = ""
 
 
 class MessageIn(BaseModel):
@@ -145,6 +215,7 @@ class AgentDefinitionRunIn(BaseModel):
     billing_class: str = "local"
     max_steps: int = Field(default=8, ge=1, le=64)
     conversation_id: str | None = None
+    worktree_id: str = ""
 
 
 class McpServerIn(BaseModel):
@@ -322,18 +393,19 @@ def create_control_app(
         }
 
     @app.get("/", response_class=HTMLResponse)
-    def status_page() -> str:
-        return STATUS_HTML.read_text(encoding="utf-8")
-
-    @app.get("/agents", response_class=HTMLResponse)
-    def agents_page() -> str:
-        """Authenticated personal-agent UI shell (IWO-003). Token stays in the browser."""
+    def studio_home() -> str:
+        """Main page is the chat studio. Jupyter still opens from the sidebar."""
         return AGENTS_HTML.read_text(encoding="utf-8")
 
-    @app.get("/lab", response_class=HTMLResponse)
-    def lab_page() -> str:
-        """Connection hub — open Studio Jupyter without Air-side SSH tunnels (FEAT-012)."""
-        return LAB_HTML.read_text(encoding="utf-8")
+    @app.get("/agents")
+    def agents_page() -> RedirectResponse:
+        """Older Studio URL. The main page is now /."""
+        return RedirectResponse(url="/", status_code=307)
+
+    @app.get("/lab")
+    def lab_page() -> RedirectResponse:
+        """The connection-hub page is retired. Jupyter opens from the main studio."""
+        return RedirectResponse(url="/", status_code=307)
 
     @app.get("/secrets", response_class=HTMLResponse)
     def secrets_page() -> str:
@@ -498,6 +570,9 @@ def create_control_app(
 
     @app.get("/favicon.svg")
     def favicon() -> Response:
+        orb = STATIC_DIR / "ai-lab-orb.jpg"
+        if orb.is_file():
+            return Response(content=orb.read_bytes(), media_type="image/jpeg")
         return Response(content=FAVICON_SVG, media_type="image/svg+xml")
 
     @app.get("/v1/models")
@@ -631,6 +706,92 @@ def create_control_app(
             "note": "Open in a new tab on the tailnet. Do not commit this URL.",
         }
 
+    @app.get("/v1/dashboard")
+    def lab_dashboard(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """What the lab can do right now: host resources, models, and modules."""
+        _gate(request, authorization)
+        conn = connect_status(
+            jupyter_url=settings.studio_jupyter_url,
+            ollama_url=settings.studio_ollama_url,
+            jupyter_token=read_token_file(settings.studio_jupyter_token_file),
+            studio_worker_url=settings.studio_worker_url,
+        )
+        memory = {"backend": "", "ok": False}
+        try:
+            raw_memory = app.state.retrieval.status()
+            memory = {
+                "backend": raw_memory.get("backend"),
+                "ok": bool(raw_memory.get("ok", True)),
+                "documents": raw_memory.get("documents") if isinstance(raw_memory.get("documents"), int) else None,
+            }
+        except Exception:
+            memory = {"backend": "", "ok": False}
+        tick = None
+        try:
+            tick = scheduler_status().get("last_tick_at")
+            tick = tick if isinstance(tick, str) else None
+        except Exception:
+            tick = None
+        jobs_up, completions_up = _antares_flags(settings.antares_job_url)
+        store_s: SecretStore = app.state.secret_store
+        secret_status = store_s.status()
+        configured = sum(
+            1 for row in secret_status.get("providers") or [] if isinstance(row, dict) and row.get("configured")
+        )
+        mcp_servers = []
+        for row in mcp_client_status().get("local_servers") or []:
+            if not isinstance(row, dict) or not row.get("id"):
+                continue
+            mcp_servers.append(
+                {
+                    "id": row.get("id"),
+                    "label": row.get("label") or row.get("id"),
+                    "enabled": bool(row.get("enabled", True)),
+                }
+            )
+        from .model_catalog import list_studio_choices
+
+        installed_names = [
+            str(row.get("name"))
+            for row in (conn.get("ollama") or {}).get("installed") or []
+            if isinstance(row, dict) and row.get("name")
+        ]
+        choices = []
+        try:
+            choices = [
+                {"model": c.get("model"), "available": bool(c.get("available"))}
+                for c in list_studio_choices(installed_names)
+                if c.get("billing_class") == "local"
+            ]
+        except Exception:
+            choices = []
+        studio_resources = (
+            fetch_remote_resources(settings.antares_job_url)
+            if settings.antares_job_url
+            else {"available": False, "reason": "Studio has not reported memory or disk yet."}
+        )
+        return build_lab_dashboard(
+            mini_resources=collect_host_resources(),
+            services={
+                "postgres": _port_open("127.0.0.1", 5432),
+                "redis": _port_open("127.0.0.1", 6379),
+                "qdrant": _port_open("127.0.0.1", 6333),
+            },
+            connect=conn,
+            studio_resources=studio_resources,
+            memory=memory,
+            scheduler_last_tick=tick,
+            antares_jobs_up=jobs_up,
+            antares_completions_up=completions_up,
+            frontier_configured=configured,
+            frontier_authorized=bool(secret_status.get("usage_billed_authorized")),
+            mcp_servers=mcp_servers,
+            local_models=choices,
+        )
+
     @app.get("/v1/status")
     def lab_status() -> dict[str, object]:
         studio_url = (settings.studio_worker_url or "http://127.0.0.1:8090").rstrip("/")
@@ -741,7 +902,12 @@ def create_control_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not hasattr(store, "put_conversation"):
             raise HTTPException(status_code=501, detail="conversation store unavailable")
+        project_id = (body.project_id or "").strip()
+        if project_id:
+            if not hasattr(store, "get_project") or store.get_project(project_id) is None:  # type: ignore[attr-defined]
+                raise HTTPException(status_code=400, detail="unknown project")
         conversation = Conversation.new(agent=body.agent, title=body.title)
+        conversation.project_id = project_id
         store.put_conversation(conversation)  # type: ignore[attr-defined]
         return conversation.to_dict()
 
@@ -782,6 +948,74 @@ def create_control_app(
         if not ok:
             raise HTTPException(status_code=404, detail="not found")
         return {"ok": True, "id": conversation_id}
+
+    @app.patch("/v1/conversations/{conversation_id}")
+    def patch_conversation(
+        request: Request,
+        conversation_id: str,
+        body: ConversationPatch,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Move a chat into a project, or clear that link."""
+        _gate(request, authorization)
+        conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
+        if conversation is None:
+            raise HTTPException(status_code=404, detail="not found")
+        project_id = (body.project_id or "").strip()
+        if project_id and (
+            not hasattr(store, "get_project") or store.get_project(project_id) is None  # type: ignore[attr-defined]
+        ):
+            raise HTTPException(status_code=400, detail="unknown project")
+        conversation.project_id = project_id
+        store.put_conversation(conversation)  # type: ignore[attr-defined]
+        return conversation.to_dict()
+
+    @app.get("/v1/projects")
+    def list_projects(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not hasattr(store, "list_projects"):
+            raise HTTPException(status_code=501, detail="project store unavailable")
+        items = store.list_projects()  # type: ignore[attr-defined]
+        return {"projects": [p.to_dict() for p in items]}
+
+    @app.post("/v1/projects")
+    def create_project(
+        request: Request,
+        body: ProjectIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not hasattr(store, "put_project"):
+            raise HTTPException(status_code=501, detail="project store unavailable")
+        try:
+            name, description = _project_fields(body.name, body.description)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        project = Project.new(name=name, description=description)
+        store.put_project(project)  # type: ignore[attr-defined]
+        return project.to_dict()
+
+    @app.delete("/v1/projects/{project_id}")
+    def delete_project(
+        request: Request,
+        project_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        if not hasattr(store, "delete_project"):
+            raise HTTPException(status_code=501, detail="project store unavailable")
+        if store.get_project(project_id) is None:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=404, detail="not found")
+        if hasattr(store, "list_conversations"):
+            for conversation in store.list_conversations(limit=200):  # type: ignore[attr-defined]
+                if conversation.project_id == project_id:
+                    conversation.project_id = ""
+                    store.put_conversation(conversation)  # type: ignore[attr-defined]
+        store.delete_project(project_id)  # type: ignore[attr-defined]
+        return {"ok": True, "id": project_id}
 
     @app.post("/v1/conversations/{conversation_id}/messages")
     def post_message(
@@ -857,7 +1091,7 @@ def create_control_app(
                     "error": "deep_research_requires_usage_billed_authorize",
                 }
 
-        system = f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly."
+        system = f"You are {assistant_name(conversation.agent)} in ai-lab. Reply helpfully and briefly."
         if body.deep_research:
             system = (
                 f"You are performing deep research for the {conversation.agent} agent. "
@@ -893,9 +1127,19 @@ def create_control_app(
             },
         )
         store.put_message(assistant)  # type: ignore[attr-defined]
+        titled = _remember_chat_title(
+            store,
+            conversation,
+            router,
+            backend=completion.backend,
+            model=completion.model,
+            user_text=body.content,
+            assistant_text=completion.text,
+        )
         return {
             "message": message.to_dict(),
             "reply": assistant.to_dict(),
+            "title": titled,
             "error": None,
         }
 
@@ -974,7 +1218,7 @@ def create_control_app(
             else:
                 raise HTTPException(status_code=400, detail="deep_research_requires_frontier_key")
 
-        system = f"You are the {conversation.agent} agent in ai-lab. Reply helpfully and briefly."
+        system = f"You are {assistant_name(conversation.agent)} in ai-lab. Reply helpfully and briefly."
         if body.deep_research:
             system = (
                 f"You are performing deep research for the {conversation.agent} agent. "
@@ -1043,7 +1287,16 @@ def create_control_app(
                 },
             )
             store.put_message(assistant)  # type: ignore[attr-defined]
-            yield f"data: {json.dumps({'event': 'done', 'reply': assistant.to_dict()})}\n\n"
+            titled = _remember_chat_title(
+                store,
+                conversation,
+                router,
+                backend=backend,
+                model=model,
+                user_text=body.content,
+                assistant_text=full,
+            )
+            yield f"data: {json.dumps({'event': 'done', 'reply': assistant.to_dict(), 'title': titled})}\n\n"
 
         return StreamingResponse(event_stream(), media_type="text/event-stream")
 
@@ -1077,6 +1330,18 @@ def create_control_app(
     ) -> dict[str, Any]:
         _gate(request, authorization)
         return mcp_client_status()
+
+    @app.get("/v1/capabilities")
+    def capabilities(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        agent: str = "lab-operations",
+    ) -> dict[str, Any]:
+        """Tools and MCP servers the assistant may use. No secrets, no handshake."""
+        _gate(request, authorization)
+        if not agent.replace("-", "").replace("_", "").isalnum():
+            raise HTTPException(status_code=400, detail="invalid agent")
+        return capability_catalog(agent)
 
     @app.put("/v1/mcp/servers/{server_id}")
     def put_mcp_server(
@@ -1200,6 +1465,35 @@ def create_control_app(
         app.state.agent_definition_store.put(definition)
         return definition.to_dict()
 
+    def _coding_workspace(worktree_id: str) -> Path:
+        from .workspace_isolation import resolve_worktree
+
+        try:
+            return resolve_worktree(worktree_id)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/v1/coding/worktrees")
+    def create_coding_worktree(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Create a detached git worktree of this lab checkout. Does not modify the primary tree."""
+        _gate(request, authorization)
+        from .workspace_isolation import create_isolated_copy
+
+        source = Path(__file__).resolve().parents[3]
+        try:
+            created = create_isolated_copy(source)
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {
+            "ok": True,
+            "id": created["id"],
+            "isolated": True,
+            "note": "Writes stay inside this copy. The primary checkout is not patched.",
+        }
+
     @app.get("/v1/agent-definitions/{definition_id}")
     def get_agent_definition(
         request: Request,
@@ -1221,6 +1515,7 @@ def create_control_app(
         billing_class: str = "local",
         max_steps: int = 8,
         conversation_id: str | None = None,
+        worktree_id: str = "",
     ) -> dict[str, Any]:
         if definition.mcp_server_ids:
             require_mcp_servers(definition.mcp_server_ids)
@@ -1247,6 +1542,7 @@ def create_control_app(
             backend=backend,
             budget=RunBudget(max_steps=max_steps),
             mcp_server_ids=list(definition.mcp_server_ids or []),
+            workspace_root=str(_coding_workspace(worktree_id)) if worktree_id.strip() else "",
         )
         run.status = AgentRunStatus.QUEUED
         store.put_agent_run(run)  # type: ignore[attr-defined]
@@ -1308,6 +1604,7 @@ def create_control_app(
                 billing_class=body.billing_class,
                 max_steps=body.max_steps,
                 conversation_id=body.conversation_id,
+                worktree_id=body.worktree_id,
             )
         except McpDenied as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc

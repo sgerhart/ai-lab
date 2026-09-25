@@ -22,5 +22,6 @@ Resolved items stay listed with **Resolved** and the ADR.
 | D-016 | Tailscale names | **Partial** — machines `mac-mini` / `mac-studio` / `mac-air` (ADR 0032). Suffix/IPv4 observed on the Air 2026-09-21 and written to gitignored overlays. **Not** `dentroio`. Studio was not on the tailnet. ACL file still unsupplied |
 | D-017 | Qdrant API key on vs off for first deploy | **Resolved** — key required (ADR 0024) |
 | D-018 | Thunderbolt NVMe | **Resolved** (deferred) — not in initial setup (ADR 0033) |
+| D-019 | Studio agent create/run screen | **Direction accepted** — chat is the front door (IWO-059). The preset form is secondary. Operator has not finished the live lab-health check |
 
-Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents. See [phases/repo-complete.md](phases/repo-complete.md).
+Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents. See [phases/repo-complete.md](phases/repo-complete.md). Current capabilities: [features/index.md](features/index.md).

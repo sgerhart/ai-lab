@@ -12,7 +12,7 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
-**Deployment status:** M1 control plane **up** on `mac-mini` (:8088) with Qdrant memory, scheduler LaunchAgent, Personal Agent Studio, and `/antares` UI. Studio Jupyter + Ollama (`llama3.2:3b`) **up**; Antares-1B weights + completions/jobs live on Studio. Cursor lab MCP on Air. Cloud/deep research gated on `/secrets`. See [docs/architecture/overview.md](docs/architecture/overview.md).
+**Deployment status:** M1 control plane **up** on `mac-mini` (:8088) with Qdrant memory, scheduler LaunchAgent, and Personal Agent Studio at `/`. `/agents` and `/lab` redirect there. Studio Ollama is **up** with `llama3.2:3b`, `qwen3.8:27b`, and `qwen3-coder:30b` installed (Git catalog still says not pulled). Jupyter opens from the Studio sidebar. Antares-1B completions/jobs are up on Studio and linked from the Security badge. Cursor lab MCP is on the Air. Cloud and deep research stay gated on `/secrets`. Coding Assistant can read a workspace and patch a separate copy after approval. The live lab-health pass is still open. See [docs/features/index.md](docs/features/index.md) and [docs/architecture/overview.md](docs/architecture/overview.md).
 
 ## Three areas
 
@@ -50,7 +50,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 | [`hosts/`](hosts/README.md) | `studio`, `m1-mini`, `m3-air` Brewfiles and setup scripts |
 | [`infrastructure/`](infrastructure/README.md) | Compose, Postgres, Qdrant, Redis, backup, monitoring |
 | [`platform/`](platform/README.md) | Agent harness (API, orchestrator, store, router, approvals) |
-| [`agents/`](agents/README.md) | Development, research, lab-operations agents |
+| [`agents/`](agents/README.md) | Coding, development, research, and lab-operations agents |
 | [`models/`](models/README.md) | Inference / MLX / training catalogs. Weights stay off Git |
 | [`scripts/`](scripts/README.md) | Bootstrap, preflight, health, backup, restore |
 | [`tests/`](tests/README.md) | Structure, policy, harness unit tests |
@@ -71,7 +71,7 @@ Host bootstrap, compose `up`, model pulls, and service binds require an explicit
 1. [docs/architecture/overview.md](docs/architecture/overview.md)
 2. [AGENT_PROCESS.md](AGENT_PROCESS.md) — Implementation Work Orders
 3. [docs/phases/repo-complete.md](docs/phases/repo-complete.md)
-4. [docs/features/index.md](docs/features/index.md) — future capabilities backlog
+4. [docs/features/index.md](docs/features/index.md) — current capabilities and backlog
 5. [docs/decisions/0020-langgraph-orchestration.md](docs/decisions/0020-langgraph-orchestration.md)
 6. Host runbooks: [m1-mini](hosts/m1-mini/RUNBOOK.md), [studio](hosts/studio/RUNBOOK.md), [m3-air](hosts/m3-air/RUNBOOK.md)
 7. [docs/open-decisions.md](docs/open-decisions.md)

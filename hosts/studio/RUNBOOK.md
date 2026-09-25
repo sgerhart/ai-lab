@@ -76,6 +76,7 @@ match the serve bind:
 export PATH="/opt/homebrew/bin:$PATH"
 export OLLAMA_HOST="$(tailscale ip -4):11434"
 ollama list
+# Seen 2026-09-24: llama3.2:3b, qwen3.8:27b, qwen3-coder:30b.
 # ollama pull <name>   # only after owner authorizes the pull
 ```
 

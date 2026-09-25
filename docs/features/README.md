@@ -1,7 +1,7 @@
 # Features and future capabilities
 
-**Status:** Documentation backlog. No feature here is authorized for implementation or deploy under this file alone.  
-**Updated:** 2026-09-21
+**Status:** Capability record plus backlog. No feature here is authorized for implementation or deploy under this file alone.  
+**Updated:** 2026-09-24
 
 This tree holds **desired capabilities**. It is not the M1 Postgres work-order store, and it is not the historical phase checklist in [`../work-orders/`](../work-orders/README.md).
 
@@ -53,7 +53,7 @@ An **execution record** on the M1 control plane (`POST /v1/work-orders`). Durabl
 
 ## Index and template
 
-- [Future capabilities index](index.md) — mini-first plan + FEAT-001…011
+- [Capabilities and feature index](index.md) — what is live, plus FEAT-001…016
 - [Mini-first dependency plan](PLAN-mini-first.md)
 - [Feature specification template](TEMPLATE.md)
 - Core specs: [FEAT-010 harness](FEAT-010-mini-personal-agent-loop.md), [FEAT-011 providers](FEAT-011-frontier-model-access.md)
