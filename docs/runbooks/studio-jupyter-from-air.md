@@ -52,7 +52,39 @@ Then on Air:
 
 1. Open `http://mac-mini:8088/` (or the mini Tailscale name/IP you use). `/lab` redirects here.
 2. Paste the lab API token from above.
-3. Click **Jupyter Labs** in the sidebar.
+3. Click **Jupyter Labs** in the sidebar. That opens `/lab` (the Python session).
+
+## R kernel
+
+R is a second notebook on the same Jupyter server. Jupyter has no `?kernel=` switch on `/lab`. Opening a notebook starts the kernel named in that file. The starter notebook’s kernelspec is `ir`.
+
+| Piece | Value |
+|-------|--------|
+| Kernelspec | `ir` (display name `R`) |
+| Notebook on Studio | `~/ai-lab-notebooks/r.ipynb` |
+| Source in Git | `notebooks/r.ipynb` |
+| Lab site | Sidebar **R Labs**, or Configure → **Open R Labs** |
+
+The mini returns this open URL (token stays out of Git):
+
+```text
+http://mac-studio:8888/lab/tree/ai-lab-notebooks/r.ipynb?token=…
+```
+
+**R Labs** uses its own browser tab (`ai-lab-jupyter-r`). **Jupyter Labs** keeps the Python tab. A second click focuses the tab that is already open.
+
+Install on the Studio (authorize the host change first). Jupyter does not need a restart to see a new kernelspec.
+
+```bash
+brew install r zeromq pkg-config
+export PATH="$HOME/.ai-lab/jupyter/.venv/bin:/opt/homebrew/bin:$PATH"
+export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
+Rscript -e 'install.packages("IRkernel", repos="https://cloud.r-project.org")'
+Rscript -e 'IRkernel::installspec(user=TRUE, name="ir", displayname="R")'
+mkdir -p ~/ai-lab-notebooks
+# Copy notebooks/r.ipynb from this repo to ~/ai-lab-notebooks/r.ipynb
+jupyter kernelspec list   # ir must appear
+```
 
 ## Access from Air (legacy SSH tunnel)
 

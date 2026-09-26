@@ -10,7 +10,7 @@ from typing import Any
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from fastapi import Body, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi import Body, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
@@ -41,7 +41,7 @@ from .capabilities import assistant_name, capability_catalog
 from .chat_title import propose_chat_title, title_is_generic
 from .operator_auth import login as operator_login
 from .operator_auth import revoke_session
-from .connect import connect_status, jupyter_open_url, read_token_file
+from .connect import connect_status, jupyter_notebook_for_kernel, jupyter_open_url, read_token_file
 from .host_resources import collect as collect_host_resources
 from .lab_dashboard import build_lab_dashboard, fetch_remote_resources
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole, Project
@@ -760,8 +760,16 @@ def create_control_app(
         )
 
     @app.get("/v1/connect/jupyter")
-    def connect_jupyter(request: Request, authorization: str | None = Header(default=None)) -> dict[str, str]:
-        """Return a one-shot Studio Jupyter open URL. Requires lab API token."""
+    def connect_jupyter(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        kernel: str = Query(default=""),
+    ) -> dict[str, str]:
+        """Return a one-shot Studio Jupyter open URL. Requires lab API token.
+
+        ``kernel=r`` opens the R starter notebook, which starts the R kernel.
+        The default opens Lab the same way as the Python Jupyter link.
+        """
         _gate(request, authorization)
         if not settings.studio_jupyter_url:
             raise HTTPException(
@@ -774,8 +782,12 @@ def create_control_app(
                 status_code=503,
                 detail="Studio Jupyter token file missing on the mini",
             )
+        try:
+            notebook = jupyter_notebook_for_kernel(kernel)
+        except KeyError:
+            raise HTTPException(status_code=400, detail="Unknown Jupyter kernel") from None
         return {
-            "open_url": jupyter_open_url(settings.studio_jupyter_url, jtoken),
+            "open_url": jupyter_open_url(settings.studio_jupyter_url, jtoken, notebook=notebook),
             "note": "Open in a new tab on the tailnet. Do not commit this URL.",
         }
 

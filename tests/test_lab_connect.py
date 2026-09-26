@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 import unittest
@@ -12,6 +13,7 @@ sys.path.insert(0, str(ROOT / "platform" / "src"))
 
 from ai_lab_platform.connect import (  # noqa: E402
     connect_status,
+    jupyter_notebook_for_kernel,
     jupyter_open_url,
     read_token_file,
 )
@@ -35,6 +37,7 @@ class ConnectHelperTests(unittest.TestCase):
         agents = (ROOT / "platform/src/ai_lab_platform/web/agents.html").read_text()
         lab = (ROOT / "platform/src/ai_lab_platform/web/lab.html").read_text()
         self.assertIn("ai-lab-jupyter", chrome)
+        self.assertIn("ai-lab-jupyter-r", agents)
         self.assertIn("window.open(\"\", name)", chrome)
         self.assertIn("aiLabOpenOnce", agents)
         self.assertIn("aiLabOpenOnce", lab)
@@ -46,6 +49,18 @@ class ConnectHelperTests(unittest.TestCase):
             jupyter_open_url("http://mac-studio:8888", "abc"),
             "http://mac-studio:8888/lab?token=abc",
         )
+
+    def test_r_notebook_url_starts_ir_kernel(self) -> None:
+        notebook = jupyter_notebook_for_kernel("r")
+        self.assertEqual(notebook, "ai-lab-notebooks/r.ipynb")
+        self.assertEqual(
+            jupyter_open_url("http://mac-studio:8888", "abc", notebook=notebook),
+            "http://mac-studio:8888/lab/tree/ai-lab-notebooks/r.ipynb?token=abc",
+        )
+        with self.assertRaises(KeyError):
+            jupyter_notebook_for_kernel("../etc")
+        notebook_file = json.loads((ROOT / "notebooks" / "r.ipynb").read_text())
+        self.assertEqual(notebook_file["metadata"]["kernelspec"]["name"], "ir")
 
     def test_read_token_file(self) -> None:
         with tempfile.NamedTemporaryFile("w", delete=False) as fh:
@@ -112,6 +127,22 @@ class LabConnectAppTests(unittest.TestCase):
         data = res.json()
         self.assertIn("token=jupyter-secret-token", data["open_url"])
         self.assertTrue(data["open_url"].startswith("http://mac-studio:8888/lab"))
+
+    def test_r_kernel_open_url(self) -> None:
+        res = self.client.get(
+            "/v1/connect/jupyter?kernel=r",
+            headers={"Authorization": "Bearer lab-token"},
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(
+            res.json()["open_url"],
+            "http://mac-studio:8888/lab/tree/ai-lab-notebooks/r.ipynb?token=jupyter-secret-token",
+        )
+        bad = self.client.get(
+            "/v1/connect/jupyter?kernel=other",
+            headers={"Authorization": "Bearer lab-token"},
+        )
+        self.assertEqual(bad.status_code, 400)
 
 
 if __name__ == "__main__":

@@ -45,11 +45,36 @@ def read_token_file(path: str | Path) -> str:
     return p.read_text(encoding="utf-8").strip()
 
 
-def jupyter_open_url(base_url: str, token: str) -> str:
+# Notebook under the Studio Jupyter root ($HOME). Its kernelspec name is `ir`,
+# so opening the file starts the R kernel. `/lab` itself has no kernel switch.
+R_NOTEBOOK = "ai-lab-notebooks/r.ipynb"
+JUPYTER_NOTEBOOKS = {"r": R_NOTEBOOK}
+
+
+def jupyter_notebook_for_kernel(kernel: str) -> str:
+    """Map an allow-listed kernel key to a notebook path. Empty keeps `/lab`."""
+    key = kernel.strip().lower()
+    if not key:
+        return ""
+    try:
+        return JUPYTER_NOTEBOOKS[key]
+    except KeyError as exc:
+        raise KeyError(key) from exc
+
+
+def jupyter_open_url(base_url: str, token: str, *, notebook: str = "") -> str:
+    from urllib.parse import quote
+
     base = base_url.rstrip("/")
+    parts = [part for part in notebook.split("/") if part and part != "." and part != ".."]
+    if parts:
+        encoded = "/".join(quote(part, safe="") for part in parts)
+        loc = f"{base}/lab/tree/{encoded}"
+    else:
+        loc = f"{base}/lab"
     if not token:
-        return f"{base}/lab"
-    return f"{base}/lab?token={token}"
+        return loc
+    return f"{loc}?token={token}"
 
 
 def connect_status(

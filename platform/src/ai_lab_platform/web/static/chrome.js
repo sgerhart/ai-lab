@@ -127,18 +127,21 @@
       if (hint) hint.textContent = "Auth status unavailable";
     });
 
-  // Reuse the Jupyter tab this page opened. An empty URL focuses that tab
-  // without loading it again. A new about:blank tab is the first open.
-  window.aiLabOpenOnce = function (url) {
-    const name = "ai-lab-jupyter";
-    const held = window.aiLabJupyterWindow;
+  // Reuse one tab per name. The Python Lab tab is "ai-lab-jupyter".
+  // R uses its own name so it does not just focus the Python tab.
+  // A new about:blank tab is the first open; a later click only focuses.
+  window.aiLabOpenOnce = function (url, windowName) {
+    const name = windowName || "ai-lab-jupyter";
+    const heldMap = window.aiLabHeldWindows || (window.aiLabHeldWindows = {});
+    const held = heldMap[name];
     if (held && held.closed === false) {
       held.focus();
       return true;
     }
     const win = window.open("", name);
     if (!win) return false;
-    window.aiLabJupyterWindow = win;
+    heldMap[name] = win;
+    if (name === "ai-lab-jupyter") window.aiLabJupyterWindow = win;
     try {
       if (!win.location.href || win.location.href === "about:blank") {
         win.location.href = url;

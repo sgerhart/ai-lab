@@ -18,7 +18,7 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Retrieval memory (Qdrant) and gated `memory_write`. A project can index its own Markdown and text files; a chat in that project searches only those (IWO-060) | Yes | Qdrant live on mini. Project-document cite on the live lab not recorded |
 | Lab MCP for Cursor on the Air | Yes | Wired (IWO-054) |
 | Deep research / cloud models | Gated adapters | Off until `/secrets` authorizes them |
-| Studio Jupyter | Host scripts | Up on `:8888` |
+| Studio Jupyter | Host scripts. Sidebar **R Labs** opens `~/ai-lab-notebooks/r.ipynb`, whose kernelspec is `ir` | Up on `:8888`. R 4.6.1 and kernelspec `ir` installed on the Studio 2026-09-26. Mini control plane serves the R link |
 | Antares-1B completions, jobs, `/antares` | Yes | UI and services live. Reboot LaunchAgents not set. Repo choice beyond the Studio fixture is direction ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)) |
 | Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | DefenseClaw summary and finding glossary in Git (IWO-061, IWO-062). Gateway not built. The page does not edit DefenseClaw config | DefenseClaw live on the Air. One summary was stored on the mini on 2026-09-25. Repeating that from the Air still needs `~/.ai-lab/api.token` there. The Findings pane was not checked in a browser |
 | Studio worker `:8090` | Scripts | Not running |

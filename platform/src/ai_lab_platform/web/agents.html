@@ -595,6 +595,7 @@
       <hr class="side-rule">
       <div class="side-scroll">
         <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
+        <button type="button" class="side-link" id="nav-r"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 12h4.2a2.2 2.2 0 0 1 0 4.4H8V20"/><path d="M11.2 16.2 15 20"/></svg>R Labs</button>
         <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
         <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
         <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
@@ -842,6 +843,7 @@
             <h2>Jupyter</h2>
             <p>Notebooks on the Studio, separate from this chat.</p>
             <button type="button" class="btn primary" id="prefs-open-jupyter" disabled>Open Jupyter</button>
+            <button type="button" class="btn" id="prefs-open-r" disabled>Open R Labs</button>
             <div class="prefs-meta" id="prefs-jupyter-meta"></div>
           </article>
           <article class="prefs-card">
@@ -1813,25 +1815,27 @@
         await refreshThread();
       } catch (e) { showErr(e); }
     }
-    async function openJupyter() {
+    async function openJupyter(kernel) {
       try {
-        const res = await fetch("/v1/connect/jupyter", { headers: headers(), redirect: "manual" });
+        const q = kernel ? ("?kernel=" + encodeURIComponent(kernel)) : "";
+        const res = await fetch("/v1/connect/jupyter" + q, { headers: headers(), redirect: "manual" });
         if (res.status === 401) { showErr("Unauthorized — sign in again."); return; }
         if (res.status === 503) {
           const body = await res.json().catch(() => ({}));
           showErr(body.detail || "Jupyter not configured on mini");
           return;
         }
+        const tab = kernel === "r" ? "ai-lab-jupyter-r" : "ai-lab-jupyter";
         if (res.ok) {
           const body = await res.json();
           if (body.open_url) {
-            if (!window.aiLabOpenOnce(body.open_url)) showErr("The browser blocked the Jupyter tab.");
+            if (!window.aiLabOpenOnce(body.open_url, tab)) showErr("The browser blocked the Jupyter tab.");
             return;
           }
         }
         const loc = res.headers.get("Location");
         if (loc) {
-          if (!window.aiLabOpenOnce(loc)) showErr("The browser blocked the Jupyter tab.");
+          if (!window.aiLabOpenOnce(loc, tab)) showErr("The browser blocked the Jupyter tab.");
         } else showErr("Could not open Jupyter (" + res.status + ")");
       } catch (e) { showErr(e); }
     }
@@ -2064,6 +2068,7 @@
     $("toggle-side").onclick = toggleSidebar;
     $("show-side").onclick = toggleSidebar;
     $("nav-jupyter").onclick = () => { openJupyter(); };
+    $("nav-r").onclick = () => { openJupyter("r"); };
     if ($("nav-chat")) $("nav-chat").onclick = () => setView("chat");
     $("nav-projects").onclick = () => setView("projects");
     function showProjectHome() {
@@ -2599,10 +2604,12 @@
           : "Not reachable from the mini";
       }
       if ($("prefs-open-jupyter")) $("prefs-open-jupyter").disabled = !(j.configured && j.token_configured);
+      if ($("prefs-open-r")) $("prefs-open-r").disabled = !(j.configured && j.token_configured);
       renderModelProviders();
       renderRoleForm();
     }
     $("prefs-open-jupyter").onclick = () => { openJupyter(); };
+    if ($("prefs-open-r")) $("prefs-open-r").onclick = () => { openJupyter("r"); };
     $("prefs-use-ollama").onclick = () => setView("chat");
 
     function prefsProviderCard(p) {

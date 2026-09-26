@@ -60,6 +60,12 @@ mini. Ordinary notebook cells must **not** route through the agent harness.
 - [ ] Notebook cells do not go through mini harness
 - [ ] Artifact storage documented
 
+## R Labs
+
+The lab site sidebar **R Labs** (Configure → **Open R Labs**) opens `notebooks/r.ipynb` on the Studio at `~/ai-lab-notebooks/r.ipynb`. That notebook’s kernelspec is `ir`, so Jupyter starts R when the file opens. **Jupyter Labs** still opens `/lab` for the Python session. Install steps and the open URL are in [the Studio Jupyter runbook](../runbooks/studio-jupyter-from-air.md).
+
+Live on 2026-09-26: R 4.6.1 and kernelspec `ir` on `mac-studio`. The mini control plane returns the notebook URL.
+
 ## Out of scope
 
 - Air as lab Jupyter *server*; forcing every cell into a runtime WO
