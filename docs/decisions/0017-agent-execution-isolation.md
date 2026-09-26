@@ -1,5 +1,7 @@
 # ADR 0017 — Agent execution isolation
 
+> **Amended by [ADR 0043](0043-shared-antares-and-security-compute-plane.md) (2026-09-26, proposed):** Tier 3 hostile analysis is specified for an external ESXi/Proxmox Security Compute Plane ([FEAT-019](../features/FEAT-019-cybersecurity-vise.md)). Containers and Mac-host execution stay prohibited. The historical decision text below is unchanged.
+
 - **Status:** Accepted
 - **Date:** 2026-09-20
 

@@ -20,6 +20,8 @@ A new engineer clones `ai-lab` and follows this file only.
 
 Do **not** `docker compose up` `infrastructure/compose.yaml` on this laptop (port collisions with Clarion).
 
+DefenseClaw stays on this laptop. `./scripts/install-defenseclaw-report-launchagent.sh --apply` posts a summary to the mini every 10 minutes. It does not start DefenseClaw.
+
 ## 1. Prerequisites
 
 - MacBook Air, Apple M3, 16 GB, 512 GB (confirmed, ADR 0031).

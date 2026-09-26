@@ -1,6 +1,7 @@
 # Security plane
 
 **Status:** Direction accepted ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)). Antares jobs and the DefenseClaw summary are the live slices. The API gateway and config editing are not built.  
+**Forward direction:** [ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md) (proposed) and [security-plane-amendment.md](security-plane-amendment.md). Where they differ from ADR 0040, ADR 0043 is the direction to build. It is not deployed.  
 **Updated:** 2026-09-26
 
 AI Lab is the security testing ground for this lab. The mini **Security** page is the board. Each tool keeps running on its own host.
@@ -65,6 +66,18 @@ Antares does not patch the code and does not scan a whole product the way an app
 |-------|------|
 | **Security** page with an Antares badge | Yes |
 | Antares jobs and completions on the Studio | Yes. Jobs do not survive reboot until LaunchAgents are set |
-| DefenseClaw on the Air | Yes. One summary is stored on the mini (2026-09-25). A later push is `./scripts/defenseclaw-report.sh --apply`, which still needs `~/.ai-lab/api.token` on the Air. The Findings pane was not checked in a browser |
+| DefenseClaw on the Air | Yes. `com.ai-lab.defenseclaw-report` posts a summary every 10 minutes (2026-09-26). The Findings pane was not checked in a browser |
 | API gateway | No |
 | Choosing an arbitrary repo, including Clarion, from **Security** | No. Jobs use the configured Studio repo path |
+| Shared Antares clients, Security Center, Vise, security agent | No. Specified in [ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md) |
+
+## Forward direction (ADR 0043)
+
+[security-plane-amendment.md](security-plane-amendment.md) is the direction where it differs from the sections above:
+
+- Antares is a shared software-security service for IDE, CLI, API, and MCP clients. It stays hosted on the Studio.
+- The MacBook Air is not a required gateway or infrastructure node.
+- Hostile-workload execution is specified for the operator's Proxmox server ([D-020](../open-decisions.md), [FEAT-019](../features/FEAT-019-cybersecurity-vise.md)). The server is an Intel i7 with 64 GB of memory and is empty. Containers and Mac hosts stay prohibited for those workloads.
+- Lookup MCP stays on the trusted hosts. It does not wait on that plane. Placement: [mcp-servers.md](mcp-servers.md).
+
+These documents do not authorize a hypervisor connection, VM changes, network changes, or sample execution.

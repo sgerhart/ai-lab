@@ -50,5 +50,9 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0037](0037-mini-owns-personal-agent-loop.md) | Mini owns the personal-agent loop | Accepted |
 | [0038](0038-model-provider-billing-classes.md) | Model provider billing classes and subscription boundaries | Accepted |
 | [0039](0039-hashicorp-vault-on-mini.md) | HashiCorp Vault on mini for lab secrets | Accepted |
+| [0040](0040-security-plane-gateway-and-antares.md) | Security plane: API gateway, DefenseClaw, Antares | Accepted (direction). Amended by 0043 (proposed) |
+| [0041](0041-studio-ollama-lan-and-tailscale.md) | Studio Ollama listens on the LAN and the tailnet | Accepted |
+| [0042](0042-agent-studio-operating-platform.md) | Agent Studio is an operating platform | Accepted (direction) |
+| [0043](0043-shared-antares-and-security-compute-plane.md) | Shared Antares service and external Security Compute Plane | Proposed |
 
 Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents.

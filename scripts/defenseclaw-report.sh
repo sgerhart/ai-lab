@@ -16,7 +16,7 @@ Prints DefenseClaw posture JSON: versions, agents, the operator config
 (secret values withheld), guardrail, finding titles, and block or confirm totals.
 --apply POSTs it to ${AI_LAB_URL:-http://mac-mini:8088}/v1/security/posture
 using the bearer token in ~/.ai-lab/api.token, or ~/.ai-lab/mac-mini-api.token.
-Does not send config.yaml, the device key, or audit.db.
+Prints ok, stale, and age only. Does not send config.yaml, the device key, or audit.db.
 EOF
       exit 0
       ;;
@@ -80,9 +80,32 @@ if [[ ! -f "$TOKEN_FILE" ]]; then
   echo "missing ~/.ai-lab/api.token (or mac-mini-api.token)" >&2
   exit 1
 fi
-URL="${AI_LAB_URL:-http://mac-mini:8088}/v1/security/posture"
-curl -sf -m 20 -X POST "$URL" \
-  -H "Authorization: Bearer $(tr -d '\n' <"$TOKEN_FILE")" \
-  -H "Content-Type: application/json" \
-  --data "$JSON"
-echo
+export TOKEN_FILE AI_LAB_URL="${AI_LAB_URL:-http://mac-mini:8088}"
+REPORT_FILE="$(mktemp)"
+chmod 600 "$REPORT_FILE"
+printf '%s' "$JSON" >"$REPORT_FILE"
+export REPORT_FILE
+python3 - <<'PY'
+import json, os, urllib.request
+from pathlib import Path
+
+report = Path(os.environ["REPORT_FILE"])
+body = report.read_bytes()
+report.unlink(missing_ok=True)
+token = Path(os.environ["TOKEN_FILE"]).read_text(encoding="utf-8").strip()
+url = os.environ["AI_LAB_URL"].rstrip("/") + "/v1/security/posture"
+req = urllib.request.Request(
+    url,
+    data=body,
+    method="POST",
+    headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+)
+with urllib.request.urlopen(req, timeout=20) as resp:
+    data = json.loads(resp.read().decode())
+print(json.dumps({
+    "ok": data.get("ok"),
+    "stale": data.get("stale"),
+    "age_sec": data.get("age_sec"),
+    "note": data.get("note"),
+}))
+PY

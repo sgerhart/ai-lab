@@ -1,6 +1,6 @@
 # IWO-061 — DefenseClaw summary on Security
 
-**Status:** In progress (unit tests; Air has not been told to `--apply`)  
+**Status:** Complete (Air posts every 10 minutes; the card stays ahead of the 15-minute stale mark)  
 **Priority:** P2  
 **Feature:** [FEAT-014](../features/FEAT-014-defenseclaw-operator-governance.md)  
 **Decision:** [ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)
@@ -19,4 +19,4 @@ Changing DefenseClaw configuration from the page, the API gateway, or choosing a
 
 - [x] A report with counts round-trips through the authenticated API
 - [x] A secret-like value is refused
-- [x] Operator report stored on the mini (2026-09-25, via the lab API). The Air script `--apply` still needs `~/.ai-lab/api.token` on the Air; this host does not have that file yet.
+- [x] Operator report stored on the mini. On 2026-09-26 the Air `--apply` posted with the existing lab token file, and `com.ai-lab.defenseclaw-report` repeats that post every 10 minutes. The operator reloaded Security and the badge was current.

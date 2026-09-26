@@ -23,5 +23,10 @@ Resolved items stay listed with **Resolved** and the ADR.
 | D-017 | Qdrant API key on vs off for first deploy | **Resolved** — key required (ADR 0024) |
 | D-018 | Thunderbolt NVMe | **Resolved** (deferred) — not in initial setup (ADR 0033) |
 | D-019 | Studio agent create/run screen | **Direction accepted** — chat is the front door (IWO-059). Agent Studio is a second menu plus a canvas (ADR 0042, IWO-063). Operator has not accepted the live screen |
+| D-020 | Initial live hypervisor provider (ESXi vs Proxmox) | **Resolved** — Proxmox (operator, 2026-09-26). One server, Intel i7, 64 GB memory, empty. No hostname, address, or disk size recorded. ADR 0043 / FEAT-019. Lookup MCP stays on the trusted Macs ([mcp-servers.md](architecture/mcp-servers.md)). |
+| D-021 | Hypervisor management endpoint and resource names | **Open** — operator-supplied. Do not invent hostnames, IPs, or inventory names |
+| D-022 | Approved isolated analysis network design | **Open** — operator can create the network. Analysis guest has one NIC on that network only; the agent stays on the mini. Bridge name and addresses are still operator-supplied. No route to trusted networks |
+| D-023 | Suspicious artifact / quarantine storage location | **Open** — operator-supplied. Do not invent a path |
+| D-024 | Initial Windows and Linux template images and toolset | **Open** — operator-supplied. Do not invent image names |
 
 Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents. See [phases/repo-complete.md](phases/repo-complete.md). Current capabilities: [features/index.md](features/index.md).

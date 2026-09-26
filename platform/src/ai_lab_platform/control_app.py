@@ -49,10 +49,14 @@ from .dispatch import DispatchFn, http_dispatch
 from .mcp_client import (
     McpDenied,
     McpTransportError,
+    authorize_mcp_server,
+    bind_mcp_agent,
     delete_local_server,
+    intake_candidates,
     list_mcp_tools,
     mcp_client_status,
     require_mcp_servers,
+    submit_mcp_intake,
     upsert_local_server,
 )
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
@@ -60,6 +64,11 @@ from .policy import load_policy
 from .retrieval import RetrievalService, default_retrieval_service, set_default_retrieval_service
 from .schedule_cron import CronError, parse_cron
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
+from .security.events import EVENT_SCHEMA, EmbeddedPayloadRefused, SecurityEvent
+from .security.vise import ViseStore, ViseTransitionError
+from .security.mcp_registry import McpRegistry
+from .security.providers import default_providers
+from .security.store import event_log_for_store
 from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
 from .store import SqliteStore, WorkOrderStore
@@ -261,6 +270,22 @@ class McpServerIn(BaseModel):
     enabled: bool = True
 
 
+class McpIntakeIn(BaseModel):
+    id: str
+    origin: str
+    label: str = ""
+    command: str = ""
+    args: list[str] = Field(default_factory=list)
+    network_policy: str = "none"
+    credential_ref: str = ""
+    capabilities: list[dict[str, str]] = Field(default_factory=list)
+
+
+class McpBindingIn(BaseModel):
+    agent_id: str
+    capabilities: list[str] = Field(default_factory=list)
+
+
 class LoginIn(BaseModel):
     username: str
     password: str
@@ -424,6 +449,10 @@ def create_control_app(
     app.state.retrieval = memory
     set_default_retrieval_service(memory)
     app.state.security_posture = PostureFile(default_posture_path())
+    app.state.security_events = event_log_for_store(store)
+    app.state.security_providers = default_providers()
+    app.state.mcp_registry = McpRegistry(events=app.state.security_events)
+    app.state.vise = ViseStore()
     app.state.antares = AntaresStudioClient(
         job_url=settings.antares_job_url,
         completions_url=settings.antares_completions_url,
@@ -1160,6 +1189,115 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         return {"ok": True, "id": document_id}
 
+    @app.get("/v1/security/providers")
+    def get_security_providers(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return {"providers": list(app.state.security_providers.list())}
+
+    @app.get("/v1/security/events/schema")
+    def get_security_event_schema(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return EVENT_SCHEMA
+
+    @app.get("/v1/security/events")
+    def list_security_events(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        agent_id: str = Query(default=""),
+        run_id: str = Query(default=""),
+        job_id: str = Query(default=""),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        events = app.state.security_events.list(agent_id=agent_id, run_id=run_id, job_id=job_id)
+        return {"events": [event.to_dict() for event in events]}
+
+    @app.post("/v1/security/events")
+    def post_security_event(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            event = SecurityEvent.from_dict(body)
+        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        app.state.security_events.append(event)
+        return event.to_dict()
+
+    @app.get("/v1/security/vise/jobs")
+    def list_vise_jobs(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return {"jobs": [job.to_dict() for job in app.state.vise.list()]}
+
+    @app.post("/v1/security/vise/jobs")
+    def create_vise_job(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            job = app.state.vise.create(body)
+        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return job.to_dict()
+
+    @app.get("/v1/security/vise/jobs/{job_id}")
+    def get_vise_job(
+        request: Request,
+        job_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            job = app.state.vise.get(job_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="not found") from exc
+        return job.to_dict()
+
+    @app.post("/v1/security/vise/jobs/{job_id}/advance")
+    def advance_vise_job(
+        request: Request,
+        job_id: str,
+        body: dict[str, Any] = Body(default_factory=dict),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            job = app.state.vise.advance(
+                job_id,
+                str(body.get("state") or ""),
+                actor=str(body.get("actor") or ""),
+                approval_id=str(body.get("approval_id") or ""),
+                evidence=list(body.get("evidence") or []),
+                finding=str(body.get("finding") or ""),
+            )
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="not found") from exc
+        except ViseTransitionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return job.to_dict()
+
+    @app.get("/v1/security/mcp")
+    def get_mcp_registry(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return app.state.mcp_registry.view()
+
     @app.get("/v1/security/posture")
     def get_security_posture(
         request: Request,
@@ -1508,6 +1646,91 @@ def create_control_app(
         except AttachmentError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return meta
+
+    @app.get("/v1/mcp/intake")
+    def mcp_intake_catalog(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Candidates the operator can submit. Nothing here is listed yet."""
+        _gate(request, authorization)
+        return {"runs_in": "stdio-process", "candidates": intake_candidates()}
+
+    @app.post("/v1/mcp/intake")
+    def post_mcp_intake(
+        request: Request,
+        body: McpIntakeIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Save a lab, third-party, or draft server. It stays denied until authorized."""
+        _gate(request, authorization)
+        try:
+            saved = submit_mcp_intake(
+                server_id=body.id,
+                origin=body.origin,
+                label=body.label,
+                command=body.command,
+                args=body.args,
+                network_policy=body.network_policy,
+                credential_ref=body.credential_ref,
+                capabilities=body.capabilities,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return saved
+
+    @app.post("/v1/mcp/servers/{server_id}/authorize")
+    def authorize_mcp(
+        request: Request,
+        server_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            saved = authorize_mcp_server(server_id)
+        except McpDenied as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        app.state.security_events.append(
+            SecurityEvent.create(
+                provider="mcp",
+                severity="info",
+                classification="mcp",
+                summary="MCP server listed",
+                agent_id="operator",
+                resource_id=server_id,
+                details={"decision": "allow", "reason": "operator listed the server"},
+            )
+        )
+        return saved
+
+    @app.put("/v1/mcp/servers/{server_id}/bindings")
+    def put_mcp_binding(
+        request: Request,
+        server_id: str,
+        body: McpBindingIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        try:
+            saved = bind_mcp_agent(server_id, body.agent_id, body.capabilities)
+        except McpDenied as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        app.state.security_events.append(
+            SecurityEvent.create(
+                provider="mcp",
+                severity="info",
+                classification="mcp",
+                summary="MCP agent binding recorded",
+                agent_id=body.agent_id,
+                resource_id=server_id,
+                details={"decision": "allow", "reason": "operator bound declared tools"},
+            )
+        )
+        return saved
 
     @app.get("/v1/mcp/status")
     def mcp_status(

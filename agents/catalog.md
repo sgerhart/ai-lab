@@ -7,3 +7,4 @@
 | research | Evidence-bearing reports | routed | authorized sources | allowlisted HTTP | Local plan: limitations report, no fetch, no invented citations |
 | lab-operations | Read-only health and drift notes | routed | lab configs + health URLs | Tailscale health | Local plan: loopback port probe + compose stub |
 | lab-docs-architect | This repo (Cursor) | Cursor | this repository | local Git | Active in chat, not the harness |
+| security | Validate and lifecycle ephemeral analysis VMs | not built | approved hypervisor inventory only | no route from analysis guests to trusted networks | Specified in FEAT-020 / IWO-076. No policy file |

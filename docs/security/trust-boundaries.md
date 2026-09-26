@@ -9,5 +9,8 @@
 | GitHub public remote | Low | `sgerhart/ai-lab` today |
 | Cloud LLM APIs | Untrusted with private data unless work order allows | OpenAI, Anthropic |
 | Home LAN RFC1918 | Medium, mixed with Clarion VMs | not the AI-lab transport |
+| Hypervisor management (ESXi / Proxmox) | High impact. Application-authenticated. No generic agent admin | Security Compute Plane (ADR 0043). Endpoint names are operator-supplied (D-021) |
+| Analysis VM network | Hostile / untrusted. No route to trusted networks | Ephemeral Vise guests (FEAT-019). Design is D-022 |
+| Evidence ingress | Untrusted until sanitized and normalized | Hashes, metadata, and tool output. Not a guest filesystem |
 
 Compromise of the Air should not include Postgres data if the Air only has a client role and no copied dumps. Compromise of the Studio should not erase the queue (state is on M1). Compromise of the M1 is a full lab incident — rotate DB passwords, Tailscale, and API tokens using [../runbooks/rotating-credentials.md](../runbooks/rotating-credentials.md).

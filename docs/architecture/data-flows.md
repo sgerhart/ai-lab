@@ -41,6 +41,8 @@ flowchart LR
 
 Usage-billed API calls from the Air and the mini are planned to enter one tailnet gateway. That gateway is not built. Local Studio completion stays a direct call to `mac-studio:11434`. DefenseClaw summaries post to the mini **Security** page when the Air report is stored. Antares jobs already return a finding to review. Detail: [security-plane.md](security-plane.md).
 
+[ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md) (proposed) adds a shared Antares service and an external Security Compute Plane for hostile workloads. That plane has no route into the trusted Mac hosts. It is not built. Detail: [security-plane-amendment.md](security-plane-amendment.md).
+
 ## Model bytes
 
 Weights stay on Studio disk (Ollama library; Antares under `~/.ai-lab/antares/`).

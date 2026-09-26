@@ -12,6 +12,8 @@ This repository is the **source of truth** for design, deployment, operation, se
 
 The repository name is **`ai-lab`**. Do not rename it.
 
+Hostile-workload analysis is a proposed external Security Compute Plane (ESXi or Proxmox), specified in [ADR 0043](docs/decisions/0043-shared-antares-and-security-compute-plane.md). It is not a fourth Mac, and it is not built. Containers and these three hosts stay off that work.
+
 **Deployment status:** M1 control plane **up** on `mac-mini` (:8088) with Qdrant memory, scheduler LaunchAgent, and Personal Agent Studio at `/`. `/agents` and `/lab` redirect there. Studio Ollama is **up** with `llama3.2:3b`, `qwen3.8:27b`, and `qwen3-coder:30b` installed (Git catalog still says not pulled). Jupyter opens from the Studio sidebar. Antares-1B completions/jobs are up on Studio and linked from the Security badge. Cursor lab MCP is on the Air. Cloud and deep research stay gated on `/secrets`. Coding Assistant can read a workspace and patch a separate copy after approval. The live lab-health pass is still open. See [docs/features/index.md](docs/features/index.md) and [docs/architecture/overview.md](docs/architecture/overview.md).
 
 ## Three areas

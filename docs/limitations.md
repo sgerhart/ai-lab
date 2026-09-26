@@ -8,10 +8,10 @@
 - Control-plane HTTP API **is** running on `mac-mini:8088` (Tailscale). Studio worker `:8090` is not.
 - LangGraph agent loop runs inside that control plane. It is unit-tested and used for Studio chat. It is not an unattended coding factory.
 - Coding Assistant cannot push, open a pull request, or run tests. Patches apply only in a harness worktree after approval. The operator has not accepted the Agent Studio layout (D-019).
-- DefenseClaw stays on the Air. The mini stores a posted summary. Repeating that post from the Air needs `~/.ai-lab/api.token` on the Air. The API gateway is not built. The Security page does not edit DefenseClaw config.
+- DefenseClaw stays on the Air. The mini stores a posted summary. The Air posts that summary every 10 minutes. The API gateway is not built. The Security page does not edit DefenseClaw config.
 - Git `models/catalog.json` stays `catalogued-not-pulled` even after a live `ollama pull`.
 - Cloud and deep-research models stay off until `/secrets` authorizes them. There is no silent paid fallback.
-- Docker container ≠ malware sandbox.
+- Docker container ≠ malware sandbox. Hostile-workload analysis is specified only for an external ESXi/Proxmox Security Compute Plane (FEAT-019, ADR 0043) and is not built.
 - Public GitHub remote remains a leak risk (F-002, accepted ADR 0028).
 - Adjacent Clarion stack on the Air can collide on ports 5432/6379/3000 if compose is ever started **on the Air** — do not start control-plane compose on the Air.
 - `datasets/` path handling: raw datasets are gitignored under `models/datasets/raw/`.

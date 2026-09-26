@@ -39,7 +39,7 @@ the existing runtime as the executor.
 
 - IWO-063 replaces the old agent form with the studio shell.
 - D-019 stays open until the operator accepts the live screen.
-- A malware-analysis environment stays out of this repository.
+- A malware-analysis environment stays out of Agent Studio and off Mac hosts. [ADR 0043](0043-shared-antares-and-security-compute-plane.md) (proposed) places hostile-workload execution on an external ESXi/Proxmox Security Compute Plane.
 
 ## Alternatives considered
 

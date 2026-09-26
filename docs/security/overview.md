@@ -12,12 +12,12 @@
 - Scoped credentials (no org-wide GitHub tokens in agent env)
 - Audit trails on work orders
 - Container isolation is tier 2, not malware-grade (ADR 0017)
-- VM isolation is future, not implemented
+- VM isolation for hostile workloads is specified for the external Security Compute Plane (FEAT-019, ADR 0043) and is not implemented
 - Network: Tailscale + loopback default; no public dashboards
 - Tailscale ≠ application authentication
 - Credential rotation and recovery runbooks
 - Untrusted repos/prompts: no silent host privileges
-- **No malware-analysis environment in this project**
+- Malware analysis is permitted only through FEAT-019 on the external ESXi/Proxmox Security Compute Plane. Containers and Mac-host execution remain prohibited for hostile workloads.
 
 ## Bootstrap rules
 
@@ -60,4 +60,4 @@ Values are not in Git.
 
 Work-order rows and audit events are kept until an operator purges them. Model caches follow Studio disk policy. Logs must not be committed.
 
-See also: [trust-boundaries.md](trust-boundaries.md), [agent-permissions.md](agent-permissions.md), [../runbooks/rotating-credentials.md](../runbooks/rotating-credentials.md).
+See also: [trust-boundaries.md](trust-boundaries.md), [agent-permissions.md](agent-permissions.md), [event-envelope.md](event-envelope.md), [../architecture/security-plane-amendment.md](../architecture/security-plane-amendment.md), [../runbooks/rotating-credentials.md](../runbooks/rotating-credentials.md).

@@ -7,3 +7,11 @@
 | m3-air | `mac-air` | MacBook Air, M3, **16 GB**, 512 GB | Tailscale IPv4, LAN IP |
 
 Do not commit serials, MACs, or Tailscale IPs. Use `hosts/<name>/local.inventory.yaml`. Public-safe names: `hosts/<name>/inventory.yaml`.
+
+## Security Compute hypervisor
+
+Operator-supplied 2026-09-26 ([D-020](../open-decisions.md)). This machine is not a Tailscale lab host and has no inventory name in Git.
+
+| Role | Confirmed | Still open |
+|------|-----------|------------|
+| Security Compute | Proxmox, Intel i7, 64 GB memory, empty (no guests) | Management endpoint (D-021), isolated network (D-022), quarantine storage (D-023), templates (D-024), disk size |

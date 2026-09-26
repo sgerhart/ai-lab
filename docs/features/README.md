@@ -53,7 +53,7 @@ An **execution record** on the M1 control plane (`POST /v1/work-orders`). Durabl
 
 ## Index and template
 
-- [Capabilities and feature index](index.md) — what is live, plus FEAT-001…016
+- [Capabilities and feature index](index.md) — what is live, plus FEAT-001…020
 - [Mini-first dependency plan](PLAN-mini-first.md)
 - [Feature specification template](TEMPLATE.md)
 - Core specs: [FEAT-010 harness](FEAT-010-mini-personal-agent-loop.md), [FEAT-011 providers](FEAT-011-frontier-model-access.md)

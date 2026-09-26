@@ -22,6 +22,7 @@ work orders and agent definitions must still exist.
 | Agent-run worker | Background queue when enabled | In-process / env-gated (`AI_LAB_AGENT_WORKER`) |
 | Backup orchestration | `scripts/backup.sh` | Scripts; first dump recorded; restore untested |
 | Monitoring | Optional `observability` profile | Off |
+| Security platform module | Provider registry, event envelope, MCP registry (IWO-065–067) | In Git. Same API process after the next authorized restart. Not a new service |
 
 Does **not** run large local models (route to Studio).
 

@@ -20,7 +20,8 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Deep research / cloud models | Gated adapters | Off until `/secrets` authorizes them |
 | Studio Jupyter | Host scripts. Sidebar **R Labs** opens `~/ai-lab-notebooks/r.ipynb`, whose kernelspec is `ir` | Up on `:8888`. R 4.6.1 and kernelspec `ir` installed on the Studio 2026-09-26. Mini control plane serves the R link |
 | Antares-1B completions, jobs, `/antares` | Yes | UI and services live. Reboot LaunchAgents not set. Repo choice beyond the Studio fixture is direction ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)) |
-| Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | DefenseClaw summary and finding glossary in Git (IWO-061, IWO-062). Gateway not built. The page does not edit DefenseClaw config | DefenseClaw live on the Air. One summary was stored on the mini on 2026-09-25. Repeating that from the Air still needs `~/.ai-lab/api.token` there. The Findings pane was not checked in a browser |
+| Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | DefenseClaw summary and finding glossary in Git (IWO-061, IWO-062). Gateway not built. The page does not edit DefenseClaw config | DefenseClaw live on the Air. The Air posts a summary every 10 minutes (2026-09-26). The Findings pane was not checked in a browser |
+| Security platform, Vise, security compute agent | Foundation in Git (IWO-065–067, unit-tested). Vise, security agent, and Security Center UI still Draft | No. No hypervisor connection. API routes wait for an authorized restart |
 | Studio worker `:8090` | Scripts | Not running |
 | Model comparison on short fixtures (IWO-057) | Script, unit tests | First live Studio pass 2026-09-25: the three large tags each scored 4/4. The fixture did not separate them, so Coding Local stays `qwen3-coder:30b` |
 | Pull requests from an agent (FEAT-007) | Not started | No |
@@ -60,6 +61,9 @@ Do not treat this index as authorized implementation or deploy.
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 `/antares` UI live | — |
 | 3 | [FEAT-017](FEAT-017-agent-operating-studio.md) | Agent Operating Studio | **In progress:** IWO-063 shell in Git. Live layout pass open (D-019) | — |
+| — | [FEAT-018](FEAT-018-ai-security-platform.md) | AI Security Platform | **Partial (code):** IWO-065–067 unit-tested. IWO-068–069 still Draft. Not deployed | — |
+| — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Partial**. Job model and fake adapter unit-tested (IWO-070, IWO-071). Live Proxmox calls are refused. IWO-072–075 and IWO-081 remain Draft | — |
+| — | [FEAT-020](FEAT-020-security-compute-agent.md) | Security Compute Agent | **Specified** (proposed). IWO-076–078 Draft. Agent identity not created | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -105,10 +109,27 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-058](../work-orders/IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | FEAT-016 | **Complete** (unit; approval + worktree only) |
 | [IWO-059](../work-orders/IWO-059-chat-first-studio.md) | Chat-first Studio shell | FEAT-013 | **In progress** (code; live operator pass open) |
 | [IWO-060](../work-orders/IWO-060-project-documents.md) | Project document library | FEAT-008 | **In progress** (unit; live cite pass open) |
-| [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | FEAT-014 | **In progress** (unit; one report stored; Air `--apply` still needs a local token) |
+| [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | FEAT-014 | **Complete** (Air posts every 10 minutes) |
 | [IWO-062](../work-orders/IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | FEAT-014 | **In progress** (unit; pane not checked in the browser) |
 | [IWO-063](../work-orders/IWO-063-agent-studio-shell.md) | Agent Studio shell | FEAT-017 | **In progress** (unit; live layout pass open) |
 | [IWO-064](../work-orders/IWO-064-jupyter-ollama-help.md) | Jupyter code help via Studio Ollama | FEAT-006 | **In progress** (6.0.0 on Studio; Air question not asked) |
+| [IWO-065](../work-orders/IWO-065-security-platform-foundation.md) | Security platform foundation | FEAT-018 | **Complete** (unit; not deployed) |
+| [IWO-066](../work-orders/IWO-066-common-security-event-and-evidence-model.md) | Common security event and evidence model | FEAT-018 | **Complete** (unit; not deployed) |
+| [IWO-067](../work-orders/IWO-067-mcp-registry-and-governed-capabilities.md) | MCP registry and governed capabilities | FEAT-018 | **Complete** (unit; not deployed) |
+| [IWO-068](../work-orders/IWO-068-agent-studio-security-posture.md) | Agent Studio security posture | FEAT-018 | **Draft** |
+| [IWO-069](../work-orders/IWO-069-security-center-expansion.md) | Security Center expansion | FEAT-018 | **Draft** |
+| [IWO-070](../work-orders/IWO-070-cybersecurity-vise-job-and-api-model.md) | Cybersecurity Vise job and API model | FEAT-019 | **Complete** (unit; not deployed) |
+| [IWO-071](../work-orders/IWO-071-hypervisor-adapter-abstraction.md) | Hypervisor adapter abstraction | FEAT-019 | **Complete** (unit; fake adapter only) |
+| [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) | Security Compute isolated network contract | FEAT-019 | **Draft** |
+| [IWO-073](../work-orders/IWO-073-security-vm-template-contract.md) | Security VM template contract | FEAT-019 | **Draft** |
+| [IWO-074](../work-orders/IWO-074-vise-evidence-collection-pipeline.md) | Vise evidence collection pipeline | FEAT-019 | **Draft** |
+| [IWO-075](../work-orders/IWO-075-cybersecurity-vise-operator-ui.md) | Cybersecurity Vise operator UI | FEAT-019 | **Draft** |
+| [IWO-076](../work-orders/IWO-076-security-agent-definition-and-policy.md) | Security agent definition and policy | FEAT-020 | **Draft** |
+| [IWO-077](../work-orders/IWO-077-security-vm-lifecycle-and-validation-workflow.md) | Security VM lifecycle and validation workflow | FEAT-020 | **Draft** |
+| [IWO-078](../work-orders/IWO-078-hypervisor-test-harness-and-benign-end-to-end-validation.md) | Hypervisor test harness and benign end-to-end validation | FEAT-020 | **Draft** |
+| [IWO-079](../work-orders/IWO-079-mcp-server-intake.md) | MCP server intake | FEAT-005 | **Complete** (unit; not deployed) |
+| [IWO-080](../work-orders/IWO-080-readonly-third-party-mcp.md) | Read-only third-party MCP candidates | FEAT-005 | **Complete** (unit; not deployed) |
+| [IWO-081](../work-orders/IWO-081-security-compute-tool-guests.md) | Security Compute tool guests | FEAT-019 | **Draft** |
 
 ## Historical phase work orders
 

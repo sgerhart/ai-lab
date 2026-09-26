@@ -1,6 +1,8 @@
 # Infrastructure
 
-Control-plane compose and supporting config. **Not started.**
+Control-plane compose for the Mac mini. **Live** on `mac-mini`: Postgres, Redis, and Qdrant. This directory is the Git definition. It does not start containers.
+
+Still open on the host, and not done by the documents here: a restore drill from the iCloud dump onto a non-live database (WO-007), the Vault profile (IWO-017, scaffold only), and the observability profile (ADR 0026, off).
 
 | Path | Purpose |
 |------|---------|

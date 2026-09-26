@@ -14,7 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 from .conversation import AgentRun, AgentRunStatus
-from .mcp_client import list_mcp_agent_tools, parse_mcp_tool_name
+from .mcp_client import binding_allows, bound_agent_tool_names, capability_needs_approval, parse_mcp_tool_name
 from .model_router import CompletionRequest, ModelRouter
 from .policy import AgentPolicy, load_policy
 from .tool_runtime import (
@@ -160,7 +160,7 @@ def step_agent_run(
     else:
         prompt = prompt + "\n\nNo observations yet. Emit one TOOL … line, or FINAL if no tool is needed."
 
-    mcp_tools = list_mcp_agent_tools(list(run.mcp_server_ids or [])) if run.mcp_server_ids else []
+    mcp_tools = bound_agent_tool_names(run.agent, list(run.mcp_server_ids or [])) if run.mcp_server_ids else []
     effective_allowed = list(policy.allowed_tools) + list(policy.privileged_tools) + mcp_tools
 
     try:
@@ -261,10 +261,10 @@ def step_agent_run(
         store_put(run)
         return run
 
-    # MCP tools on listed servers are operator-trusted for this run (no extra gate).
+    # Listed MCP tools run only when this agent is bound to that capability.
     mcp_parsed = parse_mcp_tool_name(tool_name)
     if mcp_parsed is not None:
-        sid, _ = mcp_parsed
+        sid, mcp_tool = mcp_parsed
         if sid not in (run.mcp_server_ids or []):
             run.traces.append(
                 {
@@ -280,8 +280,43 @@ def step_agent_run(
             run.updated_at = utcnow()
             store_put(run)
             return run
+        if not binding_allows(sid, run.agent, mcp_tool):
+            run.traces.append(
+                {
+                    "kind": "tool_denied",
+                    "at": utcnow(),
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "reason": "mcp_not_bound",
+                }
+            )
+            run.status = AgentRunStatus.FAILED
+            run.error = f"tool_denied:{tool_name}"
+            run.updated_at = utcnow()
+            store_put(run)
+            return run
         if tool_name not in effective_allowed:
             effective_allowed.append(tool_name)
+        if capability_needs_approval(sid, mcp_tool) and tool_name not in approved_tools:
+            run.pending_action = {
+                "id": action_id,
+                "tool": tool_name,
+                "args": tool_args,
+                "created_at": utcnow(),
+            }
+            run.status = AgentRunStatus.AWAITING_APPROVAL
+            run.traces.append(
+                {
+                    "kind": "approval_required",
+                    "at": utcnow(),
+                    "action_id": action_id,
+                    "tool": tool_name,
+                    "args": tool_args,
+                }
+            )
+            run.updated_at = utcnow()
+            store_put(run)
+            return run
         result = execute_allowed_tool(
             tool_name,
             tool_args,

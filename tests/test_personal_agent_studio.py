@@ -20,6 +20,7 @@ from ai_lab_platform.mcp_client import (
     list_mcp_tools,
     mcp_client_status,
     mcp_tool_name,
+    authorize_mcp_server,
     require_mcp_servers,
     upsert_local_server,
 )
@@ -109,24 +110,36 @@ class McpClientTests(unittest.TestCase):
             with self.assertRaises(McpDenied):
                 require_mcp_servers(["filesystem"])
 
-    def test_local_upsert_allows(self) -> None:
+    def test_local_upsert_stays_unlisted_until_authorized(self) -> None:
         path = Path(tempfile.mkdtemp()) / "mcp-servers.json"
         with mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(path)}):
             upsert_local_server(
                 server_id="filesystem",
                 label="FS",
-                command="npx -y @modelcontextprotocol/server-filesystem /tmp",
+                command="npx",
+                args=["server-filesystem"],
+                capabilities=[{"name": "read_file", "permission_class": "read"}],
             )
             status = mcp_client_status()
-            self.assertIn("filesystem", status["listed_servers"])
-            self.assertIn(status["transport"], {"stdio", "stdio-ready"})
+            self.assertNotIn("filesystem", status["listed_servers"])
+            with self.assertRaises(McpDenied):
+                require_mcp_servers(["filesystem"])
+            authorize_mcp_server("filesystem")
+            self.assertIn("filesystem", mcp_client_status()["listed_servers"])
             require_mcp_servers(["filesystem"])
 
     def test_stdio_list_and_call(self) -> None:
         path = Path(tempfile.mkdtemp()) / "mcp-servers.json"
         cmd = f"{sys.executable} {FAKE_MCP}"
         with mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(path)}):
-            upsert_local_server(server_id="fake", label="Fake", command=cmd, transport="stdio")
+            upsert_local_server(
+                server_id="fake",
+                label="Fake",
+                command=cmd,
+                transport="stdio",
+                capabilities=[{"name": "echo", "permission_class": "read"}],
+            )
+            authorize_mcp_server("fake")
             tools = list_mcp_tools("fake")
             self.assertTrue(any(t["name"] == "echo" for t in tools))
             self.assertEqual(tools[0]["agent_tool"], "mcp/fake/echo")
@@ -138,7 +151,13 @@ class McpClientTests(unittest.TestCase):
         path = Path(tempfile.mkdtemp()) / "mcp-servers.json"
         cmd = f"{sys.executable} {FAKE_MCP}"
         with mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(path)}):
-            upsert_local_server(server_id="fake", label="Fake", command=cmd)
+            upsert_local_server(
+                server_id="fake",
+                label="Fake",
+                command=cmd,
+                capabilities=[{"name": "echo", "permission_class": "read"}],
+            )
+            authorize_mcp_server("fake")
             name = mcp_tool_name("fake", "echo")
             result = execute_allowed_tool(
                 name,

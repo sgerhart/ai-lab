@@ -25,6 +25,8 @@ FEAT-002, FEAT-010; new ADR if enabling first MCP server.
 |----|-------|------------|
 | [IWO-042](../work-orders/IWO-042-lab-mcp-server.md) | Lab stdio MCP server + LabApiClient | IDE tools hit mini API |
 | IWO-043 | Richer Python client (submit/approve/chat) | Scripted WO lifecycle |
+| [IWO-079](../work-orders/IWO-079-mcp-server-intake.md) | MCP server intake | Unlisted until authorize |
+| [IWO-080](../work-orders/IWO-080-readonly-third-party-mcp.md) | Read-only third-party MCP candidates | Catalog only. Unlisted until authorize |
 
 Note: IWO-020/021/022/023 numbering collided with other tracks; IWO-042 supersedes
 the old IWO-022/023 titles for the MCP server slice.
@@ -38,5 +40,5 @@ Org-wide tokens; Clarion factory MCP.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Partial — `lab_mcp_server` + `LabApiClient` (IWO-042) |
+| Code | Partial — lab server (IWO-042), intake that stays unlisted until authorize (IWO-079), and unlisted lookup candidates (IWO-080) |
 | Live | Cursor `ai-lab` MCP on Air 2026-09-24 (token via `~/.ai-lab/mac-mini-api.token`) |

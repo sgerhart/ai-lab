@@ -82,4 +82,4 @@ That last command still does not start containers.
 
 - Bind listeners to `127.0.0.1` unless a deploy-time bind address is set.
 - Least privilege for every agent identity.
-- A Docker container on macOS is not a malware sandbox. Do not build a malware-analysis environment in this repo.
+- A Docker container on macOS is not a malware sandbox. Hostile-workload analysis is permitted only through FEAT-019 on the external ESXi/Proxmox Security Compute Plane (ADR 0043). Do not run hostile samples in containers or on Mac hosts, and do not connect to a hypervisor unless the operator explicitly authorizes that action.

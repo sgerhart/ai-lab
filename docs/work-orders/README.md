@@ -71,10 +71,27 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-058](IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | Complete (unit) |
 | [IWO-059](IWO-059-chat-first-studio.md) | Chat-first Studio shell | In progress (live lab-health pass open) |
 | [IWO-060](IWO-060-project-documents.md) | Project document library | In progress (unit; live cite pass open) |
-| [IWO-061](IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | In progress (unit; one report stored; Air `--apply` still needs a local token) |
+| [IWO-061](IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | Complete (Air posts every 10 minutes) |
 | [IWO-062](IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | In progress (unit; pane not checked in the browser) |
 | [IWO-063](IWO-063-agent-studio-shell.md) | Agent Studio shell | In progress (unit; live layout pass open) |
 | [IWO-064](IWO-064-jupyter-ollama-help.md) | Jupyter code help via Studio Ollama | In progress (6.0.0 on Studio; Air question not asked) |
+| [IWO-065](IWO-065-security-platform-foundation.md) | Security platform foundation | Complete (unit; not deployed) |
+| [IWO-066](IWO-066-common-security-event-and-evidence-model.md) | Common security event and evidence model | Complete (unit; not deployed) |
+| [IWO-067](IWO-067-mcp-registry-and-governed-capabilities.md) | MCP registry and governed capabilities | Complete (unit; not deployed) |
+| [IWO-068](IWO-068-agent-studio-security-posture.md) | Agent Studio security posture | Draft |
+| [IWO-069](IWO-069-security-center-expansion.md) | Security Center expansion | Draft |
+| [IWO-070](IWO-070-cybersecurity-vise-job-and-api-model.md) | Cybersecurity Vise job and API model | Complete (unit; not deployed) |
+| [IWO-071](IWO-071-hypervisor-adapter-abstraction.md) | Hypervisor adapter abstraction | Complete (unit; fake adapter only) |
+| [IWO-072](IWO-072-security-compute-isolated-network-contract.md) | Security Compute isolated network contract | Draft |
+| [IWO-073](IWO-073-security-vm-template-contract.md) | Security VM template contract | Draft |
+| [IWO-074](IWO-074-vise-evidence-collection-pipeline.md) | Vise evidence collection pipeline | Draft |
+| [IWO-075](IWO-075-cybersecurity-vise-operator-ui.md) | Cybersecurity Vise operator UI | Draft |
+| [IWO-076](IWO-076-security-agent-definition-and-policy.md) | Security agent definition and policy | Draft |
+| [IWO-077](IWO-077-security-vm-lifecycle-and-validation-workflow.md) | Security VM lifecycle and validation workflow | Draft |
+| [IWO-078](IWO-078-hypervisor-test-harness-and-benign-end-to-end-validation.md) | Hypervisor test harness and benign end-to-end validation | Draft |
+| [IWO-079](IWO-079-mcp-server-intake.md) | MCP server intake | Complete (unit; not deployed) |
+| [IWO-080](IWO-080-readonly-third-party-mcp.md) | Read-only third-party MCP candidates | Complete (unit; not deployed) |
+| [IWO-081](IWO-081-security-compute-tool-guests.md) | Security Compute tool guests | Draft |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

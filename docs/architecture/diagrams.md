@@ -12,7 +12,7 @@ flowchart LR
   m1 -->|local inference| st
 ```
 
-Security hops: DefenseClaw summary and Antares jobs are the live slices. The API gateway is not deployed. [security-plane.md](security-plane.md).
+Security hops: DefenseClaw summary and Antares jobs are the live slices. The API gateway is not deployed. [security-plane.md](security-plane.md). The proposed external Security Compute Plane is [security-plane-amendment.md](security-plane-amendment.md) (ADR 0043) and is not built.
 
 ## Trust zones
 

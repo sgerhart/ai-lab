@@ -41,8 +41,23 @@ Core purpose: always-on personal agents + AI experimentation. Current capability
 | Jupyter / Antares | FEAT-006 / FEAT-015 | Done for current UI and services | Studio | Live. Antares not set to survive reboot |
 | Studio worker `:8090` | FEAT-003 optional | Scripts | No | No |
 
+## Security platform and Security Compute
+
+Direction only ([ADR 0043](decisions/0043-shared-antares-and-security-compute-plane.md), proposed). Nothing in this section is deployed. These documents do not authorize a hypervisor connection, VM changes, network changes, guest tools, or sample execution.
+
+| Slice | Work | Code | Deploy | Live |
+|-------|------|------|--------|------|
+| AI Security Platform | [FEAT-018](features/FEAT-018-ai-security-platform.md), IWO-065–067 | Unit-tested | No | No |
+| Security Center and Agent Studio posture | IWO-068–069 | Draft | No | No |
+| Cybersecurity Vise | [FEAT-019](features/FEAT-019-cybersecurity-vise.md), IWO-070–071 unit, IWO-072–075 Draft | Unit-tested, not deployed | No | No |
+| Security compute agent | [FEAT-020](features/FEAT-020-security-compute-agent.md), IWO-076–078 | Draft | No | No |
+
+IWO-065, IWO-066, and IWO-067 are in Git and unit-tested. They are not deployed. Remaining order when a human accepts the drafts: IWO-070 and IWO-074 follow IWO-066. IWO-068 and IWO-076 follow IWO-067. IWO-069 follows IWO-066 and IWO-067. IWO-071, then IWO-072 and IWO-073, then IWO-077, then IWO-078. IWO-075 follows IWO-069, IWO-070, and IWO-074. Agent Studio posture (IWO-068) waits until that pass.
+
+The hypervisor is the operator's empty Proxmox server (D-020: Intel i7, 64 GB). Still operator-supplied, and not invented here: management endpoint (D-021), isolated analysis network (D-022), quarantine storage (D-023), and template images (D-024). Lookup MCP stays on the trusted hosts ([mcp-servers.md](architecture/mcp-servers.md), IWO-080). Active tool MCP waits on an isolated guest (IWO-081). This roadmap does not connect to Proxmox.
+
 ## Next
 
-Operator is deciding the Agent Studio layout (D-019). Do not treat the current canvas as final. Do not pull more models, enable paid APIs, or deploy hosts without a separate yes.
+Operator is deciding the Agent Studio layout (D-019). Do not treat the current canvas as final. Do not pull more models, enable paid APIs, or deploy hosts without a separate yes. Security platform code that is unit-tested (IWO-065–067, 070–071, 079–080) is not deployed. The remaining security IWOs stay Draft.
 
-Still open: a harder coding bench, pull-request delivery (FEAT-007), the thin hardening notes on FEAT-016, DefenseClaw Air `--apply` (needs a local token), and a browser pass of the Findings pane. Live M1 restore is still untested.
+Still open: a harder coding bench, pull-request delivery (FEAT-007), the thin hardening notes on FEAT-016, and a browser pass of the Findings pane. Live M1 restore is still untested.

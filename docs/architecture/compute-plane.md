@@ -18,7 +18,7 @@ from Air and mini ([F-015](../security/findings/F-015-studio-ssh-auth-failure.md
 | Studio worker (`scripts/studio-worker.sh`) | Not running |
 | Evaluation / heavy training jobs | As authorized |
 
-Does **not** own PostgreSQL data, the work-order queue, or backup source-of-truth.
+Does **not** own PostgreSQL data, the work-order queue, or backup source-of-truth. Hostile-workload VMs do not run here. That work is the external Security Compute Plane in [ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md), and it is not built.
 
 ## Memory
 

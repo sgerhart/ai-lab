@@ -47,5 +47,6 @@ Tools exposed: `lab_health`, `lab_memory_search`, `lab_memory_upsert`,
 `lab_scheduler_status`.
 
 Adding an *outbound* agent MCP server is a security change — see
-[../../docs/runbooks/adding-an-mcp-server.md](../../docs/runbooks/adding-an-mcp-server.md)
-if present.
+[../../docs/runbooks/adding-an-mcp-server.md](../../docs/runbooks/adding-an-mcp-server.md).
+
+Intake (`POST /v1/mcp/intake`) saves a lab, third-party, or draft server and leaves it unlisted. `POST /v1/mcp/servers/{id}/authorize` is the operator listing step. Both kinds run as a stdio process on the host. Neither runs in a container. The lab candidate is `scripts/lab-mcp-server.sh`.

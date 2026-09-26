@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .approvals import is_privileged, requires_approval
-from .mcp_client import call_mcp_tool, parse_mcp_tool_name
+from .mcp_client import call_mcp_tool, capability_needs_approval, get_local_server, parse_mcp_tool_name
 from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
 from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, repo_read, repo_search
 from .workspace_isolation import apply_patch, git_commit_isolated
@@ -118,6 +118,22 @@ def execute_allowed_tool(
     mcp = parse_mcp_tool_name(name)
     if mcp is not None:
         server_id, tool = mcp
+        server = get_local_server(server_id)
+        declared = [item["name"] for item in (server or {}).get("capabilities") or []]
+        if declared and tool not in declared:
+            return ToolResult(
+                name=name,
+                ok=False,
+                observation=f"MCP tool {tool!r} is not declared on {server_id!r}",
+                denied=True,
+            )
+        if capability_needs_approval(server_id, tool) and name not in approved_tools:
+            return ToolResult(
+                name=name,
+                ok=False,
+                observation=f"tool requires approval: {name}",
+                denied=True,
+            )
         try:
             result = call_mcp_tool(server_id, tool, args or {})
         except Exception as exc:  # noqa: BLE001

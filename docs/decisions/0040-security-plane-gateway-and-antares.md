@@ -1,5 +1,7 @@
 # ADR 0040 — Security plane: API gateway, DefenseClaw, Antares
 
+> **Amended by [ADR 0043](0043-shared-antares-and-security-compute-plane.md) (2026-09-26, proposed):** Antares is a shared software-security service usable outside the AI Lab UI, the MacBook Air is not a required gateway or infrastructure node, and hostile-workload execution moves to the ESXi/Proxmox Security Compute Plane. The historical decision text below is unchanged.
+
 - **Status:** Accepted (direction). Nothing in this ADR is deployed.
 - **Date:** 2026-09-25
 - **Related:** ADR 0007, 0025, 0037, 0038, 0039; FEAT-011, FEAT-014, FEAT-015

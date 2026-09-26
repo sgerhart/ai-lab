@@ -11,7 +11,12 @@ Durable control-plane state lives on the M1 mini. Inference and heavy models
 live on the Studio. The M3 Air is the human interface (IDE, approvals,
 DefenseClaw). The security testing ground is documented in
 [security-plane.md](security-plane.md) ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)):
-that page is direction, not a running gateway.
+that page is direction, not a running gateway. The forward direction is
+[ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md)
+(proposed): shared Antares, and hostile workloads on an external
+Proxmox Security Compute Plane (D-020: Intel i7, 64 GB, empty)
+([security-plane-amendment.md](security-plane-amendment.md)). That plane is not built.
+Lookup MCP stays on the trusted hosts ([mcp-servers.md](mcp-servers.md)).
 
 ```mermaid
 flowchart TB
@@ -55,13 +60,14 @@ flowchart TB
 | Scheduler tick + LaunchAgent | Yes (IWO-030/052) | **`com.ai-lab.scheduler-tick` on mini** |
 | Retrieval / Qdrant memory API | Yes (IWO-040/041/053) | **`backend=qdrant` on mini** |
 | Lab as MCP server (IDE) | Yes (IWO-042/054) | **Cursor `ai-lab` on Air** |
-| DefenseClaw (adjacent) | Preflight, summary API, finding glossary | **Air: Cursor + Antigravity action.** One summary stored on the mini 2026-09-25. Config edit and the API gateway are not built |
+| DefenseClaw (adjacent) | Preflight, summary API, finding glossary | **Air: Cursor + Antigravity action.** Summary posts every 10 minutes. Config edit and the API gateway are not built |
 | Studio Ollama | Catalog + provider + profiles | **Default chat profile `qwen36-local` (`qwen3.6:35b-a3b`, Q4_K_M). Also `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b` on `mac-studio:11434`. Listener is all interfaces (ADR 0041). Git catalog still `catalogued-not-pulled`** |
 | Coding Assistant | Read tools + isolated patch/commit + short bench | **Unit-tested.** First Studio bench 2026-09-25 did not separate the models. No recorded live approved patch. Push denied |
-| Studio Jupyter | Host scripts | **Up (`:8888`); token on mini** |
+| Studio Jupyter | Host scripts. Sidebar **R Labs** opens the R notebook | **Up (`:8888`); token on mini. R kernelspec installed on the Studio 2026-09-26** |
 | Antares-1B | Runbook + `/antares` UI + jobs | **Live** UI → Studio `:8002` jobs / `:8001` completions |
 | Studio SSH | Documented | **OK** — `stevengerhart@mac-studio` from Air and mini (F-015 closed) |
 | Studio worker `:8090` | Scripts | **Not running** |
+| Security platform / Vise | IWO-065–067, 070–071, and 079–080 unit-tested. The rest are Draft | **Not deployed.** No hypervisor connection |
 | Cloud LLM / deep research | Gated adapters | Off until `/secrets` authorize |
 
 ## Read next
@@ -73,5 +79,7 @@ flowchart TB
 - [data-flows.md](data-flows.md)
 - [diagrams.md](diagrams.md)
 - [security-plane.md](security-plane.md)
+- [security-plane-amendment.md](security-plane-amendment.md)
+- [mcp-servers.md](mcp-servers.md)
 - [../deployment/network.md](../deployment/network.md)
 - [../inventory/adjacent-systems.md](../inventory/adjacent-systems.md)
