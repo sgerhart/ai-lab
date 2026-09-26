@@ -51,6 +51,7 @@ mini. Ordinary notebook cells must **not** route through the agent harness.
 | [IWO-013](../work-orders/IWO-013-jupyter-ssh-tunnel.md) | SSH tunnel from Air | IWO-012 | Browser opens Lab |
 | [IWO-014](../work-orders/IWO-014-jupyter-air-verify.md) | Hardware check from Air | IWO-013 | Proof cell on Studio |
 | [IWO-015](../work-orders/IWO-015-jupyter-sample-notebook.md) | Sample AI notebook + artifacts | IWO-014 | Documented path |
+| [IWO-064](../work-orders/IWO-064-jupyter-ollama-help.md) | Code help via Studio Ollama | Jupyter live | In progress. `notebook-intelligence` 6.0.0 on Studio. Air question not asked |
 
 ## Acceptance criteria
 

@@ -12,7 +12,7 @@ flowchart LR
   m1 -->|local inference| st
 ```
 
-Planned security hops (not deployed): [security-plane.md](security-plane.md).
+Security hops: DefenseClaw summary and Antares jobs are the live slices. The API gateway is not deployed. [security-plane.md](security-plane.md).
 
 ## Trust zones
 

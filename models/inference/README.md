@@ -9,6 +9,6 @@ Suggested unit (not applied):
 # OLLAMA_HOST=127.0.0.1:11434
 ```
 
-For M1→Studio access, set `OLLAMA_HOST` to the Studio Tailscale IP at deploy time. Never `0.0.0.0` without an ADR.
+Studio `com.ai-lab.ollama` uses `OLLAMA_HOST=0.0.0.0:11434` so LAN and Tailscale clients share one process (ADR 0041). Lab clients still call `http://mac-studio:11434`.
 
 Pulls: [../../docs/runbooks/adding-a-model.md](../../docs/runbooks/adding-a-model.md)

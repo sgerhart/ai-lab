@@ -1,6 +1,6 @@
 # Future capabilities index
 
-**Updated:** 2026-09-25  
+**Updated:** 2026-09-26  
 **Plan:** [PLAN-mini-first.md](PLAN-mini-first.md)  
 **GitHub:** [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#10](https://github.com/sgerhart/ai-lab/issues/10); [#11](https://github.com/sgerhart/ai-lab/issues/11) (FEAT-010); [#12](https://github.com/sgerhart/ai-lab/issues/12) (FEAT-011).
 
@@ -11,8 +11,8 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Capability | In Git | Live on the lab |
 |------------|--------|-----------------|
 | Control plane API + LangGraph (`mac-mini:8088`, login) | Yes | Yes |
-| Studio chat at `/`. Dashboard and New chat stay fixed. Under the line: Jupyter Labs, Agents, MCP, Security, Configure, then Projects and Chats in one scroll. Search is the icon beside AI LAB and can filter chats by project. The sidebar collapses from the menu button. `/agents` and `/lab` redirect home (IWO-059) | Yes | Synced to the mini. Agent and project screens still need refinement. Live lab-health pass not recorded |
-| Model picker from Studio Ollama tags; no silent paid fallback | Yes (IWO-055) | Yes. Installed tags seen 2026-09-24: `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b`. Git catalog `status` stays `catalogued-not-pulled` |
+| Studio chat at `/`. Dashboard and New chat stay fixed. Under the line: Jupyter Labs, Agent Studio, MCP, Security, Configure, then Projects and Chats in one scroll. Search is the icon beside AI LAB and can filter chats by project. The sidebar collapses from the menu button. `/agents` and `/lab` redirect home (IWO-059). Agent Studio is the design canvas (IWO-063) | Yes | Synced to the mini. Live layout pass for Agent Studio is still open (D-019). Live lab-health pass not recorded |
+| Model picker from Studio Ollama tags; no silent paid fallback. Models page can assign General, Coding, and Fast. Chat stays on the catalog default until that save | Yes (IWO-055) | Yes. Installed tags seen 2026-09-25: `qwen3.6:35b-a3b` (Q4_K_M), `qwen3.8:27b`, `qwen3-coder:30b`, `llama3.2:3b`. Catalog default is `qwen36-local`. Role assignments live in `~/.ai-lab/model-roles.json` and are not saved until the operator clicks Save. Git catalog `status` stays `catalogued-not-pulled` |
 | Standing agents (lab check, research, coding) with optional schedule | Yes | Scheduler LaunchAgent ticks the mini. Create/run screen copy is provisional |
 | Coding Assistant reads a workspace; patches and commits only in a separate git worktree after exact approval | Yes (IWO-056, IWO-058) | Unit-tested. Studio can prepare the copy. Operator has not finished a live patch. Push, PR, and tests stay denied |
 | Retrieval memory (Qdrant) and gated `memory_write`. A project can index its own Markdown and text files; a chat in that project searches only those (IWO-060) | Yes | Qdrant live on mini. Project-document cite on the live lab not recorded |
@@ -20,9 +20,9 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Deep research / cloud models | Gated adapters | Off until `/secrets` authorizes them |
 | Studio Jupyter | Host scripts | Up on `:8888` |
 | Antares-1B completions, jobs, `/antares` | Yes | UI and services live. Reboot LaunchAgents not set. Repo choice beyond the Studio fixture is direction ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)) |
-| Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | Specified ([security-plane.md](../architecture/security-plane.md)) | DefenseClaw live on the Air only. Gateway not built |
+| Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | DefenseClaw summary and finding glossary in Git (IWO-061, IWO-062). Gateway not built. The page does not edit DefenseClaw config | DefenseClaw live on the Air. One summary was stored on the mini on 2026-09-25. Repeating that from the Air still needs `~/.ai-lab/api.token` there. The Findings pane was not checked in a browser |
 | Studio worker `:8090` | Scripts | Not running |
-| Model comparison on coding fixtures (IWO-057) | Not started | No |
+| Model comparison on short fixtures (IWO-057) | Script, unit tests | First live Studio pass 2026-09-25: the three large tags each scored 4/4. The fixture did not separate them, so Coding Local stays `qwen3-coder:30b` |
 | Pull requests from an agent (FEAT-007) | Not started | No |
 
 Lifecycle and entities: [README.md](README.md). Template: [TEMPLATE.md](TEMPLATE.md).  
@@ -55,10 +55,11 @@ Do not treat this index as authorized implementation or deploy.
 | 6 | [FEAT-005](FEAT-005-python-client-mcp.md) | Python client / IDE MCP | **Partial:** IWO-042 + Cursor (IWO-054) | [#6](https://github.com/sgerhart/ai-lab/issues/6) |
 | 7 | [FEAT-008](FEAT-008-research-retrieval-memory.md) | Research + retrieval memory | **Partial:** IWO-040/041 + Qdrant live (IWO-053) | [#9](https://github.com/sgerhart/ai-lab/issues/9) |
 | 8 | [FEAT-009](FEAT-009-scheduled-personal-agents.md) | Scheduled personal/lab-ops agents | **Partial:** IWO-030 + LaunchAgent (IWO-052) | [#10](https://github.com/sgerhart/ai-lab/issues/10) |
-| 9 | [FEAT-016](FEAT-016-local-coding-models-and-assistant.md) | Local coding models + Coding Assistant | **Partial:** profiles, read tools, isolated patch/commit. Eval and PR delivery not started. Agent screen UX open (D-019) | — |
+| 9 | [FEAT-016](FEAT-016-local-coding-models-and-assistant.md) | Local coding models + Coding Assistant | **Partial:** profiles, role overlay, read tools, isolated patch/commit, first bench. PR delivery not started. Agent screen UX open (D-019) | — |
 | 9 | [FEAT-007](FEAT-007-coding-agent-pr-workflow.md) | Optional coding-agent / PR workflow | **Partial (plan fixture)** — later write/PR; see FEAT-016 | [#8](https://github.com/sgerhart/ai-lab/issues/8) |
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 `/antares` UI live | — |
+| 3 | [FEAT-017](FEAT-017-agent-operating-studio.md) | Agent Operating Studio | **In progress:** IWO-063 shell in Git. Live layout pass open (D-019) | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -100,9 +101,14 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-054](../work-orders/IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | FEAT-005 | **Complete** (Air) |
 | [IWO-055](../work-orders/IWO-055-coding-model-profiles-routing.md) | Coding model profiles + Studio routing | FEAT-016 | **Complete** (unit; no pulls) |
 | [IWO-056](../work-orders/IWO-056-readonly-coding-assistant.md) | Read-only Coding Assistant | FEAT-016 | **Complete** (unit; no writes on the primary checkout) |
+| [IWO-057](../work-orders/IWO-057-model-bench.md) | Studio model comparison | FEAT-016 | **Complete** (unit + one live pass; fixture did not drop the coding profile) |
 | [IWO-058](../work-orders/IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | FEAT-016 | **Complete** (unit; approval + worktree only) |
 | [IWO-059](../work-orders/IWO-059-chat-first-studio.md) | Chat-first Studio shell | FEAT-013 | **In progress** (code; live operator pass open) |
 | [IWO-060](../work-orders/IWO-060-project-documents.md) | Project document library | FEAT-008 | **In progress** (unit; live cite pass open) |
+| [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | FEAT-014 | **In progress** (unit; one report stored; Air `--apply` still needs a local token) |
+| [IWO-062](../work-orders/IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | FEAT-014 | **In progress** (unit; pane not checked in the browser) |
+| [IWO-063](../work-orders/IWO-063-agent-studio-shell.md) | Agent Studio shell | FEAT-017 | **In progress** (unit; live layout pass open) |
+| [IWO-064](../work-orders/IWO-064-jupyter-ollama-help.md) | Jupyter code help via Studio Ollama | FEAT-006 | **In progress** (6.0.0 on Studio; Air question not asked) |
 
 ## Historical phase work orders
 

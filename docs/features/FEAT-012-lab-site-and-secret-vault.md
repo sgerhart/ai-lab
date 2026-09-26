@@ -42,7 +42,7 @@ safely.
 - `/secrets` write-only API key entry UI
 - `/v1/connect/status` (no secret values)
 - Authenticated Jupyter open/redirect (token server-side only)
-- Studio bind to Tailscale IPv4 for Jupyter + Ollama (never `0.0.0.0`)
+- Studio Jupyter stays on its Tailscale address. Studio Ollama listens on all interfaces (ADR 0041). Do not publish port 11434
 - Compose Vault service (scaffold; deploy gated)
 - Secret **names** for foundation APIs; values only in `~/.ai-lab/secrets/` or Vault / gitignored overlays
 

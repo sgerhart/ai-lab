@@ -3,8 +3,16 @@
   "policy": "No automatic pulls. Bootstrap never pulls. Weights stay off Git.",
   "host": "studio",
   "default_backend": "ollama",
-  "default_profile": "fast-local",
+  "default_profile": "qwen36-local",
   "profiles": [
+    {
+      "id": "qwen36-local",
+      "label": "Qwen 3.6",
+      "billing_class": "local",
+      "backend": "ollama",
+      "catalog_model_id": "qwen3.6-35b-a3b",
+      "intended_use": "Default chat on the Studio. Coding quality versus the coding profile is not measured yet."
+    },
     {
       "id": "general-local",
       "label": "General Local",
@@ -89,6 +97,18 @@
       "status": "catalogued-not-pulled",
       "pull_authorized": false,
       "notes": "Coding Local profile candidate. MoE 30B-A3B. Do not pull without owner auth. Do not assume it beats general-local without IWO-057 eval."
+    },
+    {
+      "id": "qwen3.6-35b-a3b",
+      "backend": "ollama",
+      "host": "studio",
+      "pull_name": "qwen3.6:35b-a3b",
+      "license": "Apache-2.0",
+      "approx_size": "~21 GB Q4_K_M (record ollama list size in a host note, not as status pulled)",
+      "role": "default-local",
+      "status": "catalogued-not-pulled",
+      "pull_authorized": false,
+      "notes": "Qwen3.6-35B-A3B, official GGUF Q4_K_M. The :35b-mlx tag is NVFP4 and is not the Studio build. Owner asked to pull and make this the default chat model on 2026-09-25. Git must not claim pulled. Not a replacement for coding-local until a live coding pass says so."
     }
   ]
 }

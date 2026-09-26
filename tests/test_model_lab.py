@@ -42,7 +42,8 @@ class ModelCatalogTests(unittest.TestCase):
         profiles = data.get("profiles") or []
         self.assertGreaterEqual(len(profiles), 4)
         ids = {p["id"] for p in profiles}
-        self.assertTrue({"general-local", "coding-local", "fast-local", "frontier-coding"} <= ids)
+        self.assertTrue({"general-local", "coding-local", "fast-local", "frontier-coding", "qwen36-local"} <= ids)
+        self.assertEqual(data.get("default_profile"), "qwen36-local")
 
     def test_refuse_pull(self) -> None:
         with self.assertRaises(PullRefused):
@@ -85,6 +86,24 @@ class ModelProfileTests(unittest.TestCase):
         self.assertTrue(ollama_tag_matches("qwen3-coder:30b-a3b-q4_K_M", "qwen3-coder:30b"))
         self.assertTrue(ollama_tag_matches("llama3.2:3b", "llama3.2:3b"))
         self.assertFalse(ollama_tag_matches("llama3.2:3b", "qwen3-coder:30b"))
+
+    def test_qwen36_is_default_when_mlx_tag_is_installed(self) -> None:
+        data = load_catalog()
+        self.assertEqual(data["default_profile"], "qwen36-local")
+        r = resolve_profile("qwen36-local", installed_ollama=["qwen3.6:35b-a3b", "qwen3-coder:30b"])
+        self.assertTrue(r.available)
+        self.assertEqual(r.model, "qwen3.6:35b-a3b")
+        coder = resolve_profile("coding-local", installed_ollama=["qwen3.6:35b-a3b", "qwen3-coder:30b"])
+        self.assertEqual(coder.model, "qwen3-coder:30b")
+
+    def test_role_assignment_overrides_catalog_tag(self) -> None:
+        installed = ["qwen3.6:35b-a3b", "qwen3.8:27b", "qwen3-coder:30b", "llama3.2:3b"]
+        roles = {"general-local": "qwen3.6:35b-a3b"}
+        resolved = resolve_profile("general-local", installed_ollama=installed, roles=roles)
+        self.assertEqual(resolved.model, "qwen3.6:35b-a3b")
+        choices = list_studio_choices(installed, roles=roles)
+        general = next(row for row in choices if "general-local" in (row.get("profile_ids") or []))
+        self.assertEqual(general["model"], "qwen3.6:35b-a3b")
 
     def test_fast_local_available_when_installed(self) -> None:
         r = resolve_profile("fast-local", installed_ollama=["llama3.2:3b"])

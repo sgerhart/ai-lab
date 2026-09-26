@@ -169,13 +169,14 @@
       if (res.ok) {
         const body = await res.json();
         if (body.open_url) {
-          window.open(body.open_url, "_blank", "noopener");
+          if (!window.aiLabOpenOnce(body.open_url)) alert("The browser blocked the Jupyter tab.");
           return;
         }
       }
       const loc = res.headers.get("Location");
-      if (loc) window.open(loc, "_blank", "noopener");
-      else alert("Could not open Jupyter (" + res.status + ")");
+      if (loc) {
+        if (!window.aiLabOpenOnce(loc)) alert("The browser blocked the Jupyter tab.");
+      } else alert("Could not open Jupyter (" + res.status + ")");
     });
 
     document.addEventListener("ai-lab-auth-ready", () => refresh());

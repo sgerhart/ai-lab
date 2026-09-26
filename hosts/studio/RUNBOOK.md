@@ -17,7 +17,7 @@ A new engineer clones `ai-lab` and follows this file only.
 | Preflight / Brewfile | **Implemented.** **Not applied** on a Studio. M5 Max compatibility **unverified** (this workspace is M3). |
 | Ollama install | In Brewfile. **No model pulls** in setup. |
 | Studio worker API | **Implemented** (`scripts/studio-worker.sh`). Executes catalog agent plans (not an LLM). Unit-tested. **Not running on a Studio.** |
-| Ollama bind | **Documented.** Must not be `*:11434`. |
+| Ollama bind | **Live.** `OLLAMA_HOST=0.0.0.0:11434` (ADR 0041). LAN and Tailscale. |
 | Tailscale | **Documented.** Machine name `mac-studio` (ADR 0032). |
 | Thunderbolt NVMe | **Deferred** (ADR 0033). Initial setup uses internal 1 TB SSD. |
 
@@ -55,33 +55,33 @@ python3 -m venv .venv
 
 ## 4. Configuration
 
-Ollama must listen on loopback **or** this host’s Tailscale IPv4 — never `0.0.0.0` /
-all interfaces (F-003 class):
+`com.ai-lab.ollama` sets `OLLAMA_HOST=0.0.0.0:11434` (ADR 0041). Ollama takes
+one address, so all interfaces is how loopback, the Studio LAN, and Tailscale
+share the process. Do not pin it back to the Tailscale address only.
+
+The same agent should set `OLLAMA_MAX_LOADED_MODELS=1`. Chat, agents, and a
+notebook that calls Ollama then share one resident tag. A second tag waits
+until the idle model unloads (default keep-alive is about five minutes).
+This variable is not on the live agent yet. Adding it means editing the
+LaunchAgent and restarting Ollama, which unloads the current model. An MLX
+model inside a Jupyter kernel is outside this cap.
 
 ```bash
-# Loopback-only (CLI on Studio works with defaults):
-export OLLAMA_HOST=127.0.0.1:11434
-
-# Lab pattern when the mini must reach Studio over Tailscale:
-export OLLAMA_HOST="$(tailscale ip -4):11434"
-# Then restart `ollama serve` with that env.
+curl -sS http://127.0.0.1:11434/api/tags          # on the Studio
+curl -sS http://mac-studio:11434/api/tags         # from the tailnet
+# From a machine on the same LAN as the Studio, use that host's local address.
 ```
 
-**Gotcha (live on this Studio):** If `ollama serve` is bound to the Tailscale
-IPv4 only, then `curl http://127.0.0.1:11434` and bare `ollama pull` fail with
-“ollama is not running” even though the process is up. Fix the **client** to
-match the serve bind:
+A client on a different subnet cannot open the LAN address. The Air and the
+Studio were on different `192.168` networks when this bind was set. Tailnet
+access is unchanged: the mini still uses `STUDIO_OLLAMA_URL=http://mac-studio:11434`.
 
 ```bash
 export PATH="/opt/homebrew/bin:$PATH"
-export OLLAMA_HOST="$(tailscale ip -4):11434"
 ollama list
 # Seen 2026-09-24: llama3.2:3b, qwen3.8:27b, qwen3-coder:30b.
 # ollama pull <name>   # only after owner authorizes the pull
 ```
-
-The mini already uses `STUDIO_OLLAMA_URL=http://mac-studio:11434` and does not
-need loopback on Studio.
 
 Worker URL that the **M1** will call after Tailscale join:
 
@@ -115,8 +115,8 @@ curl -sS -X POST http://127.0.0.1:8090/v1/tasks \
   -H 'Content-Type: application/json' \
   -d '{"work_order_id":"demo","agent":"lab-operations","objective":"health"}'
 
-curl -sS "http://$(tailscale ip -4):11434/api/tags"   # if serve is Tailscale-bound
-# or: curl -sS http://127.0.0.1:11434/api/tags          # if serve is loopback-bound
+curl -sS http://127.0.0.1:11434/api/tags
+curl -sS http://mac-studio:11434/api/tags
 ```
 
 From the M1 (when Tailscale and binds are set): POST `/v1/work-orders` on the control plane should reach this worker. If this host is down, the control plane **re-queues** the work order with `studio_unavailable` — it must not disappear. If the plan itself fails, the work order is persisted as `failed` with `plan_failed`.
@@ -130,10 +130,10 @@ Weights are rebuildable via catalog + `ollama pull` unless you choose a backup t
 | Symptom | Check |
 |---------|--------|
 | Chip is not M5 | You are not on the Studio |
-| Ollama on `*:11434` | Finding F-003 class issue; bind loopback |
+| LAN client cannot reach `:11434` | Same subnet as the Studio, then its local address. `0.0.0.0` does not join two networks |
 | Worker connection refused from M1 | Tailscale, bind address, ACL tags |
 | Work order `failed` + `plan_failed` | Worker ran; the deterministic plan errored. Inspect `final_result`. |
-| Unified memory pressure | Do not autoload multiple large models (ADR 0010) |
+| Unified memory pressure | One Ollama tag at a time (`OLLAMA_MAX_LOADED_MODELS=1`, not yet on the live agent). An MLX notebook is a second allocator (ADR 0010) |
 
 ## 9. Rollback
 

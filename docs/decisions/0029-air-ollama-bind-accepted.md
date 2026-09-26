@@ -12,7 +12,7 @@ Finding F-003: Ollama on the M3 Air listens on `*:11434`. That is not the Studio
 
 Leave the **Air** Ollama listener as-is. It is opportunistic workstation inference, not the lab inference plane.
 
-**Studio** Ollama must still bind loopback or the Studio Tailscale address, never all interfaces, when that host is set up.
+**Studio** Ollama listens on all interfaces so the LAN and the tailnet can both reach it ([ADR 0041](0041-studio-ollama-lan-and-tailscale.md)).
 
 ## Consequences
 

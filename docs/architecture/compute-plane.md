@@ -11,7 +11,7 @@ from Air and mini ([F-015](../security/findings/F-015-studio-ssh-auth-failure.md
 
 | Component | Live |
 |-----------|------|
-| Ollama | Yes — `llama3.2:3b`, `qwen3.8:27b`, `qwen3-coder:30b` on Tailscale `:11434`. Install is not the same as loaded; idle models stay resident for a short window |
+| Ollama | Yes — `qwen3.6:35b-a3b` (Q4_K_M, chat default `qwen36-local`), `qwen3.8:27b`, `qwen3-coder:30b`, `llama3.2:3b` on `:11434` (all interfaces, ADR 0041). Install is not the same as loaded. Intended cap is one resident tag; the live agent does not set that cap yet. Operator role assignments are a mini file, not this host |
 | JupyterLab | Yes — `:8888` (token on mini `~/.ai-lab/studio-jupyter.token`) |
 | MLX / transformers (Jupyter venv) | Present; used for Antares load smoke |
 | Antares-1B + completions + jobs | Weights; loopback `:8001`; Tailscale jobs `:8002`; mini `/antares` |
@@ -25,6 +25,21 @@ Does **not** own PostgreSQL data, the work-order queue, or backup source-of-trut
 64 GB unified is shared with macOS, GPU, apps, and any containers. Serving
 configs must set explicit context and parallel limits. Do not autoload several
 30B+ models.
+
+Studio Ollama is the single runner for AI Lab chat and agents. The intended
+LaunchAgent setting is `OLLAMA_MAX_LOADED_MODELS=1`, so a second Ollama tag
+waits and the idle model unloads instead of both staying resident. The default
+keep-alive is about five minutes. This env var is **not** on the live
+`com.ai-lab.ollama` agent yet; applying it restarts Ollama and drops whatever
+is loaded.
+
+A notebook that calls `mlx_lm.load` allocates Metal memory in the kernel.
+Ollama cannot see or evict that process. That notebook gets the Studio to
+itself: no large agent run, and no second MLX load, until the kernel drops
+the weights. Notebooks that only need a completion call Ollama on
+`127.0.0.1:11434` so they share this cap. Chat and agents stay on the local
+model the operator selected. They do not move to a frontier model because
+MLX is busy.
 
 ## Storage
 
@@ -40,8 +55,10 @@ M1 UI / scripts  --Tailscale--> Studio Jupyter (:8888)
 M1 orchestrator --Tailscale--> Studio worker (:8090)   # optional; not live
 ```
 
-If Ollama is bound only to Studio loopback, remote routing fails. Live lab uses
-a Tailscale-scoped listen (deploy-time).
+Live Studio Ollama listens on all interfaces (ADR 0041), so loopback, the
+Studio LAN, and Tailscale share one process. Lab clients still use
+`http://mac-studio:11434`. Do not publish port 11434. Jupyter stays on the
+Studio Tailscale address.
 
 ## Jupyter as operator path
 

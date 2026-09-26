@@ -48,6 +48,8 @@ moving secrets or the gateway onto the mini.
 | [IWO-044](../work-orders/IWO-044-defenseclaw-preflight.md) | Preflight + docs | — | Script reports status; no host mutate |
 | IWO-045 | Cursor connector (Add) | IWO-044 | Hooks present; Antigravity kept — **deploy auth** |
 | [IWO-046](../work-orders/IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | IWO-045 | Done — F-014 skip-scan accepted |
+| [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md) | Summary on Security | IWO-044 | In progress — one report stored on the mini; Air `--apply` still needs a local token |
+| [IWO-062](../work-orders/IWO-062-defenseclaw-finding-glossary.md) | Finding glossary and decision cards | IWO-061 | In progress — unit tests; pane not checked in the browser |
 
 ## Acceptance criteria
 
@@ -67,6 +69,6 @@ moving secrets or the gateway onto the mini.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec | Done | this file |
-| Code | Partial | IWO-044 preflight |
+| Code | Partial | IWO-044 preflight; IWO-061 summary; IWO-062 glossary (unit) |
 | Deploy | Cursor hooks live (IWO-045 action) | Air 2026-09-24 |
-| Live verified | Partial | CLI/gateway; Cursor + Antigravity action |
+| Live verified | Partial | CLI/gateway; Cursor + Antigravity action; one summary stored on the mini 2026-09-25 |

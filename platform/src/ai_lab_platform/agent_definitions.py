@@ -21,6 +21,7 @@ class AgentDefinition:
     tools: list[str] = field(default_factory=list)
     mcp_server_ids: list[str] = field(default_factory=list)
     schedule_cron: str = ""
+    studio: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=utcnow)
     updated_at: str = field(default_factory=utcnow)
 
@@ -34,6 +35,7 @@ class AgentDefinition:
         tools: list[str] | None = None,
         mcp_server_ids: list[str] | None = None,
         schedule_cron: str = "",
+        studio: dict[str, Any] | None = None,
     ) -> AgentDefinition:
         return cls(
             id=str(uuid4()),
@@ -43,6 +45,7 @@ class AgentDefinition:
             tools=list(tools or []),
             mcp_server_ids=list(mcp_server_ids or []),
             schedule_cron=schedule_cron.strip(),
+            studio=dict(studio or {}),
         )
 
     def to_dict(self) -> dict[str, Any]:

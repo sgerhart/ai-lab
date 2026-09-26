@@ -67,7 +67,7 @@
         ".ai-lab-login-card input{width:100%;box-sizing:border-box;background:#111;border:1px solid #333;" +
         "color:#ececec;border-radius:10px;padding:10px 12px;font:inherit}" +
         ".ai-lab-login-card button{margin-top:12px;width:100%;border:0;border-radius:10px;" +
-        "padding:10px;background:#10a37f;color:#04140f;font:inherit;font-weight:650;cursor:pointer}" +
+        "padding:10px;background:#7cb8ff;color:#061018;font:inherit;font-weight:650;cursor:pointer}" +
         ".ai-lab-login-err{color:#ff6b7a;min-height:1.2em;margin-top:8px!important}";
       document.head.appendChild(st);
     }
@@ -126,4 +126,27 @@
       const hint = document.getElementById("ai-lab-auth-hint");
       if (hint) hint.textContent = "Auth status unavailable";
     });
+
+  // Reuse the Jupyter tab this page opened. An empty URL focuses that tab
+  // without loading it again. A new about:blank tab is the first open.
+  window.aiLabOpenOnce = function (url) {
+    const name = "ai-lab-jupyter";
+    const held = window.aiLabJupyterWindow;
+    if (held && held.closed === false) {
+      held.focus();
+      return true;
+    }
+    const win = window.open("", name);
+    if (!win) return false;
+    window.aiLabJupyterWindow = win;
+    try {
+      if (!win.location.href || win.location.href === "about:blank") {
+        win.location.href = url;
+      }
+    } catch (_) {
+      // The tab is already on Studio Jupyter, a different origin.
+    }
+    win.focus();
+    return true;
+  };
 })();

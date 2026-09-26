@@ -13,6 +13,11 @@ Studio workers.
 loop** (model → tool validate → execute/approve → observe). Studio supplies
 inference and heavy workers.
 
+**Agent Studio (ADR 0042 / FEAT-017):** chat stays the front door. The sidebar
+item **Agent Studio** opens a second menu and a canvas for designing agents
+that build, learn, and help run a product and a company. The live layout is
+not accepted yet (D-019). See [agent-studio.md](agent-studio.md).
+
 ## Separation
 
 ```text

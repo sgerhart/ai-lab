@@ -12,7 +12,7 @@ Ollama is already installed on the M3 Air (empty model store, wildcard listen). 
 
 Initial local inference API is **Ollama on the Studio**. Model pulls are explicit (`docs/runbooks/adding-a-model.md`). MLX/MLX-LM live in `models/mlx/` for experiments and future serving. vLLM is not planned (no NVIDIA host).
 
-Ollama must not listen on `*:11434` across all interfaces. Target: Tailscale or loopback. The Air's current wildcard listen is finding F-003 and is not the Studio design.
+The Air wildcard listen is finding F-003 (ADR 0029), not the lab serving path. Studio Ollama listens on all interfaces so LAN and Tailscale clients share one process (ADR 0041). Do not publish port 11434.
 
 ## Consequences
 

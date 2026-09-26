@@ -30,6 +30,17 @@ else:
 
 
 class ConnectHelperTests(unittest.TestCase):
+    def test_jupyter_click_reuses_named_tab(self) -> None:
+        chrome = (ROOT / "platform/src/ai_lab_platform/web/static/chrome.js").read_text()
+        agents = (ROOT / "platform/src/ai_lab_platform/web/agents.html").read_text()
+        lab = (ROOT / "platform/src/ai_lab_platform/web/lab.html").read_text()
+        self.assertIn("ai-lab-jupyter", chrome)
+        self.assertIn("window.open(\"\", name)", chrome)
+        self.assertIn("aiLabOpenOnce", agents)
+        self.assertIn("aiLabOpenOnce", lab)
+        self.assertNotIn('window.open(body.open_url, "_blank"', agents)
+        self.assertNotIn('window.open(body.open_url, "_blank"', lab)
+
     def test_jupyter_open_url(self) -> None:
         self.assertEqual(
             jupyter_open_url("http://mac-studio:8888", "abc"),

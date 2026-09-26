@@ -1,0 +1,4 @@
+{"id":"word","kind":"text","prompt":"Reply with only the word ready.","expect":"ready"}
+{"id":"math","kind":"text","prompt":"What is 19 times 23? Reply with digits only.","expect":"437"}
+{"id":"add","kind":"code","prompt":"Write a Python function add(a, b) that returns the sum of a and b. Reply with only a python code block.","function":"add","calls":[[2,3],[-1,4]],"expect":[5,3]}
+{"id":"palindrome","kind":"code","prompt":"Write a Python function is_palindrome(s) that returns True when the letters of s read the same forward and back, ignoring case and spaces. Reply with only a python code block.","function":"is_palindrome","calls":[["racecar"],["Race car"],["abc"]],"expect":[true,true,false]}

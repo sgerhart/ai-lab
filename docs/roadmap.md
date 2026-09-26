@@ -33,16 +33,16 @@ Core purpose: always-on personal agents + AI experimentation. Current capability
 | Slice | Work | Code | Deploy | Live |
 |-------|------|------|--------|------|
 | Harness | IWO-002–007, 020, 031 | Done | Mini `:8088` | Chat and tool loop |
-| Studio UI | FEAT-004 / FEAT-013 / IWO-059 | Chat-first shell at `/` | Mini `/` | Used. Live lab-health pass still open (D-019) |
-| Models | FEAT-003 / IWO-055 | Profiles in Git; catalog not marked pulled | Studio Ollama | Three tags installed 2026-09-24 |
+| Studio UI | FEAT-004 / FEAT-013 / IWO-059 / IWO-063 | Chat-first shell at `/`. Sidebar label is Agent Studio | Mini `/` | Used. Agent Studio layout and lab-health pass still open (D-019) |
+| Models | FEAT-003 / IWO-055 | Profiles in Git; catalog not marked pulled | Studio Ollama | Four tags installed 2026-09-25, including `qwen3.6:35b-a3b`. Role Save not recorded |
 | Coding | FEAT-016 IWO-055/056/058 | Read + isolated patch/commit | HTML on mini | Unit only for the patch path |
-| Coding eval / PR | IWO-057, FEAT-007 | Not started | — | — |
+| Coding eval / PR | IWO-057, FEAT-007 | Bench script done. PR path not started | Studio Ollama for the bench | 2026-09-25: three large tags each scored 4/4. Fixture did not drop the coding profile |
 | Memory / schedule / IDE MCP | IWO-040–042, 052–054 | Done | Mini + Air | Live |
 | Jupyter / Antares | FEAT-006 / FEAT-015 | Done for current UI and services | Studio | Live. Antares not set to survive reboot |
 | Studio worker `:8090` | FEAT-003 optional | Scripts | No | No |
 
 ## Next
 
-Operator is deciding the agent create/run screen (D-019). Do not treat the current form as final. Do not pull more models, enable paid APIs, or deploy hosts without a separate yes.
+Operator is deciding the Agent Studio layout (D-019). Do not treat the current canvas as final. Do not pull more models, enable paid APIs, or deploy hosts without a separate yes.
 
-Still open after that decision: coding-model eval (IWO-057), pull-request delivery (FEAT-007), and the thin hardening notes on FEAT-016. Live M1 restore is still untested.
+Still open: a harder coding bench, pull-request delivery (FEAT-007), the thin hardening notes on FEAT-016, DefenseClaw Air `--apply` (needs a local token), and a browser pass of the Findings pane. Live M1 restore is still untested.

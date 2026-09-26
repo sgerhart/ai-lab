@@ -6,12 +6,12 @@
 
 **Steps:**
 1. Copy `models/_template/model.json.example` into `models/catalog.json` with a real `id` and `pull_name`. Leave `pull_authorized` **false**.
-2. On Studio, after a human says so, point the CLI at the same bind as `ollama serve`
-   (this lab often uses the Tailscale IPv4 — bare `127.0.0.1` then looks “not running”):
+2. On Studio, after a human says so, talk to the running server. `com.ai-lab.ollama`
+   listens on all interfaces (ADR 0041), so loopback works:
 
 ```bash
 export PATH="/opt/homebrew/bin:$PATH"
-export OLLAMA_HOST="$(tailscale ip -4):11434"   # or 127.0.0.1:11434 if that is the serve bind
+export OLLAMA_HOST=127.0.0.1:11434
 ollama list
 ollama pull <pull_name>
 ```
@@ -19,6 +19,6 @@ ollama pull <pull_name>
 3. Record actual size with `ollama list` in the host overlay (`*.local.yaml`), not as a Git claim of `status: pulled`.
 4. Optionally map the model into a **profile** in `models/catalog.json` (`profiles[]` + `catalog_model_id`) so Studio labels it (General / Coding / Fast Local). Profiles never pull weights.
 
-**Verify:** `curl -sS "http://$(tailscale ip -4):11434/api/tags"` on Studio (or loopback if that is the bind). From Air/mini: `GET /v1/models` → `choices` lists installed tags.
+**Verify:** `curl -sS http://127.0.0.1:11434/api/tags` on the Studio. From Air or mini, `http://mac-studio:11434/api/tags` and `GET /v1/models` on the mini should list the same tags. A LAN client must be on the Studio subnet.
 
 **Rollback:** `ollama rm <name>`. Catalog object stays or is deleted in the same change. Git still must not say the model is pulled.

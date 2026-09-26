@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -23,8 +24,57 @@ class LocalModelUnavailable(RuntimeError):
     """
 
 
+ROLE_IDS = ("general-local", "coding-local", "fast-local")
+
+
 def catalog_path() -> Path:
     return Path(__file__).resolve().parents[3] / "models" / "catalog.json"
+
+
+def role_path() -> Path:
+    override = os.environ.get("AI_LAB_MODEL_ROLES_PATH", "").strip()
+    if override:
+        return Path(override)
+    return Path.home() / ".ai-lab" / "model-roles.json"
+
+
+def load_roles(path: Path | None = None) -> dict[str, str]:
+    """Profile id to an installed Ollama tag. Missing file means the catalog mapping."""
+    target = path or role_path()
+    if not target.is_file():
+        return {}
+    data = json.loads(target.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return {}
+    raw = data.get("assignments") if isinstance(data.get("assignments"), dict) else data
+    out: dict[str, str] = {}
+    for key in ROLE_IDS:
+        value = str((raw or {}).get(key) or "").strip()
+        if value:
+            out[key] = value
+    return out
+
+
+def save_roles(assignments: dict[str, str], *, path: Path | None = None) -> dict[str, str]:
+    clean = {key: str(assignments.get(key) or "").strip() for key in ROLE_IDS}
+    clean = {key: value for key, value in clean.items() if value}
+    target = path or role_path()
+    target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    body = {"assignments": clean, "default_profile": "general-local"}
+    target.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
+    os.chmod(target, 0o600)
+    return clean
+
+
+def roles_default(path: Path | None = None) -> str | None:
+    target = path or role_path()
+    if not target.is_file():
+        return None
+    data = json.loads(target.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        return None
+    value = str(data.get("default_profile") or "").strip()
+    return value if value in ROLE_IDS else None
 
 
 def load_catalog(path: Path | None = None) -> dict[str, Any]:
@@ -148,6 +198,7 @@ def resolve_profile(
     installed_ollama: list[str] | None = None,
     cloud_enabled: dict[str, bool] | None = None,
     path: Path | None = None,
+    roles: dict[str, str] | None = None,
 ) -> ResolvedProfile:
     """Resolve a profile id to backend + model. Local profiles need an installed tag to be available."""
     profiles = {str(p["id"]): p for p in catalog_profiles(path)}
@@ -174,9 +225,15 @@ def resolve_profile(
                     model_name = str(entry.get("pull_name") or "")
         if p.get("model"):
             candidates.insert(0, str(p["model"]))
+        assigned = (roles or {}).get(profile_id, "").strip()
+        if assigned:
+            candidates.insert(0, assigned)
         if not candidates and model_name:
             candidates = [model_name]
-        matched = find_installed_match(installed, candidates) if installed else None
+        if assigned and assigned in installed:
+            matched = assigned
+        else:
+            matched = find_installed_match(installed, candidates) if installed else None
         if matched:
             return ResolvedProfile(
                 profile_id=profile_id,
@@ -244,6 +301,7 @@ def list_studio_choices(
     installed_ollama: list[str],
     *,
     path: Path | None = None,
+    roles: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     """Build UI choices: every installed Ollama model, annotated with matching profile when any."""
     profiles = catalog_profiles(path)
@@ -255,10 +313,21 @@ def list_studio_choices(
     for p in profiles:
         if str(p.get("billing_class")) != "local" or str(p.get("backend")) != "ollama":
             continue
-        resolved = resolve_profile(str(p["id"]), installed_ollama=installed_ollama, path=path)
+        resolved = resolve_profile(
+            str(p["id"]),
+            installed_ollama=installed_ollama,
+            path=path,
+            roles=roles,
+        )
         if not resolved.available:
             continue
         if resolved.model in claimed:
+            prior = next(row for row in annotated if row["model"] == resolved.model)
+            ids = prior.setdefault("profile_ids", [prior["profile_id"]])
+            if resolved.profile_id not in ids:
+                ids.append(resolved.profile_id)
+            if resolved.label not in prior["label"].split(", "):
+                prior["label"] = prior["label"] + ", " + resolved.label
             continue
         claimed.add(resolved.model)
         annotated.append(
@@ -266,6 +335,7 @@ def list_studio_choices(
                 "backend": "ollama",
                 "model": resolved.model,
                 "profile_id": resolved.profile_id,
+                "profile_ids": [resolved.profile_id],
                 "label": resolved.label,
                 "billing_class": "local",
                 "available": True,
@@ -302,6 +372,7 @@ def summarize_profiles(
     installed_ollama: list[str] | None = None,
     cloud_enabled: dict[str, bool] | None = None,
     path: Path | None = None,
+    roles: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for p in catalog_profiles(path):
@@ -310,6 +381,7 @@ def summarize_profiles(
             installed_ollama=installed_ollama,
             cloud_enabled=cloud_enabled,
             path=path,
+            roles=roles,
         )
         out.append(
             {

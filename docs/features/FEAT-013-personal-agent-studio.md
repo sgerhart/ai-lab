@@ -87,7 +87,7 @@ research).
 - [x] Stdio MCP list/call live (IWO-029); SSE/HTTP still out of scope
 - [x] Deep research uses frontier only when selected + authorized
 - [x] No secrets or attachment bytes in Git
-- [x] Operator menus stay inside Studio. Status Dashboard and New chat stay fixed. Under the line, Jupyter Labs, Agents, MCP, Security, Configure, Projects, and Chats scroll together. Search is the magnifying glass beside AI LAB. The old `/lab` hub is retired
+- [x] Operator menus stay inside Studio. Status Dashboard and New chat stay fixed. Under the line, Jupyter Labs, Agent Studio, MCP, Security, Configure, Projects, and Chats scroll together. Search is the magnifying glass beside AI LAB. The old `/lab` hub is retired
 - [x] Chat model list comes from installed Studio Ollama tags
 - [ ] Agent create/run layout accepted by the operator (D-019)
 

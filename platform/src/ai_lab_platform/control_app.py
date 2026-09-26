@@ -10,7 +10,7 @@ from typing import Any
 from urllib.error import URLError
 from urllib.request import urlopen
 
-from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi import Body, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from langgraph.checkpoint.memory import MemorySaver
@@ -29,6 +29,7 @@ from .agent_scheduler import status as scheduler_status
 from .agent_scheduler import tick as scheduler_tick
 from .agent_worker import AgentRunWorker, drain_queued_runs
 from .antares_client import AntaresStudioClient
+from .defenseclaw_report import PostureFile, default_posture_path, episode_card, narrate_episode, posture_view
 from .attachments import (
     AttachmentError,
     build_chat_prompt,
@@ -238,6 +239,7 @@ class AgentDefinitionIn(BaseModel):
     tools: list[str] = Field(default_factory=list)
     mcp_server_ids: list[str] = Field(default_factory=list)
     schedule_cron: str = ""
+    studio: dict[str, Any] = Field(default_factory=dict)
 
 
 class AgentDefinitionRunIn(BaseModel):
@@ -317,6 +319,21 @@ class SecretValueIn(BaseModel):
 
 class UsageBilledAuthIn(BaseModel):
     authorized: bool
+
+
+def _studio_payload(raw: Any) -> dict[str, Any]:
+    """Operator-facing builder fields. Not secrets, not a second policy engine."""
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise HTTPException(status_code=400, detail="studio must be an object")
+    try:
+        encoded = json.dumps(raw)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail="studio must be JSON") from exc
+    if len(encoded) > 24000:
+        raise HTTPException(status_code=400, detail="studio payload is too large")
+    return json.loads(encoded)
 
 
 def _postgres_checkpointer(database_url: str) -> tuple[Any, Any]:
@@ -406,6 +423,7 @@ def create_control_app(
     memory = retrieval or default_retrieval_service()
     app.state.retrieval = memory
     set_default_retrieval_service(memory)
+    app.state.security_posture = PostureFile(default_posture_path())
     app.state.antares = AntaresStudioClient(
         job_url=settings.antares_job_url,
         completions_url=settings.antares_completions_url,
@@ -610,7 +628,7 @@ def create_control_app(
     @app.get("/v1/models")
     def list_models(request: Request, authorization: str | None = Header(default=None)) -> dict[str, Any]:
         _gate(request, authorization)
-        from .model_catalog import list_studio_choices, load_catalog, summarize_profiles
+        from .model_catalog import list_studio_choices, load_catalog, load_roles, roles_default, summarize_profiles
 
         router: ModelRouter = app.state.model_router
         store_s: SecretStore = app.state.secret_store
@@ -627,8 +645,9 @@ def create_control_app(
             "gemini": False,
         }
         catalog = load_catalog()
-        profiles = summarize_profiles(installed_ollama=installed, cloud_enabled=cloud_enabled)
-        choices = list_studio_choices(installed)
+        roles = load_roles()
+        profiles = summarize_profiles(installed_ollama=installed, cloud_enabled=cloud_enabled, roles=roles)
+        choices = list_studio_choices(installed, roles=roles)
         # Frontier profile entries as non-local choices when authorized
         for prof in profiles:
             if prof.get("billing_class") == "usage_billed_api":
@@ -648,7 +667,9 @@ def create_control_app(
             "providers": providers,
             "profiles": profiles,
             "choices": choices,
-            "default_profile": catalog.get("default_profile") or "fast-local",
+            "default_profile": roles_default() or catalog.get("default_profile") or "fast-local",
+            "roles": roles,
+            "installed": installed,
             "usage_billed_authorized": usage_ok,
             "note": (
                 "Studio Ollama models come from the live /api/tags list. "
@@ -656,6 +677,26 @@ def create_control_app(
                 "Cloud complete() stays blocked until usage_billed_authorized."
             ),
         }
+
+    @app.post("/v1/models/roles")
+    def put_model_roles(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Assign installed Studio tags to General, Coding, and Fast. Chat opens on General."""
+        _gate(request, authorization)
+        from .model_catalog import ROLE_IDS, save_roles
+
+        router: ModelRouter = app.state.model_router
+        ollama_p = next((p for p in router.list_providers() if p["id"] == "ollama"), None)
+        installed = set((ollama_p or {}).get("models") or [])
+        assignments = {key: str(body.get(key) or "").strip() for key in ROLE_IDS}
+        missing = [tag for tag in assignments.values() if tag and tag not in installed]
+        if missing:
+            raise HTTPException(status_code=400, detail=f"not installed: {', '.join(missing)}")
+        saved = save_roles(assignments)
+        return {"ok": True, "roles": saved, "default_profile": "general-local"}
 
     @app.get("/v1/secrets/status")
     def secrets_status(request: Request, authorization: str | None = Header(default=None)) -> dict[str, Any]:
@@ -1107,6 +1148,66 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         return {"ok": True, "id": document_id}
 
+    @app.get("/v1/security/posture")
+    def get_security_posture(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        stored = app.state.security_posture.load()
+        return posture_view(stored)
+
+    @app.post("/v1/security/posture")
+    def put_security_posture(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Store a DefenseClaw summary from the Air. Rejects secret-like fields."""
+        _gate(request, authorization)
+        if body.get("source") != "defenseclaw":
+            raise HTTPException(status_code=400, detail="source must be defenseclaw")
+        try:
+            saved = app.state.security_posture.save(body)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return posture_view(saved)
+
+    @app.post("/v1/security/explain")
+    def explain_security_episode(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Rephrase one redacted block. The model sees the card, not the audit log."""
+        _gate(request, authorization)
+        try:
+            card = episode_card(body)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        facts = narrate_episode(card)
+        router: ModelRouter = app.state.model_router
+        backend = router.default_backend
+        health = router.backends[backend].health()
+        models = list(health.get("models") or [])
+        model = str(models[0]) if models else "fake-instruct"
+        try:
+            completion = router.complete(
+                CompletionRequest(
+                    model=model,
+                    prompt=facts,
+                    backend=backend,
+                    system=(
+                        "You explain one DefenseClaw decision for an operator. "
+                        "Use only the facts given. Do not invent commands, file paths, or a claim that the coding task succeeded. "
+                        "Say whether the blocked step ran, whether the turn continued, and that a finished reply is not a correct task."
+                    ),
+                )
+            )
+        except (PermissionError, KeyError, OSError) as exc:
+            return {"ok": True, "source": "facts", "explanation": facts, "error": str(exc)}
+        return {"ok": True, "source": "model", "backend": completion.backend, "explanation": completion.text, "facts": facts}
+
     @app.post("/v1/conversations/{conversation_id}/messages")
     def post_message(
         request: Request,
@@ -1534,7 +1635,43 @@ def create_control_app(
             tools=body.tools,
             mcp_server_ids=body.mcp_server_ids,
             schedule_cron=body.schedule_cron,
+            studio=_studio_payload(body.studio),
         )
+        app.state.agent_definition_store.put(definition)
+        return definition.to_dict()
+
+    @app.put("/v1/agent-definitions/{definition_id}")
+    def update_agent_definition(
+        request: Request,
+        definition_id: str,
+        body: AgentDefinitionIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        definition = app.state.agent_definition_store.get(definition_id)
+        if definition is None:
+            raise HTTPException(status_code=404, detail="not found")
+        try:
+            load_policy(body.agent)
+        except (OSError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if body.mcp_server_ids:
+            try:
+                require_mcp_servers(body.mcp_server_ids)
+            except McpDenied as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if body.schedule_cron.strip():
+            try:
+                parse_cron(body.schedule_cron.strip())
+            except CronError as exc:
+                raise HTTPException(status_code=400, detail=f"invalid schedule_cron: {exc}") from exc
+        definition.title = body.title.strip() or definition.title
+        definition.agent = body.agent
+        definition.system_prompt = body.system_prompt
+        definition.tools = list(body.tools)
+        definition.mcp_server_ids = list(body.mcp_server_ids)
+        definition.schedule_cron = body.schedule_cron.strip()
+        definition.studio = _studio_payload(body.studio)
         app.state.agent_definition_store.put(definition)
         return definition.to_dict()
 

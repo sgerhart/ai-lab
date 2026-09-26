@@ -7,3 +7,10 @@ This is **not** a model quality eval. It uses `FakeBackend`. It will not `ollama
 ```bash
 ./scripts/eval-dry-run.sh
 ```
+
+The comparison that does call Studio is [model-bench.jsonl](fixtures/model-bench.jsonl). Default is a plan. `--apply` scores the installed tags and does not pull.
+
+```bash
+./scripts/model-bench.sh
+./scripts/model-bench.sh --apply
+```

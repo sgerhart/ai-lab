@@ -67,9 +67,14 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-054](IWO-054-cursor-lab-mcp.md) | Wire Cursor to lab MCP | Complete (Air) |
 | [IWO-055](IWO-055-coding-model-profiles-routing.md) | Coding model profiles + Studio routing | Complete (unit; no pulls) |
 | [IWO-056](IWO-056-readonly-coding-assistant.md) | Read-only Coding Assistant | Complete (unit) |
+| [IWO-057](IWO-057-model-bench.md) | Studio model comparison | Complete (unit + one live pass; fixture did not drop the coding profile) |
 | [IWO-058](IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | Complete (unit) |
 | [IWO-059](IWO-059-chat-first-studio.md) | Chat-first Studio shell | In progress (live lab-health pass open) |
 | [IWO-060](IWO-060-project-documents.md) | Project document library | In progress (unit; live cite pass open) |
+| [IWO-061](IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | In progress (unit; one report stored; Air `--apply` still needs a local token) |
+| [IWO-062](IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | In progress (unit; pane not checked in the browser) |
+| [IWO-063](IWO-063-agent-studio-shell.md) | Agent Studio shell | In progress (unit; live layout pass open) |
+| [IWO-064](IWO-064-jupyter-ollama-help.md) | Jupyter code help via Studio Ollama | In progress (6.0.0 on Studio; Air question not asked) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

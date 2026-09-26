@@ -84,9 +84,43 @@ Select **Python (mac-studio M5)** in the notebook UI. The kernelspec starts
 export OLLAMA_HOST=127.0.0.1:11434
 # brew services or `ollama serve` — see hosts/studio/RUNBOOK.md
 curl -sS http://127.0.0.1:11434/api/tags
+curl -sS http://127.0.0.1:11434/api/ps
 ```
 
 Do **not** `ollama pull` until authorized ([adding-a-model.md](adding-a-model.md)).
+
+`/api/ps` is what the lab Status Dashboard shows as **In memory**. The intended
+Studio cap is one loaded Ollama model (`OLLAMA_MAX_LOADED_MODELS=1` on
+`com.ai-lab.ollama`). That setting is not applied on the live agent yet.
+
+A cell that only needs a completion should call this same Ollama. A cell that
+calls `mlx_lm.load` holds Metal memory the dashboard cannot see. Finish or
+restart that kernel before starting a large agent run. Chat and agents stay
+on the local model you selected. They are not switched to a frontier model
+while MLX is loaded.
+
+## Code help in Jupyter
+
+Coding questions use the Notebook Intelligence chat panel. Installed on the
+Studio on 2026-09-25 in `~/.ai-lab/jupyter/.venv`:
+
+- `notebook-intelligence==6.0.0` (JupyterLab 4.6.4). Version 5.3.1 did not
+  load: it pulled `mcp` 2.x, which removed `FastMCP`, and its frontend
+  required JupyterLab 4.2.
+- `mcp==1.30.0`, brought in by the 6.0.0 pin `mcp<2,>=1.28.1`.
+
+The live start script `~/.ai-lab/jupyter/start-jupyterlab.sh` matches
+`hosts/studio/start-jupyterlab.sh.example`: chat provider `ollama`, model
+`qwen3-coder:30b`, inline completion provider `none`. No cloud API key and
+no Claude mode. After the LaunchAgent restart, `GET /notebook-intelligence/capabilities`
+reported that chat model. Startup called Ollama `/api/tags` and `/api/show`
+only. `/api/ps` was empty until a question is asked. The first question loads
+the tag and unloads it about five minutes after the last one.
+
+A small model loaded in a cell for a lesson, including with MLX, is not this
+help. Restart that kernel when the lesson is done if an agent run needs the
+memory. Do not `ollama pull` for this. See
+[IWO-064](../work-orders/IWO-064-jupyter-ollama-help.md).
 
 ## Verify
 
@@ -171,7 +205,7 @@ Do not commit weights. Catalog rows stay `pull_authorized: false` / not `status:
 
 LaunchAgents (user domain):
 
-- `com.ai-lab.ollama` — `OLLAMA_HOST=127.0.0.1:11434`
+- `com.ai-lab.ollama` — `OLLAMA_HOST=0.0.0.0:11434` (ADR 0041; LAN and Tailscale)
 - `com.ai-lab.jupyterlab` — loopback `:8888`
 
 Brew's `sh.brew.ollama` plist is disabled so it does not fight the loopback agent.

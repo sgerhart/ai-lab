@@ -14,6 +14,12 @@ if [[ -z "${BIND}" ]]; then
 fi
 BIND="${BIND:-127.0.0.1}"
 
+# Code help (IWO-064). Chat calls Studio Ollama. Inline completion stays off.
+# No cloud API key and no Claude mode. The package is not installed by this script.
+export NBI_CHAT_MODEL_PROVIDER=ollama
+export NBI_CHAT_MODEL_ID=qwen3-coder:30b
+export NBI_INLINE_COMPLETION_MODEL_PROVIDER=none
+
 exec "${JDIR}/.venv/bin/jupyter" lab \
   --no-browser \
   --ip="${BIND}" \

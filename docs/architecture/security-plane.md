@@ -1,7 +1,7 @@
 # Security plane
 
-**Status:** Direction accepted ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)). Not built, except Antares jobs and the Antares link on **Security**.  
-**Updated:** 2026-09-25
+**Status:** Direction accepted ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)). Antares jobs and the DefenseClaw summary are the live slices. The API gateway and config editing are not built.  
+**Updated:** 2026-09-26
 
 AI Lab is the security testing ground for this lab. The mini **Security** page is the board. Each tool keeps running on its own host.
 
@@ -33,7 +33,7 @@ flowchart TB
 | Question | Tool |
 |----------|------|
 | What is the Air enforcing on Cursor and other connectors, and what are the alerts? | DefenseClaw, summarized on **Security** |
-| What are the current DefenseClaw settings, and can I change one? | **Security** shows the masked config. A confirmed change is applied on the Air |
+| What are the current DefenseClaw settings, and can I change one? | **Security** shows the masked config. Changing it from the page is not built |
 | Should this billed model call be allowed, and where did it go? | API gateway |
 | Which files in this repo match a weakness class? | Antares on the Studio |
 
@@ -49,7 +49,7 @@ Keys stay on the gateway host. The page records allow or deny. Billing classes i
 
 DefenseClaw stays installed on the Air (`~/.defenseclaw`). The lab does not open `defenseclaw tui` inside the browser. **Security** is the page for status, activity, alerts, and masked configuration.
 
-The Air pushes a summary. If that push stops, the card shows stale. Config files, the device key, and the audit database stay on the Air and out of Git.
+The Air pushes a summary. If that push stops, the card shows stale. Config files, the device key, and the audit database stay on the Air and out of Git. Finding rows pick up a short explanation from the lab glossary when the page renders them. Each recent block also says whether that step ran and whether the same turn kept going and ended. A turn end means the agent finished a reply. It does not mean the coding task was correct. **Explain with the lab model** rephrases that card. The match text stays on the Air.
 
 ## Antares
 
@@ -65,6 +65,6 @@ Antares does not patch the code and does not scan a whole product the way an app
 |-------|------|
 | **Security** page with an Antares badge | Yes |
 | Antares jobs and completions on the Studio | Yes. Jobs do not survive reboot until LaunchAgents are set |
-| DefenseClaw on the Air | Yes. Summary is not sent to the mini |
+| DefenseClaw on the Air | Yes. One summary is stored on the mini (2026-09-25). A later push is `./scripts/defenseclaw-report.sh --apply`, which still needs `~/.ai-lab/api.token` on the Air. The Findings pane was not checked in a browser |
 | API gateway | No |
 | Choosing an arbitrary repo, including Clarion, from **Security** | No. Jobs use the configured Studio repo path |
