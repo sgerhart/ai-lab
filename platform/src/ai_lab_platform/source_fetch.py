@@ -545,15 +545,34 @@ def _wikipedia_hits(
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
-        return []
-    if not isinstance(parsed, list) or len(parsed) < 4:
-        return []
-    titles = parsed[1] if isinstance(parsed[1], list) else []
-    links = parsed[3] if isinstance(parsed[3], list) else []
+        parsed = None
     hits: list[dict[str, str]] = []
-    for title, link in zip(titles, links, strict=False):
-        if isinstance(link, str) and link.startswith("https://"):
-            hits.append({"url": link, "title": str(title or "")})
+    if isinstance(parsed, list) and len(parsed) >= 4:
+        titles = parsed[1] if isinstance(parsed[1], list) else []
+        links = parsed[3] if isinstance(parsed[3], list) else []
+        for title, link in zip(titles, links, strict=False):
+            if isinstance(link, str) and link.startswith("https://"):
+                hits.append({"url": link, "title": str(title or "")})
+    if not hits:
+        # Fall back to Wikipedia full-text search
+        search_url = (
+            "https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&srlimit="
+            + str(capped)
+            + "&srsearch="
+            + quote_plus(query[:240])
+        )
+        search_raw = _fetch_raw(search_url, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
+        if search_raw:
+            try:
+                s_data = json.loads(search_raw)
+                s_items = (s_data.get("query") or {}).get("search") or []
+                for item in s_items:
+                    t = str(item.get("title") or "").strip()
+                    if t:
+                        wiki_link = "https://en.wikipedia.org/wiki/" + quote_plus(t.replace(" ", "_"))
+                        hits.append({"url": wiki_link, "title": t})
+            except json.JSONDecodeError:
+                pass
     return hits
 
 
