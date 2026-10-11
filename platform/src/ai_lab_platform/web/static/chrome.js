@@ -42,7 +42,10 @@
     wrap.hidden = true;
     wrap.innerHTML =
       '<div class="ai-lab-login-card">' +
-      "<h2>Sign in</h2>" +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+      '<h2 style="margin:0">Sign in</h2>' +
+      '<button type="button" id="ai-lab-login-close" style="background:transparent;border:0;color:#888;font-size:18px;cursor:pointer;width:auto;padding:0;margin:0">&times;</button>' +
+      '</div>' +
       "<p>Personal lab — username and password for this operator only.</p>" +
       '<label for="ai-lab-login-user">Username</label>' +
       '<input id="ai-lab-login-user" autocomplete="username" />' +
@@ -53,13 +56,21 @@
       "</div>";
     document.body.appendChild(wrap);
 
+    wrap.addEventListener("click", function (e) {
+      if (e.target === wrap) wrap.hidden = true;
+    });
+
+    document.getElementById("ai-lab-login-close").onclick = function () {
+      wrap.hidden = true;
+    };
+
     if (!document.getElementById("ai-lab-login-style")) {
       const st = document.createElement("style");
       st.id = "ai-lab-login-style";
       st.textContent =
         "#ai-lab-login-modal{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55);" +
         "display:flex;align-items:center;justify-content:center;padding:16px}" +
-        "#ai-lab-login-modal[hidden]{display:none}" +
+        "#ai-lab-login-modal[hidden]{display:none!important}" +
         ".ai-lab-login-card{width:min(380px,100%);background:#1a1a1a;color:#ececec;" +
         "border:1px solid #333;border-radius:16px;padding:20px;font:14px/1.4 system-ui,sans-serif}" +
         ".ai-lab-login-card h2{margin:0 0 6px;font-size:20px}" +
@@ -110,14 +121,18 @@
       const hint = document.getElementById("ai-lab-auth-hint");
       const has = !!(sessionStorage.getItem("ai_lab_token") || "");
       if (!hint) return;
+      hint.style.cursor = "pointer";
+      hint.onclick = function () {
+        ensureLoginModal();
+        const m = document.getElementById("ai-lab-login-modal");
+        if (m) m.hidden = !m.hidden;
+      };
       if (!d.auth_ready) {
         hint.textContent = "Auth not configured on mini";
       } else if (has) {
         hint.textContent = "Signed in";
       } else if (d.login_required || d.login_available || d.paste_required) {
-        hint.textContent = "Sign in required";
-        ensureLoginModal();
-        document.getElementById("ai-lab-login-modal").hidden = false;
+        hint.textContent = "Sign in (optional)";
       } else {
         hint.textContent = "Auth ready";
       }
