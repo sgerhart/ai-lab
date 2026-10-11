@@ -22,7 +22,8 @@
     "presentation_list",
     "skill_create",
     "skill_list",
-    "skill_read"
+    "skill_read",
+    "consult_frontier"
   ],
   "privileged_tools": [],
   "network": [],

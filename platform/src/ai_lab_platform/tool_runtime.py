@@ -104,6 +104,7 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "skill_create": lambda ctx, **a: _skill_create(ctx, a),
     "skill_list": lambda ctx, **a: _skill_list(ctx, a),
     "skill_read": lambda ctx, **a: _skill_read(ctx, a),
+    "consult_frontier": lambda ctx, **a: _consult_frontier(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -392,6 +393,74 @@ def _skill_read(_ctx: ToolContext, args: dict[str, Any]) -> str:
         return SkillLibrary().read(name)
     except SkillError as exc:
         raise ToolError(str(exc)) from exc
+
+
+def _consult_frontier(ctx: ToolContext, args: dict[str, Any]) -> str:
+    task = str(args.get("task") or args.get("prompt") or "").strip()
+    context = str(args.get("context") or args.get("data") or "").strip()
+    backend = str(args.get("backend") or "").strip().lower()
+    model = str(args.get("model") or "").strip()
+
+    if not task:
+        raise ToolError("task is required for consult_frontier")
+
+    router = getattr(ctx, "model_router", None)
+    if router is None:
+        from .model_router import build_router_from_settings
+
+        router = build_router_from_settings()
+
+    providers = router.list_providers()
+    enabled_cloud = [p for p in providers if p.get("enabled") and p.get("billing_class") == "usage_billed_api"]
+
+    if not enabled_cloud:
+        from .secrets_store import default_secret_store
+
+        store = getattr(router, "secret_store", None) or default_secret_store()
+        if not store.usage_billed_authorized():
+            return "Frontier models are disabled until authorized on /secrets (ADR 0038). Using local synthesis."
+        return "No cloud provider keys configured on /secrets. Please configure an OpenAI, Anthropic, or Gemini key."
+
+    target_provider = None
+    if backend:
+        target_provider = next((p for p in enabled_cloud if p["id"] == backend), None)
+    if not target_provider:
+        for preferred in ["openai", "anthropic", "gemini"]:
+            target_provider = next((p for p in enabled_cloud if p["id"] == preferred), None)
+            if target_provider:
+                break
+    if not target_provider:
+        target_provider = enabled_cloud[0]
+
+    chosen_backend = target_provider["id"]
+    chosen_model = model or (target_provider.get("models") or [""])[0]
+
+    full_prompt = task
+    if context:
+        full_prompt = f"Context and data gathered locally by agent:\n{context}\n\nTask for frontier model:\n{task}"
+
+    from .model_router import CompletionRequest
+
+    try:
+        resp = router.complete(
+            CompletionRequest(
+                model=chosen_model,
+                prompt=full_prompt,
+                backend=chosen_backend,
+                system=(
+                    "You are the frontier intelligence component of a hybrid AI agent workflow. "
+                    "Analyze the local context gathered by the local agent and deliver high-level, "
+                    "flawless strategic analysis, slide deck content, or executive synthesis."
+                ),
+            )
+        )
+        return (
+            f"--- Frontier Consultation Result ({chosen_backend} :: {resp.model}) ---\n"
+            f"{resp.text}\n"
+            f"--- End Frontier Result ---"
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise ToolError(f"Frontier consultation failed: {exc}") from exc
 
 
 def execute_allowed_tool(

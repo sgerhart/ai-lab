@@ -878,7 +878,7 @@ def create_control_app(
         cloud_enabled = {
             "openai": bool(store_s.has_provider("openai") and usage_ok),
             "anthropic": bool(store_s.has_provider("anthropic") and usage_ok),
-            "gemini": False,
+            "gemini": bool(store_s.has_provider("gemini") and usage_ok),
         }
         catalog = load_catalog()
         roles = load_roles()
@@ -899,6 +899,24 @@ def create_control_app(
                         "reason": prof.get("reason"),
                     }
                 )
+        existing_keys = {(c.get("backend"), c.get("model")) for c in choices}
+        for p in providers:
+            if p.get("enabled") and p.get("billing_class") == "usage_billed_api":
+                pid = str(p.get("id") or "")
+                for m in p.get("models") or []:
+                    if (pid, m) not in existing_keys:
+                        choices.append(
+                            {
+                                "backend": pid,
+                                "model": m,
+                                "profile_id": f"{pid}-{m}",
+                                "label": f"{m} ({pid.title()})",
+                                "billing_class": "usage_billed_api",
+                                "available": True,
+                                "intended_use": f"Foundation model {m} via {pid.title()}",
+                            }
+                        )
+                        existing_keys.add((pid, m))
         return {
             "providers": providers,
             "profiles": profiles,

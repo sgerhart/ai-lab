@@ -2119,18 +2119,40 @@
       autoOpt.textContent = "⚡ Auto (Smart Route)";
       autoOpt.title = "Automatically route to qwen3-coder for code, llama3.2 for fast queries, or qwen3.6 for reasoning.";
       msel.appendChild(autoOpt);
-      const choices = (state.choices || []).filter((c) => c.available !== false && c.model !== "fake-instruct");
+
+      const hybridOpt = document.createElement("option");
+      hybridOpt.value = "ollama::hybrid";
+      hybridOpt.textContent = "🔄 Hybrid (Local Agent + OpenAI Synthesis)";
+      hybridOpt.title = "Start on local Studio M4 for private search/vault retrieval, then collaborate with OpenAI for executive synthesis.";
+      msel.appendChild(hybridOpt);
+
+      const localGroup = document.createElement("optgroup");
+      localGroup.label = "🖥️ Local Studio Models";
+
+      const cloudGroup = document.createElement("optgroup");
+      cloudGroup.label = "☁️ Cloud Foundation Models";
+
+      const choices = (state.choices || []).filter((c) => c.model !== "fake-instruct");
       if (choices.length) {
         for (const c of choices) {
           const opt = document.createElement("option");
           opt.value = c.backend + "::" + c.model;
-          const bill = c.billing_class === "local" ? "local" : "usage-billed";
+          const isLocal = c.billing_class === "local";
           const role = c.label && c.label !== c.model ? c.label : "";
-          const label = role ? `${c.model} · ${role}` : `${c.model} (${bill})`;
-          opt.textContent = label;
-          opt.title = c.intended_use || "";
-          msel.appendChild(opt);
+          if (isLocal) {
+            opt.textContent = role ? `${c.model} · ${role}` : `${c.model} (local)`;
+            opt.title = c.intended_use || "";
+            localGroup.appendChild(opt);
+          } else {
+            const availText = c.available ? "" : " [Key required on /secrets]";
+            opt.textContent = `${c.model} (${c.backend.toUpperCase()}${availText})`;
+            opt.title = c.intended_use || (c.available ? "Cloud foundation model" : "Configure key on /secrets");
+            opt.disabled = !c.available;
+            cloudGroup.appendChild(opt);
+          }
         }
+        if (localGroup.children.length) msel.appendChild(localGroup);
+        if (cloudGroup.children.length) msel.appendChild(cloudGroup);
       } else {
         const ollama = (state.providers || []).find((p) => p.id === "ollama");
         const models = ((ollama && ollama.models) || []).filter((m) => m !== "fake-instruct");
@@ -2138,10 +2160,11 @@
           const opt = document.createElement("option");
           opt.value = "ollama::" + m;
           opt.textContent = m + " (local)";
-          msel.appendChild(opt);
+          localGroup.appendChild(opt);
         }
+        if (localGroup.children.length) msel.appendChild(localGroup);
       }
-      if (prev && [...msel.options].some((o) => o.value === prev)) msel.value = prev;
+      if (prev && [...msel.options].some((o) => o.value === prev && !o.disabled)) msel.value = prev;
       else msel.value = "ollama::auto";
       const ch = selectedChoice();
       if ($("provider")) $("provider").value = ch.backend;

@@ -87,7 +87,7 @@ class OpenAIBackend:
                 json={
                     "model": model,
                     "messages": messages,
-                    "max_tokens": 512,
+                    "max_tokens": 4096,
                     "temperature": 0.2,
                 },
                 timeout=self.timeout_seconds,
@@ -177,7 +177,7 @@ class AnthropicBackend:
                 },
                 json={
                     "model": model,
-                    "max_tokens": 512,
+                    "max_tokens": 4096,
                     "system": request.system or "You are a helpful lab agent.",
                     "messages": [{"role": "user", "content": request.prompt}],
                 },
@@ -207,3 +207,99 @@ class AnthropicBackend:
             billing_class=self.billing_class,
             usage=usage,
         )
+
+
+class GeminiBackend:
+    billing_class = BillingClass.USAGE_BILLED_API
+    provider_id = "gemini"
+
+    def __init__(
+        self,
+        secret_store: SecretStore,
+        *,
+        base_url: str = "https://generativelanguage.googleapis.com/v1beta",
+        timeout_seconds: float = 120.0,
+    ) -> None:
+        self.secret_store = secret_store
+        self.base_url = base_url.rstrip("/")
+        self.timeout_seconds = timeout_seconds
+
+    def _gate_key(self) -> str:
+        if not self.secret_store.usage_billed_authorized():
+            raise PermissionError(
+                "gemini is disabled; authorize usage-billed API on /secrets (ADR 0038)"
+            )
+        key = self.secret_store.get_provider(self.provider_id)
+        if not key:
+            raise PermissionError("gemini API key not configured in secret store")
+        return key
+
+    def health(self) -> dict[str, Any]:
+        authorized = self.secret_store.usage_billed_authorized()
+        has_key = self.secret_store.has_provider(self.provider_id)
+        enabled = authorized and has_key
+        reason = None
+        if not authorized:
+            reason = "usage_billed_not_authorized"
+        elif not has_key:
+            reason = "missing_api_key"
+        return {
+            "ok": enabled,
+            "enabled": enabled,
+            "backend": self.provider_id,
+            "billing_class": self.billing_class.value,
+            "models": list(DEFAULT_MODELS[self.provider_id]) if enabled else [],
+            "reason": reason,
+        }
+
+    def complete(self, request: CompletionRequest) -> CompletionResponse:
+        key = self._gate_key()
+        import httpx
+
+        model = request.model or DEFAULT_MODELS[self.provider_id][0]
+        url = f"{self.base_url}/models/{model}:generateContent"
+        contents: list[dict[str, Any]] = []
+        if request.system:
+            contents.append({"role": "user", "parts": [{"text": f"System instructions: {request.system}"}]})
+            contents.append({"role": "model", "parts": [{"text": "Understood."}]})
+        contents.append({"role": "user", "parts": [{"text": request.prompt}]})
+        try:
+            response = httpx.post(
+                url,
+                headers={
+                    "x-goog-api-key": key,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "contents": contents,
+                    "generationConfig": {
+                        "maxOutputTokens": 4096,
+                        "temperature": 0.2,
+                    },
+                },
+                timeout=self.timeout_seconds,
+            )
+            response.raise_for_status()
+            data = response.json()
+        except httpx.HTTPError as exc:
+            raise CloudUnavailable(str(exc)) from exc
+        text = ""
+        usage: dict[str, Any] = {"estimated_cost_usd": None}
+        if isinstance(data, dict):
+            candidates = data.get("candidates") or []
+            if candidates and isinstance(candidates[0], dict):
+                content = candidates[0].get("content") or {}
+                parts = content.get("parts") or []
+                text = "".join(str(p.get("text") or "") for p in parts if isinstance(p, dict))
+            u = data.get("usageMetadata") or {}
+            if isinstance(u, dict):
+                usage["input_tokens"] = u.get("promptTokenCount")
+                usage["output_tokens"] = u.get("candidatesTokenCount")
+        return CompletionResponse(
+            model=model,
+            backend=self.provider_id,
+            text=text,
+            billing_class=self.billing_class,
+            usage=usage,
+        )
+

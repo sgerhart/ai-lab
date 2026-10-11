@@ -415,6 +415,19 @@ def resolve_smart_model(
     """Smart model auto-router: select best model based on prompt characteristics."""
     req = (requested_model or "").strip()
     if req and req != "auto" and "auto" not in req.lower():
+        if "::" in req:
+            b, _, m = req.partition("::")
+            if "hybrid" in m.lower():
+                return ("qwen3.6:35b-a3b" if "qwen3.6:35b-a3b" in (installed_models or []) else "llama3.2:3b"), "ollama"
+            return m, b
+        if "hybrid" in req.lower():
+            return ("qwen3.6:35b-a3b" if "qwen3.6:35b-a3b" in (installed_models or []) else "llama3.2:3b"), "ollama"
+        if req.startswith("claude"):
+            return req, "anthropic"
+        if req.startswith("gpt-") or req.startswith("o1") or req.startswith("o3") or req.startswith("chatgpt"):
+            return req, "openai"
+        if req.startswith("gemini"):
+            return req, "gemini"
         return req, "ollama"
     text = (content or "").lower()
     installed = set(installed_models or [])

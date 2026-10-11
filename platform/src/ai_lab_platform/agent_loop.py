@@ -136,6 +136,7 @@ _REPEATABLE_TOOLS = frozenset(
         "memory_search",
         "repo_search",
         "repo_read",
+        "consult_frontier",
     }
 )
 
@@ -192,7 +193,8 @@ def loop_system_prompt(
         "5. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
         "6. If the user asks for a presentation, slides, or deck, you MUST call presentation_write(name, title, slides_markdown) before finishing with FINAL. Do not loop on web searches once you have basic facts; proceed directly to authoring the presentation.\n"
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
-        "8. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
+        "8. HYBRID FRONTIER WORKFLOW: You have access to consult_frontier(task, context). When you are running on the local model and need high-level strategic reasoning, complex executive synthesis, creative writing, or polished presentation slide generation, first gather facts locally (using web_search, vault_read, or files_read), then call consult_frontier to collaborate with OpenAI or another configured frontier model. Then finalize or write the presentation/report using the frontier model's output.\n"
+        "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
     ) + _brief_block(brief)
 
 
@@ -423,6 +425,8 @@ def step_agent_run(
 
     granted = extra_read_tools(list(getattr(run, "granted_tools", []) or []))
     effective_allowed = list(policy.allowed_tools) + granted + list(policy.privileged_tools) + mcp_tools
+    if ctx is not None and getattr(ctx, "model_router", None) is None:
+        ctx.model_router = router
     brief = ""
     if policy.id == "personal":
         from .memory_vault import MemoryVault

@@ -26,6 +26,7 @@ class ToolContext:
     files_root: Path | None = None
     web_opener: Any = None
     web_resolve: Any = None
+    model_router: Any = None
 
 
 def resolve_scope(ctx: ToolContext) -> Path:

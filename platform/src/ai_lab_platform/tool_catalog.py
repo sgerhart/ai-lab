@@ -33,6 +33,7 @@ READ_TOOLS = frozenset(
         "report_read",
         "report_write",
         "write_report_artifact",
+        "consult_frontier",
     }
 )
 

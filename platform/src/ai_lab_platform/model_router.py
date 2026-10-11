@@ -216,7 +216,7 @@ def build_router_from_settings(
     secret_store: Any | None = None,
 ) -> ModelRouter:
     """Construct the live router. Studio Ollama + optional cloud from SecretStore."""
-    from .cloud_backends import AnthropicBackend, OpenAIBackend
+    from .cloud_backends import AnthropicBackend, GeminiBackend, OpenAIBackend
     from .ollama_backend import OllamaBackend
     from .secrets_store import SecretStore, default_secret_store
     from .settings import Settings
@@ -228,7 +228,7 @@ def build_router_from_settings(
         "fake": FakeBackend(),
         "openai": OpenAIBackend(secrets),
         "anthropic": AnthropicBackend(secrets),
-        "gemini": DisabledCloudBackend("gemini"),
+        "gemini": GeminiBackend(secrets),
     }
     default = "fake"
     if ollama_url:

@@ -45,6 +45,33 @@
       "catalog_model_id": null,
       "model": "gpt-4.1",
       "intended_use": "Optional difficult coding tasks with usage billing (gated)"
+    },
+    {
+      "id": "frontier-claude",
+      "label": "Frontier Claude",
+      "billing_class": "usage_billed_api",
+      "backend": "anthropic",
+      "catalog_model_id": null,
+      "model": "claude-sonnet-4-5",
+      "intended_use": "Executive presentations, deep strategic research, and high-capability reasoning"
+    },
+    {
+      "id": "frontier-openai",
+      "label": "Frontier OpenAI",
+      "billing_class": "usage_billed_api",
+      "backend": "openai",
+      "catalog_model_id": null,
+      "model": "gpt-4o",
+      "intended_use": "Multimodal reasoning, presentations, and synthesis"
+    },
+    {
+      "id": "frontier-gemini",
+      "label": "Frontier Gemini",
+      "billing_class": "usage_billed_api",
+      "backend": "gemini",
+      "catalog_model_id": null,
+      "model": "gemini-2.0-flash",
+      "intended_use": "High-speed multimodal synthesis and web research"
     }
   ],
   "models": [

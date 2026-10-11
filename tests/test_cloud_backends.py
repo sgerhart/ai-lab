@@ -11,7 +11,12 @@ from unittest.mock import MagicMock, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "platform" / "src"))
 
-from ai_lab_platform.cloud_backends import AnthropicBackend, CloudUnavailable, OpenAIBackend
+from ai_lab_platform.cloud_backends import (
+    AnthropicBackend,
+    CloudUnavailable,
+    GeminiBackend,
+    OpenAIBackend,
+)
 from ai_lab_platform.model_router import CompletionRequest, build_router_from_settings
 from ai_lab_platform.secrets_store import SecretStore
 from ai_lab_platform.settings import Settings
@@ -90,6 +95,29 @@ class CloudBackendGateTests(unittest.TestCase):
             )
         self.assertEqual(text.text, "claude-hi")
         self.assertEqual(mocked.call_args.kwargs["headers"]["x-api-key"], "ant-test-not-real")
+
+    def test_gemini_complete_mocked(self) -> None:
+        try:
+            import httpx  # noqa: F401
+        except ImportError:
+            self.skipTest("httpx not installed")
+        self.store.set_usage_billed_authorized(True)
+        self.store.set_provider("gemini", "gem-test-not-real")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "gemini-hi"}]}}],
+            "usageMetadata": {"promptTokenCount": 5, "candidatesTokenCount": 2},
+        }
+        mock_resp.raise_for_status.return_value = None
+        with patch("httpx.post", return_value=mock_resp) as mocked:
+            text = GeminiBackend(self.store).complete(
+                CompletionRequest(
+                    model="gemini-2.0-flash", prompt="ping", backend="gemini"
+                )
+            )
+        self.assertEqual(text.text, "gemini-hi")
+        self.assertEqual(text.backend, "gemini")
+        self.assertEqual(mocked.call_args.kwargs["headers"]["x-goog-api-key"], "gem-test-not-real")
 
     def test_http_error_is_cloud_unavailable(self) -> None:
         try:
