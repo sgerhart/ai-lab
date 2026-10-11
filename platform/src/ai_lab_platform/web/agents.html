@@ -26,6 +26,7 @@
       --panel: #1a1a1a;
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     html, body { margin: 0; height: 100%; }
     .ai-lab-topnav { display: none !important; }
     body {
@@ -1483,7 +1484,7 @@
           <div class="thread" id="messages">
             <div class="empty" id="empty">
               <strong>Where should we start?</strong>
-              Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.
+              Ask the AI Lab Assistant. Auto mode coordinates research, slides, and tools automatically.
             </div>
           </div>
         </div>
@@ -1892,7 +1893,6 @@
               <option value="studio" selected>Studio (Local M4)</option>
               <option value="deep">Deep research</option>
             </select>
-            <button type="button" class="btn" id="run-bg" title="Queue this task on the mini" hidden>Run in background</button>
             <select id="agent" class="mode-select" title="Agent persona" hidden>
               <option value="personal">personal</option>
               <option value="lab-operations">lab-operations</option>
@@ -1901,7 +1901,7 @@
               <option value="research">research</option>
             </select>
           </div>
-          <div class="hint" id="composer-hint">Send stays a conversation. Run in background asks the mini to use tools and keeps the result in this chat. It does not approve file changes. Restart recovery is not verified.</div>
+          <div class="hint" id="composer-hint">Press Enter to send · Shift+Enter for newline · Smart Agent automatically coordinates tools, research, and artifacts.</div>
         </div>
       </div>
       <div class="err" id="error" style="position:absolute;left:0;right:0;bottom:4px;pointer-events:none"></div>
@@ -3436,7 +3436,7 @@
       const box = $("runs-list");
       box.innerHTML = "";
       if (!state.runs.length) {
-        box.innerHTML = '<p style="color:var(--muted)">No background tasks yet. From chat, use Run in background when you want the mini to use tools.</p>';
+        box.innerHTML = '<p style="color:var(--muted)">No background tasks yet. Ask the assistant to research, create slides, or run tools to start a task.</p>';
         return;
       }
       for (const r of state.runs) {
@@ -4947,43 +4947,45 @@
         $("chat").focus();
       }
     };
-    $("run-bg").onclick = async () => {
-      const text = $("chat").value.trim();
-      if (!text || state.sending) return;
-      state.sending = true;
-      $("run-bg").disabled = true;
-      try {
-        if (!state.conversationId) await newConversation();
-        const ch = selectedChoice();
-        await api(`/v1/conversations/${state.conversationId}/messages`, {
-          method: "POST",
-          body: JSON.stringify({ content: text, role: "user", reply: false }),
-        });
-        await api(`/v1/conversations/${state.conversationId}/runs`, {
-          method: "POST",
-          body: JSON.stringify({
-            agent: "personal",
-            objective: text,
-            execute: true,
-            backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
-            model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
-            billing_class: ch.billing_class || "local",
-            max_steps: 16,
-          }),
-        });
-        $("chat").value = "";
-        autosize();
-        showErr("");
-        state.sending = false;
-        await refreshThread();
-        await loadConversations();
-      } catch (e) {
-        showErr(e);
-      } finally {
-        state.sending = false;
-        $("run-bg").disabled = false;
-      }
-    };
+    if ($("run-bg")) {
+      $("run-bg").onclick = async () => {
+        const text = $("chat").value.trim();
+        if (!text || state.sending) return;
+        state.sending = true;
+        $("run-bg").disabled = true;
+        try {
+          if (!state.conversationId) await newConversation();
+          const ch = selectedChoice();
+          await api(`/v1/conversations/${state.conversationId}/messages`, {
+            method: "POST",
+            body: JSON.stringify({ content: text, role: "user", reply: false }),
+          });
+          await api(`/v1/conversations/${state.conversationId}/runs`, {
+            method: "POST",
+            body: JSON.stringify({
+              agent: "personal",
+              objective: text,
+              execute: true,
+              backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+              model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
+              billing_class: ch.billing_class || "local",
+              max_steps: 16,
+            }),
+          });
+          $("chat").value = "";
+          autosize();
+          showErr("");
+          state.sending = false;
+          await refreshThread();
+          await loadConversations();
+        } catch (e) {
+          showErr(e);
+        } finally {
+          state.sending = false;
+          $("run-bg").disabled = false;
+        }
+      };
+    }
     $("approve-action").onclick = async () => {
       try {
         showRun(await api(`/v1/agent-runs/${state.runId}/approve-action`, {
