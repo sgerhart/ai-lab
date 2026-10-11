@@ -128,7 +128,9 @@ def loop_system_prompt(
         "3. Use vault_write to permanently remember new facts, decisions, and user preferences (category: preferences, facts, decisions, projects).\n"
         "4. Use schedule_create to schedule recurring cron jobs (5-field cron: minute hour dom month dow, e.g. '0 9 * * 1' for Monday 9am, '0 9 * * *' for daily 9am). Use schedule_list and schedule_cancel to manage schedules.\n"
         "5. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
-        "6. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
+        "6. Use presentation_write to generate interactive slide decks (separate slides with --- in the content).\n"
+        "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
+        "8. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
     ) + _brief_block(brief)
 
 

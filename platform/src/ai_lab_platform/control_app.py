@@ -1622,6 +1622,12 @@ def create_control_app(
 
         backend = body.backend
         model = body.model
+        from .model_catalog import resolve_smart_model
+
+        if model in {"auto", ""} or "auto" in (model or "").lower():
+            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+            installed = list((ollama_p or {}).get("models") or [])
+            model, backend = resolve_smart_model(body.content, model, installed)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
             # IWO-028: prefer anthropic then openai when authorized + keyed.
@@ -1783,6 +1789,12 @@ def create_control_app(
 
         backend = body.backend
         model = body.model
+        from .model_catalog import resolve_smart_model
+
+        if model in {"auto", ""} or "auto" in (model or "").lower():
+            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+            installed = list((ollama_p or {}).get("models") or [])
+            model, backend = resolve_smart_model(body.content, model, installed)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
             if not secrets_s.usage_billed_authorized():
@@ -2481,15 +2493,23 @@ def create_control_app(
                     detail=f"{body.backend} API key not configured on /secrets",
                 )
         from .conversation import RunBudget
+        from .model_catalog import resolve_smart_model
+
+        run_model = body.model
+        run_backend = body.backend
+        if run_model in {"auto", ""} or "auto" in (run_model or "").lower():
+            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+            installed = list((ollama_p or {}).get("models") or [])
+            run_model, run_backend = resolve_smart_model(body.objective, run_model, installed)
 
         run = AgentRun.new(
             agent=conversation.agent,
             objective=body.objective,
             conversation_id=conversation_id,
             work_order_id=body.work_order_id,
-            model=body.model,
+            model=run_model,
             billing_class=billing,
-            backend=body.backend,
+            backend=run_backend,
             budget=RunBudget(max_steps=body.max_steps),
         )
         if body.execute:

@@ -405,3 +405,47 @@ class CatalogSummary:
     host: str
     model_count: int
     pulled_in_git: bool = False
+
+
+def resolve_smart_model(
+    content: str,
+    requested_model: str = "",
+    installed_models: list[str] | None = None,
+) -> tuple[str, str]:
+    """Smart model auto-router: select best model based on prompt characteristics."""
+    req = (requested_model or "").strip()
+    if req and req != "auto" and "auto" not in req.lower():
+        return req, "ollama"
+    text = (content or "").lower()
+    installed = set(installed_models or [])
+    # Coding triggers
+    code_triggers = (
+        "def ",
+        "class ",
+        "git ",
+        "diff ",
+        "```",
+        "python",
+        "bug",
+        "refactor",
+        "unittest",
+        "function",
+        "pull request",
+        "syntax",
+        "compile",
+        "code",
+        "patch",
+    )
+    if any(t in text for t in code_triggers) and "qwen3-coder:30b" in installed:
+        return "qwen3-coder:30b", "ollama"
+    # Fast lightweight triggers (very short query, greeting, ping, status)
+    fast_triggers = ("hello", "hi", "ping", "status", "health", "uptime", "who are you")
+    if (len(text.strip()) < 25 or any(t == text.strip() for t in fast_triggers)) and "llama3.2:3b" in installed:
+        return "llama3.2:3b", "ollama"
+    # Strategic reasoning & second brain default
+    if "qwen3.6:35b-a3b" in installed:
+        return "qwen3.6:35b-a3b", "ollama"
+    if "qwen3.8:27b" in installed:
+        return "qwen3.8:27b", "ollama"
+    return "qwen3.6:35b-a3b", "ollama"
+

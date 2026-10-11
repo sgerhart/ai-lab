@@ -278,12 +278,16 @@
       display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
       gap: 4px 10px; margin-top: 8px;
     }
+    .meta-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .06em; color: #787878; margin-right: -4px; user-select: none;
+    }
     .mode-select {
-      appearance: none; border: 0; background: transparent; color: var(--muted);
-      font: 13px/1 inherit; padding: 6px 8px; cursor: pointer; border-radius: 999px;
+      appearance: none; border: 1px solid var(--line); background: #181818; color: var(--muted);
+      font: 13px/1 inherit; padding: 6px 10px; cursor: pointer; border-radius: 999px;
       max-width: min(100%, 36rem);
     }
-    .mode-select:hover { background: rgba(255,255,255,.06); color: var(--ink); }
+    .mode-select:hover { background: #222222; color: var(--ink); border-color: #444; }
     .send {
       width: 36px; height: 36px; border-radius: 999px; border: 0;
       background: var(--send); color: var(--send-ink); cursor: pointer;
@@ -1145,10 +1149,12 @@
             <button type="button" class="send" id="send-chat" title="Send">↑</button>
           </div>
           <div class="composer-meta">
+            <span class="meta-label">Mode:</span>
             <select id="mode" class="mode-select" title="Response mode">
-              <option value="studio">Studio</option>
+              <option value="studio">Studio (Local M4)</option>
               <option value="deep">Deep research</option>
             </select>
+            <span class="meta-label" style="margin-left:6px;">Model:</span>
             <select id="provider" class="mode-select" title="Provider" hidden></select>
             <select id="model" class="mode-select" title="Model"></select>
             <button type="button" class="btn" id="run-bg" title="Queue this task on the mini">Run in background</button>
@@ -1702,6 +1708,11 @@
       const msel = $("model");
       const prev = msel.value;
       msel.innerHTML = "";
+      const autoOpt = document.createElement("option");
+      autoOpt.value = "ollama::auto";
+      autoOpt.textContent = "⚡ Auto (Smart Route)";
+      autoOpt.title = "Automatically route to qwen3-coder for code, llama3.2 for fast queries, or qwen3.6 for reasoning.";
+      msel.appendChild(autoOpt);
       const choices = (state.choices || []).filter((c) => c.available !== false);
       if (choices.length) {
         for (const c of choices) {
@@ -1714,13 +1725,8 @@
           opt.title = c.intended_use || "";
           msel.appendChild(opt);
         }
-        const defProf = state.defaultProfile || "fast-local";
-        const preferred = choices.find((c) => c.profile_id === defProf || (c.profile_ids || []).includes(defProf))
-          || choices.find((c) => (c.model || "").includes("llama3.2"))
-          || choices[0];
-        const preferredVal = preferred.backend + "::" + preferred.model;
         if (prev && [...msel.options].some((o) => o.value === prev)) msel.value = prev;
-        else msel.value = preferredVal;
+        else msel.value = "ollama::auto";
         const ch = selectedChoice();
         $("provider").value = ch.backend;
       } else {

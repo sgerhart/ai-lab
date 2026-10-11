@@ -11,8 +11,10 @@ from .approvals import is_privileged, requires_approval
 from .mcp_client import call_mcp_tool, capability_needs_approval, get_local_server, parse_mcp_tool_name
 from .memory_vault import MemoryVault, VaultError
 from .operator_files import DocumentLibrary, FilesError
+from .presentations import PresentationError, PresentationLibrary
 from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
 from .schedule_cron import CronError, parse_cron
+from .skills_library import SkillError, SkillLibrary
 from .web_lookup import WebLookupError, research_pages, web_search
 from .research_reports import ReportError, ReportLibrary
 from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, repo_read, repo_search
@@ -97,6 +99,11 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "schedule_create": lambda ctx, **a: _schedule_create(ctx, a),
     "schedule_list": lambda ctx, **a: _schedule_list(ctx, a),
     "schedule_cancel": lambda ctx, **a: _schedule_cancel(ctx, a),
+    "presentation_write": lambda ctx, **a: _presentation_write(ctx, a),
+    "presentation_list": lambda ctx, **a: _presentation_list(ctx, a),
+    "skill_create": lambda ctx, **a: _skill_create(ctx, a),
+    "skill_list": lambda ctx, **a: _skill_list(ctx, a),
+    "skill_read": lambda ctx, **a: _skill_read(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -324,6 +331,60 @@ def _schedule_cancel(ctx: ToolContext, args: dict[str, Any]) -> str:
     found.schedule_cron = ""
     store.put(found)
     return f"schedule_cancel success: Cancelled schedule for task '{found.title}' (id: {found.id})."
+
+
+def _presentation_write(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    name = str(args.get("name") or args.get("title") or "deck").strip()
+    title = str(args.get("title") or name).strip()
+    content = str(args.get("content") or args.get("slides") or args.get("body") or "").strip()
+    if not content:
+        raise ToolError("content/slides required for presentation_write")
+    try:
+        return PresentationLibrary().write(name, title, content)
+    except PresentationError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _presentation_list(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return PresentationLibrary().list_presentations(
+            limit=_bounded_limit(args.get("limit"), 50, 100)
+        )
+    except PresentationError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _skill_create(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    name = str(args.get("name") or args.get("title") or "").strip()
+    if not name:
+        raise ToolError("name is required for skill_create")
+    desc = str(args.get("description") or args.get("desc") or name).strip()
+    steps = str(
+        args.get("steps") or args.get("procedure") or args.get("instructions") or ""
+    ).strip()
+    if not steps:
+        raise ToolError("steps or procedure required for skill_create")
+    try:
+        return SkillLibrary().create(name, desc, steps)
+    except SkillError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _skill_list(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return SkillLibrary().list_skills(limit=_bounded_limit(args.get("limit"), 50, 100))
+    except SkillError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _skill_read(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    name = str(args.get("name") or args.get("skill") or "").strip()
+    if not name:
+        raise ToolError("name is required for skill_read")
+    try:
+        return SkillLibrary().read(name)
+    except SkillError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 def execute_allowed_tool(

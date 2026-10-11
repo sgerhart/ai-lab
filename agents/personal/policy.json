@@ -17,7 +17,12 @@
     "vault_write",
     "schedule_create",
     "schedule_list",
-    "schedule_cancel"
+    "schedule_cancel",
+    "presentation_write",
+    "presentation_list",
+    "skill_create",
+    "skill_list",
+    "skill_read"
   ],
   "privileged_tools": [],
   "network": [],
