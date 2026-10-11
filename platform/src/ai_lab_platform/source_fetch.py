@@ -138,11 +138,14 @@ _UDDG_RE = re.compile(r"[?&]uddg=([^&\"']+)", re.I)
 
 
 def factual_query(text: str) -> bool:
-    """A question the local model would have to recall or guess."""
+    """A question or search topic the local model would have to recall or research."""
     query = " ".join((text or "").split())
-    if len(query) < 12 or _GREETING_RE.match(query):
+    if len(query) < 3 or _GREETING_RE.match(query):
         return False
-    return bool(_FACT_RE.search(query))
+    if bool(_FACT_RE.search(query)):
+        return True
+    words = [w for w in query.split() if len(w) > 1]
+    return len(words) >= 2
 
 
 def needs_source_fetch(query: str) -> bool:
