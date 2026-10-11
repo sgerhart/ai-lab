@@ -336,7 +336,14 @@ def _schedule_cancel(ctx: ToolContext, args: dict[str, Any]) -> str:
 def _presentation_write(_ctx: ToolContext, args: dict[str, Any]) -> str:
     name = str(args.get("name") or args.get("title") or "deck").strip()
     title = str(args.get("title") or name).strip()
-    content = str(args.get("content") or args.get("slides") or args.get("body") or "").strip()
+    content = str(
+        args.get("content")
+        or args.get("slides")
+        or args.get("slides_markdown")
+        or args.get("markdown")
+        or args.get("body")
+        or ""
+    ).strip()
     if not content:
         raise ToolError("content/slides required for presentation_write")
     try:
