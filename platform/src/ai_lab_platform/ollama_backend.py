@@ -131,6 +131,11 @@ class OllamaBackend:
             "stream": False,
             "options": self._generate_options(),
         }
+        think_env = os.environ.get("AI_LAB_OLLAMA_THINK", "false").strip().lower()
+        if think_env in {"0", "false", "no"}:
+            payload["think"] = False
+        elif think_env in {"1", "true", "yes"}:
+            payload["think"] = True
         if request.system:
             payload["system"] = request.system
         if request.images:
@@ -143,7 +148,14 @@ class OllamaBackend:
             raise OllamaUnavailable(str(exc)) from exc
         text = ""
         if isinstance(data, dict):
-            text = str(data.get("response") or data.get("text") or "")
+            resp = str(data.get("response") or data.get("text") or "")
+            thinking = str(data.get("thinking") or "")
+            if resp and thinking:
+                text = f"<think>\n{thinking}\n</think>\n{resp}"
+            elif resp:
+                text = resp
+            elif thinking:
+                text = thinking
         return CompletionResponse(
             model=request.model,
             backend="ollama",
