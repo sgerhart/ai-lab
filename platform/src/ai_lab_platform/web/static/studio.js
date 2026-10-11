@@ -1,98 +1,94 @@
-/* Agent Studio canvas. The host page owns auth, chat, and run approval. */
+/* Agent Studio: Streamlined Super Agent Fleet, 1-Page Configurator, and Live Operations */
 (function () {
+  const FLEET_PRESETS = [
+    {
+      id: "second-brain",
+      title: "Second Brain & Partner",
+      agent: "personal",
+      purpose: "second-brain",
+      icon: "🧠",
+      blurb: "Your high-intellect peer. Synthesizes memory, conducts deep web searches, drafts executive decisions, and retains persistent context.",
+      tools: ["memory", "web", "files", "reports"],
+      model: "qwen3.6:35b-a3b",
+      instructions: "You are the operator's primary Second Brain and high-intellect strategic partner. Provide deeply reasoned, proactive, and structured guidance. Synthesize past memories, verify current web facts, and deliver insightful solutions.",
+    },
+    {
+      id: "coding-pair",
+      title: "Autonomous Coding Pair",
+      agent: "coding-assistant",
+      purpose: "build",
+      icon: "💻",
+      blurb: "Senior engineering peer. Reads the codebase, designs architectures, and proposes changes in isolated Git worktrees with human approval gates.",
+      tools: ["files", "git", "sandbox"],
+      model: "qwen3-coder:30b",
+      instructions: "You are a senior principal software engineer. Inspect the repository, analyze code structure, and draft rigorous patches. All filesystem changes occur in isolated Git worktree sandboxes and require operator approval.",
+    },
+    {
+      id: "deep-research",
+      title: "Deep Research & Reports",
+      agent: "research",
+      purpose: "research",
+      icon: "🔍",
+      blurb: "Advanced research specialist. Investigates topics across the live internet, extracts technical sources, and compiles comprehensive structured reports.",
+      tools: ["web", "files", "reports", "memory"],
+      model: "qwen3.6:35b-a3b",
+      instructions: "You are a research scientist. Conduct exhaustive web investigations, cross-reference credible sources, and compile clear, structured executive briefings in markdown.",
+    },
+    {
+      id: "system-ops",
+      title: "Lab System Operations",
+      agent: "lab-operations",
+      purpose: "lab",
+      icon: "⚙️",
+      blurb: "Systems and infrastructure administrator. Monitors Mac mini host health, tailnet connectivity, model memory usage, and background jobs.",
+      tools: ["files", "memory"],
+      model: "llama3.2:3b",
+      instructions: "You are the AI Lab Systems Engineer. Monitor host health, inspect logs, check Tailscale networking, and ensure zero-downtime control plane operation.",
+    },
+  ];
+
   const PURPOSES = [
-    { id: "build", label: "Build", agent: "coding-assistant", blurb: "Read a repo and change a separate copy after you approve." },
-    { id: "learn", label: "Learn", agent: "research", blurb: "Teach a topic and write a sourced note." },
-    { id: "product", label: "Product", agent: "research", blurb: "Draft a spec, a decision, or the next build step." },
-    { id: "company", label: "Company", agent: "research", blurb: "Summarize files and the work of running the company." },
-    { id: "lab", label: "Lab", agent: "lab-operations", blurb: "Check this lab. No file edits." },
+    { id: "second-brain", label: "Second Brain", agent: "personal", blurb: "Executive partner, memory synthesis, web research." },
+    { id: "build", label: "Coding Pair", agent: "coding-assistant", blurb: "Read repo and change code in isolated git worktrees." },
+    { id: "research", label: "Deep Research", agent: "research", blurb: "Internet deep dives and sourced reports." },
+    { id: "product", label: "Product & Spec", agent: "research", blurb: "Specs, architecture decisions, and roadmaps." },
+    { id: "lab", label: "System Ops", agent: "lab-operations", blurb: "Host health, tailnet checks, telemetry." },
   ];
-  const TOOLS = [
-    { id: "files", label: "Files", blurb: "Read the workspace" },
-    { id: "git", label: "Git", blurb: "Status and diff" },
-    { id: "sandbox", label: "Sandbox", blurb: "Separate copy for edits" },
-    { id: "memory", label: "Memory", blurb: "Search what the lab remembers" },
-    { id: "web", label: "Web", blurb: "Allowlisted fetch" },
+
+  const AVAILABLE_TOOLS = [
+    { id: "files", label: "Files", icon: "📁", blurb: "Read workspace & repo context" },
+    { id: "git", label: "Git", icon: "🌿", blurb: "Status, branch inspection, diffs" },
+    { id: "sandbox", label: "Sandbox", icon: "🛡️", blurb: "Isolated worktree edits with human gate" },
+    { id: "memory", label: "Memory", icon: "🧠", blurb: "Search persistent lab memory & insights" },
+    { id: "web", label: "Web Search", icon: "🌐", blurb: "Search internet and read live web pages" },
+    { id: "reports", label: "Reports", icon: "📊", blurb: "Draft structured executive reports" },
   ];
+
   const SKILLS = [
-    { group: "Build", items: [
-      ["Explain a codebase", "Read the repo and name the parts that matter."],
-      ["Implement a change", "Propose a patch in a separate copy and wait."],
-      ["Review a diff", "Look for bugs and missing tests before you commit."],
+    { group: "Engineering", items: [
+      ["Explain Architecture", "Analyze the repository structure and key dependencies."],
+      ["Implement Patch", "Propose a tested patch in an isolated git worktree."],
+      ["Review Diffs", "Review code changes for security, logic errors, and test coverage."],
     ]},
-    { group: "Learn", items: [
-      ["Tutor a topic", "Explain one idea, then give a small exercise."],
-      ["Summarize a document", "Keep the claims tied to the source."],
-      ["Turn a question into a project", "A short path from curiosity to something you can build."],
+    { group: "Second Brain & Research", items: [
+      ["Executive Synthesis", "Synthesize multiple documents into strategic decisions."],
+      ["Web Deep Dive", "Investigate an external technical topic and cite sources."],
+      ["Memory Journaling", "Record insights and patterns into persistent lab memory."],
     ]},
-    { group: "Product", items: [
-      ["Draft a spec", "Users, scope, and what done means."],
-      ["Decision log", "What you chose, and why."],
+    { group: "Operations", items: [
+      ["Host Health Check", "Inspect Mac mini resource utilization and daemon status."],
+      ["Tailnet Verify", "Confirm trusted Tailscale mesh connectivity and zero-trust auth."],
     ]},
-    { group: "Company", items: [
-      ["Weekly brief", "What moved, what is stuck, what is next."],
-      ["Draft a reply", "A message you send yourself. Sending stays behind approval."],
-    ]},
-    { group: "Catalog", items: [
-      ["Read mail", "Gmail is in the catalog. A mail build registers it and leaves it off until you sign in."],
-      ["Look up a CVE", "NVD, OSV, and CISA KEV. The server stays off until you authorize it."],
-      ["Read a file report", "VirusTotal hash, domain, and IP reports. The server stays off until you authorize it."],
-    ]},
-    { group: "Later", items: [
-      ["Read a portfolio", "Balances and history only. Transfers stay behind approval."],
-    ]},
-  ];
-  const ADV = ["Identity", "Instructions", "Model", "Context", "Memory", "Tools", "Skills", "Knowledge", "Workflow", "Permissions", "Runtime", "Versions"];
-  const NAV = [
-    ["", [["dashboard", "Dashboard"]]],
-    ["Agents", [["agents", "My Agents"], ["templates", "Templates"], ["published", "Published"]]],
-    ["Library", [["skills", "Skills"], ["tools", "Tools"], ["knowledge", "Knowledge"], ["memory", "Memory"], ["workflows", "Workflows"]]],
-    ["Operate", [["runs", "Runs"], ["evaluations", "Evaluations"], ["permissions", "Permissions"]]],
   ];
 
   let host = null;
   let section = "dashboard";
-  let mode = "simple";
-  let adv = "Identity";
   let draft = null;
-  let caps = null;
   let currentRun = null;
   let openStep = -1;
 
   function $(id) { return document.getElementById(id); }
-  function purposeOf(id) { return PURPOSES.find((p) => p.id === id) || PURPOSES[0]; }
-  function blankDraft(purposeId) {
-    const p = purposeOf(purposeId || "build");
-    return {
-      id: null,
-      title: "",
-      purpose: p.id,
-      agent: p.agent,
-      instructions: "",
-      role: "",
-      objective: "",
-      constraints: "Wait for approval before commit, push, send, delete, or anything that spends or moves money.",
-      policies: "",
-      output_format: "",
-      model: "",
-      backend: "",
-      reasoning: "",
-      temperature: "",
-      fallback: "",
-      tools: p.id === "build" ? ["files", "git", "sandbox"] : ["memory"],
-      skills: [],
-      knowledge: "",
-      memory: { session: true, user: true, agent: true, shared: false, retention_days: 30 },
-      workflow: "manager",
-      cron: "",
-      mcp: "",
-      versions: [],
-      change_note: "",
-      task: "",
-      kind: "agent",
-      steps: [],
-    };
-  }
+
   function el(tag, attrs, kids) {
     const node = document.createElement(tag);
     Object.entries(attrs || {}).forEach(([k, v]) => {
@@ -108,341 +104,515 @@
     });
     return node;
   }
+
+  function blankDraft(purposeId) {
+    const p = PURPOSES.find((x) => x.id === purposeId) || PURPOSES[0];
+    const preset = FLEET_PRESETS.find((x) => x.purpose === p.id) || FLEET_PRESETS[0];
+    return {
+      id: null,
+      title: "Custom " + p.label,
+      purpose: p.id,
+      agent: p.agent,
+      role: p.blurb,
+      objective: "Help the operator think, build, and research as an intelligent peer.",
+      instructions: preset.instructions,
+      model: preset.model || "qwen3.6:35b-a3b",
+      backend: "ollama",
+      tools: preset.tools ? [...preset.tools] : ["memory", "web", "files"],
+      skills: [],
+      knowledge: "",
+      cron: "",
+      task: "",
+    };
+  }
+
+  function fromDefinition(d) {
+    const studio = (d.studio && typeof d.studio === "object") ? d.studio : {};
+    return {
+      id: d.id,
+      title: d.title || "Custom Agent",
+      purpose: studio.purpose || "build",
+      agent: d.agent || "coding-assistant",
+      role: studio.role || "",
+      objective: studio.objective || "",
+      instructions: studio.instructions || d.system_prompt || "",
+      model: studio.model || "",
+      backend: studio.backend || "ollama",
+      tools: studio.tools || (Array.isArray(d.tools) ? d.tools : ["files", "git"]),
+      skills: studio.skills || [],
+      knowledge: studio.knowledge || "",
+      cron: d.schedule_cron || studio.cron || "",
+      task: studio.task || "",
+    };
+  }
+
   function mark() {
     document.querySelectorAll(".studio-link").forEach((btn) => {
       const id = btn.getAttribute("data-studio");
-      const on = id === section || (section === "builder" && id === "agents");
+      const on = id === section || (section === "builder" && id === "builder") || (section === "dashboard" && id === "dashboard");
       btn.classList.toggle("active", on);
     });
   }
-  function toolList(tools) {
-    if (!Array.isArray(tools)) return [];
-    return tools.map((t) => (typeof t === "string" ? t : (t && t.name) || "")).filter(Boolean);
-  }
-  function badges(d) {
-    const row = el("div", { class: "badge-row" });
-    if ((d.kind || "agent") === "workflow") row.appendChild(el("span", { class: "pill on", text: "Workflow" }));
-    const p = purposeOf(d.purpose || "build");
-    row.appendChild(el("span", { class: "pill on", text: p.label }));
-    toolList(d.tools).slice(0, 3).forEach((t) => row.appendChild(el("span", { class: "pill", text: t })));
-    if ((d.memory || {}).agent) row.appendChild(el("span", { class: "pill", text: "Memory" }));
-    return row;
-  }
-  function fromDefinition(d) {
-    const studio = d.studio && typeof d.studio === "object" ? d.studio : {};
-    const next = Object.assign(blankDraft(studio.purpose), studio, {
-      id: d.id,
-      title: d.title || "",
-      agent: d.agent || "lab-operations",
-      instructions: studio.instructions || d.system_prompt || "",
-      cron: d.schedule_cron || studio.cron || "",
-      mcp: (d.mcp_server_ids || []).join(", "),
-      tools: studio.tools || blankDraft(studio.purpose).tools,
-      versions: studio.versions || [],
-    });
-    return next;
-  }
-  function composePrompt(d) {
-    if (mode !== "advanced") {
-      const lines = ["Purpose: " + purposeOf(d.purpose).label];
-      if ((d.kind || "agent") === "workflow" && (d.steps || []).length) {
-        lines.push("Kind: workflow");
-        lines.push("Steps, in order:\n" + d.steps.map((step, index) => (index + 1) + ". " + step).join("\n"));
-        lines.push("Follow these steps in order. Do not add a step or a connection.");
+
+  async function launchChat(agentName, title) {
+    try {
+      const conv = await host.api("/v1/conversations", {
+        method: "POST",
+        body: JSON.stringify({ agent: agentName || "personal", title: title || "" }),
+      });
+      if (typeof host.loadConversations === "function") {
+        await host.loadConversations();
       }
-      if ((d.instructions || "").trim()) lines.push(d.instructions.trim());
-      if (d.knowledge.trim()) lines.push("Knowledge:\n" + d.knowledge.trim());
-      return lines.join("\n\n");
+      if (typeof host.openConversation === "function") {
+        await host.openConversation(conv.id);
+      } else {
+        host.state.conversationId = conv.id;
+        host.state.conversationAgent = conv.agent || agentName;
+        host.setView("chat");
+      }
+    } catch (e) {
+      host.showErr(e);
     }
-    const parts = [
-      ["Role", d.role],
-      ["Objective", d.objective],
-      ["Constraints", d.constraints],
-      ["Policies", d.policies],
-      ["Output format", d.output_format],
-      ["Instructions", d.instructions],
-      ["Knowledge", d.knowledge],
-    ];
-    return parts.filter(([, v]) => (v || "").trim()).map(([k, v]) => k + ":\n" + v.trim()).join("\n\n");
-  }
-  function field(label, node) {
-    return el("div", { class: "field" }, [el("label", { text: label }), node]);
-  }
-  function input(value, on, attrs) {
-    const node = el("input", Object.assign({ type: "text", value: value || "" }, attrs || {}));
-    node.addEventListener("input", () => on(node.value));
-    return node;
-  }
-  function area(value, on, rows) {
-    const node = el("textarea", { rows: String(rows || 4) });
-    node.value = value || "";
-    node.addEventListener("input", () => on(node.value));
-    return node;
   }
 
-  function renderDashboard(root) {
+  /* ------------------- FLEET VIEW ------------------- */
+  function renderFleet(root) {
     root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Agent Studio" }),
-      el("p", { text: "Design agents for building, learning, and the work around your product and company. Chat stays the place you talk. This is the place you shape the agent." }),
+      el("h1", { text: "Super Agent Fleet" }),
+      el("p", { text: "High-intellect local AI peers powered by Apple Silicon M4. Equipped for memory synthesis, deep web research, sandboxed coding, and live operations." }),
     ]));
-    const launch = el("div", { class: "studio-launch" });
-    [["build", "Build something", "A coding agent that edits only a separate copy, and only after you approve."],
-      ["learn", "Learn a topic", "A tutor that stays sourced and remembers what you are studying."],
-      ["company", "Run the company", "Briefs, drafts, and files. Sending and spending wait for you."],
-    ].forEach(([id, title, blurb]) => {
-      launch.appendChild(el("button", { class: "launch-card", type: "button", onclick: () => openBuilder(id) }, [
-        el("strong", { text: title }),
-        el("span", { text: blurb }),
-      ]));
-    });
-    root.appendChild(launch);
-    root.appendChild(el("div", { class: "studio-h", text: "Your agents" }));
-    renderAgentBoard(root);
-  }
-  function renderAgentBoard(root) {
-    const defs = (host.state.definitions || []);
-    const board = el("div", { class: "agent-board" });
-    if (!defs.length) {
-      board.appendChild(el("p", { class: "muted", text: "No agents yet. Start from a template when you want a tracked agent for building, learning, or the company." }));
-    }
-    defs.forEach((d) => {
-      const studio = d.studio || {};
-      const tile = el("article", { class: "agent-tile" });
-      const open = el("button", { class: "tile-open", type: "button", onclick: () => openExisting(d) }, [
-        el("h3", { text: d.title || "Untitled" }),
+
+    // Core Presets
+    root.appendChild(el("div", { class: "studio-h", text: "Core Super Agents" }));
+    const grid = el("div", { class: "fleet-grid" });
+
+    FLEET_PRESETS.forEach((preset) => {
+      const card = el("article", { class: "fleet-card" });
+      const head = el("div", { class: "fleet-header" }, [
+        el("div", {}, [
+          el("h3", { class: "fleet-title", text: preset.icon + " " + preset.title }),
+        ]),
+        el("span", { class: "pill on", text: preset.agent }),
       ]);
-      open.appendChild(badges(Object.assign({ purpose: studio.purpose || "build", model: studio.model, tools: studio.tools, memory: studio.memory, kind: studio.kind }, studio)));
-      tile.appendChild(open);
-      tile.appendChild(el("button", {
-        class: "tile-delete",
+      card.appendChild(head);
+      card.appendChild(el("p", { class: "fleet-blurb", text: preset.blurb }));
+
+      const badges = el("div", { class: "badge-row" });
+      preset.tools.forEach((t) => badges.appendChild(el("span", { class: "pill", text: t })));
+      badges.appendChild(el("span", { class: "pill on", text: preset.model }));
+      card.appendChild(badges);
+
+      const actions = el("div", { class: "fleet-actions" });
+      actions.appendChild(el("button", {
+        class: "btn-action-chat",
         type: "button",
-        text: "Delete",
-        onclick: () => removeDefinition(d).catch((e) => host.showErr(e)),
+        text: "💬 Chat with " + preset.title.split(" ")[0],
+        onclick: () => launchChat(preset.agent, "Chat with " + preset.title),
       }));
-      board.appendChild(tile);
+      actions.appendChild(el("button", {
+        class: "btn-action-edit",
+        type: "button",
+        text: "⚙️ Configure",
+        onclick: () => {
+          draft = blankDraft(preset.purpose);
+          draft.title = preset.title;
+          draft.instructions = preset.instructions;
+          draft.tools = [...preset.tools];
+          draft.model = preset.model;
+          section = "builder";
+          render();
+        },
+      }));
+      card.appendChild(actions);
+      grid.appendChild(card);
     });
-    root.appendChild(board);
+    root.appendChild(grid);
+
+    // Custom Agents Section
+    root.appendChild(el("div", { class: "studio-h", text: "Custom Configured Agents" }));
+    const defs = host.state.definitions || [];
+    const customGrid = el("div", { class: "fleet-grid" });
+
+    if (!defs.length) {
+      customGrid.appendChild(el("div", { class: "fleet-card", style: "border-style:dashed;align-items:center;justify-content:center;min-height:140px;" }, [
+        el("p", { class: "muted", text: "No custom agents configured yet." }),
+        el("button", {
+          class: "btn-action-chat",
+          style: "max-width:200px;",
+          type: "button",
+          text: "+ Create Custom Agent",
+          onclick: () => openBuilder("second-brain"),
+        }),
+      ]));
+    } else {
+      defs.forEach((d) => {
+        const studio = d.studio || {};
+        const card = el("article", { class: "fleet-card" });
+        const head = el("div", { class: "fleet-header" }, [
+          el("h3", { class: "fleet-title", text: "🤖 " + (d.title || "Custom Agent") }),
+          el("span", { class: "pill on", text: d.agent || "custom" }),
+        ]);
+        card.appendChild(head);
+        card.appendChild(el("p", { class: "fleet-blurb", text: studio.role || d.system_prompt || "Custom configured super agent." }));
+
+        const badges = el("div", { class: "badge-row" });
+        (studio.tools || d.tools || []).forEach((t) => badges.appendChild(el("span", { class: "pill", text: typeof t === "string" ? t : t.name })));
+        if (studio.model) badges.appendChild(el("span", { class: "pill on", text: studio.model }));
+        card.appendChild(badges);
+
+        const actions = el("div", { class: "fleet-actions" });
+        actions.appendChild(el("button", {
+          class: "btn-action-chat",
+          type: "button",
+          text: "💬 Chat",
+          onclick: () => launchChat(d.agent || "personal", "Chat with " + (d.title || "Agent")),
+        }));
+        actions.appendChild(el("button", {
+          class: "btn-action-edit",
+          type: "button",
+          text: "⚙️ Edit",
+          onclick: () => openExisting(d),
+        }));
+        actions.appendChild(el("button", {
+          class: "btn-action-del",
+          type: "button",
+          text: "🗑",
+          title: "Delete",
+          onclick: () => removeDefinition(d).catch((e) => host.showErr(e)),
+        }));
+        card.appendChild(actions);
+        customGrid.appendChild(card);
+      });
+    }
+    root.appendChild(customGrid);
   }
-  function renderTemplates(root) {
-    root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Templates" }),
-      el("p", { text: "Start from the job. You can change the model, tools, and instructions before you save." }),
-    ]));
-    const grid = el("div", { class: "lib-grid" });
+
+  /* ------------------- 1-PAGE CONFIGURATOR ------------------- */
+  function renderBuilder(root) {
+    if (!draft) draft = blankDraft("second-brain");
+
+    // Header with Back button, Title, and Actions
+    const top = el("div", { class: "builder-top" });
+    const left = el("div", { style: "flex:1;min-width:0;" });
+    left.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => show("dashboard"), text: "← Super Agent Fleet" }));
+
+    const titleInput = el("input", {
+      class: "builder-title",
+      value: draft.title,
+      placeholder: "Agent Name (e.g., Senior Systems Architect)",
+    });
+    titleInput.addEventListener("input", () => { draft.title = titleInput.value; });
+    left.appendChild(titleInput);
+    top.appendChild(left);
+
+    const actions = el("div", { class: "builder-actions" });
+    actions.appendChild(el("button", {
+      class: "studio-new",
+      type: "button",
+      text: draft.id ? "💾 Save Changes" : "💾 Create Agent",
+      onclick: () => saveDraft().catch((e) => host.showErr(e)),
+    }));
+    actions.appendChild(el("button", {
+      class: "studio-link",
+      type: "button",
+      text: "💬 Chat with Agent",
+      onclick: async () => {
+        if (!draft.id) await saveDraft();
+        await launchChat(draft.agent, "Chat with " + draft.title);
+      },
+    }));
+    if (draft.id) {
+      actions.appendChild(el("button", {
+        class: "studio-link",
+        type: "button",
+        text: "🗑 Delete",
+        onclick: () => removeDefinition({ id: draft.id, title: draft.title }).catch((e) => host.showErr(e)),
+      }));
+    }
+    top.appendChild(actions);
+    root.appendChild(top);
+
+    // 1-Page Form
+    const steps = el("div", { class: "step-list" });
+
+    // Archetype Presets
+    const presetBox = el("section", { class: "step" });
+    presetBox.appendChild(el("div", { class: "n", text: "Quick Archetype Presets" }));
+    const pRow = el("div", { class: "purpose-row", style: "margin-top:8px;" });
     PURPOSES.forEach((p) => {
-      grid.appendChild(el("button", { class: "lib-card", type: "button", onclick: () => openBuilder(p.id) }, [
-        el("strong", { text: p.label }),
-        el("span", { text: p.blurb }),
-      ]));
+      const isCur = draft.purpose === p.id;
+      pRow.appendChild(el("button", {
+        type: "button",
+        class: isCur ? "on" : "",
+        onclick: () => {
+          draft.purpose = p.id;
+          draft.agent = p.agent;
+          const pre = FLEET_PRESETS.find((x) => x.purpose === p.id);
+          if (pre) {
+            draft.instructions = pre.instructions;
+            draft.tools = [...pre.tools];
+            if (pre.model) draft.model = pre.model;
+          }
+          render();
+        },
+      }, [p.label, el("small", { text: p.blurb })]));
     });
-    root.appendChild(grid);
-  }
-  function renderSkills(root) {
-    root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Skills" }),
-      el("p", { text: "A tool can open a file. A skill knows how to do a job. Attach one from the agent builder." }),
-    ]));
-    SKILLS.forEach((group) => {
-      root.appendChild(el("div", { class: "studio-h", text: group.group }));
-      const grid = el("div", { class: "lib-grid" });
-      group.items.forEach(([name, blurb]) => {
-        const later = group.group === "Later";
-        const catalog = group.group === "Catalog";
-        grid.appendChild(el("button", {
-          class: "lib-card",
-          type: "button",
-          onclick: () => attachSkill(name),
-        }, [
-          el("strong", { text: name }),
-          el("span", { text: blurb }),
-          el("div", { class: "badge-row" }, [el("span", {
-            class: later || catalog ? "pill later" : "pill on",
-            text: later ? "Add-on" : catalog ? "Off" : "Attach",
-          })]),
-        ]));
+    presetBox.appendChild(pRow);
+    steps.appendChild(presetBox);
+
+    // Purpose & Model
+    const modelStep = el("section", { class: "step" });
+    modelStep.appendChild(el("div", { class: "n", text: "Brain & Reasoning Model" }));
+
+    const mSelect = el("select");
+    mSelect.appendChild(el("option", { value: "", text: "Use active session model" }));
+    (host.state.choices || []).forEach((c) => {
+      const opt = el("option", {
+        value: c.backend + "::" + c.model,
+        text: (c.label || c.model) + (c.billing_class === "local" ? " · local (M4)" : " · API"),
       });
-      root.appendChild(grid);
+      if ((draft.backend && draft.model && draft.backend === c.backend && draft.model === c.model) || draft.model === c.model) {
+        opt.selected = true;
+      }
+      mSelect.appendChild(opt);
     });
-    const seen = {};
-    SKILLS.forEach((group) => group.items.forEach((item) => { seen[item[0]] = true; }));
-    const extra = [];
-    (host.state.definitions || []).forEach((d) => {
-      const names = (d.studio && d.studio.skills) || [];
-      names.forEach((name) => {
-        if (!name || seen[name]) return;
-        seen[name] = true;
-        extra.push([name, "Registered with " + (d.title || "an agent")]);
-      });
+    mSelect.addEventListener("change", () => {
+      const [backend, ...rest] = mSelect.value.split("::");
+      draft.backend = backend || "ollama";
+      draft.model = rest.join("::");
     });
-    if (extra.length) {
-      root.appendChild(el("div", { class: "studio-h", text: "Registered" }));
-      const grid = el("div", { class: "lib-grid" });
-      extra.forEach(([name, blurb]) => {
-        grid.appendChild(el("button", {
-          class: "lib-card",
-          type: "button",
-          onclick: () => attachSkill(name),
-        }, [
-          el("strong", { text: name }),
-          el("span", { text: blurb }),
-          el("div", { class: "badge-row" }, [el("span", { class: "pill on", text: "Registered" })]),
-        ]));
-      });
-      root.appendChild(grid);
-    }
-  }
-  function attachSkill(name) {
-    if (!draft) openBuilder("build");
-    if (!draft.skills.includes(name)) draft.skills.push(name);
-    if (!draft.instructions.includes(name)) {
-      draft.instructions = (draft.instructions ? draft.instructions + "\n" : "") + "Skill: " + name + ".";
-    }
-    section = "builder";
-    mode = "advanced";
-    adv = "Skills";
-    host.setView("agent");
-  }
-  function renderTools(root) {
-    root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Tools" }),
-      el("p", { text: "Native tools the lab can run, and MCP servers in the catalog. A catalog server stays off until you authorize it. Each one you authorize is then available to the builder and to later agents." }),
+    modelStep.appendChild(el("div", { class: "field", style: "margin-top:8px;" }, [
+      el("label", { text: "Local Apple Silicon Model" }),
+      mSelect,
+      el("p", { class: "note", text: "High-reasoning models like Qwen 3.6 35B and Qwen 3 Coder run locally on host unified memory without latency or API charges." }),
     ]));
-    root.appendChild(el("div", { class: "studio-h", text: "Native" }));
-    const grid = el("div", { class: "lib-grid" });
-    const list = (caps && caps.capabilities) || [];
-    const native = list.filter((cap) => cap.origin === "built_in");
-    const servers = list.filter((cap) => cap.origin !== "built_in");
-    if (!native.length) {
-      grid.appendChild(el("p", { class: "muted", text: "Open this page while signed in to see the live tool list." }));
-    }
-    native.forEach((cap) => {
-      const risk = cap.risk || "";
-      grid.appendChild(el("article", { class: "lib-card" }, [
-        el("strong", { text: cap.name || "" }),
-        el("span", { text: ((cap.tools || [])[0] || {}).description || cap.connection_state || "" }),
-        el("div", { class: "badge-row" }, [
-          el("span", { class: cap.permitted ? "pill on" : "pill later", text: cap.connection_state || risk }),
-        ]),
-      ]));
+    steps.appendChild(modelStep);
+
+    // Capabilities & Tools
+    const toolStep = el("section", { class: "step" });
+    toolStep.appendChild(el("div", { class: "n", text: "Super Tools & Capabilities" }));
+    const toolRow = el("div", { class: "tool-row", style: "margin-top:8px;" });
+    AVAILABLE_TOOLS.forEach((t) => {
+      const on = (draft.tools || []).includes(t.id);
+      toolRow.appendChild(el("button", {
+        type: "button",
+        class: on ? "on" : "",
+        onclick: () => {
+          draft.tools = on ? draft.tools.filter((x) => x !== t.id) : draft.tools.concat([t.id]);
+          render();
+        },
+      }, [t.icon + " " + t.label, el("small", { text: t.blurb })]));
     });
-    root.appendChild(grid);
-    root.appendChild(el("div", { class: "studio-h", text: "MCP servers" }));
-    const serverGrid = el("div", { class: "lib-grid" });
-    if (!servers.length) {
-      serverGrid.appendChild(el("p", { class: "muted", text: "No catalog servers yet." }));
+    toolStep.appendChild(toolRow);
+    steps.appendChild(toolStep);
+
+    // System Instructions
+    const promptStep = el("section", { class: "step" });
+    promptStep.appendChild(el("div", { class: "n", text: "System Instructions & Behavioral Rules" }));
+    const promptArea = el("textarea", { rows: "8", style: "margin-top:8px;" });
+    promptArea.value = draft.instructions || "";
+    promptArea.placeholder = "Define how this agent should think, reason, and interact...";
+    promptArea.addEventListener("input", () => { draft.instructions = promptArea.value; });
+    promptStep.appendChild(promptArea);
+    steps.appendChild(promptStep);
+
+    // Specialized Knowledge & Cron
+    const extraStep = el("section", { class: "step" });
+    extraStep.appendChild(el("div", { class: "n", text: "Knowledge Context & Automation (Optional)" }));
+    const knowArea = el("textarea", { rows: "3", style: "margin-top:8px;" });
+    knowArea.value = draft.knowledge || "";
+    knowArea.placeholder = "Key repositories, architecture guidelines, or specific domains to focus on...";
+    knowArea.addEventListener("input", () => { draft.knowledge = knowArea.value; });
+    extraStep.appendChild(el("div", { class: "field" }, [el("label", { text: "Specialized Context" }), knowArea]));
+
+    const cronInput = el("input", { type: "text", value: draft.cron || "", placeholder: "e.g. 0 9 * * * (Daily 9 AM)" });
+    cronInput.addEventListener("input", () => { draft.cron = cronInput.value; });
+    extraStep.appendChild(el("div", { class: "field" }, [el("label", { text: "Schedule (Cron Expression)" }), cronInput]));
+    steps.appendChild(extraStep);
+
+    // Live Execution Section
+    const runBox = el("section", { class: "step" });
+    runBox.appendChild(el("div", { class: "n", text: "Trigger Autonomous Background Task" }));
+    const taskArea = el("textarea", { rows: "3", style: "margin-top:8px;" });
+    taskArea.value = draft.task || "";
+    taskArea.placeholder = "Describe the task to execute in the background...";
+    taskArea.addEventListener("input", () => { draft.task = taskArea.value; });
+    runBox.appendChild(taskArea);
+
+    const runActions = el("div", { class: "builder-actions", style: "margin-top:12px;" });
+    if (draft.purpose === "build") {
+      runActions.appendChild(el("button", {
+        class: "studio-link",
+        type: "button",
+        text: "Prepare Worktree Sandbox",
+        onclick: () => prepareCopy().catch((e) => host.showErr(e)),
+      }));
     }
-    servers.forEach((cap) => {
-      const names = (cap.tools || []).map((tool) => tool.name).filter(Boolean).join(", ");
-      serverGrid.appendChild(el("article", { class: "lib-card" }, [
-        el("strong", { text: cap.name || "" }),
-        el("span", { text: names || cap.connection_state || "" }),
-        el("div", { class: "badge-row" }, [
-          el("span", { class: cap.permitted ? "pill on" : "pill later", text: cap.connection_state || "off" }),
-        ]),
-      ]));
-    });
-    root.appendChild(serverGrid);
+    runActions.appendChild(el("button", {
+      class: "studio-new",
+      type: "button",
+      text: "⚡ Run Background Task",
+      onclick: () => runDraft().catch((e) => host.showErr(e)),
+    }));
+    runBox.appendChild(runActions);
+    if (host.state.worktreeId) {
+      runBox.appendChild(el("p", { class: "note", text: "Active worktree sandbox: " + host.state.worktreeId }));
+    }
+    steps.appendChild(runBox);
+
+    root.appendChild(steps);
   }
-  function renderStatic(root, title, lead, body) {
-    root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: title }),
-      el("p", { text: lead }),
-    ]));
-    body.forEach((block) => root.appendChild(block));
-  }
-  function renderKnowledge(root) {
-    renderStatic(root, "Knowledge", "Notes, project files, and repo context an agent may read. Project documents already live under Projects. This page is the studio view of that idea.", [
-      el("p", { class: "muted", text: "Put the sources on the agent when you build it. The Knowledge step is saved with the agent." }),
-    ]);
-  }
-  function renderMemory(root) {
-    renderStatic(root, "Memory", "Memory is several stores, not one bucket. Each agent sets its own policy in the builder.", [
-      el("div", { class: "lib-grid" }, [
-        ["Working", "The current task."],
-        ["Session", "This conversation."],
-        ["Episodic", "Earlier tasks and what happened."],
-        ["Semantic", "Facts and notes."],
-        ["User", "Your preferences."],
-        ["Agent", "What this agent has learned."],
-        ["Shared", "Off unless you turn it on for a team of agents."],
-      ].map(([name, blurb]) => el("article", { class: "lib-card" }, [el("strong", { text: name }), el("span", { text: blurb })]))),
-    ]);
-  }
+
+  /* ------------------- WORKFLOWS VIEW ------------------- */
   function renderWorkflows(root) {
-    renderStatic(root, "Workflows", "A known sequence is saved from New, with the steps in order. Today a run is one worker following those steps. Handoffs and branching graphs come next.", [
-      el("div", { class: "pattern-grid" }, [
-        ["Manager", "One agent owns the task and may use tools.", "Live"],
-        ["Handoff", "Build, then review, then you approve.", "Later"],
-        ["Graph", "Steps with a condition and two branches.", "Later"],
-      ].map(([name, blurb, tag]) => el("article", { class: "pattern-card" }, [
-        el("strong", { text: name }),
-        el("span", { text: blurb }),
-        el("div", { class: "badge-row" }, [el("span", { class: tag === "Live" ? "pill on" : "pill later", text: tag })]),
-      ]))),
-    ]);
+    root.appendChild(el("div", { class: "studio-hero" }, [
+      el("h1", { text: "Workflows & Skills" }),
+      el("p", { text: "Orchestrate multi-step pipelines and attach specialized skills to your super agent fleet." }),
+    ]));
+
+    root.appendChild(el("div", { class: "studio-h", text: "Workflow Patterns" }));
+    const wfGrid = el("div", { class: "fleet-grid" });
+
+    [
+      {
+        title: "Autonomous SDLC Pipeline",
+        icon: "🔄",
+        blurb: "1. Spec Architecture → 2. Create Worktree Sandbox → 3. Implement Code → 4. Diff Review → 5. Human Approval Gate.",
+        tag: "Active",
+      },
+      {
+        title: "Daily Second Brain Digest",
+        icon: "🧠",
+        blurb: "1. Query Memory Vault → 2. Deep Web Research on Topics → 3. Compile Executive Sourced Report.",
+        tag: "Active",
+      },
+      {
+        title: "Security & Repo Audit",
+        icon: "🛡️",
+        blurb: "1. Scan for leaked secrets → 2. Run validate-repo.sh & preflight.sh → 3. Report test coverage.",
+        tag: "Active",
+      },
+    ].forEach((wf) => {
+      const card = el("article", { class: "fleet-card" }, [
+        el("div", { class: "fleet-header" }, [
+          el("h3", { class: "fleet-title", text: wf.icon + " " + wf.title }),
+          el("span", { class: "pill on", text: wf.tag }),
+        ]),
+        el("p", { class: "fleet-blurb", text: wf.blurb }),
+      ]);
+      wfGrid.appendChild(card);
+    });
+    root.appendChild(wfGrid);
+
+    root.appendChild(el("div", { class: "studio-h", text: "Skill Catalog" }));
+    SKILLS.forEach((grp) => {
+      root.appendChild(el("div", { class: "studio-h", style: "font-size:11px;margin-top:12px;", text: grp.group }));
+      const sGrid = el("div", { class: "lib-grid" });
+      grp.items.forEach(([name, blurb]) => {
+        sGrid.appendChild(el("button", {
+          class: "lib-card",
+          type: "button",
+          onclick: () => {
+            if (!draft) draft = blankDraft("second-brain");
+            if (!draft.skills.includes(name)) draft.skills.push(name);
+            draft.instructions = (draft.instructions ? draft.instructions + "\n" : "") + "Skill: " + name + ". " + blurb;
+            section = "builder";
+            render();
+          },
+        }, [
+          el("strong", { text: name }),
+          el("span", { text: blurb }),
+          el("div", { class: "badge-row" }, [el("span", { class: "pill on", text: "+ Attach to Agent" })]),
+        ]));
+      });
+      root.appendChild(sGrid);
+    });
   }
-  function renderPublished(root) {
-    renderStatic(root, "Published", "An agent card other agents could read later: name, capabilities, tools, input, output, and permissions. Nothing is published yet.", [
-      el("p", { class: "muted", text: "Save an agent first. Publishing and agent-to-agent handoff stay in the next phase." }),
-    ]);
-  }
-  function renderEvaluations(root) {
-    renderStatic(root, "Evaluations", "Each agent should have a small suite you can rerun when the model, prompt, or skill changes. No suite has run yet.", [
-      el("article", { class: "lib-card" }, [
-        el("strong", { text: "What a comparison will show" }),
-        el("span", { text: "Accuracy, tool errors, cost, and latency for two saved versions. The version list on an agent is already stored when you save." }),
-      ]),
-    ]);
-  }
-  function traceLabel(trace) {
-    if (trace.kind === "model_call") return "Model";
-    if (trace.kind === "model_wait") return "Waiting";
-    if (trace.kind === "tool_result") return "Tool · " + (trace.tool || "call");
-    if (trace.kind === "final") return "Complete";
-    return trace.kind || "Step";
-  }
-  function traceBody(trace) {
-    if (trace.kind === "tool_result") return (trace.ok ? "ok" : "fail") + "\n" + (trace.observation || "");
-    return trace.text || trace.observation || "";
-  }
+
+  /* ------------------- RUNS & APPROVALS VIEW ------------------- */
   function renderRuns(root) {
     root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Runs" }),
-      el("p", { text: "Tasks the mini is running or has finished. Open one to see the timeline and approve a step." }),
+      el("h1", { text: "Live Runs & Approvals" }),
+      el("p", { text: "Background tasks running on the Mac mini host. Inspect live reasoning traces and approve gated actions." }),
     ]));
+
     const runs = host.state.runs || [];
     if (!runs.length) {
-      root.appendChild(el("p", { class: "muted", text: "No runs yet. Open an agent and choose Run." }));
+      root.appendChild(el("p", { class: "muted", text: "No runs yet. Trigger a task from the configurator or chat." }));
       return;
     }
+
     runs.forEach((run) => {
-      const row = el("button", { class: "run-row", type: "button", onclick: () => host.openRun(run.id).catch((e) => host.showErr(e)) }, [
-        el("span", { text: run.objective || "Untitled task" }),
-        el("span", { class: "pill", text: run.status || "" }),
+      const isPending = run.status === "waiting_for_approval";
+      const row = el("button", {
+        class: "run-row",
+        type: "button",
+        style: isPending ? "border-color:#e8b45c;" : "",
+        onclick: () => host.openRun(run.id).catch((e) => host.showErr(e)),
+      }, [
+        el("div", {}, [
+          el("strong", { text: run.objective || "Task: " + run.id }),
+          el("div", { class: "badge-row", style: "margin-top:4px;" }, [
+            el("span", { class: "pill", text: run.agent || "agent" }),
+            el("span", { class: "pill", text: run.model || "local" }),
+          ]),
+        ]),
+        el("span", { class: isPending ? "pill later" : "pill on", text: run.status || "" }),
       ]);
       root.appendChild(row);
     });
   }
+
+  function traceLabel(trace) {
+    if (trace.kind === "model_call") return "🧠 Model Inference";
+    if (trace.kind === "model_wait") return "⏳ Waiting";
+    if (trace.kind === "tool_result") return "🛠️ Tool: " + (trace.tool || "call");
+    if (trace.kind === "final") return "✅ Complete";
+    return trace.kind || "Step";
+  }
+
+  function traceBody(trace) {
+    if (trace.kind === "tool_result") return (trace.ok ? "Success" : "Failed") + "\n" + (trace.observation || "");
+    return trace.text || trace.observation || "";
+  }
+
   function renderRun(root) {
     const run = currentRun;
     if (!run) {
       renderRuns(root);
       return;
     }
-    root.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => show("runs"), text: "← Runs" }));
+
+    root.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => show("runs"), text: "← Runs & Approvals" }));
     root.appendChild(el("div", { class: "studio-hero" }, [
-      el("h1", { text: "Run" }),
+      el("h1", { text: "Task Detail" }),
       el("p", { text: run.objective || run.id || "" }),
     ]));
+
     const meta = el("div", { class: "badge-row" });
-    meta.appendChild(el("span", { class: "pill on", text: run.status || "unknown" }));
+    meta.appendChild(el("span", { class: run.status === "waiting_for_approval" ? "pill later" : "pill on", text: run.status || "running" }));
     if (run.model) meta.appendChild(el("span", { class: "pill", text: run.model }));
     if (run.backend) meta.appendChild(el("span", { class: "pill", text: run.backend }));
     root.appendChild(meta);
-    if (run.error) root.appendChild(el("p", { class: "muted", text: run.error }));
+
+    if (run.error) root.appendChild(el("p", { class: "muted", style: "color:#ff6b7a;", text: run.error }));
+
+    // Approval Box if pending
+    if (run.pending_action) {
+      const box = el("div", { class: "run-box", style: "border-color:#e8b45c;margin-top:16px;" });
+      box.appendChild(el("div", { class: "studio-h", style: "color:#e8b45c;", text: "⚠️ Human-In-The-Loop Approval Required" }));
+      box.appendChild(el("pre", { style: "background:#111;padding:12px;border-radius:8px;overflow:auto;font-size:12px;", text: JSON.stringify(run.pending_action, null, 2) }));
+      const row = el("div", { class: "builder-actions", style: "margin-top:12px;" });
+      row.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => decide("approved"), text: "✓ Approve Action" }));
+      row.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => decide("denied"), text: "✗ Reject Action" }));
+      box.appendChild(row);
+      root.appendChild(box);
+    }
+
+    // Traces Timeline
     const list = el("div", { class: "timeline" });
     const traces = run.traces || [];
-    if (!traces.length) list.appendChild(el("p", { class: "muted", text: "No steps yet. A queued run fills this timeline as the worker proceeds." }));
+    if (!traces.length) list.appendChild(el("p", { class: "muted", text: "Task queued. Waiting for worker step..." }));
     traces.forEach((trace, index) => {
       const open = openStep === index;
       const step = el("button", {
@@ -451,28 +621,19 @@
         onclick: () => { openStep = open ? -1 : index; render(); },
       }, [
         el("div", { class: "when", text: traceLabel(trace) }),
-        el("div", { class: "what", text: (traceBody(trace) || "").replace(/\s+/g, " ").slice(0, 180) }),
+        el("div", { class: "what", text: (traceBody(trace) || "").replace(/\s+/g, " ").slice(0, 200) }),
       ]);
       if (open) step.appendChild(el("div", { class: "tl-detail", text: traceBody(trace) }));
       list.appendChild(step);
     });
     root.appendChild(list);
-    if (run.pending_action) {
-      const box = el("div", { class: "run-box" });
-      box.appendChild(el("div", { class: "studio-h", text: "Approval" }));
-      box.appendChild(el("p", { class: "muted", text: JSON.stringify(run.pending_action, null, 2) }));
-      const row = el("div", { class: "builder-actions" });
-      row.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => decide("approved"), text: "Approve" }));
-      row.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => decide("denied"), text: "Reject" }));
-      box.appendChild(row);
-      root.appendChild(box);
-    }
-    const actions = el("div", { class: "builder-actions" });
-    actions.style.marginTop = "16px";
-    actions.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => act("cancel"), text: "Cancel" }));
-    actions.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => act("retry"), text: "Retry" }));
+
+    const actions = el("div", { class: "builder-actions", style: "margin-top:16px;" });
+    actions.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => act("cancel"), text: "Cancel Run" }));
+    actions.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => act("retry"), text: "Retry Run" }));
     root.appendChild(actions);
   }
+
   async function decide(decision) {
     const run = await host.api("/v1/agent-runs/" + currentRun.id + "/approve-action", {
       method: "POST",
@@ -480,275 +641,105 @@
     });
     host.showRun(run);
   }
+
   async function act(name) {
     const run = await host.api("/v1/agent-runs/" + currentRun.id + "/" + name, { method: "POST", body: "{}" });
     host.showRun(run);
   }
-  function renderPermissions(root) {
-    renderStatic(root, "Permissions", "Low risk is search and read. Medium is create and modify. High is delete, execute, deploy, send, or move money. High risk waits for you.", [
-      el("div", { class: "lib-grid" }, [
-        ["Read files and git", "Allowed for a build agent.", "Low"],
-        ["Patch or commit", "Only in a separate copy, and only after you approve that exact change.", "High"],
-        ["Push, send, spend, transfer", "Not granted. A later skill still stops for approval.", "High"],
-      ].map(([name, blurb, tag]) => el("article", { class: "lib-card" }, [
-        el("strong", { text: name }),
-        el("span", { text: blurb }),
-        el("div", { class: "badge-row" }, [el("span", { class: tag === "Low" ? "pill on" : "pill later", text: tag })]),
-      ]))),
-    ]);
+
+  async function prepareCopy() {
+    const created = await host.api("/v1/coding/worktrees", { method: "POST", body: "{}" });
+    host.state.worktreeId = created.id || "";
+    host.showErr("");
+    render();
   }
 
-  function simpleBuilder(root) {
-    const steps = el("div", { class: "step-list" });
-    const name = input(draft.title, (v) => { draft.title = v; });
-    name.className = "";
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "1 · Name" }),
-      field("Name", input(draft.title, (v) => { draft.title = v; }, { placeholder: "Product builder" })),
-    ]));
-    const purposes = el("div", { class: "purpose-row" });
-    PURPOSES.forEach((p) => {
-      purposes.appendChild(el("button", {
-        type: "button",
-        class: p.id === draft.purpose ? "on" : "",
-        onclick: () => {
-          draft.purpose = p.id;
-          draft.agent = p.agent;
-          render();
-        },
-      }, [p.label, el("small", { text: p.blurb })]));
+  async function runDraft() {
+    if (!draft.id) await saveDraft();
+    const choice = draft.model
+      ? { model: draft.model, backend: draft.backend || "ollama", billing_class: "local" }
+      : host.selectedChoice();
+    const run = await host.api("/v1/agent-definitions/" + draft.id + "/runs", {
+      method: "POST",
+      body: JSON.stringify({
+        objective: (draft.task || "").trim() || draft.title || "Execute configured objective.",
+        model: choice.model || "qwen3.6:35b-a3b",
+        billing_class: choice.billing_class || "local",
+        backend: choice.backend || "ollama",
+        max_steps: 10,
+        worktree_id: draft.purpose === "build" && host.state.worktreeId ? host.state.worktreeId : "",
+      }),
     });
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "2 · Purpose" }),
-      purposes,
-    ]));
-    const model = el("select");
-    const blank = el("option", { value: "", text: "Use the chat model" });
-    model.appendChild(blank);
-    (host.state.choices || []).forEach((c) => {
-      const opt = el("option", { value: c.backend + "::" + c.model, text: (c.label || c.model) + (c.billing_class === "local" ? " · local" : " · billed") });
-      if (draft.backend === c.backend && draft.model === c.model) opt.selected = true;
-      model.appendChild(opt);
-    });
-    model.addEventListener("change", () => {
-      const [backend, ...rest] = model.value.split("::");
-      draft.backend = backend || "";
-      draft.model = rest.join("::");
-    });
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "3 · Model" }),
-      field("Model", model),
-      el("p", { class: "note", text: "Local Studio models stay the default. A billed model runs only if you have already authorized spend." }),
-    ]));
-    const tools = el("div", { class: "tool-row" });
-    TOOLS.forEach((t) => {
-      const on = (draft.tools || []).includes(t.id);
-      tools.appendChild(el("button", {
-        type: "button",
-        class: on ? "on" : "",
-        onclick: () => {
-          draft.tools = on ? draft.tools.filter((x) => x !== t.id) : draft.tools.concat([t.id]);
-          render();
-        },
-      }, [t.label, el("small", { text: t.blurb })]));
-    });
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "4 · Tools" }),
-      tools,
-      el("p", { class: "note", text: "The agent kind still decides what the runtime may call. A build agent can patch only after you approve, and only in a separate copy." }),
-    ]));
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "5 · Knowledge" }),
-      field("What should it read?", area(draft.knowledge, (v) => { draft.knowledge = v; }, 3)),
-    ]));
-    steps.appendChild(el("section", { class: "step" }, [
-      el("div", { class: "n", text: "6 · Instructions" }),
-      field("How should it work?", area(draft.instructions, (v) => { draft.instructions = v; }, 5)),
-    ]));
-    root.appendChild(steps);
+    host.showRun(run);
   }
-  function advBuilder(root) {
-    const shell = el("div", { class: "adv-shell" });
-    const nav = el("div", { class: "adv-nav" });
-    ADV.forEach((name) => {
-      nav.appendChild(el("button", { type: "button", class: name === adv ? "on" : "", onclick: () => { adv = name; render(); } }, [name]));
-    });
-    const panel = el("div");
-    const mem = draft.memory || {};
-    if (adv === "Identity") {
-      panel.appendChild(field("Name", input(draft.title, (v) => { draft.title = v; })));
-      panel.appendChild(field("Description", area(draft.objective, (v) => { draft.objective = v; }, 3)));
-      panel.appendChild(el("p", { class: "note", text: "Version " + String((draft.versions || []).length + 1) + ". Icon and a public agent card come with publishing." }));
-    } else if (adv === "Instructions") {
-      ["role", "objective", "constraints", "policies", "output_format", "instructions"].forEach((key) => {
-        const label = key.replace("_", " ");
-        panel.appendChild(field(label.charAt(0).toUpperCase() + label.slice(1), area(draft[key], (v) => { draft[key] = v; }, key === "instructions" ? 5 : 3)));
-      });
-    } else if (adv === "Model") {
-      panel.appendChild(field("Model id", input(draft.model, (v) => { draft.model = v; }, { placeholder: "llama3.2:3b" })));
-      panel.appendChild(field("Provider", input(draft.backend, (v) => { draft.backend = v; }, { placeholder: "ollama" })));
-      panel.appendChild(field("Reasoning", input(draft.reasoning, (v) => { draft.reasoning = v; })));
-      panel.appendChild(field("Temperature", input(draft.temperature, (v) => { draft.temperature = v; })));
-      panel.appendChild(field("Fallback", input(draft.fallback, (v) => { draft.fallback = v; })));
-      panel.appendChild(el("p", { class: "note", text: "Stored on the agent. A run uses the model you pick here, or the chat model if this is blank. Temperature is not sent to the runtime yet." }));
-    } else if (adv === "Memory") {
-      [["session", "Session memory"], ["user", "User memory"], ["agent", "Agent learning"], ["shared", "Shared memory"]].forEach(([key, label]) => {
-        const box = el("input", { type: "checkbox" });
-        box.checked = !!mem[key];
-        box.addEventListener("change", () => { draft.memory[key] = box.checked; });
-        panel.appendChild(el("label", { class: "toggle-line" }, [label, box]));
-      });
-      panel.appendChild(field("Retention (days)", input(String(mem.retention_days || 30), (v) => { draft.memory.retention_days = Number(v) || 30; })));
-    } else if (adv === "Tools") {
-      panel.appendChild(field("MCP server ids", input(draft.mcp, (v) => { draft.mcp = v; }, { placeholder: "Leave blank unless you added a server under MCP" })));
-      panel.appendChild(el("p", { class: "note", text: "Only servers on your allowlist are accepted." }));
-    } else if (adv === "Skills") {
-      panel.appendChild(el("p", { class: "muted", text: draft.skills.length ? draft.skills.join(", ") : "No skills attached. Pick one from Skills." }));
-    } else if (adv === "Knowledge") {
-      panel.appendChild(field("Knowledge", area(draft.knowledge, (v) => { draft.knowledge = v; }, 5)));
-    } else if (adv === "Workflow") {
-      panel.appendChild(field("Mode", input(draft.workflow, (v) => { draft.workflow = v; }, { placeholder: "manager" })));
-      panel.appendChild(field("Schedule", input(draft.cron, (v) => { draft.cron = v; }, { placeholder: "Optional. 0 9 * * *" })));
-    } else if (adv === "Context") {
-      panel.appendChild(el("p", { class: "muted", text: "Working context is the current task and the conversation you run from. It is not the same store as durable memory." }));
-    } else if (adv === "Permissions") {
-      panel.appendChild(el("p", { class: "muted", text: "Commit, push, send, delete, and transfers wait for approval. This page records that policy on the agent. The runtime still enforces the agent kind." }));
-    } else if (adv === "Runtime") {
-      panel.appendChild(el("p", { class: "muted", text: "This definition runs on the mini, with models on the Studio. A build agent uses an isolated copy as its sandbox. Cloud and Kubernetes runtimes are later." }));
-    } else if (adv === "Versions") {
-      const list = draft.versions || [];
-      if (!list.length) panel.appendChild(el("p", { class: "muted", text: "The first save becomes version 1." }));
-      list.forEach((v) => panel.appendChild(el("p", { class: "muted", text: "v" + v.version + " · " + (v.note || "Saved") + " · " + (v.at || "") })));
-      panel.appendChild(field("Note for the next save", input(draft.change_note, (v) => { draft.change_note = v; })));
-    }
-    shell.appendChild(nav);
-    shell.appendChild(panel);
-    root.appendChild(shell);
+
+  async function saveDraft() {
+    const p = PURPOSES.find((x) => x.id === draft.purpose) || PURPOSES[0];
+    draft.agent = p.agent;
+    const studio = Object.assign({}, draft);
+    delete studio.id;
+    delete studio.task;
+
+    const body = {
+      title: draft.title || "Custom Agent",
+      agent: draft.agent,
+      system_prompt: draft.instructions || "",
+      tools: draft.tools || [],
+      mcp_server_ids: [],
+      schedule_cron: (draft.cron || "").trim(),
+      studio: studio,
+    };
+
+    const saved = draft.id
+      ? await host.api("/v1/agent-definitions/" + draft.id, { method: "PUT", body: JSON.stringify(body) })
+      : await host.api("/v1/agent-definitions", { method: "POST", body: JSON.stringify(body) });
+
+    draft.id = saved.id;
+    host.state.definitionId = saved.id;
+    await host.loadDefinitions();
+    host.showErr("");
+    render();
   }
-  function renderTalk(root) {
-    root.appendChild(el("div", { class: "ask-head" }, [
-      el("div", { class: "studio-hero" }, [
-        el("h1", { text: "New" }),
-        el("p", { text: "Answer the questions. Say build it when everything is good." }),
-      ]),
-    ]));
-    const body = el("div", { class: "ask-body" });
-    const log = el("div", { class: "ask-log" });
-    (draft.chat || []).forEach((row) => {
-      log.appendChild(el("div", { class: "ask-bubble" }, [
-        el("div", { class: "ask-who", text: row.role === "user" ? "You" : "Studio" }),
-        el("p", { text: row.content || "" }),
-      ]));
-    });
-    body.appendChild(log);
-    root.appendChild(body);
-    const form = el("form", { class: "ask-compose" });
-    const box = el("input", { type: "text", placeholder: "Answer, or say build it", autocomplete: "off" });
-    form.appendChild(box);
-    form.appendChild(el("button", { class: "studio-new", type: "submit", text: "Send" }));
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const text = box.value;
-      box.value = "";
-      ask(text).catch((e) => host.showErr(e));
-    });
-    root.appendChild(el("div", { class: "ask-foot" }, [form]));
+
+  async function removeDefinition(d) {
+    if (!d || !d.id) return;
+    if (!window.confirm("Delete " + (d.title || "this agent") + "?")) return;
+    await host.api("/v1/agent-definitions/" + d.id, { method: "DELETE" });
+    if (draft && draft.id === d.id) draft = null;
+    await host.loadDefinitions();
+    host.showErr("");
+    show("dashboard");
   }
-  function renderSummary(root) {
-    const head = el("div", { class: "ask-head" });
-    const top = el("div", { class: "builder-top" });
-    const left = el("div");
-    left.style.flex = "1";
-    left.style.minWidth = "0";
-    left.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => show("agents"), text: "← My Agents" }));
-    const title = el("input", { class: "builder-title", value: draft.title, placeholder: "Name this agent" });
-    title.addEventListener("input", () => { draft.title = title.value; });
-    left.appendChild(title);
-    left.appendChild(badges(draft));
-    const actions = el("div", { class: "builder-actions" });
-    actions.appendChild(el("button", {
-      class: "studio-link",
-      type: "button",
-      onclick: () => {
-        draft.phase = "talk";
-        draft.chat = (draft.chat || []).concat([{ role: "assistant", content: "What should be different?" }]);
-        render();
-      },
-      text: "Change it",
-    }));
-    actions.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => saveDraft().catch((e) => host.showErr(e)), text: draft.id ? "Save" : "Create" }));
-    if (draft.id) {
-      actions.appendChild(el("button", {
-        class: "studio-link",
-        type: "button",
-        text: "Delete",
-        onclick: () => removeDefinition({ id: draft.id, title: draft.title }).catch((e) => host.showErr(e)),
-      }));
-    }
-    top.appendChild(left);
-    top.appendChild(actions);
-    head.appendChild(top);
-    root.appendChild(head);
-    const body = el("div", { class: "ask-body" });
-    body.appendChild(el("p", { class: "ask-summary", text: draft.instructions || "No description yet." }));
-    if ((draft.kind || "agent") === "workflow" && (draft.steps || []).length) {
-      body.appendChild(el("p", {
-        class: "ask-summary",
-        text: draft.steps.map((step, index) => (index + 1) + ". " + step).join("\n"),
-      }));
-    }
-    if (draft.knowledge) body.appendChild(el("p", { class: "note", text: "It will read: " + draft.knowledge }));
-    body.appendChild(el("p", { class: "note", text: draft.model_note || "I'll use a local model for this." }));
-    if ((draft.skills || []).length) {
-      body.appendChild(el("p", { class: "note", text: "Skills: " + draft.skills.join(", ") }));
-    }
-    if ((draft.tools || []).length) {
-      const same = (draft.mcp_tools || []).join(",") === draft.tools.join(",");
-      if (!same) body.appendChild(el("p", { class: "note", text: "Tools: " + draft.tools.join(", ") }));
-    }
-    if ((draft.mcp_tools || []).length) {
-      body.appendChild(el("p", { class: "note", text: "MCP read tools, still off: " + draft.mcp_tools.join(", ") }));
-    }
-    if (draft.registration && draft.registration.mcp) {
-      const names = Array.isArray(draft.registration.mcp) ? draft.registration.mcp.join(", ") : String(draft.registration.mcp);
-      body.appendChild(el("p", { class: "note", text: "Registered " + names + ". The server stays off until you authorize it." }));
-    }
-    const run = el("div", { class: "run-box" });
-    run.appendChild(el("div", { class: "studio-h", text: "Run" }));
-    run.appendChild(field("Task", area(draft.task, (v) => { draft.task = v; }, 3)));
-    const row = el("div", { class: "builder-actions" });
-    if (draft.purpose === "build") {
-      row.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => prepareCopy().catch((e) => host.showErr(e)), text: "Prepare a separate copy" }));
-    }
-    row.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => runDraft().catch((e) => host.showErr(e)), text: "Run" }));
-    run.appendChild(row);
-    run.appendChild(el("p", { class: "note", text: host.state.worktreeId ? "Separate copy " + host.state.worktreeId + " is ready." : "A build run can read before a copy exists. It cannot change files until you prepare one and approve the edit." }));
-    body.appendChild(run);
-    root.appendChild(body);
+
+  function openBuilder(purposeId) {
+    draft = blankDraft(purposeId || "second-brain");
+    section = "builder";
+    host.setView("agent");
   }
-  function renderBuilder(root) {
-    if ((draft.phase || "talk") === "talk") renderTalk(root);
-    else renderSummary(root);
+
+  function openExisting(d) {
+    draft = fromDefinition(d);
+    section = "builder";
+    host.state.definitionId = d.id;
+    host.setView("agent");
   }
 
   const PAGES = {
-    dashboard: renderDashboard,
-    agents: (root) => {
-      root.appendChild(el("div", { class: "studio-hero" }, [el("h1", { text: "My Agents" }), el("p", { text: "Open an agent to change it, or start a new one." })]));
-      renderAgentBoard(root);
-    },
-    templates: renderTemplates,
-    published: renderPublished,
-    skills: renderSkills,
-    tools: renderTools,
-    knowledge: renderKnowledge,
-    memory: renderMemory,
-    workflows: renderWorkflows,
-    evaluations: renderEvaluations,
-    permissions: renderPermissions,
+    dashboard: renderFleet,
+    agents: renderFleet,
+    fleet: renderFleet,
+    templates: renderFleet,
     builder: renderBuilder,
+    workflows: renderWorkflows,
+    skills: renderWorkflows,
+    tools: renderWorkflows,
+    knowledge: renderWorkflows,
+    memory: renderWorkflows,
     runs: renderRuns,
     run: renderRun,
+    evaluations: renderRuns,
+    permissions: renderWorkflows,
+    published: renderFleet,
   };
 
   function render() {
@@ -756,29 +747,21 @@
     if (!root) return;
     mark();
     const next = document.createElement("div");
-    next.className = section === "builder" ? "studio-page stage" : "studio-page";
+    next.className = "studio-page";
     try {
-      const page = PAGES[section] || renderDashboard;
+      const page = PAGES[section] || renderFleet;
       page(next);
     } catch (err) {
       next.appendChild(el("p", { class: "muted", text: String(err && err.message || err) }));
     }
     root.replaceChildren(next);
-    const log = next.querySelector(".ask-body");
-    if (log) log.scrollTop = log.scrollHeight;
-    const box = next.querySelector(".ask-compose input");
-    if (box) box.focus();
-    if (section === "tools" && !caps) {
-      host.api("/v1/capabilities?agent=coding-assistant").then((data) => {
-        caps = data;
-        if (section === "tools") render();
-      }).catch(() => {});
-    }
   }
+
   function studioCovered() {
     const shell = document.getElementById("prefs-shell");
     return !document.body.classList.contains("in-studio") || (shell && shell.classList.contains("open"));
   }
+
   function show(name) {
     section = name === "builder" ? "builder" : name;
     if (name === "runs") {
@@ -797,119 +780,6 @@
     else if (host.state.view !== "agents") host.setView("agents");
     else render();
   }
-  async function ask(text) {
-    const content = (text || "").trim();
-    if (!content) return;
-    draft.chat = (draft.chat || []).concat([{ role: "user", content: content }]);
-    render();
-    const out = await host.api("/v1/agent-studio/draft", {
-      method: "POST",
-      body: JSON.stringify({ messages: draft.chat }),
-    });
-    if (out.ready && out.draft) {
-      const kept = draft.chat;
-      const id = draft.id;
-      Object.assign(draft, out.draft);
-      draft.id = id;
-      draft.chat = kept;
-      draft.phase = "summary";
-    } else {
-      draft.chat = draft.chat.concat([{ role: "assistant", content: out.question || "Tell me a little more about the job." }]);
-    }
-    host.showErr("");
-    render();
-  }
-  function openBuilder(purposeId) {
-    draft = blankDraft(purposeId || "learn");
-    draft.phase = "talk";
-    const named = purposeId ? purposeOf(purposeId).label.toLowerCase() + " " : "";
-    draft.chat = [{
-      role: "assistant",
-      content: purposeId
-        ? ("What do you want this " + named + "agent to do?")
-        : "What do you want done?",
-    }];
-    mode = "talk";
-    section = "builder";
-    host.setView("agent");
-  }
-  async function removeDefinition(d) {
-    if (!d || !d.id) return;
-    const title = d.title || "this agent";
-    if (!window.confirm("Delete " + title + "?")) return;
-    await host.api("/v1/agent-definitions/" + d.id, { method: "DELETE" });
-    if (draft && draft.id === d.id) draft = null;
-    await host.loadDefinitions();
-    host.showErr("");
-    show("agents");
-  }
-  function openExisting(d) {
-    draft = fromDefinition(d);
-    draft.phase = "summary";
-    if (!draft.model_note) draft.model_note = draft.model ? ("This agent uses " + draft.model + ".") : "I'll use a local model for this.";
-    mode = "talk";
-    section = "builder";
-    host.state.definitionId = d.id;
-    host.setView("agent");
-  }
-  async function saveDraft() {
-    const p = purposeOf(draft.purpose);
-    draft.agent = p.agent;
-    const versions = (draft.versions || []).slice(-19);
-    versions.push({
-      version: versions.length + 1,
-      at: new Date().toISOString(),
-      note: draft.change_note || "Saved from Agent Studio",
-      purpose: draft.purpose,
-      model: draft.model || "",
-    });
-    draft.versions = versions;
-    draft.change_note = "";
-    const studio = Object.assign({}, draft);
-    delete studio.id;
-    delete studio.task;
-    const body = {
-      title: draft.title || "Untitled agent",
-      agent: draft.agent,
-      system_prompt: composePrompt(draft),
-      tools: draft.tools || [],
-      mcp_server_ids: (draft.mcp || "").split(",").map((s) => s.trim()).filter(Boolean),
-      schedule_cron: (draft.cron || "").trim(),
-      studio: studio,
-    };
-    const saved = draft.id
-      ? await host.api("/v1/agent-definitions/" + draft.id, { method: "PUT", body: JSON.stringify(body) })
-      : await host.api("/v1/agent-definitions", { method: "POST", body: JSON.stringify(body) });
-    draft.id = saved.id;
-    host.state.definitionId = saved.id;
-    await host.loadDefinitions();
-    host.showErr("");
-    render();
-  }
-  async function prepareCopy() {
-    const created = await host.api("/v1/coding/worktrees", { method: "POST", body: "{}" });
-    host.state.worktreeId = created.id || "";
-    host.showErr("");
-    render();
-  }
-  async function runDraft() {
-    if (!draft.id) await saveDraft();
-    const choice = draft.model
-      ? { model: draft.model, backend: draft.backend || "ollama", billing_class: draft.backend && draft.backend !== "ollama" ? "usage_billed_api" : "local" }
-      : host.selectedChoice();
-    const run = await host.api("/v1/agent-definitions/" + draft.id + "/runs", {
-      method: "POST",
-      body: JSON.stringify({
-        objective: (draft.task || "").trim() || draft.title || "Start the task.",
-        model: choice.model || "qwen3.6:35b-a3b",
-        billing_class: choice.billing_class || "local",
-        backend: choice.backend || "ollama",
-        max_steps: 8,
-        worktree_id: draft.purpose === "build" && host.state.worktreeId ? host.state.worktreeId : "",
-      }),
-    });
-    host.showRun(run);
-  }
 
   function bindRail() {
     document.querySelectorAll(".studio-link").forEach((btn) => {
@@ -918,7 +788,7 @@
       btn.addEventListener("click", () => show(id));
     });
     const newer = $("studio-new");
-    if (newer) newer.addEventListener("click", () => openBuilder(""));
+    if (newer) newer.addEventListener("click", () => openBuilder("second-brain"));
     const toggle = $("toggle-studio");
     const showBtn = $("show-studio");
     function toggleRail() {

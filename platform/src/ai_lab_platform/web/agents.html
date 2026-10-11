@@ -709,22 +709,15 @@
         <div class="studio-kicker">Agent Studio</div>
         <button type="button" class="icon-btn" id="toggle-studio" title="Collapse Agent Studio" aria-label="Collapse Agent Studio">☰</button>
       </div>
-      <button type="button" class="studio-new" id="studio-new">New agent</button>
+      <button type="button" class="studio-new" id="studio-new">+ New Agent</button>
       <div class="studio-scroll">
-        <button type="button" class="studio-link" data-studio="dashboard">Dashboard</button>
-        <div class="studio-group">Agents</div>
-        <button type="button" class="studio-link" data-studio="agents">My Agents</button>
-        <button type="button" class="studio-link" data-studio="templates">Templates</button>
-        <button type="button" class="studio-link" data-studio="published">Published</button>
-        <div class="studio-group">Library</div>
-        <button type="button" class="studio-link" data-studio="skills">Skills</button>
-        <button type="button" class="studio-link" data-studio="tools">Tools</button>
-        <button type="button" class="studio-link" data-studio="knowledge">Knowledge</button>
-        <button type="button" class="studio-link" data-studio="memory">Memory</button>
+        <button type="button" class="studio-link active" data-studio="dashboard">Super Agent Fleet</button>
+        <div class="studio-group">Studio</div>
+        <button type="button" class="studio-link" data-studio="builder">Agent Configurator</button>
         <button type="button" class="studio-link" data-studio="workflows">Workflows</button>
-        <div class="studio-group">Operate</div>
-        <button type="button" class="studio-link" data-studio="runs">Runs</button>
-        <button type="button" class="studio-link" data-studio="evaluations">Evaluations</button>
+        <button type="button" class="studio-link" data-studio="skills">Skills</button>
+        <div class="studio-group">Operations</div>
+        <button type="button" class="studio-link" data-studio="runs">Runs &amp; Approvals</button>
         <button type="button" class="studio-link" data-studio="permissions">Permissions</button>
       </div>
     </aside>
@@ -3689,6 +3682,8 @@
         loadRuns: loadRuns,
         loadDefinitions: loadDefinitions,
         selectedChoice: selectedChoice,
+        openConversation: openConversation,
+        loadConversations: loadConversations,
       });
     }
     async function boot() {

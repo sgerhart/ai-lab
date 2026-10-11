@@ -437,3 +437,102 @@ body.in-studio .studio-rail {
   .ask-head, .ask-body { padding-left: 16px; padding-right: 16px; }
   .ask-foot { padding-left: 16px; padding-right: 16px; }
 }
+
+.fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin: 18px 0 28px;
+}
+.fleet-card {
+  border: 1px solid #2f2f2f;
+  background: #181818;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: border-color .15s ease, transform .15s ease;
+}
+.fleet-card:hover {
+  border-color: #3f3f3f;
+  transform: translateY(-2px);
+}
+.fleet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.fleet-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  color: #f0f0f0;
+}
+.fleet-blurb {
+  margin: 0;
+  color: #a0a0a0;
+  font-size: 13px;
+  line-height: 1.45;
+  flex: 1;
+}
+.fleet-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.btn-action-chat {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #7cb8ff;
+  color: #061018;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  transition: filter .15s ease;
+}
+.btn-action-chat:hover {
+  filter: brightness(1.1);
+}
+.btn-action-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #282828;
+  color: #ececec;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #383838;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.btn-action-edit:hover {
+  background: #333333;
+}
+.btn-action-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #888;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+}
+.btn-action-del:hover {
+  color: #ff6b7a;
+  background: rgba(255,107,122,.12);
+}
+
