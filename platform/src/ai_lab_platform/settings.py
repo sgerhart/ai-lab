@@ -16,7 +16,7 @@ class Settings:
     antares_job_url: str = ""
     antares_completions_url: str = ""
     api_token: str = ""
-    auth_mode: str = "token"
+    auth_mode: str = "trusted_tailnet"
     bind_address: str = "127.0.0.1"
     api_port: int = 8088
     agent_worker: bool = False
@@ -46,7 +46,7 @@ class Settings:
             antares_job_url=os.environ.get("ANTARES_JOB_URL", "").strip(),
             antares_completions_url=os.environ.get("ANTARES_COMPLETIONS_URL", "").strip(),
             api_token=os.environ.get("AI_LAB_API_TOKEN", "").strip(),
-            auth_mode=os.environ.get("AI_LAB_AUTH_MODE", "token").strip().lower() or "token",
+            auth_mode=os.environ.get("AI_LAB_AUTH_MODE", "trusted_tailnet").strip().lower() or "trusted_tailnet",
             bind_address=os.environ.get("AI_LAB_BIND_ADDRESS", "127.0.0.1").strip(),
             api_port=int(os.environ.get("AI_LAB_API_PORT", "8088")),
             agent_worker=agent_worker,

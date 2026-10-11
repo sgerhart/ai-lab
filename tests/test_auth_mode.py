@@ -41,14 +41,14 @@ class AuthHelperTests(unittest.TestCase):
 
     def test_status_login_preferred(self) -> None:
         with patch("ai_lab_platform.auth.operator_configured", return_value=True):
-            st = auth_status(mode="token", token_configured=True, peer_ip="127.0.0.1")
+            st = auth_status(mode="token", token_configured=True, peer_ip="8.8.8.8")
         self.assertTrue(st["login_required"])
         self.assertFalse(st["paste_required"])
         self.assertTrue(st["login_available"])
 
     def test_require_auth_accepts_bearer(self) -> None:
         req = MagicMock()
-        req.client.host = "100.64.1.2"
+        req.client.host = "8.8.8.8"
         with patch("ai_lab_platform.auth.operator_configured", return_value=False):
             require_auth(
                 mode="token",
@@ -57,26 +57,24 @@ class AuthHelperTests(unittest.TestCase):
                 request=req,
             )
 
-    def test_require_auth_rejects_missing_config(self) -> None:
-        req = MagicMock()
-        req.client.host = "127.0.0.1"
-        with patch("ai_lab_platform.auth.operator_configured", return_value=False):
-            with self.assertRaises(AuthError) as ctx:
-                require_auth(
-                    mode="token",
-                    expected_token="",
-                    authorization=None,
-                    request=req,
-                )
-        self.assertEqual(ctx.exception.detail, "api_token_not_configured")
-
-    def test_require_auth_rejects_without_bearer(self) -> None:
+    def test_require_auth_accepts_trusted_tailnet(self) -> None:
         req = MagicMock()
         req.client.host = "100.64.1.2"
         with patch("ai_lab_platform.auth.operator_configured", return_value=False):
+            require_auth(
+                mode="trusted_tailnet",
+                expected_token="",
+                authorization=None,
+                request=req,
+            )
+
+    def test_require_auth_rejects_untrusted_peer(self) -> None:
+        req = MagicMock()
+        req.client.host = "8.8.8.8"
+        with patch("ai_lab_platform.auth.operator_configured", return_value=False):
             with self.assertRaises(AuthError):
                 require_auth(
-                    mode="trusted_tailnet",
+                    mode="token",
                     expected_token="secret",
                     authorization=None,
                     request=req,

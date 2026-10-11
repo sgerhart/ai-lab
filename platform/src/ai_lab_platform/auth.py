@@ -1,16 +1,10 @@
 """Control-plane auth helpers.
 
-Accepts either:
-
-- ``Authorization: Bearer <AI_LAB_API_TOKEN>`` (scripts / legacy), or
-- ``Authorization: Bearer <session>`` from username/password login
-  (``~/.ai-lab/operator.json`` + ``sessions.json``).
-
-Fail closed when neither an API token nor an operator login is configured.
-Public endpoints (`/health`, `/v1/auth/status`, `/v1/auth/login`) must not
-call ``require_auth``.
-
-Keep the API off ``0.0.0.0``.
+Modes:
+- ``trusted_tailnet``: Callers from private Tailscale (100.64.0.0/10) and loopback (127.0.0.0/8)
+  are automatically authorized. Untrusted IPs require bearer token or login session.
+- ``token``: Always requires ``Authorization: Bearer <token>`` or session bearer.
+- ``none`` / ``disabled``: Auth disabled.
 """
 
 from __future__ import annotations
@@ -40,6 +34,8 @@ def client_ip(request: Any) -> str:
 
 
 def is_trusted_peer(ip: str) -> bool:
+    if not ip:
+        return False
     try:
         addr = ipaddress.ip_address(ip)
     except ValueError:
@@ -51,26 +47,30 @@ def auth_status(*, mode: str, token_configured: bool, peer_ip: str) -> dict[str,
     trusted = is_trusted_peer(peer_ip)
     mode_n = (mode or "token").strip().lower() or "token"
     login_ok = operator_configured()
-    auth_ready = bool(token_configured) or login_ok
+    trusted_auth = mode_n == "trusted_tailnet" and trusted
+    auth_ready = bool(token_configured) or login_ok or trusted_auth
     note = (
-        "Sign in with username and password, or use a lab API bearer token."
-        if login_ok
+        "Trusted peer on private Tailscale / loopback. Single-operator access authorized."
+        if trusted_auth
         else (
-            "Bearer token required when AI_LAB_API_TOKEN is set."
-            if token_configured
-            else "No operator login or API token configured — authenticated routes refuse."
+            "Sign in with username and password, or use a lab API bearer token."
+            if login_ok
+            else (
+                "Bearer token required when AI_LAB_API_TOKEN is set."
+                if token_configured
+                else "No operator login or API token configured — authenticated routes refuse."
+            )
         )
     )
     return {
         "ok": True,
-        "mode": mode_n if mode_n in {"token", "trusted_tailnet"} else "token",
+        "mode": mode_n if mode_n in {"token", "trusted_tailnet", "none"} else "token",
         "token_configured": bool(token_configured),
         "login_available": login_ok,
         "auth_ready": auth_ready,
         "peer_trusted": trusted,
-        # Prefer login UI when operator account exists; else token paste.
-        "paste_required": auth_ready and not login_ok,
-        "login_required": login_ok,
+        "paste_required": auth_ready and not login_ok and not trusted_auth,
+        "login_required": False if trusted_auth else login_ok,
         "note": note,
     }
 
@@ -84,12 +84,18 @@ def require_auth(
     session_checker: Callable[[str], bool] | None = None,
 ) -> None:
     """Raise AuthError when the caller is not allowed."""
-    _ = mode
-    _ = request
-    login_ok = operator_configured()
-    if not expected_token and not login_ok:
-        raise AuthError("api_token_not_configured")
+    mode_n = (mode or "token").strip().lower()
+    ip = client_ip(request)
 
+    # 1. Trusted Tailscale / Loopback peer authorization
+    if mode_n == "trusted_tailnet" and is_trusted_peer(ip):
+        return
+
+    # 2. Open / disabled mode
+    if mode_n in {"none", "disabled", "open"}:
+        return
+
+    # 3. Check explicit Bearer token
     bearer = ""
     if authorization and authorization.startswith("Bearer "):
         bearer = authorization[7:].strip()
@@ -100,6 +106,12 @@ def require_auth(
     checker = session_checker or session_valid
     if bearer and checker(bearer):
         return
+
+    login_ok = operator_configured()
+    if not expected_token and not login_ok:
+        if mode_n == "trusted_tailnet" and is_trusted_peer(ip):
+            return
+        raise AuthError("api_token_not_configured")
 
     raise AuthError("unauthorized")
 
