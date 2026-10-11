@@ -26,16 +26,78 @@ from .tool_runtime import (
 )
 from .work_order import utcnow
 
+_TOOL_START_RE = re.compile(r"(?m)^TOOL\s+([a-zA-Z0-9_\-.:]+)")
 _TOOL_RE = re.compile(r"^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$", re.DOTALL)
 _TOOL_LINE_RE = re.compile(r"(?m)^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$")
-_FINAL_RE = re.compile(r"^FINAL\s*(.*)$", re.DOTALL)
-_FINAL_LINE_RE = re.compile(r"(?m)^FINAL\s*(.*)$")
+_FINAL_RE = re.compile(r"^FINAL(?::)?\s*(.*)$", re.DOTALL)
+_FINAL_LINE_RE = re.compile(r"(?m)^FINAL(?::)?\s*(.*)$")
 _JSON_TOOL_RE = re.compile(
     r'\{\s*"type"\s*:\s*"tool"\s*,\s*"name"\s*:\s*"([^"]+)"\s*,\s*"args"\s*:\s*(\{.*?\})\s*\}',
     re.DOTALL,
 )
 _MARKDOWN_JSON_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 _THINK_TAG_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL | re.IGNORECASE)
+
+_WRITE_TOOLS = frozenset(
+    {
+        "presentation_write",
+        "report_write",
+        "vault_write",
+        "schedule_create",
+        "skill_create",
+        "memory_write",
+        "files_write",
+    }
+)
+
+
+def extract_first_json_object(s: str) -> str | None:
+    """Extract the first balanced JSON/dict object from a string."""
+    start = s.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    in_string = False
+    escape = False
+    for i in range(start, len(s)):
+        char = s[i]
+        if escape:
+            escape = False
+            continue
+        if char == "\\":
+            if in_string:
+                escape = True
+            continue
+        if char == '"':
+            in_string = not in_string
+            continue
+        if not in_string:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return s[start : i + 1]
+    return None
+
+
+def _parse_dict_args(raw: str | None) -> dict[str, Any]:
+    if not raw:
+        return {}
+    clean = raw.strip()
+    try:
+        parsed = ast.literal_eval(clean)
+        if isinstance(parsed, dict):
+            return parsed
+    except (SyntaxError, ValueError):
+        pass
+    try:
+        parsed = json.loads(clean)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    return {}
 
 _HISTORY_MESSAGES = 10
 _HISTORY_LINE = 500
@@ -198,37 +260,20 @@ def parse_model_turn(text: str) -> dict[str, Any]:
     _, cleaned_text = extract_thought_and_content(raw_text)
     candidate = cleaned_text if cleaned_text else raw_text
 
-    # 1. Prefer FINAL when the model emitted tools and an answer in one completion.
-    m_final_line = _FINAL_LINE_RE.search(candidate)
-    m_tool_line = _TOOL_LINE_RE.search(candidate)
-    if m_final_line and m_tool_line:
-        return {"type": "final", "text": m_final_line.group(1).strip()}
+    # Extract potential tool call
+    tool_call: dict[str, Any] | None = None
 
-    # 2. Check exact / line-anchored TOOL syntax
-    m = _TOOL_RE.match(candidate)
-    if m:
-        return _tool_from_match(m.group(1), m.group(2) or "{}")
-
-    # 3. Check exact FINAL syntax
-    m = _FINAL_RE.match(candidate)
-    if m:
-        return {"type": "final", "text": m.group(1).strip()}
-
-    # 4. Check embedded TOOL line
-    if m_tool_line:
-        return _tool_from_match(m_tool_line.group(1), m_tool_line.group(2) or "{}")
-
-    # 5. Check markdown codeblock with JSON tool call
+    # 1. Check markdown codeblock with JSON tool call
     m_md = _MARKDOWN_JSON_RE.search(candidate)
     if m_md:
         try:
             parsed = json.loads(m_md.group(1))
             if isinstance(parsed, dict):
                 if parsed.get("type") == "tool" and "name" in parsed:
-                    return {"type": "tool", "name": parsed["name"], "args": parsed.get("args") or {}}
-                if "name" in parsed and ("args" in parsed or "arguments" in parsed):
-                    return {"type": "tool", "name": parsed["name"], "args": parsed.get("args") or parsed.get("arguments") or {}}
-                if "function" in parsed and isinstance(parsed["function"], dict):
+                    tool_call = {"type": "tool", "name": parsed["name"], "args": parsed.get("args") or {}}
+                elif "name" in parsed and ("args" in parsed or "arguments" in parsed):
+                    tool_call = {"type": "tool", "name": parsed["name"], "args": parsed.get("args") or parsed.get("arguments") or {}}
+                elif "function" in parsed and isinstance(parsed["function"], dict):
                     fn = parsed["function"]
                     args = fn.get("arguments") or fn.get("args") or {}
                     if isinstance(args, str):
@@ -236,38 +281,50 @@ def parse_model_turn(text: str) -> dict[str, Any]:
                             args = json.loads(args)
                         except Exception:
                             args = {}
-                    return {"type": "tool", "name": fn.get("name", ""), "args": args}
+                    tool_call = {"type": "tool", "name": fn.get("name", ""), "args": args}
         except Exception:
             pass
 
-    # 6. Check JSON tool regex
-    m = _JSON_TOOL_RE.search(candidate)
-    if m:
-        return _tool_from_match(m.group(1), m.group(2))
+    # 2. Check JSON tool regex
+    if not tool_call:
+        m_json = _JSON_TOOL_RE.search(candidate)
+        if m_json:
+            args = _parse_dict_args(m_json.group(2))
+            tool_call = {"type": "tool", "name": m_json.group(1), "args": args}
 
-    # 7. Check embedded FINAL line
-    if m_final_line:
-        return {"type": "final", "text": m_final_line.group(1).strip()}
+    # 3. Check line-oriented TOOL syntax
+    if not tool_call:
+        m_tool = _TOOL_START_RE.search(candidate)
+        if m_tool:
+            name = m_tool.group(1)
+            rest = candidate[m_tool.end():]
+            json_str = extract_first_json_object(rest)
+            args = _parse_dict_args(json_str) if json_str else {}
+            tool_call = {"type": "tool", "name": name, "args": args}
+
+    # 4. Check FINAL line
+    m_final = _FINAL_LINE_RE.search(candidate)
+
+    # If both a tool call and FINAL are present:
+    # Write / artifact creation tools MUST execute so artifacts/schedules are produced.
+    if tool_call and m_final:
+        tname = tool_call["name"]
+        if tname in _WRITE_TOOLS or tname.endswith("_write") or tname.endswith("_create"):
+            return tool_call
+        return {"type": "final", "text": m_final.group(1).strip()}
+
+    if tool_call:
+        return tool_call
+
+    if m_final:
+        return {"type": "final", "text": m_final.group(1).strip()}
+
+    m_exact_final = _FINAL_RE.match(candidate)
+    if m_exact_final:
+        return {"type": "final", "text": m_exact_final.group(1).strip()}
 
     # Fallback to final answer
     return {"type": "final", "text": candidate}
-
-
-def _tool_from_match(name: str, args_raw: str) -> dict[str, Any]:
-    args: dict[str, Any] = {}
-    raw = args_raw.strip()
-    try:
-        parsed = ast.literal_eval(raw)
-        if isinstance(parsed, dict):
-            args = parsed
-    except (SyntaxError, ValueError):
-        try:
-            parsed = json.loads(raw)
-            if isinstance(parsed, dict):
-                args = parsed
-        except json.JSONDecodeError:
-            args = {}
-    return {"type": "tool", "name": name, "args": args}
 
 
 def _merge_usage(run: AgentRun, usage: dict[str, Any]) -> None:
