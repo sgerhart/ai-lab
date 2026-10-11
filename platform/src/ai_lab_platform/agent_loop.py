@@ -125,8 +125,10 @@ def loop_system_prompt(
         "Principles:\n"
         "1. The AI Lab repository contains the lab's local code and notes. It is not an email or personal third-party account.\n"
         "2. Use research and web_search for public information; use vault_read / vault_grep for your second brain memory.\n"
-        "3. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
-        "4. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
+        "3. Use vault_write to permanently remember new facts, decisions, and user preferences (category: preferences, facts, decisions, projects).\n"
+        "4. Use schedule_create to schedule recurring cron jobs (5-field cron: minute hour dom month dow, e.g. '0 9 * * 1' for Monday 9am, '0 9 * * *' for daily 9am). Use schedule_list and schedule_cancel to manage schedules.\n"
+        "5. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
+        "6. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
     ) + _brief_block(brief)
 
 
@@ -315,8 +317,7 @@ def step_agent_run(
     tool_traces = [t for t in run.traces if t.get("kind") == "tool_result"]
     obs = [t.get("observation", "") for t in tool_traces]
     follow = (
-        "vault tools, files tools, web_search, and research may be called again with different arguments. "
-        "report_read and report_write may be called again to revise a report. "
+        "vault tools, files tools, web_search, research, schedule tools, and report tools may be called again with different arguments. "
         "Otherwise emit a single FINAL line."
         if policy.id == "personal"
         else "Only emit TOOL if you need a different tool than you already used."

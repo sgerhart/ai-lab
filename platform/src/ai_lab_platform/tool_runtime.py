@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .agent_definitions import AgentDefinition, default_agent_definition_store
 from .approvals import is_privileged, requires_approval
 from .mcp_client import call_mcp_tool, capability_needs_approval, get_local_server, parse_mcp_tool_name
 from .memory_vault import MemoryVault, VaultError
 from .operator_files import DocumentLibrary, FilesError
 from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
+from .schedule_cron import CronError, parse_cron
 from .web_lookup import WebLookupError, research_pages, web_search
 from .research_reports import ReportError, ReportLibrary
 from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, repo_read, repo_search
@@ -91,6 +93,10 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "report_list": lambda ctx, **a: _report_list(ctx, a),
     "report_read": lambda ctx, **a: _report_read(ctx, a),
     "report_write": lambda ctx, **a: _report_write(ctx, a),
+    "vault_write": lambda ctx, **a: _vault_write(ctx, a),
+    "schedule_create": lambda ctx, **a: _schedule_create(ctx, a),
+    "schedule_list": lambda ctx, **a: _schedule_list(ctx, a),
+    "schedule_cancel": lambda ctx, **a: _schedule_cancel(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -232,6 +238,92 @@ def _report_write(_ctx: ToolContext, args: dict[str, Any]) -> str:
         )
     except ReportError as exc:
         raise ToolError(str(exc)) from exc
+
+
+def _vault_write(ctx: ToolContext, args: dict[str, Any]) -> str:
+    category = str(args.get("category") or "facts")
+    title = str(args.get("title") or "Untitled Note")
+    content = str(args.get("content") or args.get("text") or args.get("body") or "")
+    entry_type = str(args.get("entry_type") or args.get("type") or category)
+    if not content.strip():
+        raise ToolError("content is required for vault_write")
+    try:
+        return _vault_of(ctx).write_entry(category, title, content, entry_type=entry_type)
+    except VaultError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _schedule_create(ctx: ToolContext, args: dict[str, Any]) -> str:
+    title = str(args.get("title") or args.get("name") or "").strip()
+    if not title:
+        raise ToolError("title is required for schedule_create")
+    cron = str(args.get("cron") or args.get("schedule_cron") or args.get("schedule") or "").strip()
+    if not cron:
+        raise ToolError(
+            "cron expression is required for schedule_create (e.g. '0 9 * * *' for daily 9am, '0 9 * * 1' for Monday 9am)"
+        )
+    try:
+        parse_cron(cron)
+    except CronError as exc:
+        raise ToolError(
+            f"invalid cron expression '{cron}': {exc}. Expected 5 fields: minute hour dom month dow"
+        ) from exc
+
+    instructions = str(
+        args.get("instructions") or args.get("prompt") or args.get("system_prompt") or ""
+    ).strip()
+    agent = str(args.get("agent") or "personal").strip()
+
+    store = default_agent_definition_store()
+    definition = AgentDefinition.new(
+        title=title,
+        agent=agent,
+        system_prompt=instructions or title,
+        schedule_cron=cron,
+        tools=["memory", "web", "files", "reports"],
+        studio={
+            "purpose": "second-brain" if agent == "personal" else "build",
+            "instructions": instructions,
+            "cron": cron,
+        },
+    )
+    store.put(definition)
+    return (
+        f"schedule_create success: Scheduled '{definition.title}' (id: {definition.id}) with cron '{cron}' "
+        f"for agent '{definition.agent}'. The daemon scheduler on the Mac mini will execute this task automatically."
+    )
+
+
+def _schedule_list(ctx: ToolContext, args: dict[str, Any]) -> str:
+    store = default_agent_definition_store()
+    defs = [
+        d
+        for d in store.list(limit=_bounded_limit(args.get("limit"), 50, 100))
+        if (d.schedule_cron or "").strip()
+    ]
+    if not defs:
+        return "schedule_list: No recurring scheduled tasks found."
+    lines = [f"schedule_list hits={len(defs)}:"]
+    for d in defs:
+        lines.append(f"- '{d.title}' (id={d.id}): cron='{d.schedule_cron}' agent='{d.agent}'")
+    return "\n".join(lines)
+
+
+def _schedule_cancel(ctx: ToolContext, args: dict[str, Any]) -> str:
+    target = str(args.get("id") or args.get("title") or args.get("name") or "").strip()
+    if not target:
+        raise ToolError("id or title is required for schedule_cancel")
+    store = default_agent_definition_store()
+    found = None
+    for d in store.list(limit=200):
+        if d.id == target or d.title.lower() == target.lower():
+            found = d
+            break
+    if not found:
+        return f"schedule_cancel: No scheduled task matching '{target}' found."
+    found.schedule_cron = ""
+    store.put(found)
+    return f"schedule_cancel success: Cancelled schedule for task '{found.title}' (id: {found.id})."
 
 
 def execute_allowed_tool(

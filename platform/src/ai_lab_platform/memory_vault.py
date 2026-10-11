@@ -202,6 +202,44 @@ class MemoryVault:
             )
         return f"timeline/daily/{day}.md"
 
+    def write_entry(
+        self,
+        category: str,
+        title: str,
+        content: str,
+        *,
+        entry_type: str = "",
+    ) -> str:
+        """Record a structured memory file in the vault with frontmatter."""
+        self.ensure_layout()
+        cat = (category or "facts").strip().lower()
+        valid_dirs = {
+            "preferences": "knowledge/preferences",
+            "preference": "knowledge/preferences",
+            "facts": "knowledge/facts",
+            "fact": "knowledge/facts",
+            "decisions": "knowledge/decisions",
+            "decision": "knowledge/decisions",
+            "projects": "entities/projects",
+            "project": "entities/projects",
+            "people": "entities/people",
+            "person": "entities/people",
+        }
+        rel_dir = valid_dirs.get(cat, "knowledge/facts")
+        cleaned_title = title.strip() or "untitled"
+        slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", cleaned_title.lower()).strip("-")[:60] or "entry"
+        rel_path = f"{rel_dir}/{slug}.md"
+        path = _confine(self.root.resolve(), rel_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        today = utc_day()
+        meta_type = entry_type.strip() or cat
+        frontmatter = (
+            f"---\nid: {slug}\ntype: {meta_type}\naliases: [{cleaned_title}]\nupdated_at: {today}\n---\n\n"
+        )
+        body = f"# {cleaned_title}\n\n{content.strip()}\n"
+        path.write_text(frontmatter + body, encoding="utf-8")
+        return f"vault_write filed={rel_path} title={cleaned_title}"
+
     def _existing_root(self) -> Path | None:
         root = self.root
         if not root.is_dir():

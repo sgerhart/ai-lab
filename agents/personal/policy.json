@@ -13,7 +13,11 @@
     "files_read",
     "report_list",
     "report_read",
-    "report_write"
+    "report_write",
+    "vault_write",
+    "schedule_create",
+    "schedule_list",
+    "schedule_cancel"
   ],
   "privileged_tools": [],
   "network": [],
