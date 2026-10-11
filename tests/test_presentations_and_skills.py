@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 import unittest
@@ -155,6 +156,44 @@ class PresentationsAndSkillsTests(unittest.TestCase):
         )
         self.assertTrue(res_skill.ok)
         self.assertIn("skill_create success", res_skill.observation)
+
+    def test_artifacts_api_endpoints(self) -> None:
+        try:
+            from fastapi.testclient import TestClient
+            from langgraph.checkpoint.memory import MemorySaver
+            from ai_lab_platform.control_app import create_control_app
+            from ai_lab_platform.store import SqliteStore
+        except ImportError:
+            return
+
+        lib = PresentationLibrary(root=self.root / "presentations")
+        lib.write("demo-deck", "Demo Deck", "# Slide 1\nHello\n---\n# Slide 2\nWorld")
+
+        app = create_control_app(
+            store=SqliteStore(self.root / "wo.sqlite"),
+            checkpointer=MemorySaver(),
+            token="test-token",
+        )
+        client = TestClient(app)
+
+        os.environ["AI_LAB_PRESENTATIONS_ROOT"] = str(self.root / "presentations")
+        try:
+            resp = client.get("/v1/artifacts", headers={"Authorization": "Bearer test-token"})
+            self.assertEqual(resp.status_code, 200)
+            data = resp.json()
+            self.assertIn("artifacts", data)
+            items = data["artifacts"]
+            self.assertTrue(any(i["name"] == "demo-deck.html" for i in items))
+
+            pres_resp = client.get(
+                "/v1/artifacts/presentations/demo-deck.html",
+                headers={"Authorization": "Bearer test-token"},
+            )
+            self.assertEqual(pres_resp.status_code, 200)
+            self.assertIn("<!DOCTYPE html>", pres_resp.text)
+            self.assertIn("Demo Deck", pres_resp.text)
+        finally:
+            os.environ.pop("AI_LAB_PRESENTATIONS_ROOT", None)
 
 
 if __name__ == "__main__":

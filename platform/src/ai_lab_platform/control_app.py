@@ -72,6 +72,8 @@ from .mcp_client import (
 )
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
+from .presentations import default_presentations_root
+from .research_reports import default_reports_root
 from .retrieval import RetrievalService, default_retrieval_service, set_default_retrieval_service
 from .schedule_cron import CronError, parse_cron
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
@@ -1024,6 +1026,85 @@ def create_control_app(
             "open_url": jupyter_open_url(settings.studio_jupyter_url, jtoken, notebook=notebook),
             "note": "Open in a new tab on the tailnet. Do not commit this URL.",
         }
+
+    @app.get("/v1/artifacts")
+    def list_artifacts(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """List generated artifacts (presentations, reports)."""
+        _gate(request, authorization or request.query_params.get("token"))
+        p_root = default_presentations_root().resolve()
+        r_root = default_reports_root().resolve()
+        artifacts: list[dict[str, Any]] = []
+
+        if p_root.is_dir():
+            for p in sorted(p_root.glob("*.html"), key=lambda x: x.stat().st_mtime, reverse=True):
+                stat = p.stat()
+                title = p.stem.replace("_", " ").replace("-", " ").title()
+                md_path = p_root / f"{p.stem}.md"
+                if md_path.is_file():
+                    first_lines = md_path.read_text(encoding="utf-8", errors="ignore").splitlines()
+                    if first_lines and first_lines[0].startswith("# "):
+                        title = first_lines[0][2:].strip()
+                artifacts.append({
+                    "id": f"presentation::{p.name}",
+                    "type": "presentation",
+                    "name": p.name,
+                    "title": title,
+                    "url": f"/v1/artifacts/presentations/{p.name}",
+                    "size": stat.st_size,
+                    "updated_at": stat.st_mtime,
+                })
+
+        if r_root.is_dir():
+            for r in sorted(r_root.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True):
+                stat = r.stat()
+                title = r.stem.replace("_", " ").replace("-", " ").title()
+                first_lines = r.read_text(encoding="utf-8", errors="ignore").splitlines()
+                if first_lines and first_lines[0].startswith("# "):
+                    title = first_lines[0][2:].strip()
+                artifacts.append({
+                    "id": f"report::{r.name}",
+                    "type": "report",
+                    "name": r.name,
+                    "title": title,
+                    "url": f"/v1/artifacts/reports/{r.name}",
+                    "size": stat.st_size,
+                    "updated_at": stat.st_mtime,
+                })
+
+        return {"artifacts": artifacts}
+
+    @app.get("/v1/artifacts/presentations/{name}")
+    def get_presentation_artifact(
+        name: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> Response:
+        """Serve presentation HTML directly."""
+        _gate(request, authorization or request.query_params.get("token"))
+        p_root = default_presentations_root().resolve()
+        target = (p_root / name).resolve()
+        if not target.is_relative_to(p_root) or not target.is_file():
+            raise HTTPException(status_code=404, detail="Presentation not found")
+        content = target.read_bytes()
+        return Response(content=content, media_type="text/html; charset=utf-8")
+
+    @app.get("/v1/artifacts/reports/{name}")
+    def get_report_artifact(
+        name: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> Response:
+        """Serve report text/markdown directly."""
+        _gate(request, authorization or request.query_params.get("token"))
+        r_root = default_reports_root().resolve()
+        target = (r_root / name).resolve()
+        if not target.is_relative_to(r_root) or not target.is_file():
+            raise HTTPException(status_code=404, detail="Report not found")
+        content = target.read_bytes()
+        return Response(content=content, media_type="text/markdown; charset=utf-8")
 
     @app.get("/v1/dashboard")
     def lab_dashboard(
