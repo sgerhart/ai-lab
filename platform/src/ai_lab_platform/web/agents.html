@@ -577,11 +577,251 @@
       color: #fff;
     }
 
+    /* Artifacts Explorer Modal (Pop-up Panel) */
+    .artifacts-explorer-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .artifacts-explorer-modal[hidden] { display: none !important; }
+    .artifacts-explorer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .artifacts-explorer-card {
+      position: relative;
+      width: min(920px, 95vw);
+      height: min(780px, 88vh);
+      background: #15171e;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 32px 90px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(124, 184, 255, 0.12);
+      overflow: hidden;
+      z-index: 1;
+    }
+    .artifacts-explorer-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #1c1f26;
+    }
+    .artifacts-explorer-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .artifacts-total-pill {
+      background: rgba(124, 184, 255, 0.18);
+      color: var(--accent);
+      border: 1px solid rgba(124, 184, 255, 0.35);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .artifacts-explorer-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .artifacts-explorer-toolbar {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .artifacts-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .artifact-filter-btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .artifact-filter-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+    }
+    .artifact-filter-btn.active {
+      background: rgba(124, 184, 255, 0.18);
+      border-color: rgba(124, 184, 255, 0.5);
+      color: #fff;
+    }
+    .artifacts-search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 5px 12px;
+      min-width: 220px;
+      flex: 1;
+      max-width: 340px;
+    }
+    .artifacts-search-wrap input {
+      background: transparent;
+      border: 0;
+      color: var(--ink);
+      font-size: 12px;
+      outline: none;
+      width: 100%;
+    }
+    .artifacts-explorer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 240px;
+    }
+    .artifact-item-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+    .artifact-item-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(124, 184, 255, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .artifact-item-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .artifact-item-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .artifact-item-icon-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(124, 184, 255, 0.15), rgba(80, 140, 255, 0.25));
+      border: 1px solid rgba(124, 184, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .artifact-item-icon-box.report {
+      background: linear-gradient(135deg, rgba(82, 196, 122, 0.15), rgba(46, 133, 64, 0.25));
+      border-color: rgba(82, 196, 122, 0.35);
+    }
+    .artifact-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .artifact-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+    .artifact-item-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .artifact-item-badges {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .artifact-pill {
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .artifact-pill.type-pres {
+      background: rgba(124, 184, 255, 0.15);
+      border-color: rgba(124, 184, 255, 0.35);
+      color: var(--accent);
+    }
+    .artifact-pill.type-report {
+      background: rgba(82, 196, 122, 0.15);
+      border-color: rgba(82, 196, 122, 0.35);
+      color: #72e098;
+    }
+    .artifact-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .artifacts-explorer-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--line);
+      background: #1c1f26;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .artifacts-footer-info {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .artifacts-footer-info code {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      background: rgba(0,0,0,0.4);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--ink);
+    }
+
     /* Artifact Modal / Full Deck Viewer */
     .artifact-modal {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      z-index: 2000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1100,8 +1340,8 @@
           <span class="title" id="pane-title">AI Lab Assistant</span>
         </div>
         <div class="top-meta" style="flex-direction:row;align-items:center;gap:10px;">
-          <button type="button" class="btn" id="toggle-artifacts" title="View generated artifacts" style="padding:4px 10px;font-size:12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:var(--ink);">
-            <span>📦</span> Artifacts <span id="artifact-count-badge" style="background:rgba(255,255,255,0.15);padding:1px 6px;border-radius:10px;font-size:11px;">0</span>
+          <button type="button" class="btn" id="toggle-artifacts" onclick="openArtifactsExplorer()" title="Open Artifacts Explorer Pop-up" style="padding:5px 12px;font-size:12px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:var(--ink);font-weight:600;transition:all 0.15s ease;">
+            <span style="font-size:14px;">📦</span> Artifacts <span id="artifact-count-badge" style="background:rgba(124,184,255,0.25);color:var(--accent);padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;">0</span>
           </button>
           <span class="perf-meter" id="perf-meter" aria-live="polite"></span>
         </div>
@@ -1555,6 +1795,49 @@
     </aside>
   </div>
 
+  <!-- Artifacts Explorer Pop-up Panel Modal -->
+  <div class="artifacts-explorer-modal" id="artifacts-explorer-modal" hidden>
+    <div class="artifacts-explorer-backdrop" onclick="closeArtifactsExplorer()"></div>
+    <div class="artifacts-explorer-card">
+      <div class="artifacts-explorer-header">
+        <div class="artifacts-explorer-title">
+          <span style="font-size:22px;">📦</span>
+          <span>Generated Artifacts &amp; Deliverables</span>
+          <span class="artifacts-total-pill" id="artifacts-total-pill">0</span>
+        </div>
+        <div class="artifacts-explorer-header-actions">
+          <button type="button" class="btn" id="btn-refresh-artifacts" onclick="loadArtifacts(true)" title="Refresh artifacts list" style="padding:5px 12px;font-size:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.06);cursor:pointer;">
+            <span>🔄</span> Refresh
+          </button>
+          <button type="button" class="icon-btn" onclick="closeArtifactsExplorer()" title="Close panel" style="width:32px;height:32px;font-size:16px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+
+      <div class="artifacts-explorer-toolbar">
+        <div class="artifacts-filter-group" id="artifacts-filter-group">
+          <button type="button" class="artifact-filter-btn active" data-filter="all" onclick="filterArtifacts('all')">All (<span id="count-all">0</span>)</button>
+          <button type="button" class="artifact-filter-btn" data-filter="presentation" onclick="filterArtifacts('presentation')">📊 Presentations (<span id="count-presentations">0</span>)</button>
+          <button type="button" class="artifact-filter-btn" data-filter="report" onclick="filterArtifacts('report')">📑 Reports (<span id="count-reports">0</span>)</button>
+        </div>
+        <div class="artifacts-search-wrap">
+          <span style="color:var(--muted);font-size:12px;">🔍</span>
+          <input type="text" id="artifacts-search-input" placeholder="Search title, filename, or summary..." oninput="onArtifactSearchInput(this.value)" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="artifacts-explorer-body" id="artifacts-explorer-list">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="artifacts-explorer-footer">
+        <div class="artifacts-footer-info">
+          Deliverables stored on host in <code>~/.ai-lab/presentations</code> &amp; <code>~/.ai-lab/reports</code>
+        </div>
+        <button type="button" class="btn primary" onclick="closeArtifactsExplorer()" style="padding:6px 18px;font-size:13px;border-radius:8px;cursor:pointer;">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Artifact Full Screen / Modal Viewer -->
   <div class="artifact-modal" id="artifact-modal" hidden>
     <div class="artifact-modal-backdrop" id="artifact-modal-backdrop" onclick="closeArtifactViewer()"></div>
@@ -1562,6 +1845,7 @@
       <div class="artifact-modal-header">
         <div class="artifact-modal-title" id="artifact-modal-title">Presentation Preview</div>
         <div class="artifact-modal-actions">
+          <button type="button" class="btn" id="artifact-modal-back" onclick="backToExplorer()" title="Return to artifacts list" style="padding:5px 12px;font-size:12px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;">← All Artifacts</button>
           <a href="#" target="_blank" class="btn" id="artifact-modal-popout" title="Open in new window">Open in new tab ↗</a>
           <button type="button" class="btn primary" id="artifact-modal-done" onclick="closeArtifactViewer()">Done</button>
           <button type="button" class="icon-btn" id="artifact-modal-x" onclick="closeArtifactViewer()" title="Close">✕</button>
@@ -2552,6 +2836,12 @@
           }
         }
         if (presFile) {
+          const btnGroup = document.createElement("div");
+          btnGroup.style.display = "flex";
+          btnGroup.style.gap = "8px";
+          btnGroup.style.flexWrap = "wrap";
+          btnGroup.style.marginTop = "10px";
+
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "artifact-launch-btn";
@@ -2559,7 +2849,21 @@
           btn.onclick = () => {
             openArtifactViewer("/v1/artifacts/presentations/" + presFile, presFile);
           };
-          el.appendChild(btn);
+          btnGroup.appendChild(btn);
+
+          const allBtn = document.createElement("button");
+          allBtn.type = "button";
+          allBtn.className = "btn";
+          allBtn.style.padding = "9px 12px";
+          allBtn.style.fontSize = "12px";
+          allBtn.style.borderRadius = "10px";
+          allBtn.innerHTML = `<span>📦</span> All Artifacts`;
+          allBtn.onclick = () => {
+            openArtifactsExplorer();
+          };
+          btnGroup.appendChild(allBtn);
+
+          el.appendChild(btnGroup);
         }
       }
 
@@ -2606,45 +2910,220 @@
       } catch (e) { showErr(e); }
     }
 
-    async function loadArtifacts() {
+    let allArtifacts = [];
+    let currentArtifactFilter = "all";
+    let currentArtifactSearch = "";
+
+    async function loadArtifacts(openExplorerAfter) {
       try {
         const res = await api("/v1/artifacts");
-        const list = res.artifacts || [];
+        allArtifacts = res.artifacts || [];
         const countBadge = $("artifact-count-badge");
-        if (countBadge) countBadge.textContent = list.length;
-        const box = $("artifacts-list");
-        if (!box) return;
-        box.innerHTML = "";
-        if (!list.length) {
-          box.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;margin-top:24px;">No artifacts generated yet.</div>`;
-          return;
-        }
-        for (const item of list) {
-          const card = document.createElement("div");
-          card.className = "artifact-card";
-          const icon = item.type === "presentation" ? "📊" : "📑";
-          const typeLabel = item.type === "presentation" ? "Presentation" : "Research Report";
-          const sizeKb = Math.max(1, Math.round(item.size / 1024)) + " KB";
-          card.innerHTML = `
-            <div class="artifact-card-head">
-              <div class="artifact-card-icon">${icon}</div>
-              <div class="artifact-card-meta">
-                <div class="artifact-card-title" title="${item.title || item.name}">${item.title || item.name}</div>
-                <div class="artifact-card-sub">${typeLabel} · ${item.name} (${sizeKb})</div>
-              </div>
-            </div>
-            <div class="artifact-card-actions">
-              <button type="button" class="artifact-btn primary btn-preview">Preview</button>
-              <a href="${item.url}" target="_blank" class="artifact-btn" title="Open in new window">Open ↗</a>
-            </div>
-          `;
-          card.querySelector(".btn-preview").onclick = () => {
-            openArtifactViewer(item.url, item.title || item.name);
-          };
-          box.appendChild(card);
+        if (countBadge) countBadge.textContent = allArtifacts.length;
+        const totalPill = $("artifacts-total-pill");
+        if (totalPill) totalPill.textContent = allArtifacts.length;
+
+        const presCount = allArtifacts.filter(a => a.type === "presentation").length;
+        const repCount = allArtifacts.filter(a => a.type === "report").length;
+        if ($("count-all")) $("count-all").textContent = allArtifacts.length;
+        if ($("count-presentations")) $("count-presentations").textContent = presCount;
+        if ($("count-reports")) $("count-reports").textContent = repCount;
+
+        renderArtifactsExplorer();
+        renderArtifactsRail();
+
+        if (openExplorerAfter) {
+          openArtifactsExplorer();
         }
       } catch (e) {
         console.error("loadArtifacts error:", e);
+      }
+    }
+    window.loadArtifacts = loadArtifacts;
+
+    function openArtifactsExplorer() {
+      const modal = $("artifacts-explorer-modal");
+      if (!modal) return;
+      modal.removeAttribute("hidden");
+      modal.style.display = "flex";
+      renderArtifactsExplorer();
+    }
+    window.openArtifactsExplorer = openArtifactsExplorer;
+
+    function closeArtifactsExplorer() {
+      const modal = $("artifacts-explorer-modal");
+      if (!modal) return;
+      modal.setAttribute("hidden", "");
+      modal.style.display = "none";
+    }
+    window.closeArtifactsExplorer = closeArtifactsExplorer;
+
+    function filterArtifacts(type) {
+      currentArtifactFilter = type;
+      const btns = document.querySelectorAll(".artifact-filter-btn");
+      btns.forEach(b => {
+        if (b.dataset.filter === type) b.classList.add("active");
+        else b.classList.remove("active");
+      });
+      renderArtifactsExplorer();
+    }
+    window.filterArtifacts = filterArtifacts;
+
+    function onArtifactSearchInput(query) {
+      currentArtifactSearch = (query || "").trim().toLowerCase();
+      renderArtifactsExplorer();
+    }
+    window.onArtifactSearchInput = onArtifactSearchInput;
+
+    function formatTimeAgo(ts) {
+      if (!ts) return "";
+      const now = Math.floor(Date.now() / 1000);
+      const diff = Math.max(0, now - Math.floor(ts));
+      if (diff < 60) return "just now";
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      const date = new Date(ts * 1000);
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function renderArtifactsExplorer() {
+      const listContainer = $("artifacts-explorer-list");
+      if (!listContainer) return;
+      listContainer.innerHTML = "";
+
+      let items = allArtifacts.slice();
+      if (currentArtifactFilter !== "all") {
+        items = items.filter(a => a.type === currentArtifactFilter);
+      }
+      if (currentArtifactSearch) {
+        items = items.filter(a => {
+          const t = (a.title || "").toLowerCase();
+          const n = (a.name || "").toLowerCase();
+          const d = (a.description || "").toLowerCase();
+          return t.includes(currentArtifactSearch) || n.includes(currentArtifactSearch) || d.includes(currentArtifactSearch);
+        });
+      }
+
+      if (!items.length) {
+        listContainer.innerHTML = `
+          <div style="text-align:center;padding:48px 20px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <div style="font-size:42px;opacity:0.6;">📦</div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink);">No artifacts match your query</div>
+            <div style="font-size:13px;max-width:400px;line-height:1.4;">Ask the AI Lab Assistant to generate a presentation deck or research report to populate artifacts here.</div>
+          </div>
+        `;
+        return;
+      }
+
+      for (const item of items) {
+        const card = document.createElement("div");
+        card.className = "artifact-item-card";
+        const isPres = item.type === "presentation";
+        const icon = isPres ? "📊" : "📑";
+        const iconClass = isPres ? "" : "report";
+        const typeBadgeClass = isPres ? "type-pres" : "type-report";
+        const typeBadgeText = isPres ? "Interactive Presentation Deck" : "Research Report";
+        const sizeKb = Math.max(1, Math.round((item.size || 0) / 1024)) + " KB";
+        const timeAgo = formatTimeAgo(item.updated_at);
+        const slidesBadge = (isPres && item.slides_count) ? `<span class="artifact-pill" style="color:var(--accent);">${item.slides_count} Slides</span>` : "";
+
+        card.innerHTML = `
+          <div class="artifact-item-header">
+            <div class="artifact-item-main">
+              <div class="artifact-item-icon-box ${iconClass}">${icon}</div>
+              <div class="artifact-item-info">
+                <div class="artifact-item-title">${item.title || item.name}</div>
+                <div class="artifact-item-desc">${item.description || (isPres ? "HTML5 slide deck presentation" : "Markdown research deliverable report")}</div>
+                <div class="artifact-item-badges">
+                  <span class="artifact-pill ${typeBadgeClass}">${typeBadgeText}</span>
+                  ${slidesBadge}
+                  <span class="artifact-pill" title="File name">${item.name}</span>
+                  <span class="artifact-pill">${sizeKb}</span>
+                  ${timeAgo ? `<span class="artifact-pill" title="Last updated">🕒 ${timeAgo}</span>` : ""}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="artifact-item-actions">
+            <button type="button" class="btn primary btn-view-artifact" style="padding:6px 14px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+              <span>${isPres ? "▶ View Slides" : "👁 Read Report"}</span>
+            </button>
+            <a href="${item.url}" target="_blank" class="btn" style="padding:6px 12px;font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Open in new window">
+              <span>↗ Open in New Tab</span>
+            </a>
+            <button type="button" class="btn btn-copy-link" style="padding:6px 11px;font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Copy artifact URL">
+              <span>📋 Copy Link</span>
+            </button>
+            <a href="${item.url}" download="${item.name}" class="btn" style="padding:6px 11px;font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Download file to device">
+              <span>⬇ Download</span>
+            </a>
+          </div>
+        `;
+
+        card.querySelector(".btn-view-artifact").onclick = () => {
+          openArtifactViewer(item.url, item.title || item.name);
+        };
+        const copyBtn = card.querySelector(".btn-copy-link");
+        copyBtn.onclick = () => {
+          const absUrl = window.location.origin + item.url;
+          navigator.clipboard.writeText(absUrl).then(() => {
+            copyBtn.innerHTML = `<span>✓ Copied!</span>`;
+            setTimeout(() => {
+              copyBtn.innerHTML = `<span>📋 Copy Link</span>`;
+            }, 2000);
+          }).catch(() => {
+            prompt("Copy artifact link:", absUrl);
+          });
+        };
+
+        listContainer.appendChild(card);
+      }
+    }
+
+    function renderArtifactsRail() {
+      const box = $("artifacts-list");
+      if (!box) return;
+      box.innerHTML = "";
+
+      const openExplorerBtn = document.createElement("button");
+      openExplorerBtn.type = "button";
+      openExplorerBtn.className = "btn primary";
+      openExplorerBtn.style.cssText = "width:100%;font-size:12px;padding:8px;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;font-weight:600;cursor:pointer;";
+      openExplorerBtn.innerHTML = `<span>⤢</span> View All Artifacts (${allArtifacts.length})`;
+      openExplorerBtn.onclick = openArtifactsExplorer;
+      box.appendChild(openExplorerBtn);
+
+      if (!allArtifacts.length) {
+        const empty = document.createElement("div");
+        empty.style.cssText = "color:var(--muted);font-size:13px;text-align:center;margin-top:24px;";
+        empty.textContent = "No artifacts generated yet.";
+        box.appendChild(empty);
+        return;
+      }
+
+      for (const item of allArtifacts) {
+        const card = document.createElement("div");
+        card.className = "artifact-card";
+        const icon = item.type === "presentation" ? "📊" : "📑";
+        const typeLabel = item.type === "presentation" ? "Presentation" : "Research Report";
+        const sizeKb = Math.max(1, Math.round((item.size || 0) / 1024)) + " KB";
+        card.innerHTML = `
+          <div class="artifact-card-head">
+            <div class="artifact-card-icon">${icon}</div>
+            <div class="artifact-card-meta">
+              <div class="artifact-card-title" title="${item.title || item.name}">${item.title || item.name}</div>
+              <div class="artifact-card-sub">${typeLabel} · ${item.name} (${sizeKb})</div>
+            </div>
+          </div>
+          <div class="artifact-card-actions">
+            <button type="button" class="artifact-btn primary btn-preview" style="cursor:pointer;">Preview</button>
+            <a href="${item.url}" target="_blank" class="artifact-btn" title="Open in new window" style="cursor:pointer;">Open ↗</a>
+          </div>
+        `;
+        card.querySelector(".btn-preview").onclick = () => {
+          openArtifactViewer(item.url, item.title || item.name);
+        };
+        box.appendChild(card);
       }
     }
 
@@ -2662,6 +3141,12 @@
     }
     window.openArtifactViewer = openArtifactViewer;
 
+    function backToExplorer() {
+      closeArtifactViewer();
+      openArtifactsExplorer();
+    }
+    window.backToExplorer = backToExplorer;
+
     function closeArtifactViewer() {
       const modal = $("artifact-modal");
       const frame = $("artifact-frame");
@@ -2674,7 +3159,10 @@
     window.closeArtifactViewer = closeArtifactViewer;
 
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeArtifactViewer();
+      if (e.key === "Escape") {
+        closeArtifactViewer();
+        closeArtifactsExplorer();
+      }
     });
 
     function toggleArtifactsRail(force) {
@@ -4377,10 +4865,12 @@
       await fetchProjects();
       await loadDefinitions();
       await loadArtifacts();
-      if ($("toggle-artifacts")) $("toggle-artifacts").onclick = () => toggleArtifactsRail();
+      if ($("toggle-artifacts")) $("toggle-artifacts").onclick = () => openArtifactsExplorer();
       if ($("close-artifacts")) $("close-artifacts").onclick = () => toggleArtifactsRail(false);
       if ($("refresh-artifacts")) $("refresh-artifacts").onclick = () => loadArtifacts();
+      if ($("btn-refresh-artifacts")) $("btn-refresh-artifacts").onclick = () => loadArtifacts(true);
       if ($("artifact-modal-done")) $("artifact-modal-done").onclick = closeArtifactViewer;
+      if ($("artifact-modal-x")) $("artifact-modal-x").onclick = closeArtifactViewer;
       if ($("artifact-modal-backdrop")) $("artifact-modal-backdrop").onclick = closeArtifactViewer;
       if (!state.conversationId) {
         renderMessages([]);

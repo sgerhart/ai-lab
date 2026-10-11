@@ -1061,15 +1061,29 @@ def create_control_app(
                 stat = p.stat()
                 title = p.stem.replace("_", " ").replace("-", " ").title()
                 md_path = p_root / f"{p.stem}.md"
+                description = ""
                 if md_path.is_file():
                     first_lines = md_path.read_text(encoding="utf-8", errors="ignore").splitlines()
                     if first_lines and first_lines[0].startswith("# "):
                         title = first_lines[0][2:].strip()
+                    for line in first_lines[1:6]:
+                        s = line.strip()
+                        if s and not s.startswith("#") and not s.startswith("---"):
+                            description = s
+                            break
+                slides_count = 0
+                try:
+                    html_content = p.read_text(encoding="utf-8", errors="ignore")
+                    slides_count = html_content.count('class="slide')
+                except Exception:
+                    slides_count = 0
                 artifacts.append({
                     "id": f"presentation::{p.name}",
                     "type": "presentation",
                     "name": p.name,
                     "title": title,
+                    "description": description or f"Interactive Keynote presentation deck with {slides_count or 1} slides.",
+                    "slides_count": slides_count,
                     "url": f"/v1/artifacts/presentations/{p.name}",
                     "size": stat.st_size,
                     "updated_at": stat.st_mtime,
@@ -1079,14 +1093,24 @@ def create_control_app(
             for r in sorted(r_root.glob("*.md"), key=lambda x: x.stat().st_mtime, reverse=True):
                 stat = r.stat()
                 title = r.stem.replace("_", " ").replace("-", " ").title()
-                first_lines = r.read_text(encoding="utf-8", errors="ignore").splitlines()
-                if first_lines and first_lines[0].startswith("# "):
-                    title = first_lines[0][2:].strip()
+                description = ""
+                try:
+                    first_lines = r.read_text(encoding="utf-8", errors="ignore").splitlines()
+                    if first_lines and first_lines[0].startswith("# "):
+                        title = first_lines[0][2:].strip()
+                    for line in first_lines[1:6]:
+                        s = line.strip()
+                        if s and not s.startswith("#") and not s.startswith("---"):
+                            description = s
+                            break
+                except Exception:
+                    pass
                 artifacts.append({
                     "id": f"report::{r.name}",
                     "type": "report",
                     "name": r.name,
                     "title": title,
+                    "description": description or "Markdown research deliverable report.",
                     "url": f"/v1/artifacts/reports/{r.name}",
                     "size": stat.st_size,
                     "updated_at": stat.st_mtime,
