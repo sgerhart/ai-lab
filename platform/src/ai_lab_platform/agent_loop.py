@@ -401,12 +401,19 @@ def step_agent_run(
             + prompt
         )
     if obs:
+        if is_presentation_req and not has_presentation:
+            instruction = "You have research observations. You MUST call presentation_write(name, title, slides_markdown) to author the presentation slides now. Do not call web_search or emit FINAL without writing the presentation."
+        elif is_report_req and not has_report:
+            instruction = "You have research observations. You MUST call report_write(name, title, body_markdown) to author the report now. Do not emit FINAL without writing the report."
+        else:
+            instruction = "You already have tool results. Emit a single FINAL line summarizing them. " + follow
+
         prompt = (
             prompt
             + "\n\nObservations from tools (use these; do not invent):\n"
             + "\n---\n".join(obs[-5:])
-            + "\n\nYou already have tool results. Emit a single FINAL line summarizing them. "
-            + follow
+            + "\n\n"
+            + instruction
         )
     else:
         prompt = prompt + "\n\nNo observations yet. Emit one TOOL … line, or FINAL if no tool is needed."
