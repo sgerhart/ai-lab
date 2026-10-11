@@ -128,7 +128,7 @@ def loop_system_prompt(
         "3. Use vault_write to permanently remember new facts, decisions, and user preferences (category: preferences, facts, decisions, projects).\n"
         "4. Use schedule_create to schedule recurring cron jobs (5-field cron: minute hour dom month dow, e.g. '0 9 * * 1' for Monday 9am, '0 9 * * *' for daily 9am). Use schedule_list and schedule_cancel to manage schedules.\n"
         "5. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
-        "6. Use presentation_write to generate interactive slide decks (separate slides with --- in the content).\n"
+        "6. If the user asks for a presentation, slides, or deck, you MUST call presentation_write(name, title, slides_markdown) before finishing with FINAL. Do not loop on web searches once you have basic facts; proceed directly to authoring the presentation.\n"
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
         "8. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
     ) + _brief_block(brief)
@@ -432,8 +432,31 @@ def step_agent_run(
         return run
     action_id = str(uuid4())
 
-    # Lab tools stop on a repeated name. Vault reads may run again with new arguments.
+    # Lab tools stop on a repeated name. Vault reads and searches may run again with new arguments.
     if _repeat_blocks(tool_name, tool_args, tool_traces):
+        if tool_name in _REPEATABLE_TOOLS:
+            prior_same = [trace for trace in tool_traces if trace.get("tool") == tool_name]
+            last_obs = (prior_same[-1].get("observation") if prior_same else "") or ""
+            obs_text = (
+                f"Duplicate call to {tool_name} with identical arguments. "
+                f"You already retrieved this observation:\n{last_obs[:1000]}\n"
+                f"Do not call {tool_name} again with identical arguments. "
+                f"Proceed to generate your presentation_write, report_write, or FINAL."
+            )
+            run.traces.append(
+                {
+                    "kind": "tool_result",
+                    "at": utcnow(),
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "ok": True,
+                    "observation": obs_text,
+                    "denied": False,
+                }
+            )
+            run.updated_at = utcnow()
+            store_put(run)
+            return run
         run.status = AgentRunStatus.COMPLETED
         prior_same = [trace for trace in tool_traces if trace.get("tool") == tool_name]
         last_obs = (prior_same[-1].get("observation") if prior_same else "") or ""
