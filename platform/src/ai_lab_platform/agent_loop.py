@@ -375,12 +375,23 @@ def step_agent_run(
     run.status = AgentRunStatus.RUNNING
     tool_traces = [t for t in run.traces if t.get("kind") == "tool_result"]
     obs = [t.get("observation", "") for t in tool_traces]
-    follow = (
-        "vault tools, files tools, web_search, research, schedule tools, and report tools may be called again with different arguments. "
-        "Otherwise emit a single FINAL line."
-        if policy.id == "personal"
-        else "Only emit TOOL if you need a different tool than you already used."
-    )
+    lower_obj = (run.objective or "").lower()
+    has_presentation = any(t.get("tool") == "presentation_write" for t in tool_traces)
+    is_presentation_req = any(w in lower_obj for w in ["presentation", "slide", "deck"])
+    has_report = any(t.get("tool") == "report_write" for t in tool_traces)
+    is_report_req = any(w in lower_obj for w in ["report", "dossier"])
+
+    if is_presentation_req and not has_presentation:
+        follow = "You now have research observations. You MUST call presentation_write(name, title, slides_markdown) to generate the slides. Do not call web_search again."
+    elif is_report_req and not has_report:
+        follow = "You now have research observations. You MUST call report_write(name, title, body_markdown) to compile the report. Do not call web_search again."
+    elif policy.id == "personal":
+        follow = (
+            "vault tools, files tools, web_search, research, schedule tools, and report tools may be called again with different arguments. "
+            "Otherwise emit a single FINAL line."
+        )
+    else:
+        follow = "Only emit TOOL if you need a different tool than you already used."
     prompt = run.objective or "(no objective)"
     if policy.id == "personal" and (history or "").strip():
         prompt = (

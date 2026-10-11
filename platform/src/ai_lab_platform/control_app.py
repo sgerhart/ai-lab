@@ -324,7 +324,7 @@ class AgentDefinitionRunIn(BaseModel):
     model: str = "qwen3.6:35b-a3b"
     backend: str = "ollama"
     billing_class: str = "local"
-    max_steps: int = Field(default=8, ge=1, le=64)
+    max_steps: int = Field(default=24, ge=1, le=64)
     conversation_id: str | None = None
     worktree_id: str = ""
 
@@ -407,7 +407,7 @@ class AgentRunIn(BaseModel):
         default=False,
         description="If true, run the bounded model/tool loop now (IWO-005)",
     )
-    max_steps: int = Field(default=8, ge=1, le=64)
+    max_steps: int = Field(default=24, ge=1, le=64)
 
 
 class ActionDecisionIn(BaseModel):
@@ -2518,6 +2518,9 @@ def create_control_app(
             if any(k in lower_obj for k in ["presentation", "slide", "report", "skill", "stock", "search", "web", "research", "cisco", "csco", "deck", "build", "vault", "schedule", "create"]):
                 target_agent = "personal"
 
+        effective_max_steps = body.max_steps
+        if target_agent == "personal" and effective_max_steps <= 8:
+            effective_max_steps = 24
         run = AgentRun.new(
             agent=target_agent,
             objective=body.objective,
@@ -2526,7 +2529,7 @@ def create_control_app(
             model=run_model,
             billing_class=billing,
             backend=run_backend,
-            budget=RunBudget(max_steps=body.max_steps),
+            budget=RunBudget(max_steps=effective_max_steps),
         )
         if body.execute:
             run.status = AgentRunStatus.QUEUED
