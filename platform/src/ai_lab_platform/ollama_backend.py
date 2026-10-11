@@ -55,15 +55,20 @@ class OllamaBackend:
     ) -> None:
         require_lab_ollama_url(base_url)
         self.base_url = base_url.rstrip("/")
+        if timeout_seconds == 600.0:
+            raw_to = os.environ.get("AI_LAB_OLLAMA_TIMEOUT_SECONDS", "900.0").strip()
+            try:
+                timeout_seconds = float(raw_to)
+            except ValueError:
+                timeout_seconds = 900.0
         self.timeout_seconds = timeout_seconds
-        # Ollama: -1 = no cap (stop on EOS); -2 = fill remaining context.
-        # Default -1 so replies are not clipped at an arbitrary 512.
+        # Ollama: default bounded num_predict to keep generation responsive and prevent runaways.
         if num_predict is None:
-            raw = os.environ.get("AI_LAB_OLLAMA_NUM_PREDICT", "-1").strip()
+            raw = os.environ.get("AI_LAB_OLLAMA_NUM_PREDICT", "3072").strip()
             try:
                 num_predict = int(raw)
             except ValueError:
-                num_predict = -1
+                num_predict = 3072
         self.num_predict = num_predict
         self._vision_cache: dict[str, bool] = {}
 
@@ -103,7 +108,17 @@ class OllamaBackend:
         ensure_slot(self.base_url, model)
 
     def _generate_options(self) -> dict[str, Any]:
-        return {"num_predict": self.num_predict, "temperature": 0.1}
+        options: dict[str, Any] = {"temperature": 0.1}
+        if self.num_predict is not None:
+            options["num_predict"] = self.num_predict
+        raw_ctx = os.environ.get("AI_LAB_OLLAMA_NUM_CTX", "16384").strip()
+        try:
+            num_ctx = int(raw_ctx)
+            if num_ctx > 0:
+                options["num_ctx"] = num_ctx
+        except ValueError:
+            pass
+        return options
 
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         import httpx
