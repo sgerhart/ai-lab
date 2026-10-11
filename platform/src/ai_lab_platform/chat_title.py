@@ -33,6 +33,49 @@ def clean_model_title(text: str) -> str:
     return line
 
 
+def derive_descriptive_title(text: str) -> str:
+    """Extract a concise, descriptive title from a prompt or objective without LLM overhead."""
+    raw = (text or "").strip()
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+    if not raw:
+        return ""
+    raw = re.sub(r"^#+\s*", "", raw)
+    first_line = raw.splitlines()[0].strip()
+    first_line = re.sub(r"^[\-\*\d\.\)\s]+", "", first_line).strip()
+    if not first_line:
+        return ""
+
+    patterns = [
+        r"^(can\s+you\s+(please\s+)?(help\s+me\s+)?(create|make|build|write|draft|generate|give\s+me)\s+(a|an|the)?\s*)",
+        r"^(please\s+(create|make|build|write|draft|generate|give\s+me|summarize|explain)\s+(a|an|the)?\s*)",
+        r"^(i\s+want\s+(to\s+)?(create|make|build|write|see|have)\s+(a|an|the)?\s*)",
+        r"^(could\s+you\s+(please\s+)?(create|make|build|write|generate)\s+(a|an|the)?\s*)",
+        r"^(how\s+(can\s+we|do\s+i|to)\s*)",
+        r"^(tell\s+me\s+about\s*)",
+        r"^(can\s+we\s+(also\s+)?(use|make|build|do)\s*)",
+        r"^(can\s+you\s+(also\s+)?(provide|format|fix|add)\s*)",
+    ]
+    cleaned = first_line
+    for pat in patterns:
+        cleaned = re.sub(pat, "", cleaned, flags=re.IGNORECASE).strip()
+
+    cleaned = cleaned.strip("\"'`“”").rstrip(".?!:;,")
+    if not cleaned:
+        cleaned = first_line[:40].strip()
+
+    if cleaned:
+        cleaned = cleaned[0].upper() + cleaned[1:]
+
+    if len(cleaned) > 46:
+        cutoff = cleaned[:46].rfind(" ")
+        if cutoff > 20:
+            cleaned = cleaned[:cutoff].rstrip()
+        else:
+            cleaned = cleaned[:46].rstrip()
+
+    return cleaned if cleaned.lower() not in _GENERIC else ""
+
+
 def propose_chat_title(
     router: ModelRouter,
     *,
@@ -61,3 +104,4 @@ def propose_chat_title(
     except Exception:
         return ""
     return clean_model_title(response.text)
+

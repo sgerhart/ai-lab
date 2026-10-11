@@ -48,7 +48,7 @@ from .chat_grounding import (
     scrub_title,
     system_for_chat,
 )
-from .chat_title import propose_chat_title, title_is_generic
+from .chat_title import derive_descriptive_title, propose_chat_title, title_is_generic
 from .source_fetch import needs_source_fetch
 from .operator_auth import login as operator_login
 from .operator_auth import revoke_session
@@ -1378,7 +1378,34 @@ def create_control_app(
         if not hasattr(store, "list_conversations"):
             raise HTTPException(status_code=501, detail="conversation list unavailable")
         items = store.list_conversations(limit=limit)  # type: ignore[attr-defined]
-        return {"conversations": [c.to_dict() for c in items]}
+        result = []
+        for c in items:
+            d = c.to_dict()
+            if title_is_generic(d.get("title", "")):
+                derived = ""
+                if hasattr(store, "list_messages"):
+                    msgs = store.list_messages(c.id)  # type: ignore[attr-defined]
+                    for m in msgs:
+                        if getattr(m, "role", "") == MessageRole.USER and getattr(m, "content", ""):
+                            derived = derive_descriptive_title(m.content)
+                            if derived:
+                                break
+                if not derived and hasattr(store, "list_agent_runs"):
+                    runs = store.list_agent_runs(conversation_id=c.id)  # type: ignore[attr-defined]
+                    for r in runs:
+                        if getattr(r, "objective", ""):
+                            derived = derive_descriptive_title(r.objective)
+                            if derived:
+                                break
+                if derived:
+                    d["title"] = derived
+                    c.title = derived
+                    try:
+                        store.put_conversation(c)  # type: ignore[attr-defined]
+                    except Exception:
+                        pass
+            result.append(d)
+        return {"conversations": result}
 
     @app.get("/v1/conversations/{conversation_id}")
     def get_conversation(
@@ -1733,6 +1760,14 @@ def create_control_app(
             },
         )
         store.put_message(message)  # type: ignore[attr-defined]
+        if title_is_generic(conversation.title) and body.content:
+            new_title = derive_descriptive_title(body.content)
+            if new_title:
+                conversation.title = new_title
+                try:
+                    store.put_conversation(conversation)  # type: ignore[attr-defined]
+                except Exception:
+                    pass
 
         if not body.reply or role != MessageRole.USER:
             return message.to_dict()
@@ -2644,6 +2679,14 @@ def create_control_app(
         effective_max_steps = body.max_steps
         if target_agent == "personal" and effective_max_steps <= 8:
             effective_max_steps = 24
+        if title_is_generic(conversation.title) and body.objective:
+            new_title = derive_descriptive_title(body.objective)
+            if new_title:
+                conversation.title = new_title
+                try:
+                    store.put_conversation(conversation)  # type: ignore[attr-defined]
+                except Exception:
+                    pass
         run = AgentRun.new(
             agent=target_agent,
             objective=body.objective,
