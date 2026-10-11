@@ -72,6 +72,34 @@ class PresentationsAndSkillsTests(unittest.TestCase):
         with self.assertRaises(PresentationError):
             self.pres_lib.write("../../etc/evil", "Bad", "Content")
 
+    def test_presentation_header_split_and_title_sanitization(self) -> None:
+        raw_markdown = (
+            "# Agent Security 2026\n\n"
+            "## Slide 1: The Rise of Autonomous Agents\n\n"
+            "- Context: Shift from passive LLMs to agents.\n\n"
+            "## Slide 2: Key Risk #1 - Prompt Injection & Jailbreaking\n\n"
+            "- Vulnerability: Agents process untrusted inputs.\n\n"
+            "## Slide 3: Key Risk #2 - Data Exfiltration\n\n"
+            "- Data Flow: Multi-source access.\n"
+        )
+        res = self.pres_lib.write("agent-sec-test", "Agent Security 2026", raw_markdown)
+        self.assertIn("slides: 3", res)
+
+        html_file = self.presentations_root / "agent-sec-test.html"
+        self.assertTrue(html_file.is_file())
+        html = html_file.read_text(encoding="utf-8")
+
+        # Titles should be cleanly sanitized
+        self.assertIn("The Rise of Autonomous Agents", html)
+        self.assertIn("Key Risk #1 - Prompt Injection", html)
+        self.assertNotIn("Slide 1:", html)
+        self.assertNotIn("Slide 2:", html)
+        self.assertNotIn("Slide 3:", html)
+        # Badges should have Slide 01 of 03
+        self.assertIn("Slide 01 of 03", html)
+        self.assertIn("Slide 02 of 03", html)
+        self.assertIn("Slide 03 of 03", html)
+
     def test_skill_create_and_read(self) -> None:
         steps = (
             "1. Inspect CVE identifiers using NVD.\n"

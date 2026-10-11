@@ -46,29 +46,79 @@ def _confine(root: Path, rel: str) -> Path:
     return candidate
 
 
+def _clean_slide_title(title: str) -> str:
+    """Strip redundant 'Slide 1:', 'Slide 2 -', 'Slide #3:' prefixes from titles."""
+    t = (title or "").strip()
+    t = re.sub(r"^#+\s*", "", t)
+    cleaned = re.sub(r"^Slide\s*#?\d+\s*[:\-–—.]*\s*", "", t, flags=re.IGNORECASE).strip()
+    return cleaned or t or "Key Insights"
+
+
 def _parse_slides(content: str) -> list[dict[str, str]]:
-    """Parse slide sections from markdown separated by '---'."""
-    raw_blocks = [b.strip() for b in re.split(r"\n---\n", content) if b.strip()]
+    """Parse slide sections from markdown separated by '---' or slide headers ('## Slide' / '## ')."""
+    text = (content or "").strip()
+    if not text:
+        return [{"index": "1", "title": "Overview", "body": "No content provided."}]
+
+    raw_blocks: list[str] = []
+
+    # 1. Try splitting on horizontal rule lines (---, ***, ===)
+    hr_pattern = r"(?m)^\s*(?:---|[*]{3,}|={3,})\s*$"
+    if re.search(hr_pattern, text):
+        raw_blocks = [b.strip() for b in re.split(hr_pattern, text) if b.strip()]
+
+    # 2. If no horizontal rules, check for '## Slide \d+' or 'Slide \d+:' boundaries
+    if len(raw_blocks) <= 1:
+        slide_marker_pattern = r"(?m)(?=^(?:#{1,3}\s*)?Slide\s*#?\d+\s*[:\-–—.]*)"
+        candidate_blocks = [b.strip() for b in re.split(slide_marker_pattern, text) if b.strip()]
+        if len(candidate_blocks) > 1:
+            raw_blocks = candidate_blocks
+
+    # 3. If still only 1 block, try splitting on any level-2 markdown headers (## )
+    if len(raw_blocks) <= 1:
+        h2_pattern = r"(?m)(?=^##\s+)"
+        h2_blocks = [b.strip() for b in re.split(h2_pattern, text) if b.strip()]
+        if len(h2_blocks) > 1:
+            raw_blocks = h2_blocks
+
+    # 4. If still only 1 block, try splitting on level-1 markdown headers (# ) if multiple exist
+    if len(raw_blocks) <= 1:
+        h1_pattern = r"(?m)(?=^#\s+)"
+        h1_blocks = [b.strip() for b in re.split(h1_pattern, text) if b.strip()]
+        if len(h1_blocks) > 1:
+            raw_blocks = h1_blocks
+
     if not raw_blocks:
-        raw_blocks = [content.strip() or "Empty Presentation"]
+        raw_blocks = [text]
+
+    # Clean up introductory / title-only blocks (e.g. initial `# Deck Title`)
+    if len(raw_blocks) > 1:
+        first_lines = [l.strip() for l in raw_blocks[0].splitlines() if l.strip()]
+        if len(first_lines) <= 2 and all(l.startswith("#") and not re.search(r"Slide\s*#?\d+", l, re.IGNORECASE) for l in first_lines):
+            raw_blocks.pop(0)
+
     slides: list[dict[str, str]] = []
     for idx, block in enumerate(raw_blocks[:_MAX_SLIDES]):
         lines = block.splitlines()
-        title = ""
+        raw_title = ""
         body_lines: list[str] = []
         for line in lines:
-            if not title and line.startswith("#"):
-                title = line.lstrip("#").strip()
+            trimmed = line.strip()
+            if not raw_title and (trimmed.startswith("#") or re.match(r"^Slide\s*#?\d+", trimmed, re.IGNORECASE)):
+                raw_title = re.sub(r"^#+\s*", "", trimmed).strip()
             else:
                 body_lines.append(line)
+        clean_title = _clean_slide_title(raw_title)
+        body = "\n".join(body_lines).strip()
         slides.append(
             {
                 "index": str(idx + 1),
-                "title": title or f"Slide {idx + 1}",
-                "body": "\n".join(body_lines).strip(),
+                "title": clean_title or f"Slide {idx + 1}",
+                "body": body,
             }
         )
-    return slides
+
+    return slides or [{"index": "1", "title": "Overview", "body": text}]
 
 
 def _detect_theme(deck_title: str, all_text: str) -> dict[str, Any]:
@@ -253,7 +303,7 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
           <h1 class="hero-title">{stitle}</h1>
           <div class="hero-body">{content_html}</div>
           <div class="hero-footer">
-            <span class="hero-meta">AI Lab Executive Briefing · Confidential</span>
+            <span class="hero-meta">Slide 01 of {len(slides):02d} · AI Lab Executive Briefing</span>
             <span class="hero-nav-hint">Press &rarr; or Space to begin</span>
           </div>
         </div>
@@ -266,7 +316,7 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       <div class="slide split-slide{active_cls}" data-slide="{idx}">
         <div class="slide-header">
           <span class="slide-badge">{theme['badge']}</span>
-          <span class="slide-num">{idx} / {len(slides)}</span>
+          <span class="slide-num">Slide {int(idx):02d} of {len(slides):02d}</span>
         </div>
         <div class="split-grid">
           <div class="split-main">
@@ -291,7 +341,7 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       <div class="slide standard-slide{active_cls}" data-slide="{idx}">
         <div class="slide-header">
           <span class="slide-badge">{theme['badge']}</span>
-          <span class="slide-num">{idx} / {len(slides)}</span>
+          <span class="slide-num">Slide {int(idx):02d} of {len(slides):02d}</span>
         </div>
         <h2 class="slide-title">{stitle}</h2>
         <div class="slide-body">
@@ -550,8 +600,12 @@ class PresentationLibrary:
         md_path = _confine(self.root.resolve(), f"{slug}.md")
         html_path = _confine(self.root.resolve(), f"{slug}.html")
 
-        # Save markdown
-        md_text = f"# {cleaned_title}\n\n{body}\n"
+        # Save markdown without duplicate top-level title
+        trimmed_body = body.lstrip()
+        if trimmed_body.startswith(f"# {cleaned_title}") or (trimmed_body.startswith("# ") and "\n" in trimmed_body and cleaned_title.lower() in trimmed_body.splitlines()[0].lower()):
+            md_text = f"{trimmed_body}\n"
+        else:
+            md_text = f"# {cleaned_title}\n\n{body}\n"
         md_path.write_text(md_text, encoding="utf-8")
 
         # Save HTML presentation
