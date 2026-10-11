@@ -9,12 +9,35 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from .agent_loop import run_until_idle
-from .conversation import AgentRun, AgentRunStatus
+from .agent_loop import conversation_history, run_until_idle
+from .conversation import AgentRun, AgentRunStatus, Message, MessageRole
 from .model_router import ModelRouter
 from .tools import ToolContext
 
 _lock = threading.Lock()
+
+
+def _file_personal_reply(store: Any, run: AgentRun) -> None:
+    """Keep a finished personal answer in the chat so the daily filer can see it."""
+    if run.agent != "personal" or run.status != AgentRunStatus.COMPLETED:
+        return
+    text = (run.final_result or "").strip()
+    conversation_id = (run.conversation_id or "").strip()
+    if not text or not conversation_id:
+        return
+    if not hasattr(store, "list_messages") or not hasattr(store, "put_message"):
+        return
+    for message in store.list_messages(conversation_id):
+        if (message.meta or {}).get("agent_run_id") == run.id:
+            return
+    store.put_message(
+        Message.new(
+            conversation_id=conversation_id,
+            role=MessageRole.ASSISTANT,
+            content=text,
+            meta={"kind": "personal_reply", "agent_run_id": run.id},
+        )
+    )
 
 
 def list_queued_runs(store: Any) -> list[AgentRun]:
@@ -54,7 +77,9 @@ def drain_queued_runs(
                     router=router,
                     store_put=store.put_agent_run,
                     ctx=ctx,
+                    history=conversation_history(store, current),
                 )
+                _file_personal_reply(store, finished)
                 processed.append(
                     {
                         "id": finished.id,

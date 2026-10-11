@@ -21,8 +21,7 @@ Agent = Model + Instructions + Context + Memory + Tools + Skills
         + Workflow + Permissions + Runtime
 ```
 
-Simple Mode is Name, Purpose, Model, Tools, Knowledge, Run.
-Advanced Mode opens the rest. The runtime still enforces the agent kind
+Creating an agent or a workflow is a short conversation. The lab asks what should be done. A known sequence is saved as a workflow with the steps in order. A job that has to decide is saved as an agent, and the lab picks a local model. The operator does not choose a model id, temperature, or quant. When the job needs a catalog MCP server, the build registers that server, plus the skill and the read tools, and leaves the server off. The catalog today is the lab control plane, VirusTotal report reads, keyless CVE lookup, and Gmail. Google sign-in, send, spend, and delete stay with the operator. A connection that is not in the catalog stays listed and is not installed. The runtime still enforces the agent kind
 (`coding-assistant`, `research`, `lab-operations`) and the approval gate
 (ADR 0018). Builder toggles are intent stored on the definition. They do not
 bypass policy.
@@ -39,8 +38,7 @@ MCP, and Security. The Agent Studio menu is the design surface:
 Dashboard, My Agents, Templates, Published, Skills, Tools, Knowledge, Memory,
 Workflows, Runs, Evaluations, Permissions.
 
-The canvas is where an agent is built. Clicking an agent opens Simple or
-Advanced mode on that canvas. Runs and approvals stay in the canvas column.
+The canvas is where an agent is built. New agent opens the conversation. A saved agent shows what it will do and which local model was chosen. Runs and approvals stay in the canvas column.
 
 ## What is real in this slice
 
@@ -48,8 +46,9 @@ Advanced mode on that canvas. Runs and approvals stay in the canvas column.
 |-------|-----|
 | Second menu + canvas | In the Studio page |
 | Create and update a definition, including a `studio` object | `POST` and `PUT /v1/agent-definitions` |
-| Simple builder: name, purpose, model, tools, knowledge, instructions, run | Canvas |
-| Advanced sections and a short version note on each save | Stored in `studio` |
+| Conversation that drafts the agent and chooses the model | Canvas. `POST /v1/agent-studio/draft` |
+| Ollama slot | A run or chat continues when its model is already loaded, or when Ollama is idle. A different loaded model keeps the request waiting. The lab does not pull or unload it. |
+| Saved fields, including the chosen model | Stored in `studio` |
 | Skills library, memory map, workflow patterns, permission classes | Canvas. Handoff, graphs, mail, and portfolio are marked later |
 | Native tool list | `GET /v1/capabilities` |
 | Isolated copy for a build agent | Existing worktree API, still approval-gated |

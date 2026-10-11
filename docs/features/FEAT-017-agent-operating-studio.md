@@ -14,7 +14,7 @@ the design surface: a second menu and a canvas.
 ## User workflow
 
 1. Open AI Lab and use chat as usual.
-2. Choose Agent Studio. A second menu appears to the right of the AI Lab menu.
+2. Choose Agent Studio. A second menu appears to the right of the AI Lab menu. New agent starts a conversation. A known sequence becomes a workflow. A job that has to decide becomes an agent, and the lab picks the local model. A finished mail build registers the Gmail server, the Draft a reply skill, and the read tools. The server stays off until the operator signs in.
 3. Collapse either menu.
 4. Start from Dashboard or a template: Build, Learn, Product, Company, or Lab.
 5. In Simple Mode set name, purpose, model, tools, knowledge, and instructions, then save.

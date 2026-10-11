@@ -79,6 +79,14 @@ remediation (FEAT-007).
 - CLI zip present under `~/.ai-lab/antares/cli/`
 - No Antares weights under the `ai-lab` Git tree
 
+## A GitHub repository
+
+The Security form accepts a `github.com` URL. The Studio job clones a shallow snapshot under `~/.ai-lab/antares/snapshots/` and reviews that copy. Leave the weakness class blank to let Antares select up to 50 classes for the repository. Name `CWE-78` or `CWE-78,CWE-89` for a narrower review. CWE stands for Common Weakness Enumeration. Each class id is a link; the name and short definition open in a popup. A private repository clones only when the Studio can already reach GitHub. Put no credential in the URL. The Air checkout stays the place you change code.
+
+## After a review
+
+On a finished run, a read-only coding review opens each cited file and records a line, a verdict, and a reason. The page hides the Antares file list until that detailed review is complete. **Review drafts** and **Push drafts to the repository** appear after it finishes. Each pushed order stays Draft and is marked **Source: Security Audit**. See IWO-070.
+
 ## CLI smoke (Studio)
 
 ```bash

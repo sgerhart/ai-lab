@@ -161,6 +161,8 @@ class AgentRun:
     final_result: str | None = None
     # MCP servers this run may call (IWO-029). Empty = built-in tools only.
     mcp_server_ids: list[str] = field(default_factory=list)
+    # Read tools the builder attached. Names outside the read catalog are ignored.
+    granted_tools: list[str] = field(default_factory=list)
     # Isolated git worktree for coding writes. Empty = the control-plane checkout (read tools only).
     workspace_root: str = ""
     created_at: str = field(default_factory=utcnow)
@@ -180,6 +182,7 @@ class AgentRun:
         budget: RunBudget | dict[str, Any] | None = None,
         mcp_server_ids: list[str] | None = None,
         workspace_root: str = "",
+        granted_tools: list[str] | None = None,
     ) -> AgentRun:
         bc = (
             billing_class
@@ -204,6 +207,7 @@ class AgentRun:
             budget=bud,
             mcp_server_ids=list(mcp_server_ids or []),
             workspace_root=workspace_root,
+            granted_tools=list(granted_tools or []),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -225,4 +229,5 @@ class AgentRun:
         payload.setdefault("pending_action", None)
         payload.setdefault("mcp_server_ids", [])
         payload.setdefault("workspace_root", "")
+        payload.setdefault("granted_tools", [])
         return cls(**payload)

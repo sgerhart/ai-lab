@@ -70,9 +70,9 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-057](IWO-057-model-bench.md) | Studio model comparison | Complete (unit + one live pass; fixture did not drop the coding profile) |
 | [IWO-058](IWO-058-isolated-coding-worktree.md) | Isolated worktree writes | Complete (unit) |
 | [IWO-059](IWO-059-chat-first-studio.md) | Chat-first Studio shell | In progress (live lab-health pass open) |
-| [IWO-060](IWO-060-project-documents.md) | Project document library | In progress (unit; live cite pass open) |
+| [IWO-060](IWO-060-project-documents.md) | Project document library | Complete (live cite 2026-09-26) |
 | [IWO-061](IWO-061-defenseclaw-security-summary.md) | DefenseClaw summary on Security | Complete (Air posts every 10 minutes) |
-| [IWO-062](IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | In progress (unit; pane not checked in the browser) |
+| [IWO-062](IWO-062-defenseclaw-finding-glossary.md) | DefenseClaw finding glossary | Complete (operator confirmed the Findings pane 2026-09-26) |
 | [IWO-063](IWO-063-agent-studio-shell.md) | Agent Studio shell | In progress (unit; live layout pass open) |
 | [IWO-064](IWO-064-jupyter-ollama-help.md) | Jupyter code help via Studio Ollama | In progress (6.0.0 on Studio; Air question not asked) |
 | [IWO-065](IWO-065-security-platform-foundation.md) | Security platform foundation | Complete (unit; not deployed) |
@@ -92,6 +92,27 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-079](IWO-079-mcp-server-intake.md) | MCP server intake | Complete (unit; not deployed) |
 | [IWO-080](IWO-080-readonly-third-party-mcp.md) | Read-only third-party MCP candidates | Complete (unit; not deployed) |
 | [IWO-081](IWO-081-security-compute-tool-guests.md) | Security Compute tool guests | Draft |
+| [IWO-082](IWO-082-grounded-chat.md) | Grounded chat: dated fetch and product-ID check | Complete (unit; not deployed) |
+| [IWO-083](IWO-083-chat-library-and-reads.md) | Shared fetched pages, PDF text, and complete chat answers | Complete (unit; control plane restarted) |
+| [IWO-084](IWO-084-embeddings-and-images.md) | Page embeddings and image chat | Complete (unit; control plane restarted) |
+| [IWO-085](IWO-085-aisvs-level-1-gap-register.md) | AISVS 1.0 Level 1 gap register | Review (register written) |
+| [IWO-086](IWO-086-aisvs-input-validation.md) | AISVS input validation | Draft |
+| [IWO-087](IWO-087-aisvs-model-admission.md) | AISVS model admission and AI BOM | Draft |
+| [IWO-088](IWO-088-aisvs-model-load-isolation.md) | AISVS model load isolation contract | Draft |
+| [IWO-089](IWO-089-aisvs-output-controls.md) | AISVS output controls | Draft |
+| [IWO-090](IWO-090-aisvs-embedding-controls.md) | AISVS embedding controls | Draft |
+| [IWO-091](IWO-091-aisvs-agent-bounds.md) | AISVS agent bounds | Draft |
+| [IWO-092](IWO-092-aisvs-mcp-checks.md) | AISVS MCP checks | Draft |
+| [IWO-093](IWO-093-aisvs-robustness-evidence.md) | AISVS robustness evidence | Draft |
+| [IWO-094](IWO-094-aisvs-ai-monitoring.md) | AISVS AI monitoring | Draft |
+| [IWO-095](IWO-095-personal-memory-vault.md) | Personal memory vault and brief | Complete (unit; not deployed) |
+| [IWO-096](IWO-096-file-personal-day.md) | File the day's personal chats | Complete (unit; not deployed) |
+| [IWO-097](IWO-097-personal-web-lookup.md) | Personal agent web lookup | Complete (unit; not deployed) |
+| [IWO-098](IWO-098-personal-files-folder.md) | Personal notes folder | Complete (unit; not deployed) |
+| [IWO-099](IWO-099-personal-agent-chat.md) | Personal agent chat | Complete (unit; not deployed) |
+| [IWO-100](IWO-100-personal-thread-memory.md) | Personal chat remembers the thread | Complete (unit; not deployed) |
+| [IWO-101](IWO-101-personal-research-reports.md) | Personal research reports | Complete (unit; not deployed) |
+| [IWO-102](IWO-102-modern-agent-harness-and-second-brain.md) | Modern agent harness and second brain architecture | Complete (unit; not deployed) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

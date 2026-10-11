@@ -53,6 +53,8 @@ class AgentStudioPageTests(unittest.TestCase):
             'data-studio="skills"',
             'data-studio="workflows"',
             'data-studio="permissions"',
+            'id="nav-nexus"',
+            'href="/nexus/"',
             "/static/studio.js",
             "/static/studio.css",
         ):

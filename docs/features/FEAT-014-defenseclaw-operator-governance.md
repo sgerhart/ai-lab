@@ -49,7 +49,7 @@ moving secrets or the gateway onto the mini.
 | IWO-045 | Cursor connector (Add) | IWO-044 | Hooks present; Antigravity kept — **deploy auth** |
 | [IWO-046](../work-orders/IWO-046-scan-lab-mcp.md) | Scan lab MCP before Cursor trust | IWO-045 | Done — F-014 skip-scan accepted |
 | [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md) | Summary on Security | IWO-044 | Complete — Air posts every 10 minutes |
-| [IWO-062](../work-orders/IWO-062-defenseclaw-finding-glossary.md) | Finding glossary and decision cards | IWO-061 | In progress — unit tests; pane not checked in the browser |
+| [IWO-062](../work-orders/IWO-062-defenseclaw-finding-glossary.md) | Finding glossary and decision cards | IWO-061 | Complete — operator confirmed the Findings pane 2026-09-26 |
 
 ## Acceptance criteria
 

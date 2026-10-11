@@ -41,7 +41,7 @@ class AntaresStudioClient:
         except Exception as exc:  # noqa: BLE001
             return 503, {"error": str(exc)}
 
-    def _post_json(self, url: str, payload: dict[str, Any]) -> tuple[int, Any]:
+    def _post_json(self, url: str, payload: dict[str, Any], timeout_sec: float | None = None) -> tuple[int, Any]:
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             url,
@@ -50,7 +50,7 @@ class AntaresStudioClient:
             headers={"Content-Type": "application/json"},
         )
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout_sec) as resp:
+            with urllib.request.urlopen(req, timeout=timeout_sec or self.timeout_sec) as resp:
                 return resp.status, json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
@@ -83,11 +83,20 @@ class AntaresStudioClient:
             out["completions"] = {"http": code, "body": body}
         return out
 
-    def start_run(self, *, cwe: str, repo: str = "", profile: str = "") -> tuple[int, Any]:
+    def start_run(
+        self,
+        *,
+        cwe: str,
+        repo: str = "",
+        repo_url: str = "",
+        profile: str = "",
+    ) -> tuple[int, Any]:
         if not self.job_url:
             return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
         payload: dict[str, Any] = {"cwe": cwe}
-        if repo:
+        if repo_url:
+            payload["repo_url"] = repo_url
+        elif repo:
             payload["repo"] = repo
         if profile:
             payload["profile"] = profile
@@ -102,6 +111,26 @@ class AntaresStudioClient:
         if not self.job_url:
             return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
         return self._get(f"{self.job_url}/v1/runs/{run_id}")
+
+    def file_presence(self, run_id: str, paths: list[str]) -> tuple[int, Any]:
+        if not self.job_url:
+            return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
+        return self._post_json(f"{self.job_url}/v1/runs/{run_id}/presence", {"paths": paths})
+
+    def start_detail(self, run_id: str) -> tuple[int, Any]:
+        if not self.job_url:
+            return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
+        return self._post_json(f"{self.job_url}/v1/runs/{run_id}/detail", {})
+
+    def get_detail(self, run_id: str) -> tuple[int, Any]:
+        if not self.job_url:
+            return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
+        return self._get(f"{self.job_url}/v1/runs/{run_id}/detail")
+
+    def publish_audit(self, run_id: str, handoff: dict[str, Any]) -> tuple[int, Any]:
+        if not self.job_url:
+            return 503, {"error": "ANTARES_JOB_URL not configured on control plane"}
+        return self._post_json(f"{self.job_url}/v1/runs/{run_id}/audit", handoff, timeout_sec=90)
 
     def get_report(self, run_id: str, fmt: str = "json") -> tuple[int, Any]:
         if not self.job_url:

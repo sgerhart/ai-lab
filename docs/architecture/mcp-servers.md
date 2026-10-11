@@ -13,7 +13,7 @@ VirusTotal report lookups and keyless CVE lookups (NVD, OSV, CISA KEV) are HTTPS
 
 They do not need Proxmox, ESXi, or a VM. A container is the wrong place for them. The intake in IWO-079 stores a command, declared tools, a network class, and a credential name. The server stays denied until an operator authorizes it. URL submission to VirusTotal and corpus search stay off the first binding. The API key stays in the Keychain or a gitignored env file.
 
-Those clients call the public internet. The intake names that class `public-https`. `GET /v1/mcp/intake` lists `virustotal` and `cve-lookup` with `listed` false. Seeing them in the catalog does not install or authorize them.
+Those clients call the public internet. The intake names that class `public-https`. `GET /v1/mcp/intake` lists `virustotal` and `cve-lookup` with `listed` false. Gmail is a separate catalog entry: Google hosts it, and the lab does not start it. A finished build registers the catalog server that matches the job and leaves it off. Seeing a row does not install or authorize it.
 
 Sources reviewed 2026-09-26: [mcpservers.org](https://mcpservers.org/), its [security topic](https://mcpservers.org/topics/security-mcp), the Snyk MCP roundup, and [mcp-virustotal](https://github.com/w0h1v/mcp-virustotal). Snyk's own CLI MCP can wait. It sends source to Snyk, and Antares on the Studio already localizes weaknesses in a snapshot.
 

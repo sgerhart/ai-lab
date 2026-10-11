@@ -6,5 +6,6 @@
 | development | Bounded repo changes + tests + PR summary | routed | declared workspace only | GitHub if scoped token | Local plan: repo_read + git_status (Studio worker executes this; no push) |
 | research | Evidence-bearing reports | routed | authorized sources | allowlisted HTTP | Local plan: limitations report, no fetch, no invented citations |
 | lab-operations | Read-only health and drift notes | routed | lab configs + health URLs | Tailscale health | Local plan: loopback port probe + compose stub |
+| personal | Remember the operator, research a question, and write a report | routed | `~/.ai-lab/memory`, `~/.ai-lab/files`, `~/.ai-lab/reports`, and up to five public pages per research call | none besides that lookup | IWO-095 memory. IWO-096 daily filing. IWO-097 web search. IWO-098 notes folder. IWO-099 sidebar chat. IWO-100 thread memory. IWO-101 research reports. No send, spend, or delete tool |
 | lab-docs-architect | This repo (Cursor) | Cursor | this repository | local Git | Active in chat, not the harness |
 | security | Validate and lifecycle ephemeral analysis VMs | not built | approved hypervisor inventory only | no route from analysis guests to trusted networks | Specified in FEAT-020 / IWO-076. No policy file |

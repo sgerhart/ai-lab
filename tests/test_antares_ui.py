@@ -49,6 +49,9 @@ class _FakeJobHandler(BaseHTTPRequestHandler):
         if self.path == "/v1/runs":
             self._json(202, {"id": "abc", "status": "queued", "cwe": "CWE-78", "findings": []})
             return
+        if self.path.endswith("/presence"):
+            self._json(200, {"present": {"app.py": True, "missing.py": False}})
+            return
         self._json(404, {"error": "not found"})
 
 
@@ -108,6 +111,10 @@ class AntaresApiTests(unittest.TestCase):
         page = self.client.get("/antares")
         self.assertEqual(page.status_code, 200)
         self.assertIn("Antares", page.text)
+        self.assertIn("Common Weakness Enumeration", page.text)
+        classes = self.client.get("/v1/antares/classes", headers=self.headers)
+        self.assertEqual(classes.status_code, 200)
+        self.assertIn("OS Command Injection", classes.json()["classes"]["CWE-78"]["name"])
         st = self.client.get("/v1/antares/status", headers=self.headers)
         self.assertEqual(st.status_code, 200)
         self.assertTrue(st.json()["configured"])
@@ -121,6 +128,13 @@ class AntaresApiTests(unittest.TestCase):
         listing = self.client.get("/v1/antares/runs", headers=self.headers)
         self.assertEqual(listing.status_code, 200)
         self.assertTrue(listing.json()["runs"])
+        handoff = self.client.post("/v1/antares/runs/c3203fc3c8ce/handoff", headers=self.headers)
+        self.assertEqual(handoff.status_code, 200)
+        body = handoff.json()
+        self.assertEqual(body["confirmed"], 0)
+        self.assertEqual(body["implement"], False)
+        self.assertEqual(body["orders"][0]["status"], "Draft")
+        self.assertNotIn("exploit", body["orders"][0]["markdown"].lower())
 
 
 class VulnLocalizePolicyTests(unittest.TestCase):

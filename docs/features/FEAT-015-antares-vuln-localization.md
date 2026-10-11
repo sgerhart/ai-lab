@@ -49,6 +49,7 @@ or draft model. Findings require human review; no autonomous remediation.
 | [IWO-047](../work-orders/IWO-047-antares-1b-studio.md) | Antares-1B on Studio (pull gated) | FEAT-003 | **Done** — weights + load smoke |
 | [IWO-048](../work-orders/IWO-048-antares-completions-sandbox.md) | Completions server + sandbox-exec | IWO-047 | **Done** — loopback :8001 + deny-network |
 | [IWO-049](../work-orders/IWO-049-antares-studio-ui.md) | Studio UI / definition hook | IWO-048 | **Done** — `/antares` + job API |
+| [IWO-070](../work-orders/IWO-070-antares-review-handoff.md) | Review handoff into draft Work Orders | IWO-049 | **Done** — summary and Draft orders, no auto-fix |
 
 ## Acceptance criteria
 

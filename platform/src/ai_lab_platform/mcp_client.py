@@ -144,8 +144,33 @@ def cve_lookup_mcp_candidate() -> dict[str, Any]:
     }
 
 
+def gmail_mcp_candidate() -> dict[str, Any]:
+    """Google's Gmail MCP server. Catalog only. Not installed, not listed, and not a stdio process."""
+    read_tools = ("search_threads", "get_thread", "list_labels", "list_drafts")
+    return {
+        "id": "gmail",
+        "origin": "third-party",
+        "label": "Gmail",
+        "transport": "http",
+        "url": "https://gmailmcp.googleapis.com/mcp/v1",
+        "command": "",
+        "args": [],
+        "network_policy": "public-https",
+        "credential_ref": "Google OAuth",
+        "capabilities": [{"name": name, "permission_class": "read"} for name in read_tools] + [
+            {"name": "create_draft", "permission_class": "privileged"},
+            {"name": "label_message", "permission_class": "privileged"},
+        ],
+        "first_binding": list(read_tools),
+        "runs_in": "remote-http",
+        "listed": False,
+        "enabled": False,
+        "package_note": "Google hosts this server. Sign-in stays with Google. The lab does not start it until you authorize a connection.",
+    }
+
+
 def intake_candidates() -> list[dict[str, Any]]:
-    return [lab_mcp_candidate(), virustotal_mcp_candidate(), cve_lookup_mcp_candidate()]
+    return [lab_mcp_candidate(), virustotal_mcp_candidate(), cve_lookup_mcp_candidate(), gmail_mcp_candidate()]
 
 
 def _clean_capabilities(raw: Any) -> list[dict[str, str]]:
@@ -194,7 +219,8 @@ def _public_server(item: dict[str, Any]) -> dict[str, Any]:
         "credential_ref": str(item.get("credential_ref") or ""),
         "capabilities": _clean_capabilities(item.get("capabilities") or []),
         "bindings": _clean_bindings(item.get("bindings") or []),
-        "runs_in": "stdio-process",
+        "runs_in": "remote-http" if str(item.get("transport") or "") == "http" else "stdio-process",
+        "url": str(item.get("url") or ""),
         "source": "local",
     }
 
@@ -385,6 +411,7 @@ def upsert_local_server(
     credential_ref: str = "",
     capabilities: list[Any] | None = None,
     bindings: list[Any] | None = None,
+    url: str = "",
 ) -> dict[str, Any]:
     if not _SAFE_ID.match(server_id):
         raise ValueError("invalid server id")
@@ -410,6 +437,7 @@ def upsert_local_server(
         "credential_ref": _validate_credential_ref(credential_ref) if credential_ref else str(previous.get("credential_ref") or ""),
         "capabilities": _clean_capabilities(capabilities if capabilities is not None else previous.get("capabilities") or []),
         "bindings": _clean_bindings(bindings if bindings is not None else previous.get("bindings") or []),
+        "url": (url or str(previous.get("url") or "")).strip(),
     }
     replaced = False
     for i, s in enumerate(servers):
@@ -423,6 +451,28 @@ def upsert_local_server(
     _write_local(data)
     saved = _public_server(entry)
     return saved
+
+
+def register_catalog_server(server_id: str) -> dict[str, Any]:
+    """Record a catalog server. It stays off. Listing and sign-in remain a human step."""
+    catalog = {str(item["id"]): item for item in intake_candidates()}
+    item = catalog.get(server_id)
+    if item is None:
+        raise ValueError("unknown catalog server")
+    return upsert_local_server(
+        server_id=str(item["id"]),
+        label=str(item.get("label") or item["id"]),
+        transport=str(item.get("transport") or "stdio"),
+        command=str(item.get("command") or ""),
+        args=list(item.get("args") or []),
+        enabled=False,
+        listed=False if not (get_local_server(server_id) or {}).get("listed") else None,
+        origin=str(item.get("origin") or "third-party"),
+        network_policy=str(item.get("network_policy") or "none"),
+        credential_ref=str(item.get("credential_ref") or ""),
+        capabilities=list(item.get("capabilities") or []),
+        url=str(item.get("url") or ""),
+    )
 
 
 def delete_local_server(server_id: str) -> bool:
@@ -619,5 +669,6 @@ __all__ = [
     "mcp_tool_name",
     "parse_mcp_tool_name",
     "require_mcp_servers",
+    "register_catalog_server",
     "upsert_local_server",
 ]

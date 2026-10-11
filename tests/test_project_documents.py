@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import sys
 import unittest
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "platform" / "src"))
 
-from ai_lab_platform.attachments import document_text  # noqa: E402
+from ai_lab_platform.attachments import document_text, pdf_text  # noqa: E402
 from ai_lab_platform.retrieval import (  # noqa: E402
     InMemoryStore,
     RetrievalService,
@@ -58,6 +59,30 @@ class ProjectDocumentTests(unittest.TestCase):
             qdrant_project_filter("alpha"),
             {"must": [{"key": "meta.project_id", "match": {"value": "alpha"}}]},
         )
+
+    def test_pdf_text_is_extracted(self) -> None:
+        plain = (
+            b"%PDF-1.1\n1 0 obj\n<< /Length 40 >>\nstream\n"
+            b"BT (Hello from the PDF page) Tj ET\nendstream\nendobj\n%%EOF"
+        )
+        self.assertIn("Hello from the PDF page", pdf_text(plain))
+        source, text = document_text("notes.pdf", plain)
+        self.assertEqual(source, "notes.pdf")
+        self.assertIn("Hello from the PDF page", text)
+        body = b"BT (Mexico coastline notes) Tj ET"
+        compressed = zlib.compress(body)
+        flate = (
+            b"%PDF-1.4\n1 0 obj\n<< /Filter /FlateDecode /Length "
+            + str(len(compressed)).encode()
+            + b" >>\nstream\n"
+            + compressed
+            + b"\nendstream\nendobj\n%%EOF"
+        )
+        self.assertIn("Mexico coastline notes", pdf_text(flate))
+
+    def test_image_stays_unread(self) -> None:
+        _source, text = document_text("shot.png", b"\x89PNG\r\n\x1a\n" + b"x" * 32)
+        self.assertIn("vision not enabled", text)
 
 
 if __name__ == "__main__":

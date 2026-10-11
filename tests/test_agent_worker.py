@@ -56,6 +56,35 @@ class WorkerDrainTests(unittest.TestCase):
         done = self.store.get_agent_run(run.id)
         assert done is not None
         self.assertEqual(done.status, AgentRunStatus.COMPLETED)
+        self.assertEqual(self.store.list_messages(conv.id), [])
+
+    def test_personal_completion_is_stored_once(self) -> None:
+        scripted = ScriptedToolBackend([{"type": "final", "text": "noted"}])
+        router = ModelRouter(backends={"scripted": scripted})
+        conv = Conversation.new(agent="personal", title="Day")
+        self.store.put_conversation(conv)
+        run = AgentRun.new(
+            agent="personal",
+            objective="what should I remember",
+            conversation_id=conv.id,
+            model="scripted",
+            billing_class=BillingClass.LOCAL,
+            backend="scripted",
+            budget=RunBudget(max_steps=6),
+        )
+        run.status = AgentRunStatus.QUEUED
+        self.store.put_agent_run(run)
+        vault = str(Path(self.tmp.name) / "memory")
+        with unittest.mock.patch.dict("os.environ", {"AI_LAB_MEMORY_VAULT": vault}):
+            first = drain_queued_runs(self.store, router, limit=1)
+            second = drain_queued_runs(self.store, router, limit=1)
+        self.assertEqual(len(first["processed"]), 1)
+        self.assertEqual(second["processed"], [])
+        replies = [m for m in self.store.list_messages(conv.id) if m.role.value == "assistant"]
+        self.assertEqual(len(replies), 1)
+        self.assertEqual(replies[0].content, "noted")
+        self.assertEqual(replies[0].meta.get("kind"), "personal_reply")
+        self.assertEqual(replies[0].meta.get("agent_run_id"), run.id)
 
     def test_settings_worker_default(self) -> None:
         with unittest.mock.patch.dict("os.environ", {"DATABASE_URL": "", "AI_LAB_AGENT_WORKER": ""}, clear=False):

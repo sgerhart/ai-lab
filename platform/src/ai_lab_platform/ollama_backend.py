@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 from .conversation import BillingClass
 from .model_catalog import refuse_pull
 from .model_router import CompletionRequest, CompletionResponse
+from .model_slot import ensure_slot
 
 
 def require_lab_ollama_url(base_url: str) -> None:
@@ -64,6 +65,42 @@ class OllamaBackend:
             except ValueError:
                 num_predict = -1
         self.num_predict = num_predict
+        self._vision_cache: dict[str, bool] = {}
+
+    def reads_images(self, model: str) -> bool:
+        """True when this installed tag lists vision. Result is cached for the process."""
+        from .model_slot import model_tag
+
+        tag = model_tag(model)
+        if not tag:
+            return False
+        cached = self._vision_cache.get(tag)
+        if cached is not None:
+            return cached
+        ok = False
+        try:
+            import httpx
+
+            response = httpx.post(
+                self.base_url + "/api/show",
+                json={"model": tag},
+                timeout=min(3.0, self.timeout_seconds),
+            )
+            response.raise_for_status()
+            data = response.json()
+            caps = data.get("capabilities") if isinstance(data, dict) else None
+            ok = isinstance(caps, list) and "vision" in caps
+        except (OSError, ValueError, TypeError):
+            ok = False
+        except Exception as exc:
+            if type(exc).__module__.split(".", 1)[0] != "httpx":
+                raise
+            ok = False
+        self._vision_cache[tag] = ok
+        return ok
+
+    def _ensure_slot(self, model: str) -> None:
+        ensure_slot(self.base_url, model)
 
     def _generate_options(self) -> dict[str, Any]:
         return {"num_predict": self.num_predict, "temperature": 0.1}
@@ -71,6 +108,7 @@ class OllamaBackend:
     def complete(self, request: CompletionRequest) -> CompletionResponse:
         import httpx
 
+        self._ensure_slot(request.model)
         url = self.base_url + "/api/generate"
         payload: dict[str, Any] = {
             "model": request.model,
@@ -80,6 +118,8 @@ class OllamaBackend:
         }
         if request.system:
             payload["system"] = request.system
+        if request.images:
+            payload["images"] = list(request.images[:4])
         try:
             response = httpx.post(url, json=payload, timeout=self.timeout_seconds)
             response.raise_for_status()
@@ -110,6 +150,7 @@ class OllamaBackend:
         """
         import httpx
 
+        self._ensure_slot(request.model)
         url = self.base_url + "/api/generate"
         payload: dict[str, Any] = {
             "model": request.model,
@@ -119,6 +160,8 @@ class OllamaBackend:
         }
         if request.system:
             payload["system"] = request.system
+        if request.images:
+            payload["images"] = list(request.images[:4])
         try:
             with httpx.stream(
                 "POST", url, json=payload, timeout=self.timeout_seconds

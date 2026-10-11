@@ -30,5 +30,5 @@ Unrestricted crawl; Clarion production DB ingestion.
 | Layer | Status |
 |-------|--------|
 | Spec | Done |
-| Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041). Project documents (IWO-060) index text per project and a chat in that project searches only those files |
-| Live | Qdrant wired on mini 2026-09-24 (`backend=qdrant`); hash embeds |
+| Code | Partial — `/v1/memory/*`, `memory_search`, gated `memory_write` (IWO-040/041). Project documents (IWO-060) index text per project and a chat in that project searches only those files. Chat (IWO-082) fetches a pasted allowlisted link or the pinned Cisco notes, and looks up any other factual question on Wikipedia and DuckDuckGo. The reply records the document date and fetch time, and removes product IDs and figures that are not in that text. Fetched pages are kept for later chats (IWO-083). PDF text is read. A lab-status question reads ports, and a file question lists that project's names. Sourced answers and General Local are not told to stay brief. A saved page is found again when a later question uses different words, using a local English embedding (IWO-084). Qwen 3.6 and Qwen 3.8 receive attached images. Fast Local does not read images |
+| Live | Qdrant wired on mini 2026-09-24 (`backend=qdrant`). Chat page recall uses a local English embedding when fastembed is installed (IWO-084); the Qdrant vector stays the 64-d hash. Qwen 3.6 and Qwen 3.8 on the Studio accept images |

@@ -4,6 +4,24 @@ All notable repository changes. Host deployments are recorded in phase completio
 
 ## Unreleased
 
+### Personal research reports (IWO-101)
+
+- The personal agent can gather up to five public pages for a question, file the sources, and save or replace a markdown report. A later turn can research a deeper question or revise the report. The lab chooses the URLs.
+
+### Personal thread memory (IWO-100)
+
+- A follow-up in a personal chat includes up to eight earlier user and assistant lines. The current question is not repeated. Other agents do not receive that block.
+
+### Personal agent chat (IWO-099)
+
+- Sidebar **Personal agent** starts a `personal` conversation. Send queues the agent loop. **New chat** still streams a conversation.
+- A finished personal run stores one assistant line for the daily filer. The thread shows the run card.
+
+### AISVS 1.0 Level 1 catalogue
+
+- Proposed ADR 0044. Gap register at `docs/security/aisvs-level-1.md` (IWO-085, in review): 51 Level 1 identifiers, requirement text left upstream.
+- Draft follow-ons IWO-086 through IWO-094. No host change and no certification claim.
+
 ### Mini / Studio live path (IWO-046–054, IWO-047)
 
 - Scheduler LaunchAgent `com.ai-lab.scheduler-tick` on mini (IWO-052).

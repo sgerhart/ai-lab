@@ -6,7 +6,7 @@
   <title>ai-lab · Studio</title>
   <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
   <link rel="stylesheet" href="/static/chrome.css">
-  <link rel="stylesheet" href="/static/studio.css?v=4">
+  <link rel="stylesheet" href="/static/studio.css?v=7">
   <style>
     :root {
       --bg: #212121;
@@ -396,16 +396,36 @@
       border: 1px solid var(--line); border-radius: 16px; padding: 18px;
       background: var(--panel); margin-bottom: 16px;
     }
-    .settings-section h2 { margin: 0 0 6px; font-size: 16px; }
+    .settings-section h2 { margin: 18px 0 6px; font-size: 16px; }
+    .settings-section h2:first-child { margin-top: 0; }
     .settings-section .lead { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
-    .mcp-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+    #prefs-settings.prefs-pane { max-width: none; }
+    #prefs-settings .prefs-lead { margin-bottom: 14px; }
+    .mcp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .mcp-table th, .mcp-table td {
+      text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top;
+    }
+    .mcp-table th {
+      color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600;
+    }
+    .mcp-table td:first-child { width: 240px; }
+    .mcp-name { font-weight: 600; font-size: 14px; }
+    .mcp-sub { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .mcp-tools { color: var(--muted); line-height: 1.45; }
+    .mcp-status { width: 1%; white-space: nowrap; }
+    .mcp-status .btn { margin-left: 8px; }
+    .mcp-h { margin: 18px 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .mcp-list { display: flex; flex-direction: column; gap: 8px; }
     .mcp-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; border-radius: 10px; background: #111; border: 1px solid var(--line);
+      padding: 10px 12px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line);
     }
     .mcp-item .grow { flex: 1; min-width: 0; }
     .mcp-item .id { font-weight: 600; font-size: 14px; }
-    .mcp-item .cmd { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mcp-item .cmd { font-size: 12px; color: var(--muted); }
+    details.mcp-add { margin-top: 16px; }
+    details.mcp-add summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+    details.mcp-add .form-grid { margin-top: 12px; }
     .link-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .link-row a {
       color: var(--ink); text-decoration: none; padding: 10px 14px;
@@ -448,7 +468,50 @@
     .prefs-main { overflow-y: auto; padding: 28px 36px 56px; }
     .prefs-pane { display: none; max-width: 760px; }
     .prefs-pane.active { display: block; }
-    #prefs-status.prefs-pane, #prefs-defenseclaw.prefs-pane { max-width: 980px; }
+    #prefs-status.prefs-pane, #prefs-defenseclaw.prefs-pane, #prefs-antares.prefs-pane { max-width: 980px; }
+    #prefs-antares .antares-fields { max-width: none; grid-template-columns: 1fr 1fr; }
+    #prefs-antares .antares-fields .span { grid-column: 1 / -1; }
+    .antares-start { margin: 0 0 16px; }
+    .antares-start summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+    .antares-toolbar {
+      position: sticky; top: 0; z-index: 2;
+      background: var(--bg); padding: 4px 0 8px;
+    }
+    .antares-toolbar .prefs-meta, .antares-toolbar .dc-note { margin: 0 0 8px; }
+    .antares-scroll {
+      max-height: min(52vh, 560px);
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .antares-scroll .dc-table th {
+      position: sticky; top: 0; z-index: 1;
+      background: var(--bg);
+    }
+    button.antares-reason {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      width: 100%;
+      max-width: 36rem;
+      background: none; border: 0; padding: 0;
+      color: inherit; font: inherit; text-align: left; cursor: pointer;
+    }
+    button.antares-reason.open { display: block; -webkit-line-clamp: unset; }
+    #antares-runs { max-height: 9rem; overflow: auto; }
+    #antares-handoff-out:not(:empty) {
+      margin: 8px 0 4px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      max-height: 12rem;
+      overflow: auto;
+    }
+    #antares-handoff-out h3 { margin: 0 0 6px; font-size: 14px; }
+    @media (max-width: 720px) {
+      #prefs-antares .antares-fields { grid-template-columns: 1fr; }
+    }
     .dc-tabs { display: flex; gap: 6px; margin: 0 0 16px; }
     .dc-tab {
       border: 1px solid var(--line); background: transparent; color: var(--ink);
@@ -578,6 +641,25 @@
       .msg { grid-template-columns: 1fr; }
       .msg .avatar-sm { display: none; }
     }
+    button.cwe-link {
+      background: none;
+      border: 0;
+      padding: 0;
+      color: var(--accent);
+      font: inherit;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #cwe-popup {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 12px;
+      max-width: 32rem;
+      padding: 16px 18px;
+    }
+    #cwe-popup::backdrop { background: rgba(0, 0, 0, .55); }
+    #cwe-popup h2 { margin: 8px 0; font-size: 18px; }
   </style>
 </head>
 <body>
@@ -591,11 +673,13 @@
       <div class="side-fixed">
         <button type="button" class="side-link" id="nav-status" data-prefs="status"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Status Dashboard</button>
         <button type="button" class="new-chat" id="new-conv"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>New chat</button>
+        <button type="button" class="new-chat sub" id="new-personal"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 19c1.5-3 4-4.5 7-4.5S17.5 16 19 19"/></svg>Personal agent</button>
       </div>
       <hr class="side-rule">
       <div class="side-scroll">
         <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
         <button type="button" class="side-link" id="nav-r"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 12h4.2a2.2 2.2 0 0 1 0 4.4H8V20"/><path d="M11.2 16.2 15 20"/></svg>R Labs</button>
+        <a class="side-link" id="nav-nexus" href="/nexus/"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Nexus</a>
         <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
         <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
         <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
@@ -864,12 +948,80 @@
             <h2>DefenseClaw</h2>
             <p id="dc-lead">Agents, the config in use, and what the findings actually are.</p>
           </button>
-          <a class="prefs-card config-badge" id="badge-antares" href="/antares">
+          <button type="button" class="prefs-card config-badge" id="badge-antares">
             <span class="prefs-pill">Studio</span>
             <h2>Antares</h2>
             <p>Localize a finding. This does not change the repo.</p>
-          </a>
+          </button>
         </div>
+      </div>
+
+      <div class="prefs-pane" id="prefs-antares">
+        <button type="button" class="prefs-back" id="back-security-antares">← Security</button>
+        <h1>Antares</h1>
+        <p class="prefs-lead">A review names files, then a detailed pass records a line and a verdict. The repository stays unchanged until you push drafts.</p>
+        <div class="badge-row" style="margin: 0 0 12px">
+          <span class="prefs-pill off" id="antares-jobs">jobs…</span>
+          <span class="prefs-pill off" id="antares-completions">completions…</span>
+        </div>
+        <details class="antares-start" id="antares-start" open>
+          <summary>Start a review</summary>
+          <p class="dc-note">A blank weakness class lets Antares pick up to 50 classes. CWE stands for Common Weakness Enumeration. A finding is a lead, not proof.</p>
+          <div class="form-grid antares-fields">
+            <div class="span">
+              <label for="antares-url">GitHub URL</label>
+              <input id="antares-url" type="text" placeholder="https://github.com/owner/repository" autocomplete="off">
+            </div>
+            <div>
+              <label for="antares-cwe">Weakness class</label>
+              <input id="antares-cwe" type="text" placeholder="Blank lets Antares choose" autocomplete="off">
+              <p class="dc-note" id="antares-cwe-help">CWE stands for Common Weakness Enumeration. Leave this blank and Antares chooses the classes.</p>
+            </div>
+            <div>
+              <label for="antares-profile">Profile</label>
+              <input id="antares-profile" type="text" value="lab-antares-1b" autocomplete="off">
+            </div>
+            <div class="span">
+              <label for="antares-repo">Snapshot already on the Studio, under ~/.ai-lab/antares/</label>
+              <input id="antares-repo" type="text" placeholder="leave blank to use the URL, or fixture-cwe78 when both are empty" autocomplete="off">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn primary" id="antares-run">Start localize</button>
+          </div>
+          <p class="prefs-msg" id="antares-err"></p>
+          <p class="prefs-meta" id="antares-meta"></p>
+        </details>
+        <h2 class="dc-h">Recent runs</h2>
+        <div id="antares-runs"></div>
+        <div id="antares-detail" hidden>
+          <div class="antares-toolbar">
+            <p class="prefs-meta" id="antares-detail-meta"></p>
+            <p class="dc-note" id="antares-report">The detailed review has not finished.</p>
+            <div class="dc-tabs" id="antares-filters" hidden>
+              <button type="button" class="dc-tab active" id="antares-filter-all" data-antares-filter="all">All</button>
+              <button type="button" class="dc-tab" id="antares-filter-confirmed" data-antares-filter="confirmed">Confirmed</button>
+              <button type="button" class="dc-tab" id="antares-filter-uncertain" data-antares-filter="uncertain">Uncertain</button>
+              <button type="button" class="dc-tab" id="antares-filter-rejected" data-antares-filter="rejected">Rejected</button>
+            </div>
+            <div class="form-actions" id="antares-handoff-actions" hidden>
+              <button type="button" class="btn" id="antares-handoff">Review drafts</button>
+              <button type="button" class="btn" id="antares-push">Push drafts to the repository</button>
+            </div>
+            <p class="prefs-msg" id="antares-handoff-err"></p>
+            <div id="antares-handoff-out"></div>
+          </div>
+          <div id="antares-findings" class="antares-scroll"></div>
+        </div>
+        <dialog id="cwe-popup" aria-labelledby="cwe-popup-name">
+          <p class="dc-note" id="cwe-popup-stands">CWE stands for Common Weakness Enumeration.</p>
+          <p class="prefs-meta" id="cwe-popup-id"></p>
+          <h2 id="cwe-popup-name"></h2>
+          <p id="cwe-popup-meaning"></p>
+          <div class="form-actions">
+            <button type="button" class="btn" id="cwe-popup-close">Close</button>
+          </div>
+        </dialog>
       </div>
 
       <div class="prefs-pane" id="prefs-defenseclaw">
@@ -911,11 +1063,23 @@
 
       <div class="prefs-pane" id="prefs-settings">
         <h1>MCP services</h1>
-        <p class="prefs-lead">Extra tools the lab can call. Nothing here is on until you add it. A saved connection is not permission to use it.</p>
-        <div class="settings-section">
-          <h2>MCP servers</h2>
-          <p class="lead">Connect Model Context Protocol servers your agents may use. Only listed ids are callable. Saved under <code>~/.ai-lab/mcp-servers.json</code> (never Git). Stdio transport is live; use <code>mcp/&lt;server&gt;/&lt;tool&gt;</code> in agent runs.</p>
+        <p class="prefs-lead">Off until you authorize a server. Saving one is not permission to call it.</p>
+        <table class="mcp-table">
+          <thead>
+            <tr>
+              <th>Server</th>
+              <th>Read tools</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="mcp-catalog"></tbody>
+        </table>
+        <section id="mcp-saved" hidden>
+          <h2 class="mcp-h">Other saved servers</h2>
           <div class="mcp-list" id="mcp-list"></div>
+        </section>
+        <details class="mcp-add">
+          <summary>Add a server</summary>
           <div class="form-grid">
             <div>
               <label for="mcp-id">Server id</label>
@@ -944,7 +1108,7 @@
           </div>
           <pre class="trace" id="mcp-tools" style="margin-top:12px;display:none"></pre>
           <p class="hint" id="mcp-note" style="text-align:left;margin-top:12px"></p>
-        </div>
+        </details>
       </div>
 
       <div class="prefs-pane prefs-help" id="prefs-help">
@@ -1002,19 +1166,20 @@
               <option value="research">research</option>
             </select>
           </div>
-          <div class="hint">Send stays a conversation. Run in background asks the mini to use tools and keeps the result in this chat. It does not approve file changes. Restart recovery is not verified.</div>
+          <div class="hint" id="composer-hint">Send stays a conversation. Run in background asks the mini to use tools and keeps the result in this chat. It does not approve file changes. Restart recovery is not verified.</div>
         </div>
       </div>
       <div class="err" id="error" style="position:absolute;left:0;right:0;bottom:4px;pointer-events:none"></div>
     </section>
   </div>
 
-  <script src="/static/studio.js?v=4"></script>
+  <script src="/static/studio.js?v=11"></script>
   <script>
     const state = {
       view: "chat",
       conversationId: null,
       runId: null,
+      conversationAgent: "",
       pendingActionId: null,
       definitionId: null,
       providers: [],
@@ -1049,7 +1214,12 @@
       let body; try { body = JSON.parse(text); } catch { body = { raw: text }; }
       if (!res.ok) {
         const detail = body.detail;
-        throw new Error(typeof detail === "string" ? detail : (body.raw || res.statusText));
+        let message = "";
+        if (typeof detail === "string") message = detail;
+        else if (detail && typeof detail.error === "string") message = detail.error;
+        else if (typeof body.error === "string") message = body.error;
+        else if (typeof body.raw === "string") message = body.raw.trim();
+        throw new Error(message || res.statusText || "The request failed.");
       }
       return body;
     }
@@ -1072,6 +1242,7 @@
       shell.setAttribute("aria-hidden", "true");
       document.querySelectorAll(".prefs-item").forEach((b) => b.classList.remove("active"));
       document.querySelectorAll(".prefs-pane").forEach((p) => p.classList.remove("active"));
+      stopAntaresPoll();
     }
     function openPrefs(section) {
       state.view = "prefs";
@@ -1098,6 +1269,7 @@
         settings: "MCP services",
         security: "Security",
         defenseclaw: "DefenseClaw",
+        antares: "Antares",
         help: "Help",
         lab: "Models",
       };
@@ -1108,6 +1280,7 @@
         settings: "nav-mcp",
         security: "nav-security",
         defenseclaw: "nav-security",
+        antares: "nav-security",
         help: "nav-configure",
         lab: "nav-configure",
       };
@@ -1117,6 +1290,8 @@
       if (section === "lab") refreshPrefsLab().catch((e) => showErr(e));
       if (section === "keys") refreshPrefsKeys().catch((e) => showErr(e));
       if (section === "security" || section === "defenseclaw") loadDefenseClaw().catch((e) => showErr(e));
+      if (section === "antares") loadAntares().catch((e) => showErr(e));
+      else stopAntaresPoll();
       if (section === "status") {
         refreshPrefsStatus().catch((e) => showErr(e));
         startPrefsStatusPoll();
@@ -1622,15 +1797,39 @@
       $("mode").onchange = updateChips;
     }
 
+    function isPersonalConversation() {
+      const current = (state.conversations || []).find((c) => c.id === state.conversationId);
+      if (current) return current.agent === "personal";
+      return state.conversationAgent === "personal" && !!state.conversationId;
+    }
+    function emptyThreadHtml() {
+      if (isPersonalConversation()) {
+        return '<div class="empty" id="empty"><strong>Personal agent</strong>Ask about your notes, memory, or a fact. Send runs the agent. New chat stays a conversation.</div>';
+      }
+      return '<div class="empty" id="empty"><strong>Where should we start?</strong>Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.</div>';
+    }
+    function syncComposer() {
+      const personal = isPersonalConversation();
+      $("chat").placeholder = personal ? "Ask the personal agent" : "Ask anything";
+      $("run-bg").hidden = personal;
+      $("composer-hint").textContent = personal
+        ? "This chat is the personal agent. Send can read memory and notes, research up to five public pages, and write a report you can revise. It does not send, spend, or delete."
+        : "Send stays a conversation. Run in background asks the mini to use tools and keeps the result in this chat. It does not approve file changes. Restart recovery is not verified.";
+    }
     function chatTitle(c) {
       const title = (c.title || "").trim();
-      if (!title || title === "chat" || title === "ui" || title === "New chat") return "New chat";
-      return title;
+      const personal = c.agent === "personal";
+      if (!title || title === "chat" || title === "ui" || title === "New chat") {
+        return personal ? "Personal agent" : "New chat";
+      }
+      return personal ? ("Personal · " + title) : title;
     }
     async function loadConversations() {
       const data = await api("/v1/conversations?limit=40");
       const list = data.conversations || [];
       state.conversations = list;
+      const open = list.find((c) => c.id === state.conversationId);
+      state.conversationAgent = open ? (open.agent || "") : (state.conversationId ? state.conversationAgent : "");
       const box = $("conv-list");
       box.innerHTML = "";
       for (const c of list) {
@@ -1654,6 +1853,7 @@
         row.appendChild(del);
         box.appendChild(row);
       }
+      syncComposer();
     }
     async function deleteConversation(id) {
       if (!confirm("Delete this chat?")) return;
@@ -1661,6 +1861,7 @@
         await api(`/v1/conversations/${id}`, { method: "DELETE" });
         if (state.conversationId === id) {
           state.conversationId = null;
+          state.conversationAgent = "";
           state.attachments = [];
           renderAttachList();
           renderMessages([]);
@@ -1673,7 +1874,7 @@
       const box = $("messages");
       box.innerHTML = "";
       if (!list || !list.length) {
-        box.innerHTML = '<div class="empty" id="empty"><strong>Where should we start?</strong>Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.</div>';
+        box.innerHTML = emptyThreadHtml();
         return;
       }
       for (const m of list) box.appendChild(messageEl(m.role, m.content));
@@ -1723,12 +1924,13 @@
     function renderTimeline(messages, runs) {
       const box = $("messages");
       const items = [];
-      for (const m of messages || []) items.push({ at: m.created_at || "", kind: "message", item: m });
+      const shown = (messages || []).filter((m) => !(m.meta && m.meta.kind === "personal_reply"));
+      for (const m of shown) items.push({ at: m.created_at || "", kind: "message", item: m });
       for (const r of runs || []) items.push({ at: r.created_at || "", kind: "run", item: r });
       items.sort((a, b) => String(a.at).localeCompare(String(b.at)));
       box.innerHTML = "";
       if (!items.length) {
-        box.innerHTML = '<div class="empty" id="empty"><strong>Where should we start?</strong>Ask the AI Lab Assistant. Send is a conversation. Run in background only when you want the mini to use tools.</div>';
+        box.innerHTML = emptyThreadHtml();
         return;
       }
       for (const row of items) {
@@ -1847,17 +2049,20 @@
       await loadConversations();
       await refreshMessages();
     }
-    async function newConversation(projectId) {
+    async function newConversation(projectId, agent) {
+      const chosen = agent === "personal" ? "personal" : "lab-operations";
       const body = await api("/v1/conversations", {
         method: "POST",
-        body: JSON.stringify({ agent: "lab-operations", title: "", project_id: projectId || "" }),
+        body: JSON.stringify({ agent: chosen, title: "", project_id: projectId || "" }),
       });
       state.conversationId = body.id;
+      state.conversationAgent = body.agent || chosen;
       state.attachments = [];
       renderAttachList();
       renderMessages([]);
       setView("chat");
       await loadConversations();
+      syncComposer();
       $("chat").focus();
     }
 
@@ -1938,21 +2143,129 @@
       if (window.agentStudio) window.agentStudio.openAgent(id);
     }
 
+    function mcpRow(title, detail, badgeText) {
+      const row = document.createElement("div");
+      row.className = "mcp-item";
+      const grow = document.createElement("div");
+      grow.className = "grow";
+      const name = document.createElement("div");
+      name.className = "id";
+      name.textContent = title;
+      const meta = document.createElement("div");
+      meta.className = "cmd";
+      meta.textContent = detail;
+      if (detail) meta.title = detail;
+      grow.appendChild(name);
+      grow.appendChild(meta);
+      row.appendChild(grow);
+      if (badgeText) {
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = badgeText;
+        row.appendChild(badge);
+      }
+      return row;
+    }
+    function catalogTools(candidate) {
+      const bound = candidate.first_binding;
+      if (Array.isArray(bound) && bound.length) return bound.map((name) => String(name));
+      return (candidate.capabilities || [])
+        .filter((item) => item && item.permission_class === "read" && item.name)
+        .map((item) => String(item.name));
+    }
+    function catalogTableRow(label, id, transport, tools, badgeText, onRemove) {
+      const row = document.createElement("tr");
+      const name = document.createElement("td");
+      const title = document.createElement("div");
+      title.className = "mcp-name";
+      title.textContent = label;
+      const sub = document.createElement("div");
+      sub.className = "mcp-sub";
+      sub.textContent = transport ? (id + " · " + transport) : id;
+      name.appendChild(title);
+      name.appendChild(sub);
+      const toolCell = document.createElement("td");
+      toolCell.className = "mcp-tools";
+      toolCell.textContent = tools.length ? tools.join(", ") : "—";
+      const status = document.createElement("td");
+      status.className = "mcp-status";
+      const badge = document.createElement("span");
+      badge.className = "badge";
+      badge.textContent = badgeText;
+      status.appendChild(badge);
+      if (onRemove) {
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "btn danger";
+        del.textContent = "Remove";
+        del.onclick = onRemove;
+        status.appendChild(del);
+      }
+      row.appendChild(name);
+      row.appendChild(toolCell);
+      row.appendChild(status);
+      return row;
+    }
+    function renderCatalog(candidates, local) {
+      const box = $("mcp-catalog");
+      box.replaceChildren();
+      if (!candidates) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 3;
+        cell.textContent = "The catalog could not be loaded.";
+        row.appendChild(cell);
+        box.appendChild(row);
+        return;
+      }
+      if (!candidates.length) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 3;
+        cell.textContent = "The catalog is empty.";
+        row.appendChild(cell);
+        box.appendChild(row);
+        return;
+      }
+      candidates.forEach((candidate) => {
+        const id = String(candidate.id || "");
+        const saved = (local || []).find((item) => item.id === id);
+        let badge = "Off";
+        if (saved && saved.listed) badge = "Listed";
+        else if (saved) badge = "Saved";
+        box.appendChild(catalogTableRow(
+          candidate.label || id,
+          id,
+          String(candidate.transport || ""),
+          catalogTools(candidate),
+          badge,
+          saved ? () => removeMcp(id) : null,
+        ));
+      });
+    }
     async function loadMcp() {
       const s = await api("/v1/mcp/status");
       state.mcp = s;
       $("mcp-note").textContent = s.note || (`Policy: ${s.policy}. Transport: ${s.transport}.`);
-      const box = $("mcp-list");
-      box.innerHTML = "";
       const local = s.local_servers || [];
-      const repo = (s.repo_servers || []).filter((id) => !local.some((x) => x.id === id));
-      if (!local.length && !repo.length) {
-        box.innerHTML = '<p style="color:var(--muted);margin:0;font-size:13px">No MCP servers connected yet.</p>';
+      let candidates = [];
+      try {
+        const intake = await api("/v1/mcp/intake");
+        candidates = intake.candidates || [];
+      } catch (e) {
+        candidates = null;
       }
-      for (const m of local) {
-        const row = document.createElement("div");
-        row.className = "mcp-item";
-        row.innerHTML = `<div class="grow"><div class="id">${m.id}${m.enabled ? "" : " (off)"}</div><div class="cmd">${(m.command || m.transport || "").replace(/</g, "&lt;")}</div></div>`;
+      renderCatalog(candidates, local);
+      const known = new Set((candidates || []).map((item) => String(item.id || "")));
+      const box = $("mcp-list");
+      const savedPane = $("mcp-saved");
+      box.replaceChildren();
+      const extras = local.filter((item) => !known.has(String(item.id || "")));
+      const repo = (s.repo_servers || []).filter((id) => !local.some((x) => x.id === id) && !known.has(String(id)));
+      savedPane.hidden = !extras.length && !repo.length;
+      for (const m of extras) {
+        const detail = m.transport || "";
+        const row = mcpRow(m.label || m.id, m.id + (detail ? " · " + detail : ""), m.listed ? "Listed" : "Off");
         const del = document.createElement("button");
         del.type = "button";
         del.className = "btn danger";
@@ -1962,10 +2275,7 @@
         box.appendChild(row);
       }
       for (const id of repo) {
-        const row = document.createElement("div");
-        row.className = "mcp-item";
-        row.innerHTML = `<div class="grow"><div class="id">${id}</div><div class="cmd">repo allowlist</div></div><span class="badge">repo</span>`;
-        box.appendChild(row);
+        box.appendChild(mcpRow(String(id), "repo allowlist", "repo"));
       }
     }
     async function removeMcp(id) {
@@ -1978,6 +2288,7 @@
     }
 
     $("new-conv").onclick = () => newConversation().catch((e) => showErr(e));
+    $("new-personal").onclick = () => newConversation("", "personal").catch((e) => showErr(e));
     function fillSearchProjects() {
       const sel = $("search-project");
       const current = sel.value;
@@ -2277,7 +2588,379 @@
     if ($("prefs-back")) $("prefs-back").onclick = () => setView("chat");
     $("badge-ai").onclick = () => openPrefs("keys");
     $("badge-defenseclaw").onclick = () => openPrefs("defenseclaw");
+    let antaresTimer = null;
+    function stopAntaresPoll() {
+      if (antaresTimer) clearTimeout(antaresTimer);
+      antaresTimer = null;
+    }
+    function antaresOpen() {
+      const pane = $("prefs-antares");
+      return !!(pane && pane.classList.contains("active"));
+    }
+    function antaresPill(id, up, label) {
+      const el = $(id);
+      if (!el) return;
+      el.className = up ? "prefs-pill on" : "prefs-pill off";
+      el.textContent = label;
+    }
+    function antaresTable(headers, rows) {
+      const table = document.createElement("table");
+      table.className = "dc-table";
+      const head = document.createElement("thead");
+      const hr = document.createElement("tr");
+      headers.forEach((text) => {
+        const th = document.createElement("th");
+        th.textContent = text;
+        hr.appendChild(th);
+      });
+      head.appendChild(hr);
+      const body = document.createElement("tbody");
+      rows.forEach((cells) => {
+        const tr = document.createElement("tr");
+        cells.forEach((node) => tr.appendChild(node));
+        body.appendChild(tr);
+      });
+      table.appendChild(head);
+      table.appendChild(body);
+      return table;
+    }
+    let cweById = {};
+    function cweKey(raw) {
+      const text = String(raw || "").trim().toUpperCase();
+      return /^[0-9]+$/.test(text) ? "CWE-" + text : text;
+    }
+    function cweEntry(raw) {
+      return cweById[cweKey(raw)] || null;
+    }
+    function openCwePopup(raw) {
+      const dialog = $("cwe-popup");
+      if (!dialog) return;
+      const entry = cweEntry(raw);
+      const label = entry ? entry.id : String(raw || "").trim();
+      $("cwe-popup-stands").textContent = "CWE stands for Common Weakness Enumeration.";
+      $("cwe-popup-id").textContent = label;
+      $("cwe-popup-name").textContent = entry && entry.name
+        ? entry.name
+        : "No standard name is recorded for this class.";
+      $("cwe-popup-meaning").textContent = entry && entry.meaning ? entry.meaning : "";
+      if (typeof dialog.showModal === "function") dialog.showModal();
+    }
+    function cweLink(raw) {
+      const entry = cweEntry(raw);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "cwe-link";
+      button.textContent = entry ? entry.id : String(raw || "").trim();
+      button.addEventListener("click", () => openCwePopup(raw));
+      return button;
+    }
+    function cweCell(raw) {
+      const td = document.createElement("td");
+      const parts = String(raw || "").split(",").map((part) => part.trim()).filter(Boolean);
+      if (!parts.length) {
+        td.textContent = "";
+        return td;
+      }
+      parts.forEach((part, index) => {
+        if (index) td.appendChild(document.createTextNode(", "));
+        td.appendChild(cweLink(part));
+      });
+      return td;
+    }
+    function refreshCweHelp() {
+      const help = $("antares-cwe-help");
+      const field = $("antares-cwe");
+      if (!help || !field) return;
+      help.replaceChildren();
+      const note = document.createElement("span");
+      const raw = (field.value || "").trim();
+      note.textContent = raw
+        ? "CWE stands for Common Weakness Enumeration. "
+        : "CWE stands for Common Weakness Enumeration. Leave this blank and Antares chooses the classes.";
+      help.appendChild(note);
+      if (!raw) return;
+      raw.split(",").map((part) => part.trim()).filter(Boolean).forEach((part, index) => {
+        if (index) help.appendChild(document.createTextNode(", "));
+        help.appendChild(cweLink(part));
+      });
+    }
+    async function loadCweCatalog() {
+      if (Object.keys(cweById).length) return;
+      try {
+        const data = await api("/v1/antares/classes");
+        cweById = data.classes || {};
+      } catch (e) {
+        cweById = {};
+      }
+      refreshCweHelp();
+    }
+    function antaresCell(text) {
+      const td = document.createElement("td");
+      td.textContent = text == null ? "" : String(text);
+      return td;
+    }
+    let antaresRows = [];
+    let antaresFilter = "all";
+    function antaresReasonCell(text) {
+      const td = document.createElement("td");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "antares-reason";
+      btn.textContent = text || "";
+      btn.addEventListener("click", () => btn.classList.toggle("open"));
+      td.appendChild(btn);
+      return td;
+    }
+    function paintAntaresFindings() {
+      const wrap = $("antares-findings");
+      const filters = $("antares-filters");
+      if (!wrap) return;
+      const counts = { all: antaresRows.length, confirmed: 0, uncertain: 0, rejected: 0 };
+      antaresRows.forEach((row) => {
+        const verdict = row.verdict || "";
+        if (Object.prototype.hasOwnProperty.call(counts, verdict)) counts[verdict] += 1;
+      });
+      ["all", "confirmed", "uncertain", "rejected"].forEach((key) => {
+        const btn = $("antares-filter-" + key);
+        if (!btn) return;
+        const label = key === "all" ? "All" : key.charAt(0).toUpperCase() + key.slice(1);
+        btn.textContent = label + " " + counts[key];
+        btn.classList.toggle("active", antaresFilter === key);
+      });
+      if (filters) filters.hidden = !antaresRows.length;
+      wrap.replaceChildren();
+      const rows = antaresFilter === "all"
+        ? antaresRows
+        : antaresRows.filter((row) => (row.verdict || "") === antaresFilter);
+      if (!rows.length) {
+        const p = document.createElement("p");
+        p.className = "dc-note";
+        p.textContent = antaresRows.length ? "No leads in this filter." : "The detailed review finished with no leads.";
+        wrap.appendChild(p);
+        return;
+      }
+      wrap.appendChild(antaresTable(["File", "Class", "Line", "Verdict", "Reason"], rows.map((row) => [
+        antaresCell(row.file_path || ""),
+        cweCell(row.cwe || ""),
+        antaresCell(row.line == null ? "" : row.line),
+        antaresCell(row.verdict || ""),
+        antaresReasonCell(row.reason || ""),
+      ])));
+    }
+    async function loadAntares() {
+      await loadCweCatalog();
+      const err = $("antares-err");
+      if (err) err.textContent = "";
+      try {
+        const status = await api("/v1/antares/status");
+        const jobs = status.jobs || {};
+        const completions = status.completions || {};
+        antaresPill("antares-jobs", jobs.http === 200, jobs.http === 200 ? "jobs up" : "jobs down");
+        antaresPill("antares-completions", completions.http === 200, completions.http === 200 ? "completions up" : "completions down");
+        if (!status.configured && err) err.textContent = "Antares jobs are not configured on the mini.";
+      } catch (e) {
+        antaresPill("antares-jobs", false, "jobs down");
+        antaresPill("antares-completions", false, "completions down");
+        if (err) err.textContent = String(e.message || e);
+      }
+      await refreshAntaresRuns();
+    }
+    async function refreshAntaresRuns() {
+      await loadCweCatalog();
+      const box = $("antares-runs");
+      if (!box) return;
+      let data;
+      try {
+        data = await api("/v1/antares/runs");
+      } catch (e) {
+        box.replaceChildren();
+        const p = document.createElement("p");
+        p.className = "dc-note";
+        p.textContent = String(e.message || e);
+        box.appendChild(p);
+        return;
+      }
+      const runs = data.runs || [];
+      box.replaceChildren();
+      if (!runs.length) {
+        const p = document.createElement("p");
+        p.className = "dc-note";
+        p.textContent = "No runs yet.";
+        box.appendChild(p);
+        return;
+      }
+      box.appendChild(antaresTable(["ID", "Status", "CWE", "Findings", ""], runs.map((run) => {
+        const open = document.createElement("button");
+        open.type = "button";
+        open.className = "btn";
+        open.textContent = "Open";
+        open.onclick = () => openAntaresRun(run.id).catch((e) => showErr(e));
+        const action = document.createElement("td");
+        action.appendChild(open);
+        return [
+          antaresCell(run.id),
+          antaresCell(run.status),
+          cweCell(run.cwe || ""),
+          antaresCell((run.findings || []).length),
+          action,
+        ];
+      })));
+    }
+    async function openAntaresRun(id) {
+      await loadCweCatalog();
+      const detail = $("antares-detail");
+      detail.hidden = false;
+      const run = await api("/v1/antares/runs/" + encodeURIComponent(id));
+      $("antares-detail-meta").textContent = id + " · " + (run.status || "") + (run.error ? " · " + run.error : "");
+      const handoffOut = $("antares-handoff-out");
+      if (handoffOut) handoffOut.replaceChildren();
+      const handoffErr = $("antares-handoff-err");
+      if (handoffErr) handoffErr.textContent = "";
+      const wrap = $("antares-findings");
+      wrap.replaceChildren();
+      antaresRows = [];
+      antaresFilter = "all";
+      const actions = $("antares-handoff-actions");
+      if (actions) actions.hidden = true;
+      const filters = $("antares-filters");
+      if (filters) filters.hidden = true;
+      const start = $("antares-start");
+      if (start) start.open = false;
+      $("antares-report").textContent = "Detailed review has not finished. The Antares file list stays hidden until then.";
+      let review = null;
+      try {
+        review = await api("/v1/antares/runs/" + encodeURIComponent(id) + "/detail", { method: "POST", body: "{}" });
+      } catch (e) {
+        try {
+          review = await api("/v1/antares/runs/" + encodeURIComponent(id) + "/detail");
+        } catch (again) {
+          review = { status: "pending", done: 0, total: 0, findings: [], error: String(again.message || again) };
+        }
+      }
+      if (review && review.status === "completed") {
+        $("antares-report").textContent = "Detailed review is complete. " + (review.done || 0) + " leads.";
+        if (actions) actions.hidden = false;
+        antaresRows = review.findings || [];
+        paintAntaresFindings();
+      } else if (review) {
+        const done = review.done || 0;
+        const total = review.total || 0;
+        $("antares-report").textContent = review.status === "failed"
+          ? String(review.error || "The detailed review failed.")
+          : (review.error
+            ? ("Checking again. " + review.error)
+            : ("Detailed review is running. " + done + " of " + total + ". The report stays hidden until it finishes."));
+      }
+      const detailStatus = review && review.status;
+      if (antaresOpen() && detailStatus !== "completed" && detailStatus !== "failed" && (run.status === "running" || run.status === "queued" || detailStatus === "running" || detailStatus === "pending")) {
+        stopAntaresPoll();
+        antaresTimer = setTimeout(() => {
+          openAntaresRun(id).catch((e) => showErr(e));
+          refreshAntaresRuns().catch(() => {});
+        }, 2500);
+      }
+    }
+    async function requestHandoff(push) {
+      const err = $("antares-handoff-err");
+      const out = $("antares-handoff-out");
+      err.textContent = "";
+      out.replaceChildren();
+      const meta = $("antares-detail-meta").textContent || "";
+      const runId = meta.split("·")[0].trim();
+      if (!runId) {
+        err.textContent = "Open a finished review first.";
+        return;
+      }
+      const reviewBtn = $("antares-handoff");
+      const pushBtn = $("antares-push");
+      reviewBtn.disabled = true;
+      pushBtn.disabled = true;
+      try {
+        const handoff = await api("/v1/antares/runs/" + encodeURIComponent(runId) + "/handoff", {
+          method: "POST",
+          body: JSON.stringify({ push: !!push }),
+        });
+        const heading = document.createElement("h3");
+        heading.textContent = "Drafts";
+        out.appendChild(heading);
+        const lead = document.createElement("p");
+        lead.className = "dc-note";
+        lead.textContent = handoff.summary || "";
+        out.appendChild(lead);
+        const published = handoff.published || {};
+        const note = document.createElement("p");
+        note.className = "dc-note";
+        if (published.preview) {
+          note.textContent = "Preview only. The leads stay in the list above. Nothing was written to the repository.";
+        } else if (published.error) {
+          note.textContent = "The repository was not updated. " + published.error;
+        } else if (published.pushed) {
+          note.textContent = "Wrote " + ((published.work_orders || []).join(", ") || "the audit") + " on branch " + (published.branch || "") + " and pushed that branch.";
+        } else if (published.already_recorded) {
+          note.textContent = "This audit is already in the repository on branch " + (published.branch || "") + ".";
+        } else {
+          note.textContent = "Wrote the drafts in the snapshot" + (published.push_error ? ". Push did not finish: " + published.push_error : ".");
+        }
+        out.appendChild(note);
+        const orders = handoff.orders || [];
+        if (orders.length) {
+          const list = document.createElement("ul");
+          list.className = "dc-note";
+          orders.forEach((order) => {
+            const item = document.createElement("li");
+            item.textContent = (order.priority || "") + " · " + (order.title || "Draft") + " · " + (order.finding_count || "") + " leads · Draft";
+            list.appendChild(item);
+          });
+          out.appendChild(list);
+        }
+        out.scrollIntoView({ block: "nearest" });
+      } catch (e) {
+        err.textContent = String(e.message || e);
+      } finally {
+        reviewBtn.disabled = false;
+        pushBtn.disabled = false;
+      }
+    }
+    document.querySelectorAll("[data-antares-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        antaresFilter = btn.getAttribute("data-antares-filter") || "all";
+        paintAntaresFindings();
+      });
+    });
+    $("antares-handoff").onclick = () => { requestHandoff(false).catch((e) => showErr(e)); };
+    $("antares-push").onclick = () => { requestHandoff(true).catch((e) => showErr(e)); };
+    $("cwe-popup-close").addEventListener("click", () => {
+      const dialog = $("cwe-popup");
+      if (dialog && typeof dialog.close === "function") dialog.close();
+    });
+    $("antares-cwe").addEventListener("input", () => refreshCweHelp());
+    $("antares-run").onclick = async () => {
+      const err = $("antares-err");
+      err.textContent = "";
+      const btn = $("antares-run");
+      btn.disabled = true;
+      try {
+        const job = await api("/v1/antares/runs", {
+          method: "POST",
+          body: JSON.stringify({
+            cwe: ($("antares-cwe").value || "").trim(),
+            repo: ($("antares-repo").value || "").trim() || null,
+            repo_url: ($("antares-url").value || "").trim() || null,
+            profile: ($("antares-profile").value || "").trim() || null,
+          }),
+        });
+        $("antares-meta").textContent = "Started " + (job.id || "");
+        await refreshAntaresRuns();
+        if (job.id) await openAntaresRun(job.id);
+      } catch (e) {
+        err.textContent = String(e.message || e);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+    $("badge-antares").onclick = () => openPrefs("antares");
     $("back-security").onclick = () => openPrefs("security");
+    $("back-security-antares").onclick = () => openPrefs("security");
     $("back-configure-keys").onclick = () => openPrefs("configure");
     document.querySelectorAll("[data-prefs]").forEach((el) => {
       el.addEventListener("click", (ev) => {
@@ -2292,8 +2975,10 @@
 
 
     let prefsStatusTimer = null;
+    let prefsStatusLive = null;
     function stopPrefsStatusPoll() {
       if (prefsStatusTimer) { clearInterval(prefsStatusTimer); prefsStatusTimer = null; }
+      if (prefsStatusLive) { clearTimeout(prefsStatusLive); prefsStatusLive = null; }
     }
     function startPrefsStatusPoll() {
       stopPrefsStatusPoll();
@@ -2413,7 +3098,7 @@
       const stateClass = { ready: "on", limited: "warn", off: "off" };
       for (const mod of mods || []) {
         const click = mod.open === "chat" || mod.open === "jupyter" || mod.open === "agents"
-          || mod.open === "keys" || mod.open === "settings";
+          || mod.open === "keys" || mod.open === "settings" || mod.open === "antares";
         const el = document.createElement(click ? "button" : "article");
         if (click) el.type = "button";
         el.className = "dash-mod";
@@ -2432,6 +3117,7 @@
             if (mod.open === "chat") setView("chat");
             else if (mod.open === "jupyter") openJupyter();
             else if (mod.open === "agents") { setView("agents"); loadDefinitions().catch((e) => showErr(e)); }
+            else if (mod.open === "antares") openPrefs("antares");
             else if (mod.open === "keys" || mod.open === "settings") openPrefs(mod.open);
           };
         }
@@ -2455,7 +3141,15 @@
         hostPill("status-studio-pill", "prefs-node-studio", studioHost.up);
         paintResources(studioBox, studioHost.resources);
         svcRow(studioBox, "Ollama", !!studioHost.ollama_up);
+        svcRow(studioBox, "Antares jobs", !!studioHost.antares_jobs_up);
+        svcRow(studioBox, "Antares model", !!studioHost.antares_completions_up);
         svcRow(studioBox, "Jupyter", !!studioHost.jupyter_up);
+        if (studioHost.antares_review) {
+          const review = document.createElement("p");
+          review.className = "dash-note";
+          review.textContent = studioHost.antares_review;
+          studioBox.appendChild(review);
+        }
         if (!studioHost.worker_up) {
           const note = document.createElement("p");
           note.className = "dash-note";
@@ -2467,7 +3161,14 @@
         modelBlock(studioBox, "In memory", studioHost.loaded || [], "Nothing is loaded. The next chat loads a model for a few minutes.");
         modelBlock(studioBox, "On disk", onDisk, "No local models are installed.");
         paintModules(d.modules);
-        clock.textContent = "Checked " + new Date().toLocaleTimeString() + ". Next check in 5 minutes.";
+        const reviewing = !!(studioHost.antares_active);
+        if (prefsStatusLive) { clearTimeout(prefsStatusLive); prefsStatusLive = null; }
+        if (reviewing && $("prefs-status").classList.contains("active")) {
+          clock.textContent = "Checked " + new Date().toLocaleTimeString() + ". Antares is reviewing. This page refreshes every 10 seconds.";
+          prefsStatusLive = setTimeout(() => { refreshPrefsStatus().catch(() => {}); }, 10000);
+        } else {
+          clock.textContent = "Checked " + new Date().toLocaleTimeString() + ". Next check in 5 minutes.";
+        }
       } catch (e) {
         hostPill("status-mini-pill", "prefs-node-mini", false);
         hostPill("status-studio-pill", "prefs-node-studio", false);
@@ -2758,6 +3459,31 @@
         $("send-chat").click();
       }
     });
+    async function sendPersonalTurn(text) {
+      const ch = selectedChoice();
+      await api(`/v1/conversations/${state.conversationId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ content: text, role: "user", reply: false }),
+      });
+      await api(`/v1/conversations/${state.conversationId}/runs`, {
+        method: "POST",
+        body: JSON.stringify({
+          objective: text,
+          execute: true,
+          backend: ch.backend || "fake",
+          model: ch.model || "fake-instruct",
+          billing_class: ch.billing_class || "local",
+          max_steps: 16,
+        }),
+      });
+      $("chat").value = "";
+      autosize();
+      setPerf("", false);
+      showErr("");
+      state.sending = false;
+      await refreshThread();
+      await loadConversations();
+    }
     $("send-chat").onclick = async () => {
       const text = $("chat").value.trim();
       if (!text || state.sending) return;
@@ -2768,6 +3494,10 @@
       let gotOfficial = false;
       try {
         if (!state.conversationId) await newConversation();
+        if (isPersonalConversation()) {
+          await sendPersonalTurn(text);
+          return;
+        }
         $("chat").value = "";
         autosize();
         const empty = $("empty");
@@ -2807,7 +3537,12 @@
             if (!line) continue;
             let ev;
             try { ev = JSON.parse(line.slice(6)); } catch { continue; }
-            if (ev.event === "token") {
+            if (ev.event === "status") {
+              ab.textContent = ev.text || "";
+            } else if (ev.event === "replace") {
+              ab.textContent = ev.text || "";
+              $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
+            } else if (ev.event === "token") {
               if (!streamStarted) streamStarted = performance.now();
               ab.textContent += ev.text || "";
               $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
@@ -2962,7 +3697,13 @@
       await fetchProjects();
       await loadDefinitions();
       autosize();
-      setView("chat");
+      const open = new URLSearchParams(location.search).get("open");
+      if (open === "antares") {
+        history.replaceState(null, "", "/");
+        openPrefs("antares");
+      } else {
+        setView("chat");
+      }
     }
     document.addEventListener("ai-lab-auth-ready", () => {
       boot().catch(() => {});

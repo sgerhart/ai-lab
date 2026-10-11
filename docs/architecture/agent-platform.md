@@ -10,8 +10,14 @@ replace PostgreSQL work-order records, tool permissions, model serving, or
 Studio workers.
 
 **Forward direction (ADR 0037 / FEAT-010):** the mini owns the **personal-agent
-loop** (model → tool validate → execute/approve → observe). Studio supplies
-inference and heavy workers.
+loop** (model → tool validate → execute/approve → observe). The `personal`
+agent reads a markdown vault at `~/.ai-lab/memory` and starts from a dated
+brief (IWO-095). The sidebar **Personal agent** button opens that loop (IWO-099).
+A follow-up in that chat sees the earlier lines (IWO-100).
+`research` gathers up to five public pages and files the sources. `report_write`
+saves or replaces a markdown report under `~/.ai-lab/reports` (IWO-101).
+**New chat** at `/` stays a conversation with the selected model. Studio
+supplies inference and heavy workers.
 
 **Agent Studio (ADR 0042 / FEAT-017):** chat stays the front door. The sidebar
 item **Agent Studio** opens a second menu and a canvas for designing agents

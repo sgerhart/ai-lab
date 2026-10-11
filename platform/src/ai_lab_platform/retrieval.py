@@ -19,6 +19,29 @@ from urllib.request import Request, urlopen
 
 from .work_order import utcnow
 
+# Pages fetched during chat. Not a user project, so project search stays private.
+FETCHED_LIBRARY = "lab-sources"
+_FETCH_STOP = {
+    "the",
+    "and",
+    "are",
+    "for",
+    "what",
+    "which",
+    "does",
+    "with",
+    "that",
+    "this",
+    "from",
+    "how",
+    "when",
+    "where",
+    "who",
+    "why",
+    "can",
+    "you",
+}
+
 VECTOR_SIZE = 64
 NO_MATCH_NOTE = (
     "no matches — do not invent citations or sources (FEAT-008 citation policy)"
@@ -360,8 +383,9 @@ def build_memory_store_from_env() -> MemoryStore:
 class RetrievalService:
     """Upsert/search with citation-safe response shaping."""
 
-    def __init__(self, store: MemoryStore | None = None) -> None:
+    def __init__(self, store: MemoryStore | None = None, embedder: Any | None = None) -> None:
         self.store = store or InMemoryStore()
+        self.embedder = embedder
 
     def upsert(
         self,
@@ -409,11 +433,20 @@ class RetrievalService:
         text: str,
         source: str,
         filename: str = "",
+        extra_meta: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        meta: dict[str, Any] = {"project_id": project_id, "filename": filename or source}
+        for key, value in (extra_meta or {}).items():
+            if key == "project_id":
+                continue
+            meta[str(key)] = value
+        vector = self._embed_meta(text)
+        if vector:
+            meta["embed"] = vector
         saved = self.upsert(
             text=text,
             source=source,
-            meta={"project_id": project_id, "filename": filename or source},
+            meta=meta,
         )
         return saved
 
@@ -439,6 +472,14 @@ class RetrievalService:
         scoped = (project_id or "").strip()
         if not scoped or not (query or "").strip():
             return ""
+        if self._semantic():
+            try:
+                rows = self.store.list_documents(project_id=scoped)
+            except (ValueError, RuntimeError, AttributeError):
+                rows = []
+            semantic = self._semantic_block(query, rows, limit=limit)
+            if semantic:
+                return "Project documents (cite only these sources):\n" + semantic
         result = self.search(query, limit=limit, project_id=scoped)
         parts: list[str] = []
         for hit in result["matches"]:
@@ -450,11 +491,86 @@ class RetrievalService:
             return ""
         return "Project documents (cite only these sources):\n" + "\n\n".join(parts)
 
+    def fetched_context(self, query: str, *, limit: int = 2) -> str:
+        """Pages fetched in any chat. Project files stay out."""
+        q = (query or "").strip()
+        if not q:
+            return ""
+        try:
+            rows = self.store.list_documents(project_id=FETCHED_LIBRARY)
+        except (ValueError, RuntimeError, AttributeError):
+            return ""
+        if self._semantic():
+            semantic = self._semantic_block(q, rows, limit=limit)
+            if semantic:
+                return "Previously fetched pages (cite only these sources):\n" + semantic
+        tokens = {
+            tok
+            for tok in re.findall(r"[a-z0-9]{3,}", q.lower())
+            if tok not in _FETCH_STOP
+        }
+        if len(tokens) < 2:
+            return ""
+        scored: list[tuple[int, MemoryHit]] = []
+        for hit in rows:
+            words = set(re.findall(r"[a-z0-9]{3,}", hit.text.lower()))
+            score = len(tokens & words)
+            if score >= 2:
+                scored.append((score, hit))
+        scored.sort(key=lambda item: (-item[0], item[1].source))
+        parts: list[str] = []
+        for _score, hit in scored[: max(1, limit)]:
+            date = str(hit.meta.get("document_date") or "not stated")
+            parts.append(f"[{hit.source}]\nDocument date: {date}\n{hit.text[:4000]}")
+        if not parts:
+            return ""
+        return "Previously fetched pages (cite only these sources):\n" + "\n\n".join(parts)
+
     def status(self) -> dict[str, Any]:
         st = self.store.status()
-        st["embedding"] = "hash_v1"
+        name = getattr(self.embedder, "name", None) or "hash_v1"
+        st["embedding"] = name
         st["citation_policy"] = "no-fabrication"
         return st
+
+
+    def _semantic(self) -> bool:
+        return bool(self.embedder) and getattr(self.embedder, "name", "hash_v1") != "hash_v1"
+
+    def _embed_meta(self, text: str) -> list[float]:
+        if not self._semantic():
+            return []
+        try:
+            vector = self.embedder.embed((text or "")[:4000])
+        except (OSError, RuntimeError, ValueError, TypeError):
+            return []
+        if not vector:
+            return []
+        return [round(float(value), 6) for value in vector]
+
+    def _semantic_block(self, query: str, rows: list[MemoryHit], *, limit: int) -> str:
+        from .embeddings import cosine
+
+        try:
+            query_vector = self.embedder.embed(query, query=True)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            return ""
+        scored: list[tuple[float, MemoryHit]] = []
+        for hit in rows:
+            stored = hit.meta.get("embed")
+            if not isinstance(stored, list) or len(stored) != len(query_vector):
+                stored = self._embed_meta(hit.text)
+            if not stored:
+                continue
+            score = cosine(query_vector, [float(value) for value in stored])
+            if score >= 0.45:
+                scored.append((score, hit))
+        scored.sort(key=lambda item: (-item[0], item[1].source))
+        parts: list[str] = []
+        for _score, hit in scored[: max(1, limit)]:
+            date = str(hit.meta.get("document_date") or "not stated")
+            parts.append(f"[{hit.source}]\nDocument date: {date}\n{hit.text[:4000]}")
+        return "\n\n".join(parts)
 
 
 def memory_search_tool(query: str, *, limit: int = 5, service: RetrievalService | None = None) -> str:
@@ -500,6 +616,7 @@ def set_default_retrieval_service(service: RetrievalService | None) -> None:
 
 
 __all__ = [
+    "FETCHED_LIBRARY",
     "InMemoryStore",
     "MemoryDocument",
     "MemoryHit",

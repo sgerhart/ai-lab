@@ -90,6 +90,62 @@ class SchedulerTickTests(unittest.TestCase):
         st = status(state_path=self.state_path)
         self.assertIn(due.id, st["last_fired"])
 
+    def test_tick_files_yesterdays_personal_chats_once(self) -> None:
+        from ai_lab_platform.conversation import Conversation, Message
+        from ai_lab_platform.memory_vault import MemoryVault
+        from ai_lab_platform.store import SqliteStore
+
+        chats = SqliteStore(Path(self.tmp.name) / "chats.sqlite")
+        vault = MemoryVault(Path(self.tmp.name) / "vault")
+        vault.ensure_layout()
+        pref = vault.root / "knowledge" / "preferences" / "dining.md"
+        pref.write_text("pasta stays\n", encoding="utf-8")
+        personal = Conversation.new(agent="personal", title="Dinner")
+        other = Conversation.new(agent="lab-operations", title="Health")
+        chats.put_conversation(personal)
+        chats.put_conversation(other)
+        user = Message.new(conversation_id=personal.id, role="user", content="I want pasta tonight.")
+        user.created_at = "2026-10-05T18:00:00+00:00"
+        reply = Message.new(conversation_id=personal.id, role="assistant", content="Noted for tonight.")
+        reply.created_at = "2026-10-05T18:01:00+00:00"
+        today = Message.new(conversation_id=personal.id, role="user", content="This is still today.")
+        today.created_at = "2026-10-06T01:00:00+00:00"
+        lab = Message.new(conversation_id=other.id, role="user", content="Check the ports.")
+        lab.created_at = "2026-10-05T18:02:00+00:00"
+        for message in (user, reply, today, lab):
+            chats.put_message(message)
+        when = datetime(2026, 10, 6, 9, 0, tzinfo=ZoneInfo("America/New_York"))
+
+        def file_memory(moment: datetime, filed_days: list[str]) -> dict:
+            from ai_lab_platform.memory_file import file_elapsed_personal_days
+
+            return file_elapsed_personal_days(chats, vault, when=moment, filed_days=filed_days)
+
+        out = tick(
+            self.store,
+            run_definition=lambda _d: {"id": "x", "status": "completed"},
+            now=when,
+            state_path=self.state_path,
+            file_memory=file_memory,
+        )
+        self.assertIn("2026-10-05", out["memory_file"]["wrote"])
+        note = (vault.root / "timeline" / "daily" / "2026-10-05.md").read_text(encoding="utf-8")
+        self.assertIn("I want pasta tonight.", note)
+        self.assertIn("Noted for tonight.", note)
+        self.assertNotIn("This is still today.", note)
+        self.assertNotIn("Check the ports.", note)
+        self.assertEqual(pref.read_text(encoding="utf-8"), "pasta stays\n")
+        again = tick(
+            self.store,
+            run_definition=lambda _d: {"id": "x", "status": "completed"},
+            now=when.replace(minute=5),
+            state_path=self.state_path,
+            file_memory=file_memory,
+        )
+        self.assertEqual(again["memory_file"]["wrote"], [])
+        reread = (vault.root / "timeline" / "daily" / "2026-10-05.md").read_text(encoding="utf-8")
+        self.assertEqual(reread.count("I want pasta tonight."), 1)
+
     def test_invalid_cron_error_not_raise(self) -> None:
         bad = AgentDefinition.new(title="bad", schedule_cron="nope")
         self.store.put(bad)
@@ -132,6 +188,8 @@ class SchedulerApiTests(unittest.TestCase):
         self.app.state.agent_definition_store = AgentDefinitionStore(
             Path(self.tmp.name) / "defs.sqlite"
         )
+        self.app.state.schedule_state_path = Path(self.tmp.name) / "schedule-state.json"
+        self.app.state.memory_vault_root = Path(self.tmp.name) / "memory"
         self.client = TestClient(self.app)
         self.h = {"Authorization": "Bearer lab-token"}
 

@@ -28,6 +28,7 @@ MCP, models, code-analysis services, approvals, findings, and audit.
 - Security Center API/UI
 - integration with existing approvals and observability
 - DefenseClaw and Antares as providers/integrations, not the whole security plane
+- AISVS 1.0 Level 1 gap register for the lab’s own agents, MCP, models, and retrieval ([ADR 0044](../decisions/0044-adopt-aisvs-level-1.md), Proposed; [aisvs-level-1.md](../security/aisvs-level-1.md)). The register cites requirement IDs. It does not copy the standard, and a filled row is not a certification.
 
 ## Dependencies
 
@@ -45,6 +46,16 @@ MCP, models, code-analysis services, approvals, findings, and audit.
 - IWO-067 — MCP registry and governed capabilities
 - IWO-068 — Agent Studio security posture
 - IWO-069 — Security Center expansion
+- IWO-085 — AISVS 1.0 Level 1 gap register (**Review**; register written, ADR 0044 still Proposed)
+- IWO-086 — input validation (**Draft**)
+- IWO-087 — model admission and AI BOM (**Draft**)
+- IWO-088 — model load isolation contract (**Draft**)
+- IWO-089 — output bounds, safety, and citations (**Draft**)
+- IWO-090 — embedding scope and sensitive fields (**Draft**)
+- IWO-091 — agent quotas, tool-output checks, and stop (**Draft**)
+- IWO-092 — MCP checks (**Draft**)
+- IWO-093 — robustness evidence (**Draft**)
+- IWO-094 — AI interaction log and alerts (**Draft**)
 
 ## Acceptance criteria
 

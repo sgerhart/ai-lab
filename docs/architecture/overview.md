@@ -4,7 +4,7 @@
 live with several Ollama tags; Personal Agent Studio, retrieval, scheduler, and
 lab MCP in use. Antares-1B UI and services live. Coding Assistant can read and,
 after approval, patch an isolated worktree.  
-**Updated:** 2026-09-26
+**Updated:** 2026-10-05
 
 A personal, three-host Apple Silicon lab with Tailscale as the private network.
 Durable control-plane state lives on the M1 mini. Inference and heavy models
@@ -67,7 +67,7 @@ flowchart TB
 | Antares-1B | Runbook + `/antares` UI + jobs | **Live** UI → Studio `:8002` jobs / `:8001` completions |
 | Studio SSH | Documented | **OK** — `stevengerhart@mac-studio` from Air and mini (F-015 closed) |
 | Studio worker `:8090` | Scripts | **Not running** |
-| Security platform / Vise | IWO-065–067, 070–071, and 079–080 unit-tested. The rest are Draft | **Not deployed.** No hypervisor connection |
+| Security platform / Vise | IWO-065–067, 070–071, and 079–080 unit-tested. The rest are Draft. AISVS 1.0 Level 1 gap register is in Git ([aisvs-level-1.md](../security/aisvs-level-1.md)); ADR 0044 is Proposed | **Not deployed.** No hypervisor connection |
 | Cloud LLM / deep research | Gated adapters | Off until `/secrets` authorize |
 
 ## Read next
@@ -79,6 +79,7 @@ flowchart TB
 - [data-flows.md](data-flows.md)
 - [diagrams.md](diagrams.md)
 - [security-plane.md](security-plane.md)
+- [AISVS Level 1 gap register](../security/aisvs-level-1.md)
 - [security-plane-amendment.md](security-plane-amendment.md)
 - [mcp-servers.md](mcp-servers.md)
 - [../deployment/network.md](../deployment/network.md)

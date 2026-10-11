@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import base64
 import os
 import re
+import zlib
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -113,7 +115,23 @@ class AttachmentStore:
             raise AttachmentError("attachment file missing")
         return path.read_bytes(), meta
 
-    def extract_text_for_prompt(self, conversation_id: str, attachment_ids: list[str]) -> str:
+    def image_base64(self, conversation_id: str, attachment_ids: list[str]) -> list[str]:
+        """Raw base64 for images on one turn. Ollama reads these beside the prompt."""
+        encoded: list[str] = []
+        for att_id in attachment_ids[:4]:
+            try:
+                data, meta = self.read_bytes(conversation_id, att_id)
+            except AttachmentError:
+                continue
+            ext = str(meta.get("ext") or "").lower()
+            if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+                continue
+            encoded.append(base64.b64encode(data).decode("ascii"))
+        return encoded
+
+    def extract_text_for_prompt(
+        self, conversation_id: str, attachment_ids: list[str], *, see_images: bool = False
+    ) -> str:
         """Best-effort text for model context. Images get a placeholder caption."""
         parts: list[str] = []
         for att_id in attachment_ids[:8]:
@@ -127,16 +145,22 @@ class AttachmentStore:
                 text = data.decode("utf-8", errors="replace")[:MAX_ATTACHMENT_TEXT_CHARS]
                 parts.append(f"[attachment {name}]\n{text}")
             elif ext == ".pdf":
-                # No PDF parser dependency yet — honest stub.
-                parts.append(
-                    f"[attachment {name}: PDF {meta.get('bytes')} bytes; "
-                    "text extraction not installed — summarize from filename only]"
-                )
+                text = pdf_text(data)
+                if text:
+                    parts.append(f"[attachment {name}]\n{text}")
+                else:
+                    parts.append(
+                        f"[attachment {name}: PDF {meta.get('bytes')} bytes; "
+                        "no readable text found]"
+                    )
             elif ext in {".png", ".jpg", ".jpeg", ".webp"}:
-                parts.append(
-                    f"[attachment {name}: image {meta.get('content_type')}, "
-                    f"{meta.get('bytes')} bytes; vision not enabled on this Studio model yet]"
-                )
+                if see_images:
+                    parts.append(f"[attachment {name}: image attached for you to see]")
+                else:
+                    parts.append(
+                        f"[attachment {name}: image {meta.get('content_type')}, "
+                        f"{meta.get('bytes')} bytes; this model does not read images]"
+                    )
             else:
                 parts.append(f"[attachment {name}: unsupported for context]")
         return "\n\n".join(parts)
@@ -157,10 +181,84 @@ def document_text(filename: str, data: bytes) -> tuple[str, str]:
     if ext in {".md", ".txt"}:
         return base, data.decode("utf-8", errors="replace")[:MAX_ATTACHMENT_TEXT_CHARS]
     if ext == ".pdf":
-        return base, f"[PDF {base}: {len(data)} bytes; text extraction not installed]"
+        text = pdf_text(data)
+        if text:
+            return base, text
+        return base, f"[PDF {base}: {len(data)} bytes; no readable text found]"
     if ext in {".png", ".jpg", ".jpeg", ".webp"}:
         return base, f"[image {base}: {len(data)} bytes; vision not enabled]"
     raise AttachmentError(f"unsupported type {ext!r}")
+
+
+def pdf_text(data: bytes) -> str:
+    """Visible strings from a PDF, including deflated streams. No extra package."""
+    pieces: list[bytes] = []
+    streams = 0
+    for match in re.finditer(rb"stream\r?\n(.*?)endstream", data, re.S):
+        streams += 1
+        if streams > 40:
+            break
+        raw = match.group(1).strip(b"\r\n")
+        header = data[max(0, match.start() - 300) : match.start()]
+        if b"FlateDecode" in header:
+            inflated = _inflate(raw)
+            if inflated:
+                pieces.append(inflated)
+            continue
+        pieces.append(raw)
+    if not pieces:
+        pieces.append(data)
+    found: list[str] = []
+    for blob in pieces:
+        for literal in re.findall(rb"\((?:\\.|[^\\)]){2,}\)", blob):
+            text = _pdf_literal(literal)
+            if _readable(text):
+                found.append(text)
+    cleaned = re.sub(r"\s+", " ", " ".join(found)).strip()
+    if len(cleaned) < 8:
+        return ""
+    return cleaned[:MAX_ATTACHMENT_TEXT_CHARS]
+
+
+def _inflate(raw: bytes, limit: int = 1_000_000) -> bytes:
+    try:
+        decoder = zlib.decompressobj()
+        out = decoder.decompress(raw, limit)
+    except zlib.error:
+        return b""
+    if decoder.unconsumed_tail:
+        return b""
+    return out
+
+
+def _pdf_literal(raw: bytes) -> str:
+    body = raw[1:-1]
+    chars: list[str] = []
+    index = 0
+    while index < len(body):
+        char = body[index]
+        if char == 0x5C and index + 1 < len(body):
+            nxt = body[index + 1]
+            mapped = {
+                ord("n"): "\n",
+                ord("r"): "\n",
+                ord("t"): "\t",
+                ord("("): "(",
+                ord(")"): ")",
+                ord("\\"): "\\",
+            }
+            if nxt in mapped:
+                chars.append(mapped[nxt])
+                index += 2
+                continue
+        chars.append(chr(char) if 32 <= char < 127 else " ")
+        index += 1
+    return "".join(chars).strip()
+
+
+def _readable(text: str) -> bool:
+    letters = sum(1 for char in text if char.isalpha())
+    return letters >= 4 and letters * 3 >= len(text)
 
 
 def prompt_char_budget(

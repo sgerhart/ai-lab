@@ -6,6 +6,7 @@ import socket
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 class ToolError(RuntimeError):
@@ -21,6 +22,10 @@ class ToolContext:
     workspace_root: Path
     artifact_root: Path
     bounded_scope: str = ""
+    vault_root: Path | None = None
+    files_root: Path | None = None
+    web_opener: Any = None
+    web_resolve: Any = None
 
 
 def resolve_scope(ctx: ToolContext) -> Path:

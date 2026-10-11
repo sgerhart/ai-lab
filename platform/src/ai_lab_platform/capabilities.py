@@ -11,6 +11,7 @@ from typing import Any
 
 from .mcp_client import local_servers, repo_listed_ids
 from .policy import load_policy
+from .tool_catalog import catalog_servers
 
 _TOOL_BLURB = {
     "health_read": "Read loopback health for lab services on the mini.",
@@ -20,6 +21,17 @@ _TOOL_BLURB = {
     "git_status": "Show git status for the workspace.",
     "git_diff": "Show a truncated git diff.",
     "memory_search": "Search lab memory.",
+    "vault_list": "List markdown files in the personal memory vault.",
+    "vault_grep": "Find a vault file by keyword or alias.",
+    "vault_read": "Read one markdown file in the personal memory vault.",
+    "web_search": "Look up a factual question on the public web. The lab chooses the page.",
+    "research": "Gather up to five public pages for a question. The lab chooses the URLs and files a source dossier.",
+    "report_list": "List research reports and source dossiers.",
+    "report_read": "Read a research report or source dossier.",
+    "report_write": "Save or replace a markdown research report.",
+    "files_list": "List .md and .txt notes in the personal files folder.",
+    "files_grep": "Find a note in the personal files folder by words in the file.",
+    "files_read": "Read one .md or .txt note in the personal files folder.",
     "apply_patch": "Apply a patch. Requires approval and an isolated copy.",
     "git_commit": "Commit in an isolated copy. Requires approval.",
 }
@@ -28,6 +40,8 @@ _TOOL_BLURB = {
 def assistant_name(agent_id: str) -> str:
     if agent_id == "lab-operations":
         return "AI Lab Assistant"
+    if agent_id == "personal":
+        return "Personal Agent"
     return agent_id
 
 
@@ -112,6 +126,11 @@ def capability_catalog(agent_id: str = "lab-operations", *, now: datetime | None
             continue
         seen.add(sid)
         caps.append(_mcp_cap(server))
+    known = {str(cap.get("id") or "") for cap in caps}
+    for card in catalog_servers():
+        if card["id"] in known:
+            continue
+        caps.append(card)
     for sid in sorted(repo_listed_ids()):
         if sid in seen:
             continue

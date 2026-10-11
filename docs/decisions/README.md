@@ -54,5 +54,6 @@ ADRs are numbered and dated. To change a decision, add a new ADR that supersedes
 | [0041](0041-studio-ollama-lan-and-tailscale.md) | Studio Ollama listens on the LAN and the tailnet | Accepted |
 | [0042](0042-agent-studio-operating-platform.md) | Agent Studio is an operating platform | Accepted (direction) |
 | [0043](0043-shared-antares-and-security-compute-plane.md) | Shared Antares service and external Security Compute Plane | Proposed |
+| [0044](0044-adopt-aisvs-level-1.md) | Adopt OWASP AISVS 1.0 Level 1 as the AI verification catalogue | Proposed |
 
 Still not inventable: `{{TAILNET_NAME}}`, Tailscale IPv4, ACL file contents.

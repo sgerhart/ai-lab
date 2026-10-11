@@ -2,7 +2,8 @@
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
   const links = [
     { href: "/", label: "AI Lab", match: /^\/$/ },
-    { href: "/antares", label: "Antares", match: /^\/antares$/ },
+    { href: "/nexus/", label: "📚 Study Hub", match: /^\/nexus/ },
+    { href: "/?open=antares", label: "Antares", match: /^\/antares$/ },
     { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
     { href: "/help", label: "Help", match: /^\/help$/ },
   ];

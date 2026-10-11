@@ -1,6 +1,6 @@
 # IWO-062 — DefenseClaw finding glossary
 
-**Status:** In progress (unit tests; Findings pane not checked in the browser)  
+**Status:** Complete (operator confirmed the Findings pane 2026-09-26)  
 **Priority:** P2  
 **Effort:** M  
 **Owner:** human (operator)  
@@ -122,7 +122,7 @@ Docs to touch when implementing, not in this draft: one sentence on the DefenseC
 
 - Verification evidence: `python3 -m unittest tests.test_defenseclaw_report -v` (10 tests). Air `defenseclaw-report.sh` print was not run in this pass.
 - Follow-ons filed: the operator asked for the outcome, so this slice now includes recent block episodes and `POST /v1/security/explain`. The model sees the card only. It is not a separate studio agent.
-- Residual risks: glossary sentences for CRITICAL and HIGH rules still need a human read. The Findings pane was not opened in a browser.
+- Residual risks: the operator confirmed the Findings pane on 2026-09-26. A line-by-line read of every CRITICAL and HIGH sentence is still open.
 - Docs/status updated: this file, `docs/features/index.md`, `docs/work-orders/README.md`, FEAT-014, `docs/architecture/security-plane.md`
 - Status surfaces reconciled: yes
 - Summary metadata reviewed: yes

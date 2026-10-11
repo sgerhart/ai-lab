@@ -8,7 +8,11 @@ from typing import Any, Callable
 
 from .approvals import is_privileged, requires_approval
 from .mcp_client import call_mcp_tool, capability_needs_approval, get_local_server, parse_mcp_tool_name
+from .memory_vault import MemoryVault, VaultError
+from .operator_files import DocumentLibrary, FilesError
 from .retrieval import default_retrieval_service, memory_search_tool, memory_write_tool
+from .web_lookup import WebLookupError, research_pages, web_search
+from .research_reports import ReportError, ReportLibrary
 from .tools import ToolContext, ToolError, compose_ps_read, git_diff, git_status, health_read, repo_read, repo_search
 from .workspace_isolation import apply_patch, git_commit_isolated
 
@@ -76,6 +80,17 @@ _HANDLERS: dict[str, Callable[..., str]] = {
         limit=int(a.get("limit", 5)),
         service=default_retrieval_service(),
     ),
+    "vault_list": lambda ctx, **a: _vault_list(ctx, a),
+    "vault_grep": lambda ctx, **a: _vault_grep(ctx, a),
+    "vault_read": lambda ctx, **a: _vault_read(ctx, a),
+    "files_list": lambda ctx, **a: _files_list(ctx, a),
+    "files_grep": lambda ctx, **a: _files_grep(ctx, a),
+    "files_read": lambda ctx, **a: _files_read(ctx, a),
+    "web_search": lambda ctx, **a: _web_search(ctx, a),
+    "research": lambda ctx, **a: _research(ctx, a),
+    "report_list": lambda ctx, **a: _report_list(ctx, a),
+    "report_read": lambda ctx, **a: _report_read(ctx, a),
+    "report_write": lambda ctx, **a: _report_write(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -86,6 +101,137 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "deploy": lambda ctx, **_a: _refuse_privileged("deploy"),
     "gh_pr_merge": lambda ctx, **_a: _refuse_privileged("gh_pr_merge"),
 }
+
+
+def _vault_of(ctx: ToolContext) -> MemoryVault:
+    return MemoryVault(ctx.vault_root)
+
+
+def _bounded_limit(value: object, default: int, cap: int) -> int:
+    try:
+        parsed = int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        parsed = default
+    return max(1, min(parsed, cap))
+
+
+def _vault_list(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _vault_of(ctx).list_files(
+            str(args.get("prefix") or args.get("path") or ""),
+            limit=_bounded_limit(args.get("limit"), 200, 200),
+        )
+    except VaultError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _vault_grep(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _vault_of(ctx).grep(
+            str(args.get("query") or args.get("q") or ""),
+            limit=_bounded_limit(args.get("limit"), 8, 20),
+        )
+    except VaultError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _vault_read(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _vault_of(ctx).read(str(args.get("path") or args.get("file") or ""))
+    except VaultError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _files_of(ctx: ToolContext) -> DocumentLibrary:
+    return DocumentLibrary(ctx.files_root)
+
+
+def _files_list(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _files_of(ctx).list_files(
+            str(args.get("prefix") or args.get("path") or ""),
+            limit=_bounded_limit(args.get("limit"), 200, 200),
+        )
+    except FilesError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _files_grep(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _files_of(ctx).grep(
+            str(args.get("query") or args.get("q") or ""),
+            limit=_bounded_limit(args.get("limit"), 8, 20),
+        )
+    except FilesError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _files_read(ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return _files_of(ctx).read(str(args.get("path") or args.get("file") or ""))
+    except FilesError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _web_search(ctx: ToolContext, args: dict[str, Any]) -> str:
+    if args.get("url") or args.get("href"):
+        return "web_search does not open a URL from the question. Ask in words."
+    try:
+        return web_search(
+            str(args.get("query") or args.get("q") or ""),
+            opener=ctx.web_opener,
+            resolve=ctx.web_resolve,
+        )
+    except WebLookupError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _research(ctx: ToolContext, args: dict[str, Any]) -> str:
+    if args.get("url") or args.get("href"):
+        return "research does not open a URL from the question. Ask in words."
+    query = str(args.get("query") or args.get("q") or "")
+    try:
+        brief, sources = research_pages(
+            query,
+            opener=ctx.web_opener,
+            resolve=ctx.web_resolve,
+        )
+    except WebLookupError as exc:
+        raise ToolError(str(exc)) from exc
+    if not sources:
+        return brief
+    try:
+        rel = ReportLibrary().add_dossier(str(args.get("name") or query), query, sources)
+    except ReportError as exc:
+        raise ToolError(str(exc)) from exc
+    return brief + f"\ndossier: {rel}"
+
+
+def _report_list(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return ReportLibrary().list_reports(limit=_bounded_limit(args.get("limit"), 100, 200))
+    except ReportError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _report_read(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return ReportLibrary().read(
+            str(args.get("name") or args.get("path") or args.get("file") or ""),
+            offset=_bounded_limit(args.get("offset"), 0, 48_000) if args.get("offset") else 0,
+        )
+    except ReportError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _report_write(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    try:
+        return ReportLibrary().write(
+            str(args.get("name") or args.get("path") or ""),
+            str(args.get("body") or args.get("text") or ""),
+        )
+    except ReportError as exc:
+        raise ToolError(str(exc)) from exc
 
 
 def execute_allowed_tool(

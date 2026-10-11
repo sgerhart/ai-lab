@@ -1,6 +1,6 @@
 # IWO-060 — Project document library
 
-**Status:** In progress (unit tests; live Qdrant pass not recorded)  
+**Status:** Complete (live cite 2026-09-26)  
 **Priority:** P2  
 **Feature:** [FEAT-008](../features/FEAT-008-research-retrieval-memory.md)
 
@@ -18,4 +18,4 @@ A new embedding model, PDF text extraction, vision, or a separate RAG page in th
 
 - [x] Two projects do not share search hits
 - [x] Delete is refused for a document that belongs to another project
-- [ ] Operator adds a markdown file on the live mini and a chat in that project cites it
+- [x] Operator path on the live mini, 2026-09-26: a markdown file was indexed for a project, and a chat in that project answered with the sentence’s code (`llama3.2:3b`). The test project, chat, and document were deleted afterward.

@@ -13,6 +13,7 @@ from urllib.request import urlopen
 from fastapi import Body, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from pydantic import BaseModel, Field
@@ -20,6 +21,7 @@ from pydantic import BaseModel, Field
 from .agent_definitions import AgentDefinition, default_agent_definition_store
 from .agent_loop import (
     cancel_agent_run,
+    conversation_history,
     reconcile_stuck_running,
     resolve_pending_action,
     retry_agent_run,
@@ -29,6 +31,8 @@ from .agent_scheduler import status as scheduler_status
 from .agent_scheduler import tick as scheduler_tick
 from .agent_worker import AgentRunWorker, drain_queued_runs
 from .antares_client import AntaresStudioClient
+from .antares_handoff import build_handoff
+from .cwe_glossary import catalog_payload
 from .defenseclaw_report import PostureFile, default_posture_path, episode_card, narrate_episode, posture_view
 from .attachments import (
     AttachmentError,
@@ -38,12 +42,19 @@ from .attachments import (
 )
 from .auth import AuthError, auth_status, client_ip, require_auth
 from .capabilities import assistant_name, capability_catalog
+from .chat_grounding import (
+    finish_grounded_reply,
+    prepare_grounded_turn,
+    scrub_title,
+    system_for_chat,
+)
 from .chat_title import propose_chat_title, title_is_generic
+from .source_fetch import needs_source_fetch
 from .operator_auth import login as operator_login
 from .operator_auth import revoke_session
 from .connect import connect_status, jupyter_notebook_for_kernel, jupyter_open_url, read_token_file
 from .host_resources import collect as collect_host_resources
-from .lab_dashboard import build_lab_dashboard, fetch_remote_resources
+from .lab_dashboard import antares_review_text, build_lab_dashboard, fetch_remote_resources
 from .conversation import AgentRun, AgentRunStatus, BillingClass, Conversation, Message, MessageRole, Project
 from .dispatch import DispatchFn, http_dispatch
 from .mcp_client import (
@@ -79,7 +90,6 @@ AGENTS_HTML = Path(__file__).resolve().parent / "web" / "agents.html"
 LAB_HTML = Path(__file__).resolve().parent / "web" / "lab.html"
 SECRETS_HTML = Path(__file__).resolve().parent / "web" / "secrets.html"
 HELP_HTML = Path(__file__).resolve().parent / "web" / "help.html"
-ANTARES_HTML = Path(__file__).resolve().parent / "web" / "antares.html"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATIC_DIR = WEB_DIR / "static"
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
@@ -160,24 +170,82 @@ def _remember_chat_title(
     )
     if not title:
         return conversation.title
+    title = scrub_title(title, assistant_text)
+    if not title:
+        return conversation.title
     conversation.title = title
     store.put_conversation(conversation)
     return title
 
 
-def _with_project_documents(app: Any, prompt: str, project_id: str, query: str) -> str:
+def _project_text(app: Any, project_id: str, query: str) -> str:
     if not (project_id or "").strip():
-        return prompt
+        return ""
     try:
-        extra = app.state.retrieval.project_context(query, project_id)
+        return app.state.retrieval.project_context(query, project_id) or ""
     except (ValueError, RuntimeError):
-        return prompt
-    if not extra:
-        return prompt
-    return prompt + "\n\n" + extra
+        return ""
 
 
-def _chat_prompt(att_store, conversation_id: str, messages: list[Any]) -> str:
+def _model_sees_images(router: Any, backend: str, model: str) -> bool:
+    obj = router.backends.get(backend) if router is not None else None
+    reader = getattr(obj, "reads_images", None)
+    if not callable(reader):
+        return False
+    try:
+        return bool(reader(model))
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def _latest_user_attachment_ids(messages: list[Any]) -> list[str]:
+    for message in reversed(messages):
+        role = message.role.value if hasattr(message.role, "value") else str(message.role)
+        if role != "user":
+            continue
+        meta = message.meta or {}
+        return [str(item) for item in (meta.get("attachment_ids") or []) if item]
+    return []
+
+
+def _grounded_chat(
+    app: Any,
+    conversation: Any,
+    *,
+    query: str,
+    prompt: str,
+    deep_research: bool,
+    model: str = "",
+    has_image: bool = False,
+):
+    """Attach allowlisted pages and project documents, and say how to use them."""
+    turn = prepare_grounded_turn(
+        query=query,
+        prompt=prompt,
+        project_text=_project_text(app, conversation.project_id, query),
+        project_id=conversation.project_id or "",
+        retrieval=getattr(app.state, "retrieval", None),
+        has_image=has_image,
+    )
+    if deep_research:
+        system = (
+            f"You are performing deep research for the {conversation.agent} agent. "
+            "Synthesize carefully; note uncertainty; do not invent citations."
+        )
+    else:
+        system = system_for_chat(
+            assistant_name(conversation.agent),
+            model=model,
+            sourced=bool(turn.instructions),
+        )
+    if has_image:
+        system = f"{system}\nThe user attached an image. Answer from what is visible in it."
+    if turn.instructions:
+        system = f"{system}\n{turn.instructions}"
+    return turn, system
+
+
+def _chat_prompt(att_store, conversation_id: str, messages: list[Any], *, see_images: bool = False) -> str:
     """Replay chat turns and the files attached to them, newest first within the window."""
     turns: list[tuple[str, str, list[str]]] = []
     for message in messages:
@@ -187,7 +255,7 @@ def _chat_prompt(att_store, conversation_id: str, messages: list[Any]) -> str:
         turns.append((role, message.content or "", ids))
 
     def attachment_text(ids: list[str]) -> str:
-        return att_store.extract_text_for_prompt(conversation_id, ids)
+        return att_store.extract_text_for_prompt(conversation_id, ids, see_images=see_images)
 
     return build_chat_prompt(turns, attachment_text)
 
@@ -253,7 +321,7 @@ class AgentDefinitionIn(BaseModel):
 
 class AgentDefinitionRunIn(BaseModel):
     objective: str = ""
-    model: str = "llama3.2:3b"
+    model: str = "qwen3.6:35b-a3b"
     backend: str = "ollama"
     billing_class: str = "local"
     max_steps: int = Field(default=8, ge=1, le=64)
@@ -304,12 +372,20 @@ class MemorySearchIn(BaseModel):
 
 
 class AntaresRunIn(BaseModel):
-    cwe: str = Field(description="CWE id, e.g. CWE-78")
+    cwe: str = Field(default="", description="CWE id, e.g. CWE-78. Blank lets Antares choose.")
     repo: str | None = Field(
         default=None,
         description="Repo path on Studio under ~/.ai-lab/antares/ (default: fixture)",
     )
+    repo_url: str | None = Field(
+        default=None,
+        description="github.com URL to clone on the Studio before the review",
+    )
     profile: str | None = Field(default=None, description="Antares CLI profile name")
+
+
+class AntaresHandoffIn(BaseModel):
+    push: bool = False
 
 
 class AgentRunIn(BaseModel):
@@ -368,6 +444,31 @@ def _postgres_checkpointer(database_url: str) -> tuple[Any, Any]:
     saver = context.__enter__()
     saver.setup()
     return saver, context
+
+
+class _ICloudFileResponse(FileResponse):
+    """Send file bytes instead of Uvicorn's pathsend/sendfile path.
+
+    sendfile stalls on iCloud Drive files: the status line goes out and the
+    body never arrives. A normal read does not.
+    """
+
+    async def __call__(self, scope, receive, send):  # type: ignore[no-untyped-def]
+        extensions = scope.get("extensions")
+        if isinstance(extensions, dict) and "http.response.pathsend" in extensions:
+            scope = {
+                **scope,
+                "extensions": {key: value for key, value in extensions.items() if key != "http.response.pathsend"},
+            }
+        await super().__call__(scope, receive, send)
+
+
+class _ICloudStaticFiles(StaticFiles):
+    def file_response(self, full_path, stat_result, scope, status_code=200):  # type: ignore[no-untyped-def]
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        if type(response) is FileResponse:
+            response.__class__ = _ICloudFileResponse
+        return response
 
 
 def create_control_app(
@@ -446,6 +547,10 @@ def create_control_app(
     app.state.agent_definition_store = default_agent_definition_store()
     app.state.agent_run_worker = None
     memory = retrieval or default_retrieval_service()
+    if retrieval is None and getattr(memory, "embedder", None) is None:
+        from .embeddings import build_embedder
+
+        memory.embedder = build_embedder()
     app.state.retrieval = memory
     set_default_retrieval_service(memory)
     app.state.security_posture = PostureFile(default_posture_path())
@@ -471,10 +576,13 @@ def create_control_app(
             "agent_worker": bool(settings.agent_worker),
         }
 
-    @app.get("/", response_class=HTMLResponse)
-    def studio_home() -> str:
+    @app.get("/")
+    def studio_home() -> HTMLResponse:
         """Main page is the chat studio. Jupyter still opens from the sidebar."""
-        return AGENTS_HTML.read_text(encoding="utf-8")
+        return HTMLResponse(
+            AGENTS_HTML.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.get("/agents")
     def agents_page() -> RedirectResponse:
@@ -495,10 +603,14 @@ def create_control_app(
     def help_page() -> str:
         return HELP_HTML.read_text(encoding="utf-8")
 
-    @app.get("/antares", response_class=HTMLResponse)
-    def antares_page() -> str:
-        """Antares vuln-localize UI (FEAT-015 / IWO-049). No remediation."""
-        return ANTARES_HTML.read_text(encoding="utf-8")
+    @app.get("/antares")
+    def antares_page() -> RedirectResponse:
+        """Antares localize opens inside Studio Security. The job still runs on the Studio."""
+        return RedirectResponse(
+            url="/?open=antares",
+            status_code=307,
+            headers={"Cache-Control": "no-store"},
+        )
 
     @app.get("/v1/auth/status")
     def auth_status_endpoint(request: Request) -> dict[str, object]:
@@ -572,6 +684,15 @@ def create_control_app(
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    @app.get("/v1/antares/classes")
+    def antares_classes(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """MITRE names for weakness class ids. CWE stands for Common Weakness Enumeration."""
+        _gate(request, authorization)
+        return catalog_payload()
+
     @app.get("/v1/antares/status")
     def antares_status(
         request: Request,
@@ -605,6 +726,7 @@ def create_control_app(
         code, result = client.start_run(
             cwe=body.cwe,
             repo=(body.repo or "").strip(),
+            repo_url=(body.repo_url or "").strip(),
             profile=(body.profile or "").strip(),
         )
         if code >= 400:
@@ -646,6 +768,88 @@ def create_control_app(
             return body
         media = "text/markdown" if fmt == "md" else "application/json"
         return Response(content=str(body), media_type=media)
+
+    @app.post("/v1/antares/runs/{run_id}/detail")
+    def antares_start_detail(
+        run_id: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Start the read-only file review. The Antares file list stays hidden until it finishes."""
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        code, body = client.start_detail(run_id)
+        if code >= 400:
+            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
+        return body if isinstance(body, dict) else {"status": "failed"}
+
+    @app.get("/v1/antares/runs/{run_id}/detail")
+    def antares_get_detail(
+        run_id: str,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        client: AntaresStudioClient = app.state.antares
+        code, body = client.get_detail(run_id)
+        if code >= 400:
+            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
+        return body if isinstance(body, dict) else {"status": "failed"}
+
+    @app.post("/v1/antares/runs/{run_id}/handoff")
+    def antares_handoff(
+        run_id: str,
+        request: Request,
+        body: AntaresHandoffIn = Body(default_factory=AntaresHandoffIn),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Draft Work Orders from a finished localization. Push is a separate step."""
+        _gate(request, authorization)
+        if len(run_id) < 8 or len(run_id) > 32 or any(ch not in "0123456789abcdef" for ch in run_id):
+            raise HTTPException(status_code=400, detail="run id is not valid")
+        client: AntaresStudioClient = app.state.antares
+        code, run = client.get_run(run_id)
+        if code >= 400 or not isinstance(run, dict):
+            raise HTTPException(status_code=code if code >= 400 else 502, detail=run if isinstance(run, dict) else {"error": "no run"})
+        if run.get("status") != "completed":
+            raise HTTPException(status_code=409, detail="handoff waits until the review is completed")
+        findings = run.get("findings") if isinstance(run.get("findings"), list) else []
+        dcode, detail = client.get_detail(run_id)
+        if (
+            dcode < 400
+            and isinstance(detail, dict)
+            and detail.get("status") == "completed"
+            and isinstance(detail.get("findings"), list)
+            and (detail.get("model") or any(isinstance(row, dict) and row.get("verdict") for row in detail["findings"]))
+        ):
+            findings = detail["findings"]
+        paths = [str(item["file_path"]) for item in findings if isinstance(item, dict) and item.get("file_path")]
+        present: dict[str, bool] = {}
+        if paths:
+            pcode, presence = client.file_presence(run_id, paths[:200])
+            if pcode >= 400 or not isinstance(presence, dict) or not isinstance(presence.get("present"), dict):
+                raise HTTPException(status_code=502, detail="the Studio could not check the snapshot files")
+            present = {str(key): bool(value) for key, value in presence["present"].items()}
+        summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
+        handoff = build_handoff(
+            run_id=run_id,
+            source_url=str(run.get("source_url") or ""),
+            findings=findings,
+            summary=summary,
+            present=present,
+        )
+        if not body.push:
+            handoff["published"] = {"preview": True}
+            return handoff
+        handoff["push"] = True
+        pcode, published = client.publish_audit(run_id, handoff)
+        if pcode >= 400 or not isinstance(published, dict):
+            handoff["published"] = {
+                "error": published.get("error") if isinstance(published, dict) else "the repository was not updated",
+            }
+        else:
+            handoff["published"] = published
+        return handoff
 
     @app.get("/favicon.svg")
     def favicon() -> Response:
@@ -850,6 +1054,19 @@ def create_control_app(
         except Exception:
             tick = None
         jobs_up, completions_up = _antares_flags(settings.antares_job_url)
+        antares_review = ""
+        antares_active = False
+        try:
+            code, body = app.state.antares.list_runs()
+            runs = body.get("runs") if isinstance(body, dict) else []
+            if code < 400 and isinstance(runs, list):
+                antares_review = antares_review_text(runs)
+                antares_active = any(
+                    isinstance(row, dict) and row.get("status") in {"queued", "running"} for row in runs
+                )
+        except Exception:
+            antares_review = ""
+            antares_active = False
         store_s: SecretStore = app.state.secret_store
         secret_status = store_s.status()
         configured = sum(
@@ -900,6 +1117,8 @@ def create_control_app(
             scheduler_last_tick=tick,
             antares_jobs_up=jobs_up,
             antares_completions_up=completions_up,
+            antares_review=antares_review,
+            antares_active=antares_active,
             frontier_configured=configured,
             frontier_authorized=bool(secret_status.get("usage_billed_authorized")),
             mcp_servers=mcp_servers,
@@ -1374,6 +1593,11 @@ def create_control_app(
             role = MessageRole(body.role)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"invalid role: {body.role}") from exc
+        if conversation.agent == "personal" and body.reply:
+            raise HTTPException(
+                status_code=400,
+                detail="personal conversations answer through an agent run",
+            )
         message = Message.new(
             conversation_id=conversation_id,
             role=role,
@@ -1391,11 +1615,10 @@ def create_control_app(
 
         from .cloud_backends import CloudUnavailable
         from .ollama_backend import OllamaUnavailable
+        from .model_slot import ModelSlotBusy
 
         att_store = app.state.attachment_store
         prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
-        prompt = _chat_prompt(att_store, conversation_id, prior) or body.content
-        prompt = _with_project_documents(app, prompt, conversation.project_id, body.content)
 
         backend = body.backend
         model = body.model
@@ -1422,14 +1645,25 @@ def create_control_app(
                     "error": "deep_research_requires_usage_billed_authorize",
                 }
 
-        system = f"You are {assistant_name(conversation.agent)} in ai-lab. Reply helpfully and briefly."
-        if body.deep_research:
-            system = (
-                f"You are performing deep research for the {conversation.agent} agent. "
-                "Synthesize carefully; note uncertainty; do not invent citations."
-            )
-
         router: ModelRouter = app.state.model_router
+        see_images = _model_sees_images(router, backend, model)
+        prompt = _chat_prompt(att_store, conversation_id, prior, see_images=see_images) or body.content
+        images = (
+            att_store.image_base64(conversation_id, _latest_user_attachment_ids(prior))
+            if see_images
+            else []
+        )
+        turn, system = _grounded_chat(
+            app,
+            conversation,
+            query=body.content,
+            prompt=prompt,
+            deep_research=bool(body.deep_research),
+            model=model,
+            has_image=bool(images),
+        )
+        prompt = turn.prompt
+
         try:
             completion = router.complete(
                 CompletionRequest(
@@ -1437,24 +1671,41 @@ def create_control_app(
                     prompt=prompt,
                     backend=backend,
                     system=system,
+                    images=images,
                 )
             )
+        except ModelSlotBusy as exc:
+            assistant = Message.new(
+                conversation_id=conversation_id,
+                role=MessageRole.ASSISTANT,
+                content=str(exc),
+                meta={"kind": "model_wait", "backend": backend, "model": model},
+            )
+            store.put_message(assistant)  # type: ignore[attr-defined]
+            return {
+                "message": message.to_dict(),
+                "reply": assistant.to_dict(),
+                "title": conversation.title,
+                "error": None,
+            }
         except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
             return {
                 "message": message.to_dict(),
                 "reply": None,
                 "error": f"provider_unavailable:{exc}",
             }
+        shown, grounding = finish_grounded_reply(completion.text, turn)
         assistant = Message.new(
             conversation_id=conversation_id,
             role=MessageRole.ASSISTANT,
-            content=completion.text,
+            content=shown,
             meta={
                 "kind": "chat_reply",
                 "backend": completion.backend,
                 "model": completion.model,
                 "billing_class": completion.billing_class.value,
                 "deep_research": bool(body.deep_research),
+                "grounding": grounding,
             },
         )
         store.put_message(assistant)  # type: ignore[attr-defined]
@@ -1465,7 +1716,7 @@ def create_control_app(
             backend=completion.backend,
             model=completion.model,
             user_text=body.content,
-            assistant_text=completion.text,
+            assistant_text=shown,
         )
         return {
             "message": message.to_dict(),
@@ -1503,11 +1754,17 @@ def create_control_app(
         conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
         if conversation is None:
             raise HTTPException(status_code=404, detail="not found")
+        if conversation.agent == "personal":
+            raise HTTPException(
+                status_code=400,
+                detail="personal conversations answer through an agent run",
+            )
         if body.role != "user":
             raise HTTPException(status_code=400, detail="stream only supports role=user")
 
         from .cloud_backends import CloudUnavailable
         from .ollama_backend import OllamaBackend, OllamaUnavailable
+        from .model_slot import ModelSlotBusy
 
         att_store = app.state.attachment_store
         message = Message.new(
@@ -1523,8 +1780,6 @@ def create_control_app(
         store.put_message(message)  # type: ignore[attr-defined]
 
         prior = store.list_messages(conversation_id)  # type: ignore[attr-defined]
-        prompt = _chat_prompt(att_store, conversation_id, prior) or body.content
-        prompt = _with_project_documents(app, prompt, conversation.project_id, body.content)
 
         backend = body.backend
         model = body.model
@@ -1542,17 +1797,38 @@ def create_control_app(
             else:
                 raise HTTPException(status_code=400, detail="deep_research_requires_frontier_key")
 
-        system = f"You are {assistant_name(conversation.agent)} in ai-lab. Reply helpfully and briefly."
-        if body.deep_research:
-            system = (
-                f"You are performing deep research for the {conversation.agent} agent. "
-                "Synthesize carefully; note uncertainty; do not invent citations."
-            )
-        req = CompletionRequest(model=model, prompt=prompt, backend=backend, system=system)
         router: ModelRouter = app.state.model_router
+        see_images = _model_sees_images(router, backend, model)
+        prompt = _chat_prompt(att_store, conversation_id, prior, see_images=see_images) or body.content
+        images = (
+            att_store.image_base64(conversation_id, _latest_user_attachment_ids(prior))
+            if see_images
+            else []
+        )
 
         def event_stream():
             yield f"data: {json.dumps({'event': 'user', 'message': message.to_dict()})}\n\n"
+            if needs_source_fetch(body.content) and not images:
+                yield f"data: {json.dumps({'event': 'status', 'text': 'Reading the source…'})}\n\n"
+            elif images:
+                yield f"data: {json.dumps({'event': 'status', 'text': 'Looking at the image…'})}\n\n"
+            turn, system = _grounded_chat(
+                app,
+                conversation,
+                query=body.content,
+                prompt=prompt,
+                deep_research=bool(body.deep_research),
+                model=model,
+                has_image=bool(images),
+            )
+            req = CompletionRequest(
+                model=model,
+                prompt=turn.prompt,
+                backend=backend,
+                system=system,
+                images=images,
+            )
+            suppress = turn.checking_source
             parts: list[str] = []
             metrics: dict[str, Any] = {}
             try:
@@ -1564,12 +1840,14 @@ def create_control_app(
                             text = str(item)
                             if text:
                                 parts.append(text)
-                                yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
+                                if not suppress:
+                                    yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
                             continue
                         text = item.get("text") or ""
                         if text:
                             parts.append(str(text))
-                            yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
+                            if not suppress:
+                                yield f"data: {json.dumps({'event': 'token', 'text': text})}\n\n"
                         if item.get("done"):
                             eval_count = item.get("eval_count")
                             eval_ns = item.get("eval_duration_ns")
@@ -1593,20 +1871,37 @@ def create_control_app(
                     completion = router.complete(req)
                     full = completion.text
                     billing = completion.billing_class.value
-                    yield f"data: {json.dumps({'event': 'token', 'text': full})}\n\n"
+                    if not suppress:
+                        yield f"data: {json.dumps({'event': 'token', 'text': full})}\n\n"
+            except ModelSlotBusy as exc:
+                full = str(exc)
+                assistant = Message.new(
+                    conversation_id=conversation_id,
+                    role=MessageRole.ASSISTANT,
+                    content=full,
+                    meta={"kind": "model_wait", "backend": backend, "model": model, "billing_class": "local"},
+                )
+                store.put_message(assistant)  # type: ignore[attr-defined]
+                yield f"data: {json.dumps({'event': 'replace', 'text': full})}\n\n"
+                yield f"data: {json.dumps({'event': 'done', 'reply': assistant.to_dict(), 'title': conversation.title})}\n\n"
+                return
             except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
                 yield f"data: {json.dumps({'event': 'error', 'error': f'provider_unavailable:{exc}'})}\n\n"
                 return
+            shown, grounding = finish_grounded_reply(full, turn)
+            if suppress or shown != full:
+                yield f"data: {json.dumps({'event': 'replace', 'text': shown})}\n\n"
             assistant = Message.new(
                 conversation_id=conversation_id,
                 role=MessageRole.ASSISTANT,
-                content=full,
+                content=shown,
                 meta={
                     "kind": "chat_reply",
                     "backend": backend,
                     "model": model,
                     "billing_class": billing,
                     "deep_research": bool(body.deep_research),
+                    "grounding": grounding,
                     **({"perf": metrics} if metrics else {}),
                 },
             )
@@ -1618,7 +1913,7 @@ def create_control_app(
                 backend=backend,
                 model=model,
                 user_text=body.content,
-                assistant_text=full,
+                assistant_text=shown,
             )
             yield f"data: {json.dumps({'event': 'done', 'reply': assistant.to_dict(), 'title': titled})}\n\n"
 
@@ -1833,6 +2128,74 @@ def create_control_app(
             limit=max(1, min(limit, 8)),
         )
 
+    @app.post("/v1/agent-studio/draft")
+    def agent_studio_draft(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Ask one question, then draft an agent. The lab chooses the local model."""
+        _gate(request, authorization)
+        from .agent_builder import interview, interviewer_model
+        from .mcp_client import register_catalog_server
+        from .model_catalog import load_roles
+        from .model_router import CompletionRequest
+
+        raw = body.get("messages") or []
+        if not isinstance(raw, list) or len(raw) > 12:
+            raise HTTPException(status_code=400, detail="messages must be a short list")
+        messages: list[dict[str, Any]] = []
+        for row in raw:
+            if not isinstance(row, dict):
+                continue
+            role = str(row.get("role") or "")
+            if role not in {"user", "assistant"}:
+                continue
+            messages.append({"role": role, "content": str(row.get("content") or "")[:2000]})
+        router: ModelRouter = app.state.model_router
+        providers = router.list_providers()
+        ollama = next((p for p in providers if p.get("id") == "ollama"), None)
+        installed = [str(name) for name in ((ollama or {}).get("models") or []) if name]
+        model = interviewer_model(installed)
+
+        def complete(prompt: str) -> str:
+            done = router.complete(
+                CompletionRequest(model=model, prompt=prompt, backend="ollama" if installed else "fake")
+            )
+            return done.text
+
+        result = interview(messages, installed=installed, roles=load_roles(), complete=complete if installed else None)
+        draft = result.get("draft") if isinstance(result, dict) else None
+        offers: list[str] = []
+        if isinstance(draft, dict):
+            raw_offers = draft.get("mcp_offers") or []
+            if isinstance(raw_offers, list):
+                offers.extend(str(item) for item in raw_offers if item)
+            single = str(draft.get("mcp_offer") or "")
+            if single and single not in offers:
+                offers.insert(0, single)
+        if result.get("ready") and isinstance(draft, dict) and offers:
+            saved_ids: list[str] = []
+            errors: list[str] = []
+            for server_id in offers:
+                try:
+                    saved = register_catalog_server(server_id)
+                    sid = str(saved.get("id") or server_id)
+                    if sid not in saved_ids:
+                        saved_ids.append(sid)
+                except ValueError as exc:
+                    errors.append(str(exc))
+            if saved_ids:
+                draft["registration"] = {
+                    "mcp": saved_ids,
+                    "listed": False,
+                    "skills": list(draft.get("skills") or []),
+                    "tools": list(draft.get("mcp_tools") or draft.get("tools") or []),
+                }
+            if errors:
+                draft["registration_error"] = "; ".join(errors)
+        return result
+
     @app.get("/v1/agent-definitions")
     def list_agent_definitions(
         request: Request,
@@ -1939,6 +2302,18 @@ def create_control_app(
             "note": "Writes stay inside this copy. The primary checkout is not patched.",
         }
 
+    @app.delete("/v1/agent-definitions/{definition_id}")
+    def delete_agent_definition(
+        request: Request,
+        definition_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Remove a saved agent or workflow. Runs already recorded stay in the run list."""
+        _gate(request, authorization)
+        if not app.state.agent_definition_store.delete(definition_id):
+            raise HTTPException(status_code=404, detail="not found")
+        return {"ok": True, "id": definition_id}
+
     @app.get("/v1/agent-definitions/{definition_id}")
     def get_agent_definition(
         request: Request,
@@ -1955,7 +2330,7 @@ def create_control_app(
         definition: AgentDefinition,
         *,
         objective: str = "",
-        model: str = "llama3.2:3b",
+        model: str = "qwen3.6:35b-a3b",
         backend: str = "ollama",
         billing_class: str = "local",
         max_steps: int = 8,
@@ -1977,6 +2352,8 @@ def create_control_app(
                 raise HTTPException(status_code=404, detail="conversation not found")
         from .conversation import RunBudget
 
+        from .tool_catalog import extra_read_tools
+
         objective_text = objective or definition.system_prompt or definition.title
         run = AgentRun.new(
             agent=definition.agent,
@@ -1988,6 +2365,7 @@ def create_control_app(
             budget=RunBudget(max_steps=max_steps),
             mcp_server_ids=list(definition.mcp_server_ids or []),
             workspace_root=str(_coding_workspace(worktree_id)) if worktree_id.strip() else "",
+            granted_tools=extra_read_tools(list(definition.tools or [])),
         )
         run.status = AgentRunStatus.QUEUED
         store.put_agent_run(run)  # type: ignore[attr-defined]
@@ -2002,6 +2380,7 @@ def create_control_app(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         _gate(request, authorization)
+        state_path = getattr(app.state, "schedule_state_path", None)
         defs = [
             {
                 "id": d.id,
@@ -2011,7 +2390,7 @@ def create_control_app(
             for d in app.state.agent_definition_store.list()
             if (d.schedule_cron or "").strip()
         ]
-        out = scheduler_status()
+        out = scheduler_status(state_path=state_path)
         out["scheduled_definitions"] = defs
         return out
 
@@ -2026,7 +2405,24 @@ def create_control_app(
         def runner(definition: AgentDefinition) -> dict[str, Any]:
             return _run_definition(definition)
 
-        return scheduler_tick(app.state.agent_definition_store, run_definition=runner)
+        def file_memory(when: datetime, filed_days: list[str]) -> dict[str, Any]:
+            from .memory_file import file_elapsed_personal_days
+            from .memory_vault import MemoryVault, default_vault_root
+
+            root = getattr(app.state, "memory_vault_root", None) or default_vault_root()
+            return file_elapsed_personal_days(
+                store,
+                MemoryVault(root),
+                when=when,
+                filed_days=filed_days,
+            )
+
+        return scheduler_tick(
+            app.state.agent_definition_store,
+            run_definition=runner,
+            state_path=getattr(app.state, "schedule_state_path", None),
+            file_memory=file_memory,
+        )
 
     @app.post("/v1/agent-definitions/{definition_id}/runs")
     def run_agent_definition(
@@ -2144,6 +2540,7 @@ def create_control_app(
             run,
             router=app.state.model_router,
             store_put=store.put_agent_run,  # type: ignore[attr-defined]
+            history=conversation_history(store, run),
         )
         out = run.to_dict()
         out["kind"] = "agent_run"
@@ -2236,6 +2633,28 @@ def create_control_app(
 
     if STATIC_DIR.is_dir():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+    # ~/.ai-lab/nexus is a local mirror. LaunchAgents can stat iCloud Drive
+    # files and then block forever on read, so that copy has to come first.
+    nexus_candidates = [
+        Path.home() / ".ai-lab" / "nexus",
+        Path.home() / "Documents" / "Information",
+        Path.home() / "Information",
+        Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "Information",
+        Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "Documents" / "Information",
+        Path("/Users/sgerhart/Documents/Information"),
+        Path("/Users/stevengerhart/Documents/Information"),
+        Path("/Users/sgerhart/Information"),
+        Path("/Users/stevengerhart/Information"),
+    ]
+    for n_dir in nexus_candidates:
+        if n_dir.is_dir():
+            @app.get("/nexus")
+            def _nexus_redirect() -> RedirectResponse:
+                return RedirectResponse(url="/nexus/", status_code=307)
+
+            app.mount("/nexus", _ICloudStaticFiles(directory=str(n_dir), html=True), name="nexus")
+            break
 
     return app
 

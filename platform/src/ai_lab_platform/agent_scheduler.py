@@ -51,6 +51,7 @@ def tick(
     run_definition: Runner,
     now: datetime | None = None,
     state_path: Path | None = None,
+    file_memory: Callable[[datetime, list[str]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Evaluate schedules; start at most one run per definition per local minute."""
     when = now or datetime.now().astimezone()
@@ -119,6 +120,17 @@ def tick(
             }
         )
 
+    memory_file: dict[str, Any] | None = None
+    if file_memory is not None:
+        try:
+            memory_file = file_memory(when, list(state.get("memory_filed_days") or []))
+        except Exception as exc:  # noqa: BLE001 — the tick still reports schedule results
+            memory_file = {"ok": False, "error": str(exc)[:300]}
+        else:
+            filed = memory_file.get("filed_days") if isinstance(memory_file, dict) else None
+            if isinstance(filed, list):
+                state["memory_filed_days"] = [str(day) for day in filed][-30:]
+
     state["last_fired"] = last_fired
     state["last_tick_at"] = datetime.now(timezone.utc).isoformat()
     _write_state(path, state)
@@ -130,6 +142,7 @@ def tick(
         "started": started,
         "skipped": skipped,
         "errors": errors,
+        "memory_file": memory_file,
     }
 
 

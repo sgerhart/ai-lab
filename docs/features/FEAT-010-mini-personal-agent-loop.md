@@ -101,7 +101,7 @@ an optional small mini model, or an authorized cloud API.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done (this file) | planning PR |
-| Code | Partial — IWO-002–007 + IWO-020 live Ollama loop | `agent_loop.py`, `/agents` |
+| Code | Partial — IWO-002–007 + IWO-020 live Ollama loop. IWO-095 through IWO-101 are unit-tested. The personal tools copied to the mini stop at the notes folder. Sidebar chat, thread memory, and research reports are not on that page yet | `agent_loop.py`, `memory_vault.py`, `memory_file.py`, `web_lookup.py`, `operator_files.py`, `research_reports.py`, `agents.html` |
 | Host deploy | Control plane live; Studio Ollama wired | mini:8088 |
 | Live verified | Yes — Studio Ollama tool loop (`health_read`→FINAL) | 2026-09-23 |
 

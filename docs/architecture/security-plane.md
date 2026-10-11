@@ -54,7 +54,7 @@ The Air pushes a summary. If that push stops, the card shows stale. Config files
 
 ## Antares
 
-Antares-1B is the localization model on the Studio. You name a weakness class and a read-only snapshot. It returns files a person should review. The live check is the CWE-78 fixture, which points at `app.py`. The UI is `/antares`, linked from **Security**.
+Antares-1B is the localization model on the Studio. You name a GitHub repository or a snapshot already under `~/.ai-lab/antares/`. A blank weakness class lets Antares choose up to 50 classes for that repository. Named classes stay a narrower review. It returns files a person should review. The live check of the demo tree is the CWE-78 fixture, which points at `app.py`. **Security** opens the form in the Studio shell. `GET /antares` redirects there.
 
 Use it on a repo by placing a read-only copy on the Studio and starting a job. That includes this lab. It also includes an adjacent product such as Clarion: copy the snapshot you want inspected, run the job, review the paths. Clarion’s compose stack, Vault, and repo stay outside this tree ([ADR 0025](../decisions/0025-clarion-adjacent-only.md)).
 
@@ -66,7 +66,7 @@ Antares does not patch the code and does not scan a whole product the way an app
 |-------|------|
 | **Security** page with an Antares badge | Yes |
 | Antares jobs and completions on the Studio | Yes. Jobs do not survive reboot until LaunchAgents are set |
-| DefenseClaw on the Air | Yes. `com.ai-lab.defenseclaw-report` posts a summary every 10 minutes (2026-09-26). The Findings pane was not checked in a browser |
+| DefenseClaw on the Air | Yes. `com.ai-lab.defenseclaw-report` posts a summary every 10 minutes (2026-09-26). The operator confirmed the Findings pane |
 | API gateway | No |
 | Choosing an arbitrary repo, including Clarion, from **Security** | No. Jobs use the configured Studio repo path |
 | Shared Antares clients, Security Center, Vise, security agent | No. Specified in [ADR 0043](../decisions/0043-shared-antares-and-security-compute-plane.md) |
@@ -81,3 +81,7 @@ Antares does not patch the code and does not scan a whole product the way an app
 - Lookup MCP stays on the trusted hosts. It does not wait on that plane. Placement: [mcp-servers.md](mcp-servers.md).
 
 These documents do not authorize a hypervisor connection, VM changes, network changes, or sample execution.
+
+## Verification catalogue
+
+OWASP AISVS 1.0 Level 1 is the proposed checklist for the lab’s own agents, MCP servers, local models, and retrieval ([ADR 0044](../decisions/0044-adopt-aisvs-level-1.md)). Coverage is the gap register [../security/aisvs-level-1.md](../security/aisvs-level-1.md). DefenseClaw, Antares, and Vise stay the tools that register measures. The register does not certify the lab.

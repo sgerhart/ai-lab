@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "platform" / "src"))
 from ai_lab_platform.connect import parse_ollama_installed, parse_ollama_loaded  # noqa: E402
 from ai_lab_platform.host_resources import parse_memory_free_percent  # noqa: E402
 from ai_lab_platform.lab_dashboard import (  # noqa: E402
+    antares_review_text,
     build_lab_dashboard,
     fetch_remote_resources,
     sanitize_resources,
@@ -80,8 +81,26 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(modules["chat"]["state"], "ready")
         self.assertEqual(modules["memory"]["state"], "ready")
         self.assertEqual(modules["antares"]["state"], "limited")
+        self.assertEqual(modules["antares"]["open"], "antares")
         self.assertEqual(modules["jupyter"]["open"], "jupyter")
         self.assertNotIn("command", modules["mcp"])
+
+    def test_antares_review_names_the_repo_only(self) -> None:
+        line = antares_review_text([
+            {
+                "status": "running",
+                "mode": "sweep",
+                "source_url": "git@github.com:dentroio/agentic-factory.git",
+                "repo": "/Users/someone/.ai-lab/antares/snapshots/dentroio/agentic-factory",
+            }
+        ])
+        self.assertIn("dentroio/agentic-factory", line)
+        self.assertIn("separate from Ollama", line)
+        self.assertNotIn("/Users", line)
+        self.assertEqual(
+            antares_review_text([{"status": "running", "mode": "query", "cwe": "CWE-78", "source_url": ""}]),
+            "Reviewing a Studio snapshot for CWE-78 on its own model server, separate from Ollama.",
+        )
 
     def test_ollama_parsers(self) -> None:
         installed = parse_ollama_installed(

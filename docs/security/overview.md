@@ -61,3 +61,5 @@ Values are not in Git.
 Work-order rows and audit events are kept until an operator purges them. Model caches follow Studio disk policy. Logs must not be committed.
 
 See also: [trust-boundaries.md](trust-boundaries.md), [agent-permissions.md](agent-permissions.md), [event-envelope.md](event-envelope.md), [../architecture/security-plane-amendment.md](../architecture/security-plane-amendment.md), [../runbooks/rotating-credentials.md](../runbooks/rotating-credentials.md).
+
+AISVS 1.0 Level 1 is the proposed verification catalogue for this stack ([ADR 0044](../decisions/0044-adopt-aisvs-level-1.md), still Proposed). The gap register is [aisvs-level-1.md](aisvs-level-1.md) ([IWO-085](../work-orders/IWO-085-aisvs-level-1-gap-register.md)). Follow-on work orders IWO-086 through IWO-094 are Draft. A row in the register is not a certification.

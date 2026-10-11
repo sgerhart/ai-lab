@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -61,6 +62,8 @@ def build_lab_dashboard(
     scheduler_last_tick: str | None,
     antares_jobs_up: bool,
     antares_completions_up: bool,
+    antares_review: str = "",
+    antares_active: bool = False,
     frontier_configured: int,
     frontier_authorized: bool,
     mcp_servers: list[dict[str, Any]],
@@ -95,7 +98,7 @@ def build_lab_dashboard(
             f"Last tick {scheduler_last_tick}." if scheduler_last_tick else "No tick has been recorded yet.",
             "",
         ),
-        _antares_module(antares_jobs_up, antares_completions_up),
+        _antares_module(antares_jobs_up, antares_completions_up, antares_review),
     ]
     return {
         "ok": True,
@@ -125,6 +128,10 @@ def build_lab_dashboard(
                 ),
                 "ollama_up": ollama_up,
                 "jupyter_up": jupyter_up,
+                "antares_jobs_up": antares_jobs_up,
+                "antares_completions_up": antares_completions_up,
+                "antares_review": antares_review[:240],
+                "antares_active": antares_active,
                 "worker_up": bool(worker.get("http_ok")),
                 "installed": _models(installed),
                 "loaded": _models(loaded),
@@ -207,9 +214,51 @@ def _mcp_module(servers: list[dict[str, Any]]) -> dict[str, str]:
     return _module("mcp", "MCP services", "limited", "No extra service is saved yet.", "settings")
 
 
-def _antares_module(jobs_up: bool, completions_up: bool) -> dict[str, str]:
+def antares_review_text(runs: list[Any]) -> str:
+    """One dashboard line. Repository names only, never a filesystem path."""
+    chosen: dict[str, Any] | None = None
+    for run in runs:
+        if isinstance(run, dict) and run.get("status") in {"queued", "running"}:
+            chosen = run
+            break
+    if chosen is None:
+        for run in runs:
+            if isinstance(run, dict):
+                chosen = run
+                break
+    if chosen is None:
+        return ""
+    name = _github_name(str(chosen.get("source_url") or "")) or "a Studio snapshot"
+    status = str(chosen.get("status") or "")
+    if status in {"queued", "running"} and str(chosen.get("mode") or "") == "sweep":
+        return f"Reviewing {name}. Antares is choosing the classes on its own model server, separate from Ollama."
+    if status in {"queued", "running"}:
+        cwe = str(chosen.get("cwe") or "").strip()
+        target = cwe if cwe.upper().startswith("CWE-") else "named classes"
+        return f"Reviewing {name} for {target} on its own model server, separate from Ollama."
+    if status == "completed":
+        return f"Last review of {name} finished."
+    if status == "failed":
+        return f"The review of {name} failed."
+    return ""
+
+
+def _github_name(url: str) -> str:
+    match = re.search(r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?$", url.strip())
+    if match is None:
+        return ""
+    owner, repo = match.group(1), match.group(2)
+    if owner in {".", ".."} or repo in {".", ".."}:
+        return ""
+    return f"{owner}/{repo}"[:80]
+
+
+def _antares_module(jobs_up: bool, completions_up: bool, review: str = "") -> dict[str, str]:
+    line = review.strip()
     if jobs_up and completions_up:
-        return _module("antares", "Antares", "ready", "Jobs and the local model helper are up.", "")
+        detail = line or "Its own model server is up, separate from Ollama."
+        return _module("antares", "Antares", "ready", detail, "antares")
     if jobs_up:
-        return _module("antares", "Antares", "limited", "Jobs are up. The local model helper is down.", "")
+        detail = line or "Jobs are up. Its model server is down."
+        return _module("antares", "Antares", "limited", detail, "antares")
     return _module("antares", "Antares", "off", "Antares jobs are not reachable.", "")

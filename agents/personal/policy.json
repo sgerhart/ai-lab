@@ -1,0 +1,21 @@
+{
+  "id": "personal",
+  "isolation_tier": 0,
+  "read_only": true,
+  "allowed_tools": [
+    "vault_list",
+    "vault_grep",
+    "vault_read",
+    "web_search",
+    "research",
+    "files_list",
+    "files_grep",
+    "files_read",
+    "report_list",
+    "report_read",
+    "report_write"
+  ],
+  "privileged_tools": [],
+  "network": [],
+  "notes": "Reads ~/.ai-lab/memory and ~/.ai-lab/files. research gathers up to five public pages the lab chooses and files a source dossier under ~/.ai-lab/reports. report_write saves or replaces a markdown report there. The model does not choose URLs. Send, spend, and delete are not tools."
+}

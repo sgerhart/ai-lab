@@ -20,6 +20,7 @@ from ai_lab_platform.mcp_client import (
     cve_lookup_mcp_candidate,
     intake_candidates,
     lab_mcp_candidate,
+    register_catalog_server,
     submit_mcp_intake,
     virustotal_mcp_candidate,
 )
@@ -82,9 +83,14 @@ class IntakeTests(unittest.TestCase):
 
     def test_lookup_candidates_stay_unlisted_until_authorized(self) -> None:
         candidates = {item["id"]: item for item in intake_candidates()}
-        self.assertEqual(set(candidates), {"ai-lab", "virustotal", "cve-lookup"})
+        self.assertEqual(set(candidates), {"ai-lab", "virustotal", "cve-lookup", "gmail"})
         for item in candidates.values():
             self.assertFalse(item["listed"])
+            if item["id"] == "gmail":
+                self.assertEqual(item["transport"], "http")
+                self.assertEqual(item["runs_in"], "remote-http")
+                self.assertIn("gmailmcp.googleapis.com", item["url"])
+                continue
             self.assertEqual(item["runs_in"], "stdio-process")
         virus = candidates["virustotal"]
         cve = candidates["cve-lookup"]
@@ -150,6 +156,18 @@ class IntakeTests(unittest.TestCase):
                 capabilities=[{"name": "list_dir", "permission_class": "read"}],
                 credential_ref="sk-live-secretvalue",
             )
+
+    def test_gmail_registration_stays_off(self) -> None:
+        saved = register_catalog_server("gmail")
+        self.assertEqual(saved["id"], "gmail")
+        self.assertEqual(saved["transport"], "http")
+        self.assertFalse(saved["listed"])
+        self.assertFalse(saved["enabled"])
+        self.assertEqual(saved["runs_in"], "remote-http")
+        self.assertIn("gmailmcp.googleapis.com", saved["url"])
+        self.assertEqual(saved["credential_ref"], "Google OAuth")
+        with self.assertRaises(ValueError):
+            authorize_mcp_server("gmail")
 
 
 if __name__ == "__main__":

@@ -33,8 +33,12 @@
       ["Weekly brief", "What moved, what is stuck, what is next."],
       ["Draft a reply", "A message you send yourself. Sending stays behind approval."],
     ]},
+    { group: "Catalog", items: [
+      ["Read mail", "Gmail is in the catalog. A mail build registers it and leaves it off until you sign in."],
+      ["Look up a CVE", "NVD, OSV, and CISA KEV. The server stays off until you authorize it."],
+      ["Read a file report", "VirusTotal hash, domain, and IP reports. The server stays off until you authorize it."],
+    ]},
     { group: "Later", items: [
-      ["Read mail", "Connect a mailbox, then summarize. Not connected yet."],
       ["Read a portfolio", "Balances and history only. Transfers stay behind approval."],
     ]},
   ];
@@ -85,6 +89,8 @@
       versions: [],
       change_note: "",
       task: "",
+      kind: "agent",
+      steps: [],
     };
   }
   function el(tag, attrs, kids) {
@@ -115,6 +121,7 @@
   }
   function badges(d) {
     const row = el("div", { class: "badge-row" });
+    if ((d.kind || "agent") === "workflow") row.appendChild(el("span", { class: "pill on", text: "Workflow" }));
     const p = purposeOf(d.purpose || "build");
     row.appendChild(el("span", { class: "pill on", text: p.label }));
     toolList(d.tools).slice(0, 3).forEach((t) => row.appendChild(el("span", { class: "pill", text: t })));
@@ -136,9 +143,14 @@
     return next;
   }
   function composePrompt(d) {
-    if (mode === "simple") {
+    if (mode !== "advanced") {
       const lines = ["Purpose: " + purposeOf(d.purpose).label];
-      if (d.instructions.trim()) lines.push(d.instructions.trim());
+      if ((d.kind || "agent") === "workflow" && (d.steps || []).length) {
+        lines.push("Kind: workflow");
+        lines.push("Steps, in order:\n" + d.steps.map((step, index) => (index + 1) + ". " + step).join("\n"));
+        lines.push("Follow these steps in order. Do not add a step or a connection.");
+      }
+      if ((d.instructions || "").trim()) lines.push(d.instructions.trim());
       if (d.knowledge.trim()) lines.push("Knowledge:\n" + d.knowledge.trim());
       return lines.join("\n\n");
     }
@@ -195,10 +207,18 @@
     }
     defs.forEach((d) => {
       const studio = d.studio || {};
-      const tile = el("button", { class: "agent-tile", type: "button", onclick: () => openExisting(d) }, [
+      const tile = el("article", { class: "agent-tile" });
+      const open = el("button", { class: "tile-open", type: "button", onclick: () => openExisting(d) }, [
         el("h3", { text: d.title || "Untitled" }),
       ]);
-      tile.appendChild(badges(Object.assign({ purpose: studio.purpose || "build", model: studio.model, tools: studio.tools, memory: studio.memory }, studio)));
+      open.appendChild(badges(Object.assign({ purpose: studio.purpose || "build", model: studio.model, tools: studio.tools, memory: studio.memory, kind: studio.kind }, studio)));
+      tile.appendChild(open);
+      tile.appendChild(el("button", {
+        class: "tile-delete",
+        type: "button",
+        text: "Delete",
+        onclick: () => removeDefinition(d).catch((e) => host.showErr(e)),
+      }));
       board.appendChild(tile);
     });
     root.appendChild(board);
@@ -227,6 +247,7 @@
       const grid = el("div", { class: "lib-grid" });
       group.items.forEach(([name, blurb]) => {
         const later = group.group === "Later";
+        const catalog = group.group === "Catalog";
         grid.appendChild(el("button", {
           class: "lib-card",
           type: "button",
@@ -234,11 +255,41 @@
         }, [
           el("strong", { text: name }),
           el("span", { text: blurb }),
-          el("div", { class: "badge-row" }, [el("span", { class: later ? "pill later" : "pill on", text: later ? "Add-on" : "Attach" })]),
+          el("div", { class: "badge-row" }, [el("span", {
+            class: later || catalog ? "pill later" : "pill on",
+            text: later ? "Add-on" : catalog ? "Off" : "Attach",
+          })]),
         ]));
       });
       root.appendChild(grid);
     });
+    const seen = {};
+    SKILLS.forEach((group) => group.items.forEach((item) => { seen[item[0]] = true; }));
+    const extra = [];
+    (host.state.definitions || []).forEach((d) => {
+      const names = (d.studio && d.studio.skills) || [];
+      names.forEach((name) => {
+        if (!name || seen[name]) return;
+        seen[name] = true;
+        extra.push([name, "Registered with " + (d.title || "an agent")]);
+      });
+    });
+    if (extra.length) {
+      root.appendChild(el("div", { class: "studio-h", text: "Registered" }));
+      const grid = el("div", { class: "lib-grid" });
+      extra.forEach(([name, blurb]) => {
+        grid.appendChild(el("button", {
+          class: "lib-card",
+          type: "button",
+          onclick: () => attachSkill(name),
+        }, [
+          el("strong", { text: name }),
+          el("span", { text: blurb }),
+          el("div", { class: "badge-row" }, [el("span", { class: "pill on", text: "Registered" })]),
+        ]));
+      });
+      root.appendChild(grid);
+    }
   }
   function attachSkill(name) {
     if (!draft) openBuilder("build");
@@ -254,15 +305,17 @@
   function renderTools(root) {
     root.appendChild(el("div", { class: "studio-hero" }, [
       el("h1", { text: "Tools" }),
-      el("p", { text: "Native tools the lab can already run, plus MCP servers you have saved. A saved server is not permission to call it. Enterprise systems can be added later as connections, not as the point of the studio." }),
+      el("p", { text: "Native tools the lab can run, and MCP servers in the catalog. A catalog server stays off until you authorize it. Each one you authorize is then available to the builder and to later agents." }),
     ]));
     root.appendChild(el("div", { class: "studio-h", text: "Native" }));
     const grid = el("div", { class: "lib-grid" });
     const list = (caps && caps.capabilities) || [];
-    if (!list.length) {
+    const native = list.filter((cap) => cap.origin === "built_in");
+    const servers = list.filter((cap) => cap.origin !== "built_in");
+    if (!native.length) {
       grid.appendChild(el("p", { class: "muted", text: "Open this page while signed in to see the live tool list." }));
     }
-    list.forEach((cap) => {
+    native.forEach((cap) => {
       const risk = cap.risk || "";
       grid.appendChild(el("article", { class: "lib-card" }, [
         el("strong", { text: cap.name || "" }),
@@ -273,6 +326,22 @@
       ]));
     });
     root.appendChild(grid);
+    root.appendChild(el("div", { class: "studio-h", text: "MCP servers" }));
+    const serverGrid = el("div", { class: "lib-grid" });
+    if (!servers.length) {
+      serverGrid.appendChild(el("p", { class: "muted", text: "No catalog servers yet." }));
+    }
+    servers.forEach((cap) => {
+      const names = (cap.tools || []).map((tool) => tool.name).filter(Boolean).join(", ");
+      serverGrid.appendChild(el("article", { class: "lib-card" }, [
+        el("strong", { text: cap.name || "" }),
+        el("span", { text: names || cap.connection_state || "" }),
+        el("div", { class: "badge-row" }, [
+          el("span", { class: cap.permitted ? "pill on" : "pill later", text: cap.connection_state || "off" }),
+        ]),
+      ]));
+    });
+    root.appendChild(serverGrid);
   }
   function renderStatic(root, title, lead, body) {
     root.appendChild(el("div", { class: "studio-hero" }, [
@@ -300,7 +369,7 @@
     ]);
   }
   function renderWorkflows(root) {
-    renderStatic(root, "Workflows", "Three ways agents can work together. Today a run is one agent that stays responsible. Handoffs and explicit graphs come next.", [
+    renderStatic(root, "Workflows", "A known sequence is saved from New, with the steps in order. Today a run is one worker following those steps. Handoffs and branching graphs come next.", [
       el("div", { class: "pattern-grid" }, [
         ["Manager", "One agent owns the task and may use tools.", "Live"],
         ["Handoff", "Build, then review, then you approve.", "Later"],
@@ -327,6 +396,7 @@
   }
   function traceLabel(trace) {
     if (trace.kind === "model_call") return "Model";
+    if (trace.kind === "model_wait") return "Waiting";
     if (trace.kind === "tool_result") return "Tool · " + (trace.tool || "call");
     if (trace.kind === "final") return "Complete";
     return trace.kind || "Step";
@@ -555,25 +625,94 @@
     shell.appendChild(panel);
     root.appendChild(shell);
   }
-  function renderBuilder(root) {
+  function renderTalk(root) {
+    root.appendChild(el("div", { class: "ask-head" }, [
+      el("div", { class: "studio-hero" }, [
+        el("h1", { text: "New" }),
+        el("p", { text: "Answer the questions. Say build it when everything is good." }),
+      ]),
+    ]));
+    const body = el("div", { class: "ask-body" });
+    const log = el("div", { class: "ask-log" });
+    (draft.chat || []).forEach((row) => {
+      log.appendChild(el("div", { class: "ask-bubble" }, [
+        el("div", { class: "ask-who", text: row.role === "user" ? "You" : "Studio" }),
+        el("p", { text: row.content || "" }),
+      ]));
+    });
+    body.appendChild(log);
+    root.appendChild(body);
+    const form = el("form", { class: "ask-compose" });
+    const box = el("input", { type: "text", placeholder: "Answer, or say build it", autocomplete: "off" });
+    form.appendChild(box);
+    form.appendChild(el("button", { class: "studio-new", type: "submit", text: "Send" }));
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = box.value;
+      box.value = "";
+      ask(text).catch((e) => host.showErr(e));
+    });
+    root.appendChild(el("div", { class: "ask-foot" }, [form]));
+  }
+  function renderSummary(root) {
+    const head = el("div", { class: "ask-head" });
     const top = el("div", { class: "builder-top" });
     const left = el("div");
+    left.style.flex = "1";
+    left.style.minWidth = "0";
     left.appendChild(el("button", { class: "studio-link", type: "button", onclick: () => show("agents"), text: "← My Agents" }));
     const title = el("input", { class: "builder-title", value: draft.title, placeholder: "Name this agent" });
     title.addEventListener("input", () => { draft.title = title.value; });
     left.appendChild(title);
     left.appendChild(badges(draft));
     const actions = el("div", { class: "builder-actions" });
-    actions.appendChild(el("div", { class: "seg" }, [
-      el("button", { type: "button", class: mode === "simple" ? "on" : "", onclick: () => { mode = "simple"; render(); }, text: "Simple" }),
-      el("button", { type: "button", class: mode === "advanced" ? "on" : "", onclick: () => { mode = "advanced"; render(); }, text: "Advanced" }),
-    ]));
+    actions.appendChild(el("button", {
+      class: "studio-link",
+      type: "button",
+      onclick: () => {
+        draft.phase = "talk";
+        draft.chat = (draft.chat || []).concat([{ role: "assistant", content: "What should be different?" }]);
+        render();
+      },
+      text: "Change it",
+    }));
     actions.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => saveDraft().catch((e) => host.showErr(e)), text: draft.id ? "Save" : "Create" }));
+    if (draft.id) {
+      actions.appendChild(el("button", {
+        class: "studio-link",
+        type: "button",
+        text: "Delete",
+        onclick: () => removeDefinition({ id: draft.id, title: draft.title }).catch((e) => host.showErr(e)),
+      }));
+    }
     top.appendChild(left);
     top.appendChild(actions);
-    root.appendChild(top);
-    if (mode === "simple") simpleBuilder(root);
-    else advBuilder(root);
+    head.appendChild(top);
+    root.appendChild(head);
+    const body = el("div", { class: "ask-body" });
+    body.appendChild(el("p", { class: "ask-summary", text: draft.instructions || "No description yet." }));
+    if ((draft.kind || "agent") === "workflow" && (draft.steps || []).length) {
+      body.appendChild(el("p", {
+        class: "ask-summary",
+        text: draft.steps.map((step, index) => (index + 1) + ". " + step).join("\n"),
+      }));
+    }
+    if (draft.knowledge) body.appendChild(el("p", { class: "note", text: "It will read: " + draft.knowledge }));
+    body.appendChild(el("p", { class: "note", text: draft.model_note || "I'll use a local model for this." }));
+    if ((draft.skills || []).length) {
+      body.appendChild(el("p", { class: "note", text: "Skills: " + draft.skills.join(", ") }));
+    }
+    if ((draft.tools || []).length) {
+      const same = (draft.mcp_tools || []).join(",") === draft.tools.join(",");
+      if (!same) body.appendChild(el("p", { class: "note", text: "Tools: " + draft.tools.join(", ") }));
+    }
+    if ((draft.mcp_tools || []).length) {
+      body.appendChild(el("p", { class: "note", text: "MCP read tools, still off: " + draft.mcp_tools.join(", ") }));
+    }
+    if (draft.registration && draft.registration.mcp) {
+      const names = Array.isArray(draft.registration.mcp) ? draft.registration.mcp.join(", ") : String(draft.registration.mcp);
+      body.appendChild(el("p", { class: "note", text: "Registered " + names + ". The server stays off until you authorize it." }));
+    }
     const run = el("div", { class: "run-box" });
     run.appendChild(el("div", { class: "studio-h", text: "Run" }));
     run.appendChild(field("Task", area(draft.task, (v) => { draft.task = v; }, 3)));
@@ -584,7 +723,12 @@
     row.appendChild(el("button", { class: "studio-new", type: "button", onclick: () => runDraft().catch((e) => host.showErr(e)), text: "Run" }));
     run.appendChild(row);
     run.appendChild(el("p", { class: "note", text: host.state.worktreeId ? "Separate copy " + host.state.worktreeId + " is ready." : "A build run can read before a copy exists. It cannot change files until you prepare one and approve the edit." }));
-    root.appendChild(run);
+    body.appendChild(run);
+    root.appendChild(body);
+  }
+  function renderBuilder(root) {
+    if ((draft.phase || "talk") === "talk") renderTalk(root);
+    else renderSummary(root);
   }
 
   const PAGES = {
@@ -612,7 +756,7 @@
     if (!root) return;
     mark();
     const next = document.createElement("div");
-    next.className = "studio-page";
+    next.className = section === "builder" ? "studio-page stage" : "studio-page";
     try {
       const page = PAGES[section] || renderDashboard;
       page(next);
@@ -620,6 +764,10 @@
       next.appendChild(el("p", { class: "muted", text: String(err && err.message || err) }));
     }
     root.replaceChildren(next);
+    const log = next.querySelector(".ask-body");
+    if (log) log.scrollTop = log.scrollHeight;
+    const box = next.querySelector(".ask-compose input");
+    if (box) box.focus();
     if (section === "tools" && !caps) {
       host.api("/v1/capabilities?agent=coding-assistant").then((data) => {
         caps = data;
@@ -649,15 +797,57 @@
     else if (host.state.view !== "agents") host.setView("agents");
     else render();
   }
+  async function ask(text) {
+    const content = (text || "").trim();
+    if (!content) return;
+    draft.chat = (draft.chat || []).concat([{ role: "user", content: content }]);
+    render();
+    const out = await host.api("/v1/agent-studio/draft", {
+      method: "POST",
+      body: JSON.stringify({ messages: draft.chat }),
+    });
+    if (out.ready && out.draft) {
+      const kept = draft.chat;
+      const id = draft.id;
+      Object.assign(draft, out.draft);
+      draft.id = id;
+      draft.chat = kept;
+      draft.phase = "summary";
+    } else {
+      draft.chat = draft.chat.concat([{ role: "assistant", content: out.question || "Tell me a little more about the job." }]);
+    }
+    host.showErr("");
+    render();
+  }
   function openBuilder(purposeId) {
-    draft = blankDraft(purposeId);
-    mode = "simple";
+    draft = blankDraft(purposeId || "learn");
+    draft.phase = "talk";
+    const named = purposeId ? purposeOf(purposeId).label.toLowerCase() + " " : "";
+    draft.chat = [{
+      role: "assistant",
+      content: purposeId
+        ? ("What do you want this " + named + "agent to do?")
+        : "What do you want done?",
+    }];
+    mode = "talk";
     section = "builder";
     host.setView("agent");
   }
+  async function removeDefinition(d) {
+    if (!d || !d.id) return;
+    const title = d.title || "this agent";
+    if (!window.confirm("Delete " + title + "?")) return;
+    await host.api("/v1/agent-definitions/" + d.id, { method: "DELETE" });
+    if (draft && draft.id === d.id) draft = null;
+    await host.loadDefinitions();
+    host.showErr("");
+    show("agents");
+  }
   function openExisting(d) {
     draft = fromDefinition(d);
-    mode = "simple";
+    draft.phase = "summary";
+    if (!draft.model_note) draft.model_note = draft.model ? ("This agent uses " + draft.model + ".") : "I'll use a local model for this.";
+    mode = "talk";
     section = "builder";
     host.state.definitionId = d.id;
     host.setView("agent");
@@ -711,7 +901,7 @@
       method: "POST",
       body: JSON.stringify({
         objective: (draft.task || "").trim() || draft.title || "Start the task.",
-        model: choice.model || "llama3.2:3b",
+        model: choice.model || "qwen3.6:35b-a3b",
         billing_class: choice.billing_class || "local",
         backend: choice.backend || "ollama",
         max_steps: 8,
@@ -728,7 +918,7 @@
       btn.addEventListener("click", () => show(id));
     });
     const newer = $("studio-new");
-    if (newer) newer.addEventListener("click", () => openBuilder("build"));
+    if (newer) newer.addEventListener("click", () => openBuilder(""));
     const toggle = $("toggle-studio");
     const showBtn = $("show-studio");
     function toggleRail() {

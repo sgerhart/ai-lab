@@ -1,0 +1,8 @@
+{
+  "hosts": [
+    "www.cisco.com",
+    "docs.python.org",
+    "developer.mozilla.org",
+    "www.rfc-editor.org"
+  ]
+}

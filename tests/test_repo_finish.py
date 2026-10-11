@@ -53,7 +53,9 @@ class OllamaBackendTests(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"response": "pong"}
         mock_resp.raise_for_status.return_value = None
-        with patch("httpx.post", return_value=mock_resp) as mocked:
+        with patch("ai_lab_platform.model_slot.read_resident", return_value=[]), patch(
+            "httpx.post", return_value=mock_resp
+        ) as mocked:
             text = OllamaBackend().complete(
                 CompletionRequest(model="unused", prompt="ping", backend="ollama")
             )
@@ -62,6 +64,48 @@ class OllamaBackendTests(unittest.TestCase):
         args, kwargs = mocked.call_args
         self.assertTrue(str(args[0]).startswith("http://127.0.0.1:11434/"))
         self.assertFalse(kwargs["json"].get("stream"))
+        self.assertNotIn("images", kwargs["json"])
+
+    def test_complete_sends_images(self) -> None:
+        try:
+            import httpx  # noqa: F401
+        except ImportError:
+            self.skipTest("httpx not installed")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"response": "a switch"}
+        mock_resp.raise_for_status.return_value = None
+        with patch("ai_lab_platform.model_slot.read_resident", return_value=[]), patch(
+            "httpx.post", return_value=mock_resp
+        ) as mocked:
+            text = OllamaBackend().complete(
+                CompletionRequest(
+                    model="qwen3.8:27b",
+                    prompt="what is this",
+                    backend="ollama",
+                    images=["abc123"],
+                )
+            )
+        self.assertEqual(text.text, "a switch")
+        _args, kwargs = mocked.call_args
+        self.assertEqual(kwargs["json"]["images"], ["abc123"])
+
+    def test_reads_images_from_capabilities(self) -> None:
+        try:
+            import httpx  # noqa: F401
+        except ImportError:
+            self.skipTest("httpx not installed")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {"capabilities": ["completion", "vision"]}
+        mock_resp.raise_for_status.return_value = None
+        backend = OllamaBackend("http://127.0.0.1:11434")
+        with patch("httpx.post", return_value=mock_resp) as mocked:
+            self.assertTrue(backend.reads_images("qwen3.8:27b"))
+            self.assertTrue(backend.reads_images("Qwen3.8:27b"))
+        self.assertEqual(mocked.call_count, 1)
+        mock_resp.json.return_value = {"capabilities": ["completion"]}
+        backend._vision_cache.clear()
+        with patch("httpx.post", return_value=mock_resp):
+            self.assertFalse(backend.reads_images("llama3.2:3b"))
 
 
 class AuditTests(unittest.TestCase):

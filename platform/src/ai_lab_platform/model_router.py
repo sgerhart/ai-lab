@@ -18,6 +18,7 @@ class CompletionRequest:
     prompt: str
     backend: str = "fake"
     system: str = ""
+    images: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -190,6 +191,7 @@ class ModelRouter:
                         prompt=request.prompt,
                         backend=self.default_backend,
                         system=request.system,
+                        images=list(request.images),
                     )
                 )
             else:
