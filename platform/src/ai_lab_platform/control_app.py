@@ -1624,9 +1624,12 @@ def create_control_app(
         model = body.model
         from .model_catalog import resolve_smart_model
 
-        if model in {"auto", ""} or "auto" in (model or "").lower():
-            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
-            installed = list((ollama_p or {}).get("models") or [])
+        ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+        installed = list((ollama_p or {}).get("models") or [])
+        real_models = [m for m in installed if m != "fake-instruct"]
+        if real_models and (model in {"auto", "", "fake-instruct"} or backend == "fake" or "auto" in (model or "").lower()):
+            model, backend = resolve_smart_model(body.content, model, real_models)
+        elif model in {"auto", ""} or "auto" in (model or "").lower():
             model, backend = resolve_smart_model(body.content, model, installed)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
@@ -1791,9 +1794,12 @@ def create_control_app(
         model = body.model
         from .model_catalog import resolve_smart_model
 
-        if model in {"auto", ""} or "auto" in (model or "").lower():
-            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
-            installed = list((ollama_p or {}).get("models") or [])
+        ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+        installed = list((ollama_p or {}).get("models") or [])
+        real_models = [m for m in installed if m != "fake-instruct"]
+        if real_models and (model in {"auto", "", "fake-instruct"} or backend == "fake" or "auto" in (model or "").lower()):
+            model, backend = resolve_smart_model(body.content, model, real_models)
+        elif model in {"auto", ""} or "auto" in (model or "").lower():
             model, backend = resolve_smart_model(body.content, model, installed)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
@@ -2497,9 +2503,12 @@ def create_control_app(
 
         run_model = body.model
         run_backend = body.backend
-        if run_model in {"auto", ""} or "auto" in (run_model or "").lower():
-            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
-            installed = list((ollama_p or {}).get("models") or [])
+        ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+        installed = list((ollama_p or {}).get("models") or [])
+        real_models = [m for m in installed if m != "fake-instruct"]
+        if real_models and (run_model in {"auto", "", "fake-instruct"} or run_backend == "fake" or "auto" in (run_model or "").lower()):
+            run_model, run_backend = resolve_smart_model(body.objective, run_model, real_models)
+        elif run_model in {"auto", ""} or "auto" in (run_model or "").lower():
             run_model, run_backend = resolve_smart_model(body.objective, run_model, installed)
 
         run = AgentRun.new(

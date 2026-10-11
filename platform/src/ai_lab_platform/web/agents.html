@@ -283,9 +283,9 @@
       letter-spacing: .06em; color: #787878; margin-right: -4px; user-select: none;
     }
     .mode-select {
-      appearance: none; border: 1px solid var(--line); background: #181818; color: var(--muted);
-      font: 13px/1 inherit; padding: 6px 10px; cursor: pointer; border-radius: 999px;
-      max-width: min(100%, 36rem);
+      border: 1px solid var(--line); background: #181818; color: var(--muted);
+      font: 13px/1 inherit; padding: 6px 12px; cursor: pointer; border-radius: 999px;
+      min-width: 140px; max-width: min(100%, 36rem);
     }
     .mode-select:hover { background: #222222; color: var(--ink); border-color: #444; }
     .send {
@@ -1156,7 +1156,9 @@
             </select>
             <span class="meta-label" style="margin-left:6px;">Model:</span>
             <select id="provider" class="mode-select" title="Provider" hidden></select>
-            <select id="model" class="mode-select" title="Model"></select>
+            <select id="model" class="mode-select" title="Model">
+              <option value="ollama::auto" selected>⚡ Auto (Smart Route)</option>
+            </select>
             <button type="button" class="btn" id="run-bg" title="Queue this task on the mini">Run in background</button>
             <select id="agent" class="mode-select" title="Agent persona" hidden>
               <option value="lab-operations">lab-operations</option>
@@ -1690,17 +1692,22 @@
       const raw = $("model").value || "";
       const [backend, ...rest] = raw.split("::");
       const model = rest.join("::");
-      if (backend && model) {
+      if (backend && model && model !== "fake-instruct") {
         const fromChoices = (state.choices || []).find((c) => c.backend === backend && c.model === model);
         if (fromChoices) return fromChoices;
         return { backend, model, billing_class: backend === "ollama" ? "local" : "usage_billed_api", label: model, available: true };
       }
-      const p = state.providers.find((x) => x.id === $("provider").value);
+      const ollama = (state.providers || []).find((x) => x.id === "ollama");
+      const realModels = (ollama && ollama.models || []).filter((m) => m !== "fake-instruct");
+      if (realModels.length || (ollama && ollama.enabled)) {
+        return { backend: "ollama", model: "auto", billing_class: "local", label: "Auto (Smart Route)", available: true };
+      }
+      const p = (state.providers || []).find((x) => x.id === $("provider").value);
       return {
-        backend: $("provider").value || "fake",
-        model: raw || "fake-instruct",
+        backend: $("provider").value || "ollama",
+        model: raw || "auto",
         billing_class: (p && p.billing_class) || "local",
-        label: raw,
+        label: raw || "Auto",
         available: true,
       };
     }
@@ -1713,7 +1720,7 @@
       autoOpt.textContent = "⚡ Auto (Smart Route)";
       autoOpt.title = "Automatically route to qwen3-coder for code, llama3.2 for fast queries, or qwen3.6 for reasoning.";
       msel.appendChild(autoOpt);
-      const choices = (state.choices || []).filter((c) => c.available !== false);
+      const choices = (state.choices || []).filter((c) => c.available !== false && c.model !== "fake-instruct");
       if (choices.length) {
         for (const c of choices) {
           const opt = document.createElement("option");
@@ -1725,20 +1732,20 @@
           opt.title = c.intended_use || "";
           msel.appendChild(opt);
         }
-        if (prev && [...msel.options].some((o) => o.value === prev)) msel.value = prev;
-        else msel.value = "ollama::auto";
-        const ch = selectedChoice();
-        $("provider").value = ch.backend;
       } else {
-        const p = state.providers.find((x) => x.id === $("provider").value);
-        const models = (p && p.models && p.models.length) ? p.models : ["fake-instruct"];
+        const ollama = (state.providers || []).find((p) => p.id === "ollama");
+        const models = ((ollama && ollama.models) || []).filter((m) => m !== "fake-instruct");
         for (const m of models) {
           const opt = document.createElement("option");
-          opt.value = (p ? p.id : "fake") + "::" + m;
-          opt.textContent = m;
+          opt.value = "ollama::" + m;
+          opt.textContent = m + " (local)";
           msel.appendChild(opt);
         }
       }
+      if (prev && [...msel.options].some((o) => o.value === prev)) msel.value = prev;
+      else msel.value = "ollama::auto";
+      const ch = selectedChoice();
+      if ($("provider")) $("provider").value = ch.backend;
       updateChips();
     }
     function updateChips() {
@@ -3469,8 +3476,8 @@
         body: JSON.stringify({
           objective: text,
           execute: true,
-          backend: ch.backend || "fake",
-          model: ch.model || "fake-instruct",
+          backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+          model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
           billing_class: ch.billing_class || "local",
           max_steps: 16,
         }),
@@ -3493,7 +3500,8 @@
       let gotOfficial = false;
       try {
         if (!state.conversationId) await newConversation();
-        if (isPersonalConversation()) {
+        const needsAgent = isPersonalConversation() || /presentation|slide|report|skill|deck|research|memory|vault|task/i.test(text);
+        if (needsAgent) {
           await sendPersonalTurn(text);
           return;
         }
@@ -3515,8 +3523,8 @@
             content: text,
             role: "user",
             reply: true,
-            backend: ch.backend || "fake",
-            model: ch.model || "fake-instruct",
+            backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+            model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
             attachment_ids: state.attachments.map((a) => a.id),
             deep_research: deepResearch(),
           }),
