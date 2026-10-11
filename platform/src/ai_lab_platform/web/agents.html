@@ -1557,13 +1557,14 @@
 
   <!-- Artifact Full Screen / Modal Viewer -->
   <div class="artifact-modal" id="artifact-modal" hidden>
-    <div class="artifact-modal-backdrop" id="artifact-modal-backdrop"></div>
+    <div class="artifact-modal-backdrop" id="artifact-modal-backdrop" onclick="closeArtifactViewer()"></div>
     <div class="artifact-modal-card">
       <div class="artifact-modal-header">
         <div class="artifact-modal-title" id="artifact-modal-title">Presentation Preview</div>
         <div class="artifact-modal-actions">
           <a href="#" target="_blank" class="btn" id="artifact-modal-popout" title="Open in new window">Open in new tab ↗</a>
-          <button type="button" class="btn primary" id="artifact-modal-done">Done</button>
+          <button type="button" class="btn primary" id="artifact-modal-done" onclick="closeArtifactViewer()">Done</button>
+          <button type="button" class="icon-btn" id="artifact-modal-x" onclick="closeArtifactViewer()" title="Close">✕</button>
         </div>
       </div>
       <div class="artifact-modal-body">
@@ -2633,15 +2634,25 @@
       titleEl.textContent = title || "Artifact Preview";
       popout.href = url;
       frame.src = url;
-      modal.hidden = false;
+      modal.removeAttribute("hidden");
+      modal.style.display = "flex";
     }
+    window.openArtifactViewer = openArtifactViewer;
 
     function closeArtifactViewer() {
       const modal = $("artifact-modal");
       const frame = $("artifact-frame");
-      if (modal) modal.hidden = true;
+      if (modal) {
+        modal.setAttribute("hidden", "");
+        modal.style.display = "none";
+      }
       if (frame) frame.src = "about:blank";
     }
+    window.closeArtifactViewer = closeArtifactViewer;
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeArtifactViewer();
+    });
 
     function toggleArtifactsRail(force) {
       const rail = $("artifacts-rail");
