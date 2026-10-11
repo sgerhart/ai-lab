@@ -3474,6 +3474,7 @@
       await api(`/v1/conversations/${state.conversationId}/runs`, {
         method: "POST",
         body: JSON.stringify({
+          agent: "personal",
           objective: text,
           execute: true,
           backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
@@ -3637,12 +3638,13 @@
         await api(`/v1/conversations/${state.conversationId}/runs`, {
           method: "POST",
           body: JSON.stringify({
+            agent: "personal",
             objective: text,
             execute: true,
-            backend: ch.backend || "fake",
-            model: ch.model || "fake-instruct",
+            backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+            model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
             billing_class: ch.billing_class || "local",
-            max_steps: 6,
+            max_steps: 16,
           }),
         });
         $("chat").value = "";

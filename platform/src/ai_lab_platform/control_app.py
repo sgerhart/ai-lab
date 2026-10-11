@@ -391,6 +391,7 @@ class AntaresHandoffIn(BaseModel):
 class AgentRunIn(BaseModel):
     """Durable agent-run request. Distinct from an ordinary chat message."""
 
+    agent: str | None = Field(default=None, description="Optional agent persona (personal|lab-operations|etc.)")
     objective: str = ""
     model: str = "fake-instruct"
     billing_class: str = Field(
@@ -2511,8 +2512,14 @@ def create_control_app(
         elif run_model in {"auto", ""} or "auto" in (run_model or "").lower():
             run_model, run_backend = resolve_smart_model(body.objective, run_model, installed)
 
+        target_agent = body.agent or conversation.agent
+        if target_agent == "lab-operations":
+            lower_obj = (body.objective or "").lower()
+            if any(k in lower_obj for k in ["presentation", "slide", "report", "skill", "stock", "search", "web", "research", "cisco", "csco", "deck", "build", "vault", "schedule", "create"]):
+                target_agent = "personal"
+
         run = AgentRun.new(
-            agent=conversation.agent,
+            agent=target_agent,
             objective=body.objective,
             conversation_id=conversation_id,
             work_order_id=body.work_order_id,
