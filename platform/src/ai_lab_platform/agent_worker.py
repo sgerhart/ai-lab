@@ -80,6 +80,13 @@ def drain_queued_runs(
                     history=conversation_history(store, current),
                 )
                 _file_personal_reply(store, finished)
+                if (getattr(finished, "steward_goal_id", "") or "").strip():
+                    from .steward import note_wake_finished
+
+                    try:
+                        note_wake_finished(finished)
+                    except Exception:  # noqa: BLE001 — the run result is already stored
+                        pass
                 processed.append(
                     {
                         "id": finished.id,

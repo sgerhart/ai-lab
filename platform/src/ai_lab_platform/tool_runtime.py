@@ -91,6 +91,7 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "files_grep": lambda ctx, **a: _files_grep(ctx, a),
     "files_read": lambda ctx, **a: _files_read(ctx, a),
     "web_search": lambda ctx, **a: _web_search(ctx, a),
+    "nexus_search": lambda ctx, **a: _nexus_search(ctx, a),
     "research": lambda ctx, **a: _research(ctx, a),
     "report_list": lambda ctx, **a: _report_list(ctx, a),
     "report_read": lambda ctx, **a: _report_read(ctx, a),
@@ -100,6 +101,7 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "schedule_list": lambda ctx, **a: _schedule_list(ctx, a),
     "schedule_cancel": lambda ctx, **a: _schedule_cancel(ctx, a),
     "presentation_write": lambda ctx, **a: _presentation_write(ctx, a),
+    "presentation_read": lambda ctx, **a: _presentation_read(ctx, a),
     "presentation_list": lambda ctx, **a: _presentation_list(ctx, a),
     "skill_create": lambda ctx, **a: _skill_create(ctx, a),
     "skill_list": lambda ctx, **a: _skill_list(ctx, a),
@@ -185,6 +187,18 @@ def _files_read(ctx: ToolContext, args: dict[str, Any]) -> str:
         return _files_of(ctx).read(str(args.get("path") or args.get("file") or ""))
     except FilesError as exc:
         raise ToolError(str(exc)) from exc
+
+
+def _nexus_search(ctx: ToolContext, args: dict[str, Any]) -> str:
+    """Search the Knowledge Nexus shelf. Read-only."""
+    del ctx
+    query = str(args.get("query") or args.get("q") or "").strip()
+    if len(query) < 3:
+        raise ToolError("nexus_search needs a question about the library.")
+    from .nexus_library import books_for_query
+
+    found = books_for_query(query, limit=4)
+    return found or "No Nexus book, paper, or course matched that question."
 
 
 def _web_search(ctx: ToolContext, args: dict[str, Any]) -> str:
@@ -349,6 +363,16 @@ def _presentation_write(_ctx: ToolContext, args: dict[str, Any]) -> str:
         raise ToolError("content/slides required for presentation_write")
     try:
         return PresentationLibrary().write(name, title, content)
+    except PresentationError as exc:
+        raise ToolError(str(exc)) from exc
+
+
+def _presentation_read(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    name = str(args.get("name") or args.get("title") or "").strip()
+    if not name:
+        raise ToolError("name required for presentation_read")
+    try:
+        return PresentationLibrary().read(name)
     except PresentationError as exc:
         raise ToolError(str(exc)) from exc
 

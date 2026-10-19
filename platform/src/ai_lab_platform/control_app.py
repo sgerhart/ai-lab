@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import socket
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -29,6 +30,17 @@ from .agent_loop import (
 )
 from .agent_scheduler import status as scheduler_status
 from .agent_scheduler import tick as scheduler_tick
+from .steward import (
+    StewardError,
+    access_manifest,
+    close_goal,
+    create_goal,
+    default_goals_path,
+    list_activity,
+    list_goals,
+    pause_goal,
+    wake_due,
+)
 from .agent_worker import AgentRunWorker, drain_queued_runs
 from .antares_client import AntaresStudioClient
 from .antares_handoff import build_handoff
@@ -43,6 +55,7 @@ from .attachments import (
 from .auth import AuthError, auth_status, client_ip, require_auth
 from .capabilities import assistant_name, capability_catalog
 from .chat_grounding import (
+    GroundedTurn,
     finish_grounded_reply,
     prepare_grounded_turn,
     scrub_title,
@@ -72,7 +85,14 @@ from .mcp_client import (
 )
 from .model_router import CompletionRequest, ModelRouter, build_router_from_settings
 from .policy import load_policy
-from .presentations import default_presentations_root
+from .presentations import (
+    PresentationError,
+    _safe_slug,
+    deck_edit_prompt,
+    deck_title_from_markdown,
+    default_presentations_root,
+    interpret_deck_reply,
+)
 from .research_reports import default_reports_root
 from .retrieval import RetrievalService, default_retrieval_service, set_default_retrieval_service
 from .schedule_cron import CronError, parse_cron
@@ -92,6 +112,8 @@ AGENTS_HTML = Path(__file__).resolve().parent / "web" / "agents.html"
 LAB_HTML = Path(__file__).resolve().parent / "web" / "lab.html"
 SECRETS_HTML = Path(__file__).resolve().parent / "web" / "secrets.html"
 HELP_HTML = Path(__file__).resolve().parent / "web" / "help.html"
+CLASSROOM_HTML = Path(__file__).resolve().parent / "web" / "classroom.html"
+STEWARD_HTML = Path(__file__).resolve().parent / "web" / "steward.html"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATIC_DIR = WEB_DIR / "static"
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
@@ -221,6 +243,59 @@ def _grounded_chat(
     has_image: bool = False,
 ):
     """Attach allowlisted pages and project documents, and say how to use them."""
+    if (
+        getattr(conversation, "agent", "") == "study"
+        or "[context:" in query.lower()
+        or "[book:" in query.lower()
+        or "[study context:" in query.lower()
+    ):
+        from .nexus_study import extract_book_context
+
+        rel_path = ""
+        book_title = ""
+        m_path = re.search(r'Path:\s*"([^"]+)"', query, re.I)
+        if not m_path:
+            m_path = re.search(r"Path:\s*'([^']+)'", query, re.I)
+        if not m_path:
+            m_path = re.search(r"Path:\s*([^\s\]]+)", query, re.I)
+        if m_path:
+            rel_path = m_path.group(1).strip()
+        m_book = re.search(r'Book:\s*"([^"]+)"', query, re.I)
+        if not m_book:
+            m_book = re.search(r"Book:\s*'([^']+)'", query, re.I)
+        if not m_book:
+            m_book = re.search(r"Book:\s*([^\s,\]]+)", query, re.I)
+        if m_book:
+            book_title = m_book.group(1).strip()
+
+        # Clean query (strip study context wrapper for search)
+        clean_q = re.sub(r"\[(?:Study Context|Context):[^\]]+\]", "", query, flags=re.I).strip()
+        if not clean_q:
+            clean_q = query
+
+        excerpts = ""
+        if rel_path:
+            excerpts = extract_book_context(rel_path, clean_q)
+
+        augmented_prompt = prompt
+        if excerpts:
+            augmented_prompt = (
+                f"[Source: {book_title or rel_path}]\n"
+                f"{excerpts}\n\n"
+                f"---\n"
+                f"Steven's Question: {clean_q}\n\n"
+                f"Answer Steven's question directly and authoritatively using the book excerpts above. "
+                f"Cite the chapter, section, and specific numbers/findings from the book."
+            )
+
+        turn = GroundedTurn(prompt=augmented_prompt)
+        system = (
+            f"You are Steven Gerhart's AI Study Assistant in Knowledge Nexus for {book_title or 'this book'}. "
+            "Help Steven thoroughly master the technical material. "
+            "When book excerpts are provided, ground your answer directly and accurately in the book's text and cite the chapter and section."
+        )
+        return turn, system
+
     turn = prepare_grounded_turn(
         query=query,
         prompt=prompt,
@@ -244,6 +319,23 @@ def _grounded_chat(
         system = f"{system}\nThe user attached an image. Answer from what is visible in it."
     if turn.instructions:
         system = f"{system}\n{turn.instructions}"
+    if not has_image and len(re.findall(r"[A-Za-z]{3,}", query)) >= 3:
+        try:
+            from .nexus_library import books_for_query
+
+            shelf = books_for_query(query)
+        except (OSError, RuntimeError, ValueError, TypeError):
+            shelf = ""
+        if shelf:
+            turn.prompt = (
+                f"{turn.prompt}\n\n{shelf}\n\n"
+                "If one of those Nexus books would help, name it and why. "
+                "Do not invent a book that is not in that list."
+            )
+            system = (
+                f"{system}\nSteven's Knowledge Nexus library was searched for this question. "
+                "Recommend a listed book when it fits."
+            )
     return turn, system
 
 
@@ -293,6 +385,34 @@ class ProjectIn(BaseModel):
     description: str = ""
 
 
+class ClassroomLessonIn(BaseModel):
+    topic: str = ""
+
+
+class ClassroomQuestionIn(BaseModel):
+    topic: str = ""
+    question: str = ""
+    segment_title: str = ""
+    recent_speech: str = ""
+
+
+class ClassroomPostIn(BaseModel):
+    topic: str = ""
+    title: str = ""
+    lesson: dict[str, Any] = Field(default_factory=dict)
+    discussion: list[Any] = Field(default_factory=list)
+    image_png: str = ""
+
+
+class PresentationReviseIn(BaseModel):
+    """One edit or question about the open slide deck."""
+
+    instruction: str
+    backend: str = "ollama"
+    model: str = "auto"
+    history: list[dict[str, str]] = Field(default_factory=list)
+
+
 class MessageIn(BaseModel):
     """Ordinary chat turn. Does not create a runtime work order or agent run."""
 
@@ -309,6 +429,13 @@ class MessageIn(BaseModel):
         default=False,
         description="If true, prefer usage-billed frontier backend when authorized (IWO-028)",
     )
+
+
+class StewardGoalIn(BaseModel):
+    title: str
+    intent: str = ""
+    wake_cron: str
+    see_tools: list[str] | None = None
 
 
 class AgentDefinitionIn(BaseModel):
@@ -548,6 +675,7 @@ def create_control_app(
     app.state.secret_store = secrets
     app.state.attachment_store = default_attachment_store()
     app.state.agent_definition_store = default_agent_definition_store()
+    app.state.steward_goals_path = default_goals_path()
     app.state.agent_run_worker = None
     memory = retrieval or default_retrieval_service()
     if retrieval is None and getattr(memory, "embedder", None) is None:
@@ -605,6 +733,118 @@ def create_control_app(
     @app.get("/help", response_class=HTMLResponse)
     def help_page() -> str:
         return HELP_HTML.read_text(encoding="utf-8")
+
+    @app.get("/steward")
+    def steward_page() -> HTMLResponse:
+        """Standing goals and the activity a wake leaves behind."""
+        return HTMLResponse(
+            STEWARD_HTML.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/classroom")
+    def classroom_page() -> HTMLResponse:
+        """Live lesson: plan, browser voice, and whiteboard marks."""
+        return HTMLResponse(
+            CLASSROOM_HTML.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.post("/v1/classroom/lessons")
+    def classroom_lesson(
+        request: Request,
+        body: ClassroomLessonIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Build a lesson plan for one topic. Local model only, with a classroom outline if it does not return one."""
+        _gate(request, authorization)
+        from .classroom import generate_lesson, router_complete
+
+        try:
+            return generate_lesson(body.topic, lambda prompt: router_complete(app.state.model_router, prompt))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/v1/classroom/questions")
+    def classroom_question(
+        request: Request,
+        body: ClassroomQuestionIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Answer one student question against the current lesson. Local model only."""
+        _gate(request, authorization)
+        from .classroom import answer_question, router_complete
+
+        try:
+            return answer_question(
+                topic=body.topic,
+                question=body.question,
+                segment_title=body.segment_title,
+                recent_speech=body.recent_speech,
+                complete=lambda prompt: router_complete(app.state.model_router, prompt),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/v1/classroom/posts")
+    def classroom_posts(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .classroom import list_posts
+
+        return {"posts": list_posts()}
+
+    @app.post("/v1/classroom/posts")
+    def classroom_post(
+        request: Request,
+        body: ClassroomPostIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Save the current class, including a PNG of the board."""
+        _gate(request, authorization)
+        from .classroom import save_post
+
+        try:
+            return save_post(
+                topic=body.topic,
+                title=body.title,
+                lesson=body.lesson,
+                discussion=body.discussion,
+                image_png=body.image_png,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.get("/v1/classroom/posts/{post_id}")
+    def classroom_post_detail(
+        request: Request,
+        post_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .classroom import load_post
+
+        try:
+            return load_post(post_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @app.get("/v1/classroom/posts/{post_id}/image")
+    def classroom_post_image(
+        request: Request,
+        post_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> Response:
+        _gate(request, authorization)
+        from .classroom import load_post_image
+
+        try:
+            blob = load_post_image(post_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        return Response(content=blob, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
 
     @app.get("/antares")
     def antares_page() -> RedirectResponse:
@@ -1132,6 +1372,87 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="Presentation not found")
         content = target.read_bytes()
         return Response(content=content, media_type="text/html; charset=utf-8")
+
+    @app.post("/v1/artifacts/presentations/{name}/revise")
+    def revise_presentation_artifact(
+        name: str,
+        body: PresentationReviseIn,
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Apply one requested change to a saved deck and return the chat reply."""
+        _gate(request, authorization or request.query_params.get("token"))
+        instruction = " ".join((body.instruction or "").split())
+        if not instruction:
+            raise HTTPException(status_code=400, detail="instruction required")
+        if len(instruction) > 4_000:
+            raise HTTPException(status_code=400, detail="instruction is too long")
+
+        from .presentations import PresentationLibrary
+
+        library = PresentationLibrary()
+        try:
+            markdown = library.read(name)
+        except PresentationError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+        run_backend = (body.backend or "ollama").strip() or "ollama"
+        run_model = (body.model or "auto").strip() or "auto"
+        if run_backend not in {"fake", "scripted"}:
+            from .model_catalog import resolve_smart_model
+
+            ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
+            installed = list((ollama_p or {}).get("models") or [])
+            real_models = [m for m in installed if m != "fake-instruct"]
+            if real_models and (run_model in {"auto", "", "fake-instruct"} or "auto" in run_model.lower()):
+                run_model, run_backend = resolve_smart_model(instruction, run_model, real_models)
+            elif run_model in {"auto", ""} or "auto" in run_model.lower():
+                run_model, run_backend = resolve_smart_model(instruction, run_model, installed)
+
+        if run_backend in {"openai", "anthropic", "gemini"}:
+            secrets_s: SecretStore = app.state.secret_store
+            if not secrets_s.usage_billed_authorized() or not secrets_s.has_provider(run_backend):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"{run_backend} is not authorized for slide edits",
+                )
+
+        router: ModelRouter = app.state.model_router
+        prompt = deck_edit_prompt(markdown, instruction, body.history)
+        try:
+            completion = router.complete(
+                CompletionRequest(
+                    model=run_model,
+                    prompt=prompt,
+                    backend=run_backend,
+                    system=(
+                        "You edit one existing slide deck. "
+                        "Reply with EDIT and the full markdown, or ANSWER and a short reply."
+                    ),
+                )
+            )
+        except PermissionError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except KeyError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        message, revised = interpret_deck_reply(completion.text, instruction=instruction)
+        slides = max(1, markdown.count("\n---") + 1)
+        if revised:
+            title = deck_title_from_markdown(revised, name)
+            try:
+                written = library.write(name, title, revised)
+            except PresentationError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            counted = re.search(r"slides:\s*(\d+)", written)
+            if counted:
+                slides = int(counted.group(1))
+        return {
+            "updated": revised is not None,
+            "reply": message,
+            "name": f"{_safe_slug(name)}.html",
+            "slides": slides,
+        }
 
     @app.get("/v1/artifacts/reports/{name}")
     def get_report_artifact(
@@ -1862,7 +2183,17 @@ def create_control_app(
                 "reply": None,
                 "error": f"provider_unavailable:{exc}",
             }
-        shown, grounding = finish_grounded_reply(completion.text, turn)
+        is_study = (
+            getattr(conversation, "agent", "") == "study"
+            or "[context:" in body.content.lower()
+            or "[book:" in body.content.lower()
+            or "[study context:" in body.content.lower()
+        )
+        if is_study:
+            shown = completion.text
+            grounding = {"status": "book_grounded"}
+        else:
+            shown, grounding = finish_grounded_reply(completion.text, turn)
         assistant = Message.new(
             conversation_id=conversation_id,
             role=MessageRole.ASSISTANT,
@@ -1985,7 +2316,13 @@ def create_control_app(
 
         def event_stream():
             yield f"data: {json.dumps({'event': 'user', 'message': message.to_dict()})}\n\n"
-            if needs_source_fetch(body.content) and not images:
+            is_study = (
+                getattr(conversation, "agent", "") == "study"
+                or "[context:" in body.content.lower()
+                or "[book:" in body.content.lower()
+                or "[study context:" in body.content.lower()
+            )
+            if not is_study and needs_source_fetch(body.content) and not images:
                 yield f"data: {json.dumps({'event': 'status', 'text': 'Reading the source…'})}\n\n"
             elif images:
                 yield f"data: {json.dumps({'event': 'status', 'text': 'Looking at the image…'})}\n\n"
@@ -2065,8 +2402,12 @@ def create_control_app(
             except (PermissionError, KeyError, OllamaUnavailable, CloudUnavailable) as exc:
                 yield f"data: {json.dumps({'event': 'error', 'error': f'provider_unavailable:{exc}'})}\n\n"
                 return
-            shown, grounding = finish_grounded_reply(full, turn)
-            if suppress or shown != full:
+            if is_study:
+                shown = full
+                grounding = {"status": "book_grounded"}
+            else:
+                shown, grounding = finish_grounded_reply(full, turn)
+            if suppress or (not is_study and shown != full):
                 yield f"data: {json.dumps({'event': 'replace', 'text': shown})}\n\n"
             assistant = Message.new(
                 conversation_id=conversation_id,
@@ -2594,12 +2935,93 @@ def create_control_app(
                 filed_days=filed_days,
             )
 
+        def mark_goals(when: datetime) -> list[dict[str, Any]]:
+            return wake_due(
+                when,
+                store=store,
+                path=getattr(app.state, "steward_goals_path", None),
+                model="qwen3.6:35b-a3b",
+                backend="ollama",
+            )
+
         return scheduler_tick(
             app.state.agent_definition_store,
             run_definition=runner,
             state_path=getattr(app.state, "schedule_state_path", None),
             file_memory=file_memory,
+            mark_goals=mark_goals,
         )
+
+    def _steward_path() -> Path:
+        return getattr(app.state, "steward_goals_path", None) or default_goals_path()
+
+    def _steward_call(func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except StewardError as exc:
+            detail = str(exc)
+            status = 404 if detail == "unknown goal" else 400
+            if detail == "a closed goal stays closed":
+                status = 409
+            raise HTTPException(status_code=status, detail=detail) from exc
+
+    @app.get("/v1/steward/access")
+    def get_steward_access(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return {"ok": True, "agent": "personal", "classes": access_manifest()}
+
+    @app.get("/v1/steward/activity")
+    def get_steward_activity(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return {"ok": True, "activity": list_activity(path=_steward_path())}
+
+    @app.get("/v1/steward/goals")
+    def get_steward_goals(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return {"ok": True, "goals": list_goals(path=_steward_path())}
+
+    @app.post("/v1/steward/goals")
+    def post_steward_goal(
+        request: Request,
+        body: StewardGoalIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(
+            create_goal,
+            title=body.title,
+            intent=body.intent,
+            wake_cron=body.wake_cron,
+            see_tools=body.see_tools,
+            path=_steward_path(),
+        )
+
+    @app.post("/v1/steward/goals/{goal_id}/pause")
+    def post_steward_pause(
+        request: Request,
+        goal_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(pause_goal, goal_id, path=_steward_path())
+
+    @app.post("/v1/steward/goals/{goal_id}/close")
+    def post_steward_close(
+        request: Request,
+        goal_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(close_goal, goal_id, path=_steward_path())
 
     @app.post("/v1/agent-definitions/{definition_id}/runs")
     def run_agent_definition(
@@ -2835,6 +3257,84 @@ def create_control_app(
             "conversation_id": conversation_id,
             "runs": [r.to_dict() for r in runs],
         }
+
+    @app.get("/v1/nexus/library")
+    def nexus_library_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Books on the served Nexus disk that can be added to the Study Hub."""
+        _gate(request, authorization)
+        from .nexus_library import scan_served_library
+
+        return scan_served_library()
+
+    @app.get("/v1/nexus/search")
+    def nexus_search_endpoint(
+        request: Request,
+        q: str = Query(default="", max_length=400),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Books in Nexus whose contents or titles can help with a question."""
+        _gate(request, authorization)
+        from .nexus_library import suggest_books
+
+        books = suggest_books(q, limit=4)
+        return {"query": q, "books": books}
+
+    @app.get("/v1/nexus/summaries")
+    def nexus_summaries_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Saved one-time summaries for shelf cards and chat."""
+        _gate(request, authorization)
+        from .nexus_summaries import list_summaries
+
+        return {"summaries": list_summaries()}
+
+    @app.get("/v1/nexus/cover")
+    def nexus_cover_endpoint(
+        request: Request,
+        path: str = Query(default="", max_length=500),
+        authorization: str | None = Header(default=None),
+    ) -> Response:
+        """Cover image for one library book."""
+        _gate(request, authorization)
+        from .nexus_covers import load_cover
+
+        found = load_cover(path)
+        if found is None:
+            raise HTTPException(status_code=404, detail="no cover")
+        data, media = found
+        return Response(
+            content=data,
+            media_type=media,
+            headers={"Cache-Control": "private, max-age=86400"},
+        )
+
+    class _NexusSyncBody(BaseModel):
+        apply: bool = False
+
+    @app.post("/v1/nexus/sync")
+    def nexus_sync_endpoint(
+        request: Request,
+        body: _NexusSyncBody,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Copy new iCloud books into the local mirror, then list what is on disk.
+
+        apply false lists the files that would be copied. The library button
+        sends apply true. Nothing is deleted.
+        """
+        _gate(request, authorization)
+        from .nexus_library import scan_served_library, sync_icloud_library
+
+        result = sync_icloud_library(apply=body.apply)
+        scanned = scan_served_library()
+        result["books"] = scanned["books"]
+        result["count"] = scanned["count"]
+        return result
 
     if STATIC_DIR.is_dir():
         app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

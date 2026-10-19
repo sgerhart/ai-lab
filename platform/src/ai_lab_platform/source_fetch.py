@@ -599,6 +599,17 @@ def _ddg_hits(query: str, *, opener: Any, resolve: Callable[[str], list[str]] | 
     return hits
 
 
+def _clean_search_query(text: str) -> str:
+    cleaned = re.sub(
+        r"^(?:i want to understand|i'd like to understand|i want to know|can you explain|please explain|tell me about|explain to me|explain|how do|how does|how can|what is|what are|why is|why are)\s+",
+        "",
+        (text or "").strip(),
+        flags=re.I,
+    )
+    cleaned = cleaned.strip("?.! ")
+    return cleaned if len(cleaned) >= 3 else text.strip()
+
+
 def search_pages(
     query: str,
     *,
@@ -611,10 +622,13 @@ def search_pages(
     text = " ".join((query or "").split())
     if not factual_query(text):
         return []
+    cleaned = _clean_search_query(text)
     found: list[dict[str, str]] = []
     seen: set[str] = set()
     hits = _wikipedia_hits(text, opener=opener, resolve=resolve, limit=wiki_limit)
-    hits.extend(_ddg_hits(text, opener=opener, resolve=resolve))
+    if cleaned != text and len(hits) < limit:
+        hits.extend(_wikipedia_hits(cleaned, opener=opener, resolve=resolve, limit=wiki_limit))
+    hits.extend(_ddg_hits(cleaned if cleaned != text else text, opener=opener, resolve=resolve))
     for row in hits:
         try:
             url = validate_https_url(row["url"], public=True)

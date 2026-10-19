@@ -3,6 +3,8 @@
   const links = [
     { href: "/", label: "AI Lab", match: /^\/$/ },
     { href: "/nexus/", label: "📚 Study Hub", match: /^\/nexus/ },
+    { href: "/classroom", label: "Classroom", match: /^\/classroom$/ },
+    { href: "/steward", label: "Steward", match: /^\/steward$/ },
     { href: "/?open=antares", label: "Antares", match: /^\/antares$/ },
     { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
     { href: "/help", label: "Help", match: /^\/help$/ },

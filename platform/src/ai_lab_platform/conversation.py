@@ -165,6 +165,10 @@ class AgentRun:
     granted_tools: list[str] = field(default_factory=list)
     # Isolated git worktree for coding writes. Empty = the control-plane checkout (read tools only).
     workspace_root: str = ""
+    # When set, the loop may call only these policy tools. Steward wakes use the See list.
+    tool_ceiling: list[str] = field(default_factory=list)
+    # Set on a Steward wake. Empty for ordinary chats and scheduled definitions.
+    steward_goal_id: str = ""
     created_at: str = field(default_factory=utcnow)
     updated_at: str = field(default_factory=utcnow)
 
@@ -230,4 +234,6 @@ class AgentRun:
         payload.setdefault("mcp_server_ids", [])
         payload.setdefault("workspace_root", "")
         payload.setdefault("granted_tools", [])
+        payload.setdefault("tool_ceiling", [])
+        payload.setdefault("steward_goal_id", "")
         return cls(**payload)

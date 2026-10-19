@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Lab · Classroom</title>
+  <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="/static/chrome.css">
+  <style>
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
+      background-image:
+        radial-gradient(900px 420px at 80% -10%, #1a2a3d 0%, transparent 55%),
+        linear-gradient(180deg, transparent, #0c1014 28%);
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 22px 18px 48px; }
+    .eyebrow {
+      margin: 0;
+      font: 12px/1 ui-monospace, Menlo, monospace;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    h1 { margin: 8px 0 6px; font-size: 32px; letter-spacing: -.03em; }
+    .lead { margin: 0 0 16px; max-width: 68ch; color: var(--muted); }
+    form.topic {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: end;
+    }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input, textarea {
+      width: 100%; box-sizing: border-box;
+      background: #0e141b; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 12px; font: inherit;
+    }
+    textarea { min-height: 76px; resize: vertical; }
+    .topic input { min-width: min(100%, 420px); flex: 1; }
+    button {
+      border: 0; border-radius: 10px; padding: 10px 14px;
+      background: var(--accent); color: #061018;
+      font: inherit; font-weight: 650; cursor: pointer;
+    }
+    button[disabled] { opacity: .45; cursor: default; }
+    button.ghost {
+      background: transparent; color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    button[aria-pressed="true"] { background: #e8b45c; color: #1c1406; }
+    #status { min-height: 1.3em; margin: 12px 0 0; color: var(--live); }
+    .room {
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr) 280px;
+      gap: 14px;
+      margin-top: 16px;
+    }
+    .plan, .ask {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      min-width: 0;
+    }
+    .plan h2 { margin: 0 0 8px; font-size: 18px; }
+    .plan .source, .plan .plan-label, .ask .hint { color: var(--muted); font-size: 13px; }
+    .plan ol { margin: 8px 0 14px; padding-left: 18px; }
+    .plan li { margin: 4px 0; }
+    .beat {
+      display: block; width: 100%; text-align: left; margin: 6px 0;
+      background: #0e141b; color: var(--ink); border: 1px solid var(--line);
+      font-weight: 550;
+    }
+    .beat[aria-current="true"] { border-color: var(--accent); color: var(--accent); }
+    .stage { min-width: 0; }
+    .board-frame {
+      height: 520px;
+      background: #d7d0c4;
+      border-radius: 18px;
+      padding: 12px 12px 28px;
+      box-shadow: inset 0 -18px 0 #c4b8a4;
+    }
+    #board {
+      width: 100%; height: 100%; display: block;
+      background: #f3eee4; border-radius: 8px;
+    }
+    #caption {
+      margin: 12px 0;
+      min-height: 3.2em;
+      font-size: 17px;
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ask h2 { margin: 0 0 6px; font-size: 18px; }
+    #discussion {
+      list-style: none; margin: 14px 0 0; padding: 0;
+      max-height: 360px; overflow: auto;
+    }
+    #discussion li { margin: 0 0 12px; }
+    #discussion span {
+      display: block; font-size: 12px; color: var(--accent); margin-bottom: 2px;
+    }
+    #discussion p { margin: 0; }
+    #discussion .empty { color: var(--muted); }
+    .ask-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .posted { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .posted h2 { margin: 0 0 8px; font-size: 16px; }
+    .posted ul { list-style: none; margin: 10px 0 0; padding: 0; }
+    .posted .item {
+      display: block; width: 100%; text-align: left; margin: 6px 0;
+      background: #0e141b; color: var(--ink); border: 1px solid var(--line); font-weight: 550;
+    }
+    #voice-name { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    @media (max-width: 980px) {
+      .room { grid-template-columns: 1fr; }
+      .board-frame { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="eyebrow">AI Lab · Classroom</p>
+    <h1>Classroom</h1>
+    <p class="lead">Name any topic. The instructor writes a lesson plan, speaks it in a natural voice, and draws the explanation by hand — pictures first, then typed labels. Raise your hand, ask a question, or post the class when you want to keep it.</p>
+    <form class="topic" id="topic-form">
+      <div style="flex:1; min-width:240px">
+        <label for="topic">Topic</label>
+        <input id="topic" name="topic" maxlength="180" autocomplete="off" placeholder="For example, how a neural network learns" required>
+      </div>
+      <button type="submit" id="start-class">Start class</button>
+    </form>
+    <p id="status" role="status"></p>
+    <div class="room">
+      <aside class="plan" aria-label="Lesson plan">
+        <div id="lesson-plan">
+          <h2>Lesson plan</h2>
+          <p class="source">The plan appears here when class starts.</p>
+        </div>
+        <div class="posted">
+          <h2>Posted</h2>
+          <button type="button" id="post-lesson" disabled>Post this class</button>
+          <ul id="posted"></ul>
+        </div>
+      </aside>
+      <section class="stage" aria-label="Whiteboard">
+        <div class="board-frame">
+          <canvas id="board" width="640" height="420">The whiteboard is drawn here.</canvas>
+        </div>
+        <p id="caption">The instructor’s words show here while the lesson is spoken.</p>
+        <div class="controls">
+          <button type="button" class="ghost" id="pause-instructor" aria-pressed="false" disabled>Pause</button>
+          <button type="button" class="ghost" id="raise-hand" aria-pressed="false" disabled>Raise hand</button>
+          <button type="button" class="ghost" id="voice-toggle" aria-pressed="true">Voice on</button>
+        </div>
+        <p id="voice-name"></p>
+      </section>
+      <aside class="ask" aria-label="Questions">
+        <h2>Questions</h2>
+        <p class="hint">Ask now to interrupt. Post for later and the instructor takes it when this part ends. Pause stops the voice and the pen. Space pauses. H raises your hand.</p>
+        <form id="question-form">
+          <label for="question">Your question</label>
+          <textarea id="question" maxlength="600" placeholder="Ask the instructor"></textarea>
+          <div class="ask-actions">
+            <button type="submit" id="ask-question" disabled>Ask</button>
+            <button type="button" class="ghost" id="pass-note" disabled>Post for later</button>
+          </div>
+        </form>
+        <ol id="discussion"><li class="empty">Questions and answers stay in this list.</li></ol>
+      </aside>
+    </div>
+  </main>
+  <script src="/static/chrome.js"></script>
+  <script src="/static/classroom.js?v=10"></script>
+</body>
+</html>

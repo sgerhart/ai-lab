@@ -962,6 +962,128 @@
       border: 0;
       display: block;
     }
+    .artifact-modal.deck-open .artifact-modal-card {
+      width: min(1440px, 97vw);
+      height: min(920px, 94vh);
+    }
+    .artifact-modal-body.with-editor {
+      display: flex;
+      background: #0e1016;
+    }
+    .artifact-modal-body.with-editor iframe {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: auto;
+    }
+    .deck-editor:not([hidden]) {
+      width: 400px;
+      flex: 0 0 400px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      border-left: 1px solid var(--line);
+      background: #12141c;
+    }
+    .deck-editor-head {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .deck-editor-head strong {
+      display: block;
+      font-size: 14px;
+    }
+    .deck-editor-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .deck-editor-chips {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .deck-chip {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font: inherit;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .deck-chip:hover { background: rgba(124, 184, 255, 0.16); }
+    .deck-editor-messages {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .deck-welcome {
+      text-align: center;
+      padding: 16px 12px;
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .deck-welcome strong { color: var(--ink); }
+    .deck-bubble {
+      max-width: 92%;
+      padding: 8px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .deck-bubble.user {
+      align-self: flex-end;
+      background: #3730a3;
+      color: #fff;
+    }
+    .deck-bubble.assistant {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+    }
+    .deck-editor-form {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding: 10px 12px 12px;
+      border-top: 1px solid var(--line);
+    }
+    .deck-editor-form textarea {
+      flex: 1;
+      resize: none;
+      min-height: 44px;
+      max-height: 120px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #1c1c1c;
+      color: var(--ink);
+      font: inherit;
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+    @media (max-width: 900px) {
+      .artifact-modal-body.with-editor { flex-direction: column; }
+      .artifact-modal-body.with-editor iframe { min-height: 46%; }
+      .deck-editor:not([hidden]) {
+        width: 100%;
+        flex: 1 1 42%;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
     .send {
       width: 36px; height: 36px; border-radius: 999px; border: 0;
       background: var(--send); color: var(--send-ink); cursor: pointer;
@@ -1406,6 +1528,8 @@
         <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
         <button type="button" class="side-link" id="nav-r"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 12h4.2a2.2 2.2 0 0 1 0 4.4H8V20"/><path d="M11.2 16.2 15 20"/></svg>R Labs</button>
         <a class="side-link" id="nav-nexus" href="/nexus/"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Nexus</a>
+        <a class="side-link" id="nav-classroom" href="/classroom"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M7 8h7M7 12h4"/></svg>Classroom</a>
+        <a class="side-link" id="nav-steward" href="/steward"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Steward</a>
         <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
         <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
         <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
@@ -1980,8 +2104,24 @@
           <button type="button" class="icon-btn" id="artifact-modal-x" onclick="closeArtifactViewer()" title="Close">✕</button>
         </div>
       </div>
-      <div class="artifact-modal-body">
+      <div class="artifact-modal-body" id="artifact-modal-body">
         <iframe id="artifact-frame" src="about:blank"></iframe>
+        <aside class="deck-editor" id="deck-editor" hidden>
+          <div class="deck-editor-head">
+            <strong>Slide editor</strong>
+            <p>The deck stays on the left. Ask for a change and it updates on that page.</p>
+          </div>
+          <div class="deck-editor-chips">
+            <button type="button" class="deck-chip" data-prompt="Shorten the longest slide so every point fits on its own page.">Shorten a slide</button>
+            <button type="button" class="deck-chip" data-prompt="Add one slide that states the decision and the next step.">Add a slide</button>
+            <button type="button" class="deck-chip" data-prompt="Rewrite the titles so each one is specific. Do not prefix them with Slide 1.">Tighten titles</button>
+          </div>
+          <div class="deck-editor-messages" id="deck-editor-messages"></div>
+          <form class="deck-editor-form" id="deck-editor-form">
+            <textarea id="deck-editor-input" rows="2" placeholder="Ask for an edit, or ask about this deck"></textarea>
+            <button type="submit" class="btn primary" id="deck-editor-send">Send</button>
+          </form>
+        </aside>
       </div>
     </div>
   </div>
@@ -3213,7 +3353,7 @@
           </div>
           <div class="artifact-item-actions">
             <button type="button" class="btn primary btn-view-artifact" style="padding:6px 14px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
-              <span>${isPres ? "▶ View Slides" : "👁 Read Report"}</span>
+              <span>${isPres ? "▶ Edit slides" : "👁 Read Report"}</span>
             </button>
             <a href="${item.url}" target="_blank" class="btn" style="padding:6px 12px;font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Open in new window">
               <span>↗ Open in New Tab</span>
@@ -3283,7 +3423,7 @@
             </div>
           </div>
           <div class="artifact-card-actions">
-            <button type="button" class="artifact-btn primary btn-preview" style="cursor:pointer;">Preview</button>
+            <button type="button" class="artifact-btn primary btn-preview" style="cursor:pointer;">${item.type === "presentation" ? "Edit" : "Preview"}</button>
             <a href="${item.url}" target="_blank" class="artifact-btn" title="Open in new window" style="cursor:pointer;">Open ↗</a>
           </div>
         `;
@@ -3294,17 +3434,126 @@
       }
     }
 
+    const deckStudio = { url: "", name: "", history: [], sending: false };
+
+    function isPresentationUrl(url) {
+      return /\/presentations\/[^/]+\.html(?:$|\?)/.test(url || "");
+    }
+
+    function deckFileName(url) {
+      const path = String(url || "").split("?")[0].split("#")[0];
+      return decodeURIComponent(path.split("/").pop() || "");
+    }
+
+    function currentDeckSlide(frame) {
+      try {
+        const api = frame.contentWindow && frame.contentWindow.aiLabDeck;
+        if (api && typeof api.current === "function") {
+          const n = api.current();
+          if (n) return n;
+        }
+        const active = frame.contentDocument && frame.contentDocument.querySelector(".slide.active");
+        if (active) return parseInt(active.getAttribute("data-slide") || "1", 10) || 1;
+      } catch (e) { /* the frame is not ready yet */ }
+      return 1;
+    }
+
+    function reloadDeckFrame() {
+      const frame = $("artifact-frame");
+      if (!frame || !deckStudio.url) return;
+      const slide = currentDeckSlide(frame);
+      const base = deckStudio.url.split("?")[0].split("#")[0];
+      frame.src = base + "?t=" + Date.now() + "#slide=" + slide;
+    }
+
+    function resetDeckEditor(title) {
+      deckStudio.history = [];
+      deckStudio.sending = false;
+      const box = $("deck-editor-messages");
+      if (!box) return;
+      box.innerHTML = "";
+      const welcome = document.createElement("div");
+      welcome.className = "deck-welcome";
+      const name = document.createElement("strong");
+      name.textContent = title || deckStudio.name || "this deck";
+      welcome.appendChild(document.createTextNode("Ask for a change to "));
+      welcome.appendChild(name);
+      welcome.appendChild(document.createTextNode(". The slides on the left update when the edit is saved. A question leaves the deck as it is."));
+      box.appendChild(welcome);
+    }
+
+    function appendDeckBubble(role, text) {
+      const box = $("deck-editor-messages");
+      if (!box) return null;
+      const el = document.createElement("div");
+      el.className = "deck-bubble " + role;
+      el.textContent = text;
+      box.appendChild(el);
+      box.scrollTop = box.scrollHeight;
+      return el;
+    }
+
+    async function sendDeckEdit(text) {
+      const clean = (text || "").trim();
+      if (!clean || deckStudio.sending || !deckStudio.name) return;
+      const input = $("deck-editor-input");
+      const send = $("deck-editor-send");
+      deckStudio.sending = true;
+      if (send) send.disabled = true;
+      if (input) input.value = "";
+      appendDeckBubble("user", clean);
+      const pending = appendDeckBubble("assistant", "Updating the slides…");
+      try {
+        const ch = selectedChoice();
+        const res = await api("/v1/artifacts/presentations/" + encodeURIComponent(deckStudio.name) + "/revise", {
+          method: "POST",
+          body: JSON.stringify({
+            instruction: clean,
+            history: deckStudio.history.slice(-6),
+            backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+            model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
+          }),
+        });
+        if (pending) pending.textContent = res.reply || (res.updated ? "Updated the slides." : "No change.");
+        deckStudio.history.push({ role: "user", content: clean });
+        deckStudio.history.push({ role: "assistant", content: (res.reply || "").slice(0, 400) });
+        if (res.updated) reloadDeckFrame();
+        showErr("");
+      } catch (e) {
+        if (pending) pending.textContent = String(e.message || e);
+      } finally {
+        deckStudio.sending = false;
+        if (send) send.disabled = false;
+        if (input) input.focus();
+      }
+    }
+
     function openArtifactViewer(url, title) {
       const modal = $("artifact-modal");
       const frame = $("artifact-frame");
       const titleEl = $("artifact-modal-title");
       const popout = $("artifact-modal-popout");
+      const body = $("artifact-modal-body");
+      const editor = $("deck-editor");
       if (!modal || !frame) return;
-      titleEl.textContent = title || "Artifact Preview";
+      const deck = isPresentationUrl(url);
+      titleEl.textContent = title || (deck ? "Slide editor" : "Artifact Preview");
       popout.href = url;
       frame.src = url;
+      modal.classList.toggle("deck-open", deck);
+      if (body) body.classList.toggle("with-editor", deck);
+      if (editor) editor.hidden = !deck;
+      if (deck) {
+        deckStudio.url = url.split("?")[0].split("#")[0];
+        deckStudio.name = deckFileName(url);
+        resetDeckEditor(title || deckStudio.name);
+      }
       modal.removeAttribute("hidden");
       modal.style.display = "flex";
+      if (deck) {
+        const input = $("deck-editor-input");
+        if (input) setTimeout(() => input.focus(), 200);
+      }
     }
     window.openArtifactViewer = openArtifactViewer;
 
@@ -3317,20 +3566,54 @@
     function closeArtifactViewer() {
       const modal = $("artifact-modal");
       const frame = $("artifact-frame");
+      const body = $("artifact-modal-body");
+      const editor = $("deck-editor");
       if (modal) {
         modal.setAttribute("hidden", "");
         modal.style.display = "none";
+        modal.classList.remove("deck-open");
       }
+      if (body) body.classList.remove("with-editor");
+      if (editor) editor.hidden = true;
       if (frame) frame.src = "about:blank";
+      deckStudio.url = "";
+      deckStudio.name = "";
     }
     window.closeArtifactViewer = closeArtifactViewer;
 
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeArtifactViewer();
-        closeArtifactsExplorer();
+      if (e.key !== "Escape") return;
+      if (document.activeElement && document.activeElement.id === "deck-editor-input") {
+        document.activeElement.blur();
+        return;
       }
+      closeArtifactViewer();
+      closeArtifactsExplorer();
     });
+    const deckForm = $("deck-editor-form");
+    if (deckForm) {
+      deckForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        sendDeckEdit(($("deck-editor-input") || {}).value || "");
+      });
+    }
+    document.querySelectorAll(".deck-chip").forEach((chip) => {
+      chip.addEventListener("click", () => sendDeckEdit(chip.getAttribute("data-prompt") || ""));
+    });
+    const deckInput = $("deck-editor-input");
+    if (deckInput) {
+      deckInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendDeckEdit(deckInput.value);
+        }
+      });
+    }
+    const deckHash = (location.hash || "").match(/^#deck=(.+)$/);
+    if (deckHash) {
+      const file = decodeURIComponent(deckHash[1]);
+      openArtifactViewer("/v1/artifacts/presentations/" + encodeURIComponent(file), file);
+    }
 
     function toggleArtifactsRail(force) {
       const rail = $("artifacts-rail");
@@ -4825,7 +5108,9 @@
             return;
           }
         }
-        const needsAgent = (goal === "agent") || (goal === "auto" && /presentation|slide|report|skill|deck|research|memory|vault|task|cisco|csco|cron|schedule|build/i.test(text));
+        const needsAgent = (goal === "agent") || (goal === "auto" && (
+          /presentation|slide|report|skill|deck|research|investigate|explore|explain|understand|deep dive|study|overview|analyze|analysis|compare|difference|lookup|look up|search|how does|how do|how can|why does|why do|why is|what is|what are|tell me about|fpga|hardware|architecture|inference|accelerat|benchmark|latency|throughput|memory|vault|task|cisco|csco|cron|schedule|build/i.test(text)
+        ));
         if (needsAgent && goal !== "chat") {
           await sendPersonalTurn(text);
           return;

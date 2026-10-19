@@ -25,6 +25,7 @@ READ_TOOLS = frozenset(
         "vault_grep",
         "vault_read",
         "web_search",
+        "nexus_search",
         "files_list",
         "files_grep",
         "files_read",
@@ -108,7 +109,7 @@ def access_for(text: str, purpose: str, *, shape: str = "agent") -> dict[str, An
         native.append("memory_search")
     if shape != "workflow" and purpose == "personal":
         native.extend(
-            ["vault_list", "vault_grep", "vault_read", "files_list", "files_grep", "files_read", "web_search", "research", "report_list", "report_read", "report_write"]
+            ["vault_list", "vault_grep", "vault_read", "files_list", "files_grep", "files_read", "web_search", "nexus_search", "research", "report_list", "report_read", "report_write"]
         )
     if shape != "workflow" and purpose in {"learn", "product", "company"} and any(
         word in lower for word in ("note", "report", "write", "summary", "summarize")

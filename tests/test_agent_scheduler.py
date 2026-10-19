@@ -189,6 +189,7 @@ class SchedulerApiTests(unittest.TestCase):
             Path(self.tmp.name) / "defs.sqlite"
         )
         self.app.state.schedule_state_path = Path(self.tmp.name) / "schedule-state.json"
+        self.app.state.steward_goals_path = Path(self.tmp.name) / "steward" / "goals.json"
         self.app.state.memory_vault_root = Path(self.tmp.name) / "memory"
         self.client = TestClient(self.app)
         self.h = {"Authorization": "Bearer lab-token"}

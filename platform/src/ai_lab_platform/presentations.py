@@ -28,9 +28,15 @@ def default_presentations_root() -> Path:
 
 
 def _safe_slug(name: str) -> str:
-    if ".." in name or "/" in name or "\\" in name:
+    raw = (name or "").strip()
+    lower = raw.lower()
+    for ext in (".html", ".md"):
+        if lower.endswith(ext):
+            raw = raw[: -len(ext)].strip()
+            break
+    if ".." in raw or "/" in raw or "\\" in raw:
         raise PresentationError("name cannot contain path separators or parent directory references")
-    cleaned = _SLUG_RE.sub("-", name.strip().lower()).strip("-")
+    cleaned = _SLUG_RE.sub("-", raw.lower()).strip("-")
     return cleaned[:60] or "presentation"
 
 
@@ -387,11 +393,12 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       transition: width 0.25s ease;
     }}
     .deck-container {{
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      padding: 24px 32px; position: relative; min-height: 0;
+      flex: 1; position: relative; min-height: 0;
     }}
     .slide {{
-      display: none; width: min(1080px, 94vw); height: min(620px, 86vh);
+      display: none;
+      position: absolute; inset: 16px 28px 12px;
+      width: auto; height: auto;
       background: var(--card-bg);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
@@ -399,9 +406,10 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       border-radius: 24px; padding: 40px 48px;
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(255, 255, 255, 0.05);
       flex-direction: column; animation: slideFade .22s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative; overflow: hidden;
+      overflow: auto;
     }}
     .slide.active {{ display: flex; }}
+    .slide:not(.active) {{ display: none !important; }}
     @keyframes slideFade {{
       from {{ opacity: 0; transform: scale(0.985) translateY(6px); }}
       to {{ opacity: 1; transform: scale(1) translateY(0); }}
@@ -424,8 +432,8 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       flex-shrink: 0;
     }}
     .slide-body {{
-      flex: 1; font-size: 16.5px; line-height: 1.6; color: #cbd5e1;
-      overflow-y: auto; padding-right: 8px;
+      flex: 1 0 auto; font-size: 16.5px; line-height: 1.6; color: #cbd5e1;
+      overflow: visible;
     }}
     .slide-body p {{ margin: 0 0 14px; }}
     .slide-list {{ margin: 0 0 16px; padding-left: 20px; }}
@@ -455,10 +463,10 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
 
     /* 2-Column Split Layout */
     .split-grid {{
-      display: grid; grid-template-columns: 1.35fr 1fr; gap: 32px;
-      flex: 1; min-height: 0; align-items: stretch;
+      display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(240px, 1fr); gap: 32px;
+      flex: 1 0 auto; align-items: start;
     }}
-    .split-main {{ display: flex; flex-direction: column; min-height: 0; }}
+    .split-main {{ display: flex; flex-direction: column; min-width: 0; }}
     .split-media {{ display: flex; flex-direction: column; justify-content: center; }}
     .media-card {{
       background: rgba(0, 0, 0, 0.35); border: 1px solid var(--line);
@@ -480,7 +488,7 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
     /* Hero Title Slide */
     .hero-slide {{
       background-size: cover; background-position: center;
-      display: flex; flex-direction: column; justify-content: center;
+      flex-direction: column; justify-content: safe center;
       padding: 56px 64px; text-align: left;
     }}
     .hero-overlay {{
@@ -488,7 +496,7 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       background: radial-gradient(circle at 20% 40%, rgba(10, 12, 18, 0.85) 0%, rgba(10, 12, 18, 0.96) 100%);
       pointer-events: none;
     }}
-    .hero-content {{ position: relative; z-index: 1; max-width: 860px; }}
+    .hero-content {{ position: relative; z-index: 1; width: 100%; max-width: 860px; }}
     .hero-badge {{
       display: inline-flex; align-items: center; gap: 6px;
       padding: 6px 16px; border-radius: 999px;
@@ -528,8 +536,22 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
     .btn-nav.primary:hover {{ opacity: 0.9; }}
     @media (max-width: 800px) {{
       .split-grid {{ grid-template-columns: 1fr; }}
-      .split-media {{ display: none; }}
-      .slide {{ padding: 24px; }}
+      .media-img {{ height: 180px; }}
+      .slide, .hero-slide {{ padding: 24px; }}
+    }}
+    @media print {{
+      body {{ height: auto; overflow: visible; background: #fff; }}
+      .progress-bar, .controls {{ display: none !important; }}
+      .deck-container {{ display: block; height: auto; overflow: visible; }}
+      .slide,
+      .slide:not(.active) {{
+        display: flex !important;
+        position: relative; inset: auto;
+        width: 100%; height: auto; min-height: 100vh;
+        margin: 0; overflow: visible;
+        break-after: page; page-break-after: always;
+        box-shadow: none;
+      }}
     }}
   </style>
 </head>
@@ -576,10 +598,103 @@ def _render_html(deck_title: str, slides: list[dict[str, str]]) -> str:
       else if (e.key === 'Home') show(1);
       else if (e.key === 'End') show(total);
     }});
-    show(1);
+    function initialSlide() {{
+      const fromHash = (location.hash || "").match(/slide=(\\d+)/);
+      if (fromHash) return parseInt(fromHash[1], 10) || 1;
+      return 1;
+    }}
+    show(initialSlide());
+    window.aiLabDeck = {{ current: function() {{ return cur; }}, show: show }};
   </script>
 </body>
 </html>"""
+
+
+_MAX_DECK_CHARS = 80_000
+_MAX_INSTRUCTION_CHARS = 4_000
+_EDIT_INTENT = re.compile(
+    r"\b(edit|change|update|rewrite|revise|shorten|expand|add|remove|delete|drop|rename|fix|replace|insert|move|tighten|cut|trim)\b",
+    re.IGNORECASE,
+)
+
+
+def deck_title_from_markdown(markdown: str, fallback: str) -> str:
+    for line in (markdown or "").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return stripped[2:].strip() or fallback
+    return fallback or "AI Lab Presentation"
+
+
+def _looks_like_deck(text: str) -> bool:
+    body = (text or "").strip()
+    if len(body) < 8 or len(body) > _MAX_DECK_CHARS:
+        return False
+    return body.startswith("#") or body.startswith("---") or "\n---" in body
+
+
+def deck_edit_prompt(markdown: str, instruction: str, history: list[dict[str, str]] | None = None) -> str:
+    """Ask the model to either revise the whole deck or answer without writing."""
+    prior: list[str] = []
+    for turn in (history or [])[-6:]:
+        role = str(turn.get("role") or "").strip().lower()
+        if role not in {"user", "assistant"}:
+            continue
+        content = " ".join(str(turn.get("content") or "").split())[:400]
+        if content:
+            prior.append(f"{role}: {content}")
+    history_block = "\n".join(prior) if prior else "(none)"
+    deck = (markdown or "").strip()[:_MAX_DECK_CHARS]
+    request = " ".join((instruction or "").split())[:_MAX_INSTRUCTION_CHARS]
+    return (
+        "You are editing one slide deck. The slides the person is looking at are the markdown below.\n"
+        "If they want any change, reply with exactly this shape and nothing else:\n"
+        "EDIT\n"
+        "<the full updated markdown for every slide. Separate slides with a line that contains only --->\n"
+        "If they only asked a question, reply with exactly:\n"
+        "ANSWER\n"
+        "<a short answer>\n"
+        "Do not wrap the reply in fences. Do not drop slides they did not ask to remove.\n\n"
+        f"Earlier turns:\n{history_block}\n\n"
+        f"DECK\n{deck}\nEND DECK\n\n"
+        f"Request: {request}\n"
+    )
+
+
+def _strip_fence(text: str) -> str:
+    match = re.match(r"^```(?:markdown|md)?\s*([\s\S]*?)\s*```$", (text or "").strip(), flags=re.IGNORECASE)
+    return match.group(1).strip() if match else (text or "").strip()
+
+
+def _labeled_section(text: str, label: str) -> str | None:
+    """Read the body after a standalone EDIT or ANSWER line near the start of the reply."""
+    for index, line in enumerate(text.splitlines()[:12]):
+        if line.strip().rstrip(":").upper() == label:
+            return "\n".join(text.splitlines()[index + 1 :]).strip()
+    return None
+
+
+def interpret_deck_reply(reply: str, *, instruction: str) -> tuple[str, str | None]:
+    """Return the chat message and replacement markdown, or None when the deck stays as it is."""
+    text = re.sub(r"<think>.*?</think>", "", reply or "", flags=re.DOTALL | re.IGNORECASE).strip()
+    if text.startswith("```"):
+        text = _strip_fence(text)
+
+    edit = _labeled_section(text, "EDIT")
+    if edit is not None:
+        body = _strip_fence(edit)
+        if _looks_like_deck(body):
+            return ("Updated the slides. The page on the left is current.", body)
+        return ("The edit did not include the full deck, so the slides were left unchanged.", None)
+
+    answer = _labeled_section(text, "ANSWER")
+    if answer is not None:
+        message = _strip_fence(answer) or "No change."
+        return (message, None)
+
+    if _looks_like_deck(text) and _EDIT_INTENT.search(instruction or ""):
+        return ("Updated the slides. The page on the left is current.", text)
+    return (text or "No change.", None)
 
 
 class PresentationLibrary:

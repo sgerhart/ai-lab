@@ -129,6 +129,7 @@ _REPEATABLE_TOOLS = frozenset(
         "files_grep",
         "files_read",
         "web_search",
+        "nexus_search",
         "research",
         "report_list",
         "report_read",
@@ -156,6 +157,33 @@ def _repeat_blocks(tool_name: str, tool_args: dict[str, Any], tool_traces: list[
         return True
     key = _call_key(tool_args)
     return any(_call_key(trace.get("args") or {}) == key for trace in prior)
+
+
+def _wake_tools(run: AgentRun, policy: AgentPolicy) -> list[str] | None:
+    """See tools for a Steward wake. None means this run is not a wake."""
+    if not (getattr(run, "steward_goal_id", "") or "").strip():
+        return None
+    from .steward import SEE_TOOLS
+
+    ceiling = getattr(run, "tool_ceiling", None) or []
+    allowed = set(policy.allowed_tools) & SEE_TOOLS
+    return [name for name in ceiling if isinstance(name, str) and name in allowed]
+
+
+def wake_system_prompt(agent_id: str, tools: list[str], brief: str = "") -> str:
+    """Background wake. The model is not offered draft or approval tools."""
+    allowed = ", ".join(tools) or "(none)"
+    return (
+        f"You are the {agent_id} agent waking for one standing goal.\n"
+        f"Read tools you may call: {allowed}.\n"
+        "This is a background wake. Do not write files, send messages, change a schedule, "
+        "or call a frontier model.\n"
+        "If the goal needs a draft or a decision, say that in FINAL and stop.\n\n"
+        "To invoke a tool, respond with:\n"
+        '  TOOL <tool_name> {"arg": "value"}\n'
+        "When you are done, respond with:\n"
+        "  FINAL <what you found and what the operator should decide>\n"
+    ) + _brief_block(brief)
 
 
 def loop_system_prompt(
@@ -187,11 +215,11 @@ def loop_system_prompt(
         "  FINAL <your comprehensive guidance and findings>\n\n"
         "Principles:\n"
         "1. The AI Lab repository contains the lab's local code and notes. It is not an email or personal third-party account.\n"
-        "2. Use research and web_search for public information; use vault_read / vault_grep for your second brain memory.\n"
+        "2. Use research and web_search for public information. Use nexus_search({\"query\": \"...\"}) for Steven's Knowledge Nexus books, papers, and courses. Cite the title and chapter from that result. Do not invent a book that was not returned.\n"
         "3. Use vault_write to permanently remember new facts, decisions, and user preferences (category: preferences, facts, decisions, projects).\n"
         "4. Use schedule_create to schedule recurring cron jobs (5-field cron: minute hour dom month dow, e.g. '0 9 * * 1' for Monday 9am, '0 9 * * *' for daily 9am). Use schedule_list and schedule_cancel to manage schedules.\n"
         "5. Use report_write to compile multi-source reports and dossiers when conducting deep research.\n"
-        "6. If the user asks for a presentation, slides, or deck, you MUST call presentation_write(name, title, slides_markdown) before finishing with FINAL. Separate each slide with '---' and use clean executive slide titles (e.g. '## The Rise of Autonomous Agents' — do not prefix titles with 'Slide 1:' or 'Slide 2:'). Do not loop on web searches once you have basic facts; proceed directly to authoring the presentation.\n"
+        "6. If the user asks for a presentation, slides, or deck, you MUST call presentation_write(name, title, slides_markdown) before finishing with FINAL. Separate each slide with '---' and use clean executive slide titles (e.g. '## The Rise of Autonomous Agents' — do not prefix titles with 'Slide 1:' or 'Slide 2:'). Do not loop on web searches once you have basic facts; proceed directly to authoring the presentation. If they ask to change a deck that already exists, call presentation_read(name) first, then presentation_write with that same name and the full updated markdown.\n"
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
         "8. HYBRID FRONTIER WORKFLOW: You have access to consult_frontier(task, context). When you are running on the local model and need high-level strategic reasoning, complex executive synthesis, creative writing, or polished presentation slide generation, first gather facts locally (using web_search, vault_read, or files_read), then call consult_frontier to collaborate with OpenAI or another configured frontier model. Then finalize or write the presentation/report using the frontier model's output.\n"
         "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
@@ -382,11 +410,20 @@ def step_agent_run(
     is_presentation_req = any(w in lower_obj for w in ["presentation", "slide", "deck"])
     has_report = any(t.get("tool") == "report_write" for t in tool_traces)
     is_report_req = any(w in lower_obj for w in ["report", "dossier"])
+    wake_tools = _wake_tools(run, policy)
+    if wake_tools is not None:
+        is_presentation_req = False
+        is_report_req = False
 
     if is_presentation_req and not has_presentation:
         follow = "You now have research observations. You MUST call presentation_write(name, title, slides_markdown) to generate the slides. Do not call web_search again."
     elif is_report_req and not has_report:
         follow = "You now have research observations. You MUST call report_write(name, title, body_markdown) to compile the report. Do not call web_search again."
+    elif wake_tools is not None:
+        follow = (
+            "Call only the read tools listed for this wake, and only with different arguments. "
+            "Otherwise emit a single FINAL line."
+        )
     elif policy.id == "personal":
         follow = (
             "vault tools, files tools, web_search, research, schedule tools, and report tools may be called again with different arguments. "
@@ -424,7 +461,6 @@ def step_agent_run(
     from .tool_catalog import extra_read_tools
 
     granted = extra_read_tools(list(getattr(run, "granted_tools", []) or []))
-    effective_allowed = list(policy.allowed_tools) + granted + list(policy.privileged_tools) + mcp_tools
     if ctx is not None and getattr(ctx, "model_router", None) is None:
         ctx.model_router = router
     brief = ""
@@ -432,6 +468,14 @@ def step_agent_run(
         from .memory_vault import MemoryVault
 
         brief = MemoryVault(ctx.vault_root).render_brief()
+    if wake_tools is not None:
+        effective_allowed = list(wake_tools)
+        granted = []
+        mcp_tools = []
+        system = wake_system_prompt(policy.id, wake_tools, brief)
+    else:
+        effective_allowed = list(policy.allowed_tools) + granted + list(policy.privileged_tools) + mcp_tools
+        system = loop_system_prompt(policy, mcp_tools=mcp_tools, extra_tools=granted, brief=brief)
 
     try:
         completion = router.complete(
@@ -439,7 +483,7 @@ def step_agent_run(
                 model=run.model,
                 prompt=prompt,
                 backend=run.backend,
-                system=loop_system_prompt(policy, mcp_tools=mcp_tools, extra_tools=granted, brief=brief),
+                system=system,
             )
         )
     except ModelSlotBusy as exc:
@@ -501,6 +545,21 @@ def step_agent_run(
 
     tool_name = turn["name"]
     tool_args = turn.get("args") or {}
+    if wake_tools is not None and tool_name not in wake_tools:
+        run.traces.append(
+            {
+                "kind": "tool_denied",
+                "at": utcnow(),
+                "tool": tool_name,
+                "args": tool_args,
+                "reason": "wake_ceiling",
+            }
+        )
+        run.status = AgentRunStatus.FAILED
+        run.error = f"tool_denied:{tool_name}"
+        run.updated_at = utcnow()
+        store_put(run)
+        return run
     blocked = _account_tool_block(run.objective, tool_name)
     if blocked:
         run.status = AgentRunStatus.COMPLETED

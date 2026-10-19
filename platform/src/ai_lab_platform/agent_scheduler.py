@@ -52,8 +52,12 @@ def tick(
     now: datetime | None = None,
     state_path: Path | None = None,
     file_memory: Callable[[datetime, list[str]], dict[str, Any]] | None = None,
+    mark_goals: Callable[[datetime], list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
-    """Evaluate schedules; start at most one run per definition per local minute."""
+    """Evaluate schedules; start at most one run per definition per local minute.
+
+    ``mark_goals`` records due Steward goals. It must not start a model run.
+    """
     when = now or datetime.now().astimezone()
     path = state_path or schedule_state_path()
     state = _read_state(path)
@@ -135,6 +139,16 @@ def tick(
     state["last_tick_at"] = datetime.now(timezone.utc).isoformat()
     _write_state(path, state)
 
+    steward_marked: list[dict[str, Any]] = []
+    if mark_goals is not None:
+        try:
+            raw = mark_goals(when)
+        except Exception as exc:  # noqa: BLE001 — schedule results still return
+            errors.append({"source": "steward", "error": str(exc)[:300]})
+        else:
+            if isinstance(raw, list):
+                steward_marked = [item for item in raw if isinstance(item, dict)]
+
     return {
         "ok": True,
         "when": when.isoformat(),
@@ -143,6 +157,7 @@ def tick(
         "skipped": skipped,
         "errors": errors,
         "memory_file": memory_file,
+        "steward_marked": steward_marked,
     }
 
 

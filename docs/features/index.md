@@ -1,6 +1,6 @@
 # Future capabilities index
 
-**Updated:** 2026-10-09  
+**Updated:** 2026-10-18  
 **Plan:** [PLAN-mini-first.md](PLAN-mini-first.md)  
 **GitHub:** [#2](https://github.com/sgerhart/ai-lab/issues/2)–[#10](https://github.com/sgerhart/ai-lab/issues/10); [#11](https://github.com/sgerhart/ai-lab/issues/11) (FEAT-010); [#12](https://github.com/sgerhart/ai-lab/issues/12) (FEAT-011).
 
@@ -25,6 +25,7 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Studio worker `:8090` | Scripts | Not running |
 | Model comparison on short fixtures (IWO-057) | Script, unit tests | First live Studio pass 2026-09-25: the three large tags each scored 4/4. The fixture did not separate them, so Coding Local stays `qwen3-coder:30b` |
 | Pull requests from an agent (FEAT-007) | Not started | No |
+| Classroom: name a topic, get a lesson plan, spoken teaching, and a whiteboard. Raise a hand or ask a question (FEAT-021, IWO-106) | Yes | Live on the mini 2026-10-17. Page and lesson API checked. Browser voice not watched in a session |
 
 Lifecycle and entities: [README.md](README.md). Template: [TEMPLATE.md](TEMPLATE.md).  
 Protocol: [../work-order-protocol/](../work-order-protocol/README.md).
@@ -64,6 +65,8 @@ Do not treat this index as authorized implementation or deploy.
 | — | [FEAT-018](FEAT-018-ai-security-platform.md) | AI Security Platform | **Partial (code):** IWO-065–067 unit-tested. IWO-068–069 Draft. AISVS register written (IWO-085, Review). IWO-086–094 Draft. ADR 0044 Proposed. Not deployed | — |
 | — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Partial**. Job model and fake adapter unit-tested (IWO-070, IWO-071). Live Proxmox calls are refused. IWO-072–075 and IWO-081 remain Draft | — |
 | — | [FEAT-020](FEAT-020-security-compute-agent.md) | Security Compute Agent | **Specified** (proposed). IWO-076–078 Draft. Agent identity not created | — |
+| — | [FEAT-021](FEAT-021-classroom.md) | Classroom: lesson plan, voice, whiteboard | **Live on the mini** (IWO-106, 2026-10-17). Browser voice not watched in a session | — |
+| — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Partial (code):** IWO-107 and IWO-108 Review. A due goal queues a read-only run. No lab page. Not deployed | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -151,6 +154,9 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-099](../work-orders/IWO-099-personal-agent-chat.md) | Personal agent chat | FEAT-010 | **Complete** (unit; not deployed) |
 | [IWO-100](../work-orders/IWO-100-personal-thread-memory.md) | Personal chat remembers the thread | FEAT-010 | **Complete** (unit; not deployed) |
 | [IWO-101](../work-orders/IWO-101-personal-research-reports.md) | Personal research reports | FEAT-010 | **Complete** (unit; not deployed) |
+| [IWO-106](../work-orders/IWO-106-classroom-voice-whiteboard.md) | Classroom voice and whiteboard | FEAT-021 | **Review** (live on mini 2026-10-17; browser voice not watched in a session) |
+| [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
+| [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Steward read-only wake | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
 
 ## Historical phase work orders
 

@@ -5,6 +5,7 @@
     "http_get_allowlist",
     "write_report_artifact",
     "memory_search",
+    "nexus_search",
     "memory_write"
   ],
   "privileged_tools": [
