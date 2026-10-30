@@ -166,6 +166,7 @@ function bookCardHtml(item) {
   const primaryObj = pdfFmt || epubFmt || formats[0] || {};
   const primaryPath = primaryObj.path || "";
   const primaryFilename = primaryPath.split("/").pop() || "";
+  const displayFilename = typeof formatDisplayFilename === "function" ? formatDisplayFilename(primaryFilename) : primaryFilename;
   const coverUrl = primaryPath ? `/v1/nexus/cover?path=${encodeURIComponent(primaryPath)}` : "";
 
   let actionButtons = "";
@@ -206,7 +207,7 @@ function bookCardHtml(item) {
           <p class="library-card-desc">${esc(item.desc || "")}</p>
         </div>
         <div class="library-card-bottom">
-          <code class="library-card-filename" title="${esc(primaryFilename)}">${esc(primaryFilename)}</code>
+          <code class="library-card-filename" title="${esc(primaryFilename)}">${esc(displayFilename)}</code>
           <div class="library-card-actions">
             ${actionButtons}
           </div>

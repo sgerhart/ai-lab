@@ -2968,6 +2968,22 @@ function escapeHtml(value) {
   }[ch]));
 }
 
+function formatDisplayFilename(rawPathOrName) {
+  if (!rawPathOrName) return "";
+  let fn = String(rawPathOrName).split("/").pop() || "";
+  fn = fn.split("?")[0].split("#")[0];
+  fn = fn.replace(/_\d{8,14}(?=\.[a-z0-9]+$)/i, "");
+  fn = fn.replace(/^(?:nikita_prasad_|author_)/i, "");
+  const lastDot = fn.lastIndexOf(".");
+  if (lastDot > 0) {
+    const base = fn.slice(0, lastDot).replace(/[_-]+/g, " ").trim();
+    const ext = fn.slice(lastDot).toLowerCase();
+    return base + ext;
+  }
+  return fn.replace(/[_-]+/g, " ").trim();
+}
+window.formatDisplayFilename = formatDisplayFilename;
+
 function renderLibrary(filter = 'all', search = '') {
   const grid = document.getElementById('libraryGrid');
   if (!grid) return;
@@ -3056,7 +3072,7 @@ function renderLibrary(filter = 'all', search = '') {
             <p class="library-card-desc">${escapeHtml(item.desc || '')}</p>
           </div>
           <div class="library-card-bottom">
-            <code class="library-card-filename" title="${escapeHtml(primaryFilename)}">${escapeHtml(primaryFilename)}</code>
+            <code class="library-card-filename" title="${escapeHtml(primaryFilename)}">${escapeHtml(formatDisplayFilename(primaryFilename))}</code>
             <div class="library-card-actions">
               ${actionButtons}
             </div>
@@ -3076,6 +3092,8 @@ function renderQuickstart() {
   let html = '';
   QUICK_CHEATSHEETS.forEach(sheet => {
     const fullUrl = getFileUrl(sheet.path);
+    const rawFilename = sheet.path.split('/').pop() || '';
+    const cleanName = formatDisplayFilename(rawFilename);
     html += `
       <div class="quickstart-card">
         <div class="quickstart-icon">${sheet.icon}</div>
@@ -3083,8 +3101,11 @@ function renderQuickstart() {
           <h3>${sheet.title}</h3>
         </div>
         <p>${sheet.desc}</p>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-          <code style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono);">${sheet.path.split('/').pop()}</code>
+        <div class="quickstart-card-bottom">
+          <div class="quickstart-meta">
+            <span class="badge badge-format-pdf">PDF</span>
+            <code class="quickstart-filename" title="${escapeHtml(rawFilename)} (${escapeHtml(sheet.path)})">${escapeHtml(cleanName)}</code>
+          </div>
           <a href="${fullUrl}" class="btn btn-sm btn-primary" target="_blank">View Sheet ↗</a>
         </div>
       </div>
