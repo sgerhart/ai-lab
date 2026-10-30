@@ -1622,21 +1622,23 @@
         <details class="side-tools-details" id="side-tools-details">
           <summary class="side-tools-summary">
             <svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span style="flex:1">Apps &amp; Settings</span>
+            <span style="flex:1">Studio Tools</span>
             <span class="side-tools-caret">▾</span>
           </summary>
           <div class="side-tools-items">
+            <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
             <button type="button" class="side-link" id="nav-jupyter"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>Jupyter Labs</button>
             <button type="button" class="side-link" id="nav-r"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 12h4.2a2.2 2.2 0 0 1 0 4.4H8V20"/><path d="M11.2 16.2 15 20"/></svg>R Labs</button>
-            <a class="side-link" id="nav-nexus" href="/nexus/"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Nexus</a>
-            <a class="side-link" id="nav-classroom" href="/classroom"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M7 8h7M7 12h4"/></svg>Classroom</a>
-            <a class="side-link" id="nav-steward" href="/steward" data-view="steward"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Steward</a>
-            <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
-            <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
+            <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP Tools</button>
             <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
-            <button type="button" class="side-link" id="nav-configure" data-prefs="configure"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="10" cy="17" r="1.6" fill="currentColor" stroke="none"/></svg>Configure</button>
           </div>
         </details>
+        <div style="display:none;" aria-hidden="true">
+          <a id="nav-nexus" href="/nexus/">Nexus</a>
+          <a id="nav-classroom" href="/classroom">Classroom</a>
+          <a id="nav-steward" href="/steward" data-view="steward">Steward</a>
+          <button type="button" id="nav-configure" data-prefs="configure">Configure</button>
+        </div>
       </div>
 
       <div class="side-foot" id="op-btn">
@@ -2013,6 +2015,7 @@
   <div class="prefs-shell" id="prefs-shell" aria-hidden="true">
     <section class="prefs-main">
       <div class="prefs-pane" id="prefs-status">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <div class="page-head">
           <div>
             <h1>Status Dashboard</h1>
@@ -2047,6 +2050,7 @@
       </div>
 
       <div class="prefs-pane" id="prefs-lab">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <h1>Models</h1>
         <p class="prefs-lead">Local models run on the Studio. A cloud model is used only when you choose it and API spend is authorized.</p>
         <div class="prefs-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 18px">
@@ -2087,6 +2091,7 @@
       </div>
 
       <div class="prefs-pane" id="prefs-security">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <h1>Security</h1>
         <p class="prefs-lead">DefenseClaw runs on the Air. Antares runs on the Studio. Open a badge for the detail.</p>
         <div class="prefs-grid">
@@ -2179,6 +2184,7 @@
       </div>
 
       <div class="prefs-pane" id="prefs-configure">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <h1>Configure</h1>
         <p class="prefs-lead">Frontier models. The chat model stays on the Studio unless you choose otherwise.</p>
         <div class="prefs-grid">
@@ -2191,7 +2197,10 @@
       </div>
 
       <div class="prefs-pane" id="prefs-keys">
-        <button type="button" class="btn" id="back-configure-keys">← Configure</button>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <button type="button" class="btn" id="back-configure-keys">← Configure</button>
+          <button type="button" class="btn" data-back="chat">← Back to Chat</button>
+        </div>
         <h1>AI</h1>
         <p class="prefs-lead">Keys stay on the mini under <code>~/.ai-lab/secrets/</code> (mode 600). Never shown again after save. Usage-billed calls stay off until you authorize spend (ADR 0038).</p>
         <div class="settings-section prefs-flag">
@@ -2209,6 +2218,7 @@
       </div>
 
       <div class="prefs-pane" id="prefs-settings">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <h1>MCP services</h1>
         <p class="prefs-lead">Off until you authorize a server. Saving one is not permission to call it.</p>
         <table class="mcp-table">
@@ -2259,6 +2269,7 @@
       </div>
 
       <div class="prefs-pane prefs-help" id="prefs-help">
+        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
         <h1>Help</h1>
         <p class="prefs-lead">How to authenticate the lab site and open Studio without SSH tunnels.</p>
         <h2>Sign in (username + password)</h2>
@@ -2914,6 +2925,7 @@
     }
 
     function setView(view, opts = {}) {
+      window.setView = setView;
       state.view = view;
       closeOpMenu();
       closePrefs();
@@ -4501,6 +4513,9 @@
     $("run-back").onclick = () => { setView("runs"); loadRuns().catch((e) => showErr(e)); };
     $("runs-refresh").onclick = () => loadRuns().catch((e) => showErr(e));
     if ($("prefs-back")) $("prefs-back").onclick = () => setView("chat");
+    document.querySelectorAll("[data-back='chat']").forEach((b) => {
+      b.onclick = () => setView("chat");
+    });
     $("badge-ai").onclick = () => openPrefs("keys");
     $("badge-defenseclaw").onclick = () => openPrefs("defenseclaw");
     let antaresTimer = null;

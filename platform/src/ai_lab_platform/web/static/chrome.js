@@ -1,13 +1,15 @@
 (function () {
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
+  const search = window.location.search || "";
+  const isAntares = /open=antares/.test(search) || /^\/antares/.test(path);
   const links = [
-    { href: "/", label: "Studio", match: /^\/$/ },
-    { href: "/nexus/", label: "📚 Study Hub", match: /^\/nexus/ },
-    { href: "/classroom", label: "Classroom", match: /^\/classroom$/ },
-    { href: "/steward", label: "Steward", match: /^\/steward$/ },
-    { href: "/?open=antares", label: "Antares", match: /^\/antares$/ },
-    { href: "/secrets", label: "API keys", match: /^\/secrets$/ },
-    { href: "/help", label: "Help", match: /^\/help$/ },
+    { href: "/", label: "Studio", active: path === "/" && !isAntares },
+    { href: "/nexus/", label: "📚 Nexus", active: /^\/nexus/.test(path) },
+    { href: "/classroom", label: "Classroom", active: /^\/classroom$/.test(path) },
+    { href: "/steward", label: "Steward", active: /^\/steward$/.test(path) },
+    { href: "/?open=antares", label: "Antares", active: isAntares },
+    { href: "/secrets", label: "API keys", active: /^\/secrets$/.test(path) },
+    { href: "/help", label: "Help", active: /^\/help$/.test(path) },
   ];
   const nav = document.createElement("nav");
   nav.className = "ai-lab-topnav";
@@ -18,7 +20,7 @@
     '<div class="ai-lab-links">' +
     links
       .map(function (l) {
-        const active = l.match.test(path) ? " active" : "";
+        const active = l.active ? " active" : "";
         return '<a class="' + active.trim() + '" href="' + l.href + '">' + l.label + "</a>";
       })
       .join("") +
