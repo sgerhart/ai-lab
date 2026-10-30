@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Studio job & host resources server (port 8002).
+# Listens on Tailscale IPv4 for mini dashboard and /antares UI.
+set -euo pipefail
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH}"
+BIND="${AI_LAB_BIND_ADDRESS:-}"
+if [[ -z "${BIND}" ]]; then
+  if command -v tailscale >/dev/null 2>&1; then
+    BIND="$(tailscale ip -4 2>/dev/null | head -1 || true)"
+  fi
+fi
+BIND="${BIND:-127.0.0.1}"
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+exec /opt/homebrew/bin/python3 "${ROOT}/scripts/antares-job-server.py" --host "${BIND}" --port 8002
