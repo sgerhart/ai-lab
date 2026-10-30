@@ -26,8 +26,8 @@
       "label": "Coding Local",
       "billing_class": "local",
       "backend": "ollama",
-      "catalog_model_id": "qwen3-coder-30b",
-      "intended_use": "Repository analysis, implementation, debugging, tests, and diff review"
+      "catalog_model_id": "qwen3-coder-next",
+      "intended_use": "Repository analysis, implementation, debugging, tests, JupyterLab coding help, and diff review"
     },
     {
       "id": "fast-local",
@@ -124,6 +124,19 @@
       "status": "catalogued-not-pulled",
       "pull_authorized": false,
       "notes": "Coding Local profile candidate. MoE 30B-A3B. Do not pull without owner auth. Do not assume it beats general-local without IWO-057 eval."
+    },
+    {
+      "id": "qwen3-coder-next",
+      "backend": "ollama",
+      "host": "studio",
+      "pull_name": "qwen3-coder-next",
+      "alternate_pull_names": ["qwen3-coder-next:latest", "qwen3-coder:latest"],
+      "license": "Apache-2.0 (verify on Ollama library page)",
+      "approx_size": "~42–46 GB (MoE 80B-A3B)",
+      "role": "coding-local",
+      "status": "catalogued-not-pulled",
+      "pull_authorized": false,
+      "notes": "Coding Local profile candidate and JupyterLab assistant default. MoE 80B-A3B with 3B active parameters. Human authorized on 2026-10-30. Git must not claim pulled."
     },
     {
       "id": "qwen3.6-35b-a3b",

@@ -165,11 +165,11 @@ Studio on 2026-09-25 in `~/.ai-lab/jupyter/.venv`:
 
 The live start script `~/.ai-lab/jupyter/start-jupyterlab.sh` matches
 `hosts/studio/start-jupyterlab.sh.example`: chat provider `ollama`, model
-`qwen3-coder:30b`, inline completion provider `none`. No cloud API key and
-no Claude mode. After the LaunchAgent restart, `GET /notebook-intelligence/capabilities`
-reported that chat model. Startup called Ollama `/api/tags` and `/api/show`
-only. `/api/ps` was empty until a question is asked. The first question loads
-the tag and unloads it about five minutes after the last one.
+`qwen3-coder-next` (fallback `qwen3-coder:30b`), inline completion provider `none`.
+No cloud API key and no Claude mode. After the LaunchAgent restart,
+`GET /notebook-intelligence/capabilities` reported that chat model. Startup called
+Ollama `/api/tags` and `/api/show` only. `/api/ps` was empty until a question is
+asked. The first question loads the tag and unloads it about five minutes after the last one.
 
 A small model loaded in a cell for a lesson, including with MLX, is not this
 help. Restart that kernel when the lesson is done if an agent run needs the
