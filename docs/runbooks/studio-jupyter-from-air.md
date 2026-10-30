@@ -86,6 +86,28 @@ mkdir -p ~/ai-lab-notebooks
 jupyter kernelspec list   # ir must appear
 ```
 
+## Installing packages inside Notebooks
+
+### Python notebooks (Studio kernel)
+Use the `%pip` line magic directly in any notebook cell:
+
+```python
+%pip install <package-name>
+```
+
+Restart the notebook kernel (`Kernel` → `Restart Kernel`) after installing C-extensions, PyTorch, or MLX packages.
+
+### R notebooks (IRkernel)
+Use standard `install.packages()` directly in any R notebook cell:
+
+```r
+install.packages("<package-name>")
+library(<package-name>)
+```
+
+The cloud CRAN mirror (`https://cloud.r-project.org`) is preconfigured in `~/.Rprofile` on `mac-studio`, and user libraries install to `~/Library/R/arm64/4.6/library` without prompt or sudo requirement.
+
+
 ## Access from Air (legacy SSH tunnel)
 
 ```bash
