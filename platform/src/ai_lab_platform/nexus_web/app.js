@@ -2971,6 +2971,8 @@ function escapeHtml(value) {
 function renderLibrary(filter = 'all', search = '') {
   const grid = document.getElementById('libraryGrid');
   if (!grid) return;
+  grid.classList.remove('is-shelves');
+  grid.classList.add('is-grid');
 
   const s = search.toLowerCase().trim();
   const filtered = CONSOLIDATED_LIBRARY.filter(item => {

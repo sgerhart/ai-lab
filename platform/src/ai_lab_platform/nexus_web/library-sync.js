@@ -216,6 +216,43 @@ function bookCardHtml(item) {
   `;
 }
 
+let nexusViewMode = "grid";
+try {
+  nexusViewMode = localStorage.getItem("nexus_view_mode") || "grid";
+} catch (e) {
+  nexusViewMode = "grid";
+}
+
+function bindViewModeToggle() {
+  const gridBtn = document.getElementById("viewModeGrid");
+  const shelvesBtn = document.getElementById("viewModeShelves");
+  if (!gridBtn || !shelvesBtn) return;
+
+  function setMode(mode) {
+    nexusViewMode = mode;
+    try { localStorage.setItem("nexus_view_mode", mode); } catch (e) {}
+    if (mode === "grid") {
+      gridBtn.classList.add("active");
+      shelvesBtn.classList.remove("active");
+    } else {
+      shelvesBtn.classList.add("active");
+      gridBtn.classList.remove("active");
+    }
+    refreshLibraryView();
+  }
+
+  gridBtn.addEventListener("click", () => setMode("grid"));
+  shelvesBtn.addEventListener("click", () => setMode("shelves"));
+
+  if (nexusViewMode === "shelves") {
+    shelvesBtn.classList.add("active");
+    gridBtn.classList.remove("active");
+  } else {
+    gridBtn.classList.add("active");
+    shelvesBtn.classList.remove("active");
+  }
+}
+
 function renderLibraryShelves(filter, search) {
   const grid = document.getElementById("libraryGrid");
   if (!grid || typeof CONSOLIDATED_LIBRARY === "undefined") return;
@@ -235,7 +272,7 @@ function renderLibraryShelves(filter, search) {
     grid.innerHTML = '<div class="library-empty"><p>No books match that search.</p></div>';
     return;
   }
-  if (active !== "all") {
+  if (nexusViewMode === "grid" || active !== "all") {
     grid.classList.remove("is-shelves");
     grid.classList.add("is-grid");
     grid.innerHTML = matched.map(bookCardHtml).join("");
@@ -355,6 +392,7 @@ function bindHelpfulBookSearch() {
 
 function initLibrarySync() {
   bindShelfScroll();
+  bindViewModeToggle();
   renderLibrary = renderLibraryShelves;
   bindHelpfulBookSearch();
   const btn = document.getElementById("syncLibraryBtn");
