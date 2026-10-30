@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
   <link rel="stylesheet" href="/static/studio.css?v=7">
-  <link rel="stylesheet" href="/static/steward.css">
+  <link rel="stylesheet" href="/static/steward.css?v=5">
   <style>
     :root {
       --bg: #070a12;
@@ -33,6 +33,17 @@
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
     html, body { margin: 0; height: 100%; }
     .ai-lab-topnav { display: none !important; }
     body {
@@ -1702,9 +1713,9 @@
           <header class="presence">
             <div class="mark" id="presence-mark" data-state="quiet" aria-hidden="true"></div>
             <div>
-              <p class="eyebrow">Steward · Standing Autonomous Companion</p>
+              <p class="eyebrow">Steward · Chief of Staff &amp; Autonomous Companion</p>
               <h1 id="presence">Quiet</h1>
-              <p class="lead" id="presence-detail">Nothing is in its care. Leave a responsibility and it will keep watch.</p>
+              <p class="lead" id="presence-detail">Nothing is in its care. Talk with Steward or hand off a responsibility below.</p>
               <div class="presence-stats" id="presence-stats">
                 <span class="stat-badge"><span class="stat-dot"></span> <span id="stat-active-count">0</span> Active Watches</span>
                 <span class="stat-badge">🛡️ Read-Only Ceiling</span>
@@ -1713,51 +1724,193 @@
             </div>
           </header>
 
-          <form id="goal-form" class="compose">
-            <label class="visually-hidden" for="goal-title">What it should look after</label>
-            <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off" placeholder="What should it look after?">
-            <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
-            <textarea id="goal-intent" name="intent" maxlength="4000" rows="2" placeholder="Anything more it should notice."></textarea>
+          <!-- Executive Tab Switcher -->
+          <nav class="steward-tabs" role="tablist" aria-label="Steward Desk Modes">
+            <button type="button" class="steward-tab active" data-tab="chat" role="tab" aria-selected="true" id="steward-tab-chat">
+              <span class="tab-icon">💬</span> Chief of Staff
+            </button>
+            <button type="button" class="steward-tab" data-tab="watches" role="tab" aria-selected="false" id="steward-tab-watches">
+              <span class="tab-icon">🛡️</span> Standing Watches <span class="tab-count" id="steward-tab-count">0</span>
+            </button>
+            <button type="button" class="steward-tab" data-tab="feed" role="tab" aria-selected="false" id="steward-tab-feed">
+              <span class="tab-icon">📋</span> Intelligence Feed
+            </button>
+          </nav>
 
-            <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
-              <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="true">Each morning</button>
-              <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
-              <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 minutes</button>
-              <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom</button>
+          <!-- Tab 1: Conversational Chief of Staff Desk -->
+          <section class="steward-view" id="steward-view-chat" role="tabpanel" aria-labelledby="steward-tab-chat">
+            <div class="steward-chat-container">
+              <div class="steward-chat-messages" id="steward-chat-messages">
+                <div class="steward-empty-chat" id="steward-empty-chat">
+                  <div class="steward-hero-orb">
+                    <img src="/static/ai-lab-orb.jpg" alt="Steward" class="steward-hero-img">
+                  </div>
+                  <h2>Steward Companion Desk</h2>
+                  <p class="hero-desc">Your personal autonomous agent is on watch. Talk through ideas, explore memory vault, trigger background investigations, or hand off standing responsibilities.</p>
+                  
+                  <div class="steward-prompt-grid">
+                    <button type="button" class="steward-prompt-card" data-prompt="Give me a morning briefing of lab health, open tasks, and overnight updates.">
+                      <div class="prompt-icon">🌅</div>
+                      <div class="prompt-text">
+                        <strong>Morning Briefing</strong>
+                        <span>Scan memory, health, and recent reports</span>
+                      </div>
+                    </button>
+                    <button type="button" class="steward-prompt-card" data-prompt="Watch arXiv and the web for recent LLM reasoning breakthroughs every morning.">
+                      <div class="prompt-icon">🔬</div>
+                      <div class="prompt-text">
+                        <strong>Assign Research Watch</strong>
+                        <span>Sentinel for recent AI papers and breakthroughs</span>
+                      </div>
+                    </button>
+                    <button type="button" class="steward-prompt-card" data-prompt="Search personal memory vault for our recent notes and plans.">
+                      <div class="prompt-icon">🧠</div>
+                      <div class="prompt-text">
+                        <strong>Search Memory Vault</strong>
+                        <span>Inspect notes, decisions, and second brain</span>
+                      </div>
+                    </button>
+                    <button type="button" class="steward-prompt-card" data-prompt="What active watches are running and what did you observe in your latest wake?">
+                      <div class="prompt-icon">⚡</div>
+                      <div class="prompt-text">
+                        <strong>System Pulse &amp; Wakes</strong>
+                        <span>Review active watches and latest findings</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Thinking / Status Banner -->
+              <div class="steward-thinking" id="steward-thinking" hidden>
+                <div class="thinking-spinner"></div>
+                <span id="steward-thinking-text">Steward is investigating with personal agent tools...</span>
+              </div>
+
+              <!-- Floating Glass Composer -->
+              <div class="steward-composer-bar">
+                <button type="button" class="steward-icon-btn" id="steward-new-chat-btn" title="Start new conversation" aria-label="New chat">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <div class="steward-composer-input-wrap">
+                  <textarea id="steward-chat-input" rows="1" placeholder="Message Steward or assign a responsibility..." autocomplete="off"></textarea>
+                </div>
+                <button type="button" class="steward-send-btn" id="steward-send-btn" title="Send message" aria-label="Send">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                </button>
+              </div>
             </div>
-            <label class="visually-hidden" for="wake-preset">Wake schedule</label>
-            <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
-              <option value="0 9 * * *">Each morning</option>
-              <option value="0 * * * *">Hourly</option>
-              <option value="*/15 * * * *">Every 15 minutes</option>
-              <option value="custom">Custom</option>
-            </select>
-            <div class="cron-row" id="cron-row" hidden>
-              <label for="wake-cron">Custom schedule, minute hour day month weekday</label>
-              <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
+          </section>
+
+          <!-- Tab 2: Standing Watches (Executive Card Deck) -->
+          <section class="steward-view" id="steward-view-watches" role="tabpanel" aria-labelledby="steward-tab-watches" hidden>
+            <!-- 1-Click Quick Templates Section -->
+            <div class="steward-templates-section">
+              <div class="section-tag">QUICK WATCH TEMPLATES</div>
+              <div class="steward-templates-deck">
+                <button type="button" class="template-card" data-template="morning">
+                  <span class="tpl-icon">🌅</span>
+                  <div class="tpl-body">
+                    <strong>Morning Briefing</strong>
+                    <span>Daily 9:00 AM · Memory, reports &amp; lab health</span>
+                  </div>
+                </button>
+                <button type="button" class="template-card" data-template="research">
+                  <span class="tpl-icon">🔬</span>
+                  <div class="tpl-body">
+                    <strong>Research Sentinel</strong>
+                    <span>Daily 9:00 AM · Web &amp; Nexus paper scan</span>
+                  </div>
+                </button>
+                <button type="button" class="template-card" data-template="health">
+                  <span class="tpl-icon">🛡️</span>
+                  <div class="tpl-body">
+                    <strong>Lab Health Pulse</strong>
+                    <span>Hourly · Health checks &amp; active schedules</span>
+                  </div>
+                </button>
+                <button type="button" class="template-card" data-template="journal">
+                  <span class="tpl-icon">📓</span>
+                  <div class="tpl-body">
+                    <strong>Memory Journal</strong>
+                    <span>Every 15 min · Index vault notes &amp; decisions</span>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            <div class="sources">
-              <p>It may read (Lab Tools &amp; Governed MCPs)</p>
-              <ul class="chips" id="see-tools"></ul>
-              <p class="ceiling-hint">Ceiling: Read-only background wakes cannot modify files or send messages without approval.</p>
+            <!-- Active Watches Deck -->
+            <div class="watches-deck-header">
+              <h2>In Its Care</h2>
+              <button type="button" class="btn-new-watch" id="btn-toggle-composer">
+                ＋ New Watch
+              </button>
             </div>
-            <div class="compose-bar">
-              <p id="status" role="status"></p>
-              <button type="submit" class="primary" id="save-goal">Keep watch</button>
+            
+            <div class="stack" id="goals">
+              <p class="empty">The first responsibility will sit here. Choose a quick template above or create one below.</p>
             </div>
-          </form>
 
-          <div class="board">
-            <section class="column" aria-label="Goals">
-              <h2>In its care</h2>
-              <div class="stack" id="goals"><p class="empty">The first responsibility will sit here. Leave one above to begin.</p></div>
-            </section>
-            <section class="column" aria-label="Activity">
-              <h2>Brought back</h2>
-              <div id="activity"><p class="empty">Notes from autonomous wakes will show up here.</p></div>
-            </section>
-          </div>
+            <!-- Refined Watch Composer Card -->
+            <form id="goal-form" class="compose watch-composer-card">
+              <div class="compose-header">
+                <h3>Assign a Standing Watch</h3>
+                <p class="compose-sub">Steward will wake autonomously on schedule and report findings back to your feed.</p>
+              </div>
+
+              <label class="visually-hidden" for="goal-title">What it should look after</label>
+              <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off" placeholder="Responsibility title (e.g. Monitor overnight CI and lab health)">
+              
+              <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
+              <textarea id="goal-intent" name="intent" maxlength="4000" rows="2" placeholder="Specific instructions or conditions to flag during background wake..."></textarea>
+
+              <div class="rhythm-wrapper">
+                <span class="field-label">WAKE RHYTHM</span>
+                <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
+                  <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="true">Each morning (9:00 AM)</button>
+                  <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
+                  <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 minutes</button>
+                  <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom Schedule</button>
+                </div>
+                <label class="visually-hidden" for="wake-preset">Wake schedule</label>
+                <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
+                  <option value="0 9 * * *">Each morning</option>
+                  <option value="0 * * * *">Hourly</option>
+                  <option value="*/15 * * * *">Every 15 minutes</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <div class="cron-row" id="cron-row" hidden>
+                  <label for="wake-cron">Custom cron (minute hour day month weekday)</label>
+                  <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
+                </div>
+              </div>
+
+              <div class="sources">
+                <span class="field-label">PERMITTED TOOLS (READ-ONLY)</span>
+                <ul class="chips" id="see-tools"></ul>
+                <p class="ceiling-hint">🛡️ Read-Only Ceiling: Background wakes cannot modify files or send messages without human approval.</p>
+              </div>
+
+              <div class="compose-bar">
+                <p id="status" role="status"></p>
+                <button type="submit" class="primary" id="save-goal">Keep watch</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Tab 3: Intelligence Feed (Brought Back) -->
+          <section class="steward-view" id="steward-view-feed" role="tabpanel" aria-labelledby="steward-tab-feed" hidden>
+            <div class="feed-header">
+              <div>
+                <h2>Intelligence Feed</h2>
+                <p class="feed-sub">Autonomous findings and executive summaries brought back by Steward's background wakes.</p>
+              </div>
+              <button type="button" class="text-btn" id="btn-refresh-feed">↻ Refresh</button>
+            </div>
+            <div id="activity" class="feed-stream">
+              <p class="empty">Notes from autonomous wakes will show up here.</p>
+            </div>
+          </section>
         </main>
       </div>
 
@@ -2218,7 +2371,7 @@
   </div>
 
   <script src="/static/studio.js?v=11"></script>
-  <script src="/static/steward.js?v=4"></script>
+  <script src="/static/steward.js?v=5"></script>
   <script>
     const state = {
       view: "chat",

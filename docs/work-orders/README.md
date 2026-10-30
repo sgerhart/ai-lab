@@ -120,6 +120,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-111](IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | Complete (unit; not deployed) |
 | [IWO-112](IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | Complete (unit; not deployed) |
 | [IWO-113](IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | Complete (unit; not deployed) |
+| [IWO-114](IWO-114-steward-conversational-chief-of-staff-desk.md) | Steward Conversational Chief of Staff Desk Redesign | Complete (unit; not deployed) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
