@@ -1,14 +1,10 @@
 (function () {
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
-  const search = window.location.search || "";
-  const isAntares = /open=antares/.test(search) || /^\/antares/.test(path);
   const links = [
-    { href: "/", label: "Studio", active: path === "/" && !isAntares },
+    { href: "/", label: "Studio", active: path === "/" },
     { href: "/nexus/", label: "📚 Nexus", active: /^\/nexus/.test(path) },
     { href: "/classroom", label: "Classroom", active: /^\/classroom$/.test(path) },
     { href: "/steward", label: "Steward", active: /^\/steward$/.test(path) },
-    { href: "/?open=antares", label: "Antares", active: isAntares },
-    { href: "/secrets", label: "API keys", active: /^\/secrets$/.test(path) },
     { href: "/help", label: "Help", active: /^\/help$/.test(path) },
   ];
   const nav = document.createElement("nav");
