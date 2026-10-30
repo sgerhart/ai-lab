@@ -1,7 +1,7 @@
 (function () {
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
   const links = [
-    { href: "/", label: "AI Lab", match: /^\/$/ },
+    { href: "/", label: "Studio", match: /^\/$/ },
     { href: "/nexus/", label: "📚 Study Hub", match: /^\/nexus/ },
     { href: "/classroom", label: "Classroom", match: /^\/classroom$/ },
     { href: "/steward", label: "Steward", match: /^\/steward$/ },

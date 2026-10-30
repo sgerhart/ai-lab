@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261030-v3">
+  <link rel="stylesheet" href="/static/chrome.css">
+  <link rel="stylesheet" href="styles.css?v=20261030-v4">
 </head>
 <body class="dark-theme">
   <!-- Ambient background glow -->
@@ -34,8 +35,8 @@
 
       <!-- Quick Stats Header -->
       <div class="header-stats">
-        <a class="btn btn-secondary" id="backToLab" href="/">← Studio</a>
-        <a class="btn btn-secondary" id="stewardLink" href="/steward">🛡️ Steward</a>
+        <a class="btn btn-secondary" id="backToLab" href="/" style="display:none;" aria-hidden="true">← Studio</a>
+        <a class="btn btn-secondary" id="stewardLink" href="/steward" style="display:none;" aria-hidden="true">🛡️ Steward</a>
         <div class="stat-badge system-status-pill" title="AI Lab Control Plane is active">
           <span class="status-dot"></span>
           <span class="stat-value">Connected</span>
@@ -334,7 +335,8 @@
     <p>Knowledge Nexus • Designed for Focused Accelerated Learning • Built for Steven Gerhart</p>
   </footer>
 
-  <script src="app.js?v=20261030-v3"></script>
-  <script src="library-sync.js?v=20261030-v3"></script>
+  <script src="/static/chrome.js"></script>
+  <script src="app.js?v=20261030-v4"></script>
+  <script src="library-sync.js?v=20261030-v4"></script>
 </body>
 </html>

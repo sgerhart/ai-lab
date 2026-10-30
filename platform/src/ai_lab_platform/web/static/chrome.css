@@ -15,18 +15,20 @@
 .ai-lab-topnav {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  background: rgba(9, 13, 22, 0.82);
+  background: rgba(9, 13, 22, 0.88);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .ai-lab-topnav .inner {
-  max-width: 1120px;
+  max-width: 1420px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 8px 24px;
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
