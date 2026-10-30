@@ -165,7 +165,7 @@ Studio on 2026-09-25 in `~/.ai-lab/jupyter/.venv`:
 
 The live start script `~/.ai-lab/jupyter/start-jupyterlab.sh` matches
 `hosts/studio/start-jupyterlab.sh.example`: chat provider `ollama`, model
-`qwen3-coder-next` (fallback `qwen3-coder:30b`), inline completion provider `none`.
+`qwen3-coder-next:latest` (fallback `qwen3-coder:30b`), inline completion provider `none`.
 No cloud API key and no Claude mode. After the LaunchAgent restart,
 `GET /notebook-intelligence/capabilities` reported that chat model. Startup called
 Ollama `/api/tags` and `/api/show` only. `/api/ps` was empty until a question is

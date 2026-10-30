@@ -17,7 +17,7 @@ BIND="${BIND:-127.0.0.1}"
 # Code help (IWO-064). Chat calls Studio Ollama. Inline completion stays off.
 # No cloud API key and no Claude mode. The package is not installed by this script.
 export NBI_CHAT_MODEL_PROVIDER=ollama
-export NBI_CHAT_MODEL_ID=qwen3-coder-next
+export NBI_CHAT_MODEL_ID=qwen3-coder-next:latest
 export NBI_INLINE_COMPLETION_MODEL_PROVIDER=none
 
 exec "${JDIR}/.venv/bin/jupyter" lab \
