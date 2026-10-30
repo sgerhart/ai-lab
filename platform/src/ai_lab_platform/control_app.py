@@ -119,6 +119,7 @@ CLASSROOM_HTML = Path(__file__).resolve().parent / "web" / "classroom.html"
 STEWARD_HTML = Path(__file__).resolve().parent / "web" / "steward.html"
 WEB_DIR = Path(__file__).resolve().parent / "web"
 STATIC_DIR = WEB_DIR / "static"
+NEXUS_WEB_DIR = Path(__file__).resolve().parent / "nexus_web"
 FAVICON_SVG = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="6" fill="#141b22"/>
   <circle cx="16" cy="16" r="6" fill="#3ee0a8"/>
@@ -597,11 +598,28 @@ class _ICloudFileResponse(FileResponse):
 
 
 class _ICloudStaticFiles(StaticFiles):
+    def __init__(self, *args: Any, overlay_dir: Path | None = None, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.overlay_dir = overlay_dir
+
     def file_response(self, full_path, stat_result, scope, status_code=200):  # type: ignore[no-untyped-def]
         response = super().file_response(full_path, stat_result, scope, status_code)
         if type(response) is FileResponse:
             response.__class__ = _ICloudFileResponse
         return response
+
+    async def get_response(self, path: str, scope: Any) -> Any:
+        if self.overlay_dir and self.overlay_dir.is_dir():
+            clean = path.strip("/") or "index.html"
+            candidate = (self.overlay_dir / clean).resolve()
+            try:
+                candidate.relative_to(self.overlay_dir.resolve())
+                if candidate.is_file():
+                    stat_result = candidate.stat()
+                    return self.file_response(str(candidate), stat_result, scope)
+            except ValueError:
+                pass
+        return await super().get_response(path, scope)
 
 
 def create_control_app(
@@ -3387,6 +3405,7 @@ def create_control_app(
         Path("/Users/stevengerhart/Documents/Information"),
         Path("/Users/sgerhart/Information"),
         Path("/Users/stevengerhart/Information"),
+        NEXUS_WEB_DIR,
     ]
     for n_dir in nexus_candidates:
         if n_dir.is_dir():
@@ -3394,7 +3413,15 @@ def create_control_app(
             def _nexus_redirect() -> RedirectResponse:
                 return RedirectResponse(url="/nexus/", status_code=307)
 
-            app.mount("/nexus", _ICloudStaticFiles(directory=str(n_dir), html=True), name="nexus")
+            app.mount(
+                "/nexus",
+                _ICloudStaticFiles(
+                    directory=str(n_dir),
+                    html=True,
+                    overlay_dir=NEXUS_WEB_DIR if NEXUS_WEB_DIR.is_dir() else None,
+                ),
+                name="nexus",
+            )
             break
 
     return app

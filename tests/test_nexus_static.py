@@ -50,3 +50,22 @@ class ICloudStaticTests(unittest.TestCase):
             response = files.file_response(Path(tmp) / "index.html", stat_result, scope)
         self.assertIs(type(response), _ICloudFileResponse)
         self.assertIsInstance(response, FileResponse)
+
+    def test_overlay_dir_takes_precedence_over_underlying_disk(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_disk, tempfile.TemporaryDirectory() as tmp_overlay:
+            disk_index = Path(tmp_disk) / "index.html"
+            disk_index.write_text("disk index", encoding="utf-8")
+            disk_book = Path(tmp_disk) / "book.pdf"
+            disk_book.write_text("pdf bytes", encoding="utf-8")
+
+            overlay_index = Path(tmp_overlay) / "index.html"
+            overlay_index.write_text("overlay index", encoding="utf-8")
+
+            files = _ICloudStaticFiles(directory=tmp_disk, html=True, overlay_dir=Path(tmp_overlay))
+            scope = {"type": "http", "method": "GET", "headers": []}
+
+            resp_index = asyncio.run(files.get_response("index.html", scope))
+            self.assertEqual(Path(resp_index.path).resolve(), overlay_index.resolve())
+
+            resp_book = asyncio.run(files.get_response("book.pdf", scope))
+            self.assertEqual(Path(resp_book.path).resolve(), disk_book.resolve())
