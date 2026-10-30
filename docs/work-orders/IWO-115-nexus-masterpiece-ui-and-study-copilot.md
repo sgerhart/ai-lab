@@ -1,6 +1,6 @@
 # IWO-115 — Knowledge Nexus Masterpiece UI & Grounded Study Copilot
 
-**Status:** Complete (unit; not deployed)  
+**Status:** Complete (deployed to mac-mini)  
 **Priority:** P1  
 **Effort:** M  
 **Owner:** human / Antigravity  

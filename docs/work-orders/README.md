@@ -121,7 +121,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-112](IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | Complete (unit; not deployed) |
 | [IWO-113](IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | Complete (unit; not deployed) |
 | [IWO-114](IWO-114-steward-conversational-chief-of-staff-desk.md) | Steward Conversational Chief of Staff Desk Redesign | Complete (unit; not deployed) |
-| [IWO-115](IWO-115-nexus-masterpiece-ui-and-study-copilot.md) | Knowledge Nexus Masterpiece UI & Grounded Study Copilot | Complete (unit; not deployed) |
+| [IWO-115](IWO-115-nexus-masterpiece-ui-and-study-copilot.md) | Knowledge Nexus Masterpiece UI & Grounded Study Copilot | Complete (deployed to mac-mini) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
