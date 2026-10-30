@@ -1,17 +1,40 @@
-/* Steward page: standing goals and wake activity. */
+/* Steward Desk: hand over a responsibility, then read what comes back. */
 (function () {
   "use strict";
+
+  const GROUPS = [
+    { label: "Memory", icon: "🧠", tools: ["vault_list", "vault_grep", "vault_read"] },
+    { label: "Notes", icon: "📝", tools: ["files_list", "files_grep", "files_read"] },
+    { label: "Reports", icon: "📊", tools: ["report_list", "report_read"] },
+    { label: "Nexus", icon: "📚", tools: ["nexus_search"] },
+    { label: "The web", icon: "🌐", tools: ["web_search"] },
+    { label: "Schedules", icon: "⏰", tools: ["schedule_list"] },
+    { label: "Presentations", icon: "📽️", tools: ["presentation_list", "presentation_read"] },
+    { label: "Skills", icon: "⚡", tools: ["skill_list", "skill_read"] },
+    { label: "Lab health", icon: "🛡️", tools: ["health_read"] },
+  ];
+  const RHYTHM = {
+    "0 9 * * *": "Each morning",
+    "0 * * * *": "Hourly",
+    "*/15 * * * *": "Every 15 minutes",
+  };
 
   const form = document.getElementById("goal-form");
   const titleInput = document.getElementById("goal-title");
   const intentInput = document.getElementById("goal-intent");
   const preset = document.getElementById("wake-preset");
   const cronInput = document.getElementById("wake-cron");
+  const cronRow = document.getElementById("cron-row");
+  const rhythm = document.getElementById("rhythm");
   const seeTools = document.getElementById("see-tools");
   const goalsEl = document.getElementById("goals");
   const activityEl = document.getElementById("activity");
   const statusEl = document.getElementById("status");
   const saveBtn = document.getElementById("save-goal");
+  const presence = document.getElementById("presence");
+  const presenceDetail = document.getElementById("presence-detail");
+  const presenceMark = document.getElementById("presence-mark");
+  let newestId = "";
 
   function setStatus(text) {
     statusEl.textContent = text || "";
@@ -46,7 +69,7 @@
   }
 
   function clear(node) {
-    while (node.firstChild) node.removeChild(node.firstChild);
+    while (node && node.firstChild) node.removeChild(node.firstChild);
   }
 
   function add(parent, tag, text, className) {
@@ -57,11 +80,6 @@
     return el;
   }
 
-  function empty(parent, text) {
-    clear(parent);
-    add(parent, "p", text, "empty");
-  }
-
   function checkedTools() {
     return Array.prototype.map.call(
       seeTools.querySelectorAll("input[type=checkbox]:checked"),
@@ -69,91 +87,238 @@
     );
   }
 
-  function renderTools(names) {
-    clear(seeTools);
-    (names || []).forEach(function (name) {
-      const item = document.createElement("li");
-      const label = document.createElement("label");
+  function chip(label, toolNames, isMcp, icon) {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = isMcp ? "chip mcp-chip" : "chip";
+    button.setAttribute("aria-pressed", "true");
+    button.textContent = (icon ? icon + " " : "") + label;
+    toolNames.forEach(function (name) {
       const box = document.createElement("input");
       box.type = "checkbox";
       box.value = name;
       box.checked = true;
-      label.appendChild(box);
-      label.appendChild(document.createTextNode(" " + name));
-      item.appendChild(label);
-      seeTools.appendChild(item);
+      box.hidden = true;
+      box.tabIndex = -1;
+      item.appendChild(box);
+    });
+    button.addEventListener("click", function () {
+      const on = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+      Array.prototype.forEach.call(item.querySelectorAll("input"), function (box) {
+        box.checked = on;
+      });
+    });
+    item.appendChild(button);
+    return item;
+  }
+
+  function renderTools(names) {
+    clear(seeTools);
+    const known = {};
+    GROUPS.forEach(function (group) {
+      const present = group.tools.filter(function (name) { return names.indexOf(name) !== -1; });
+      if (!present.length) return;
+      present.forEach(function (name) { known[name] = group.label; });
+      seeTools.appendChild(chip(group.label, present, false, group.icon));
+    });
+    names.forEach(function (name) {
+      if (!known[name]) {
+        let label = name;
+        let isMcp = false;
+        if (name.indexOf("mcp/") === 0) {
+          isMcp = true;
+          const parts = name.split("/");
+          const sName = parts[1] || "";
+          const tName = parts.slice(2).join("/");
+          label = tName + " (" + sName + ")";
+        }
+        seeTools.appendChild(chip(label, [name], isMcp, isMcp ? "🔌" : "⚙️"));
+      }
     });
   }
 
-  function statusClass(status) {
-    if (status === "active" || status === "completed" || status === "queued") return "status-active";
-    if (status === "paused") return "status-paused";
-    if (status === "done" || status === "failed" || status === "error") return "status-done";
-    return "meta";
+  function sourceLabels(tools) {
+    const labels = [];
+    const seen = {};
+    (tools || []).forEach(function (name) {
+      let label = name;
+      GROUPS.forEach(function (group) {
+        if (group.tools.indexOf(name) !== -1) label = group.label;
+      });
+      if (name.indexOf("mcp/") === 0) {
+        const parts = name.split("/");
+        label = "MCP " + (parts[1] || "service");
+      }
+      if (!seen[label]) {
+        seen[label] = true;
+        labels.push(label);
+      }
+    });
+    if (!labels.length) return "";
+    if (labels.length >= 5) return "the lab & MCPs";
+    if (labels.length === 1) return labels[0];
+    if (labels.length === 2) return labels[0] + " and " + labels[1];
+    return labels.slice(0, -1).join(", ") + ", and " + labels[labels.length - 1];
+  }
+
+  function rhythmWords(cron) {
+    return RHYTHM[cron] || cron || "On its schedule";
+  }
+
+  function friendlyWhen(iso) {
+    if (!iso) return "";
+    const when = new Date(iso);
+    if (Number.isNaN(when.getTime())) return String(iso);
+    const diffMs = Date.now() - when.getTime();
+    if (diffMs >= 0) {
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return "Just now";
+      if (diffMins < 60) return diffMins + "m ago";
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return diffHours + "h ago";
+    }
+    return when.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  function stateWord(status) {
+    if (status === "active") return { text: "Watching", className: "state awake" };
+    if (status === "paused") return { text: "Paused", className: "state rest" };
+    if (status === "done") return { text: "Closed", className: "state closed" };
+    if (status === "queued") return { text: "Waiting", className: "state" };
+    if (status === "completed") return { text: "Brought back", className: "state awake" };
+    if (status === "failed" || status === "error") return { text: "Stopped", className: "state bad" };
+    if (status === "skipped") return { text: "Nothing to read", className: "state" };
+    return { text: status || "", className: "state" };
+  }
+
+  function renderPresence(goals) {
+    const active = goals.filter(function (goal) { return goal.status === "active"; }).length;
+    const paused = goals.filter(function (goal) { return goal.status === "paused"; }).length;
+    const statActive = document.getElementById("stat-active-count");
+    if (statActive) statActive.textContent = String(active);
+
+    if (!goals.length) {
+      presence.textContent = "Quiet";
+      presenceDetail.textContent = "Nothing is in its care. Leave a responsibility and it will keep watch.";
+      presenceMark.dataset.state = "quiet";
+      return;
+    }
+    if (active) {
+      presence.textContent = active === 1 ? "Watching 1 responsibility" : "Watching " + active + " responsibilities";
+      presenceDetail.textContent = "It wakes autonomously on the mini and reports back findings over Ollama on the Studio.";
+      presenceMark.dataset.state = "awake";
+      return;
+    }
+    if (paused) {
+      presence.textContent = "Resting";
+      presenceDetail.textContent = "Every open goal is paused. Wake one when you want it looking again.";
+      presenceMark.dataset.state = "paused";
+      return;
+    }
+    presence.textContent = "At rest";
+    presenceDetail.textContent = "The closed goals stay here as a permanent audit record.";
+    presenceMark.dataset.state = "quiet";
+  }
+
+  function textButton(label, onClick, className) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className ? "text-btn " + className : "text-btn";
+    button.textContent = label;
+    button.addEventListener("click", onClick);
+    return button;
   }
 
   function renderGoals(goals) {
     clear(goalsEl);
-    if (!goals || !goals.length) {
-      empty(goalsEl, "No goals yet.");
+    renderPresence(goals);
+    if (!goals.length) {
+      add(goalsEl, "p", "The first responsibility will sit here. Leave one above to begin.", "empty");
       return;
     }
-    goals.forEach(function (goal) {
+    goals.slice().reverse().forEach(function (goal) {
       const card = document.createElement("article");
-      card.className = "card";
-      add(card, "h3", goal.title || "Untitled");
-      if (goal.intent) add(card, "p", goal.intent);
-      const meta = add(card, "p", "", "meta");
-      add(meta, "span", goal.status || "", statusClass(goal.status));
-      meta.appendChild(document.createTextNode(
-        " · " + (goal.wake_cron || "") +
-        (goal.last_due_at ? " · last due " + goal.last_due_at : " · not due yet")
-      ));
-      if (goal.see_tools && goal.see_tools.length) {
-        add(card, "p", "Reads " + goal.see_tools.join(", "), "meta");
-      }
+      card.className = "goal" + (goal.id === newestId ? " arrived" : "");
+      const top = document.createElement("div");
+      top.className = "goal-top";
+      add(top, "h3", goal.title || "Untitled");
+      const word = stateWord(goal.status);
+      add(top, "span", word.text, word.className);
+      card.appendChild(top);
+      if (goal.intent) add(card, "p", goal.intent, "intent");
+      const when = rhythmWords(goal.wake_cron);
+      const due = goal.last_due_at ? "Last looked " + friendlyWhen(goal.last_due_at) : "Not looked yet";
+      add(card, "p", "⏰ " + when + " · " + due, "meta");
+      const sources = sourceLabels(goal.see_tools);
+      if (sources) add(card, "p", "🔍 Reading: " + sources, "meta");
+
       const actions = document.createElement("div");
-      actions.className = "actions";
+      actions.className = "goal-actions";
       if (goal.status === "active") {
-        const pause = document.createElement("button");
-        pause.type = "button";
-        pause.className = "ghost";
-        pause.textContent = "Pause";
-        pause.addEventListener("click", function () { act(goal.id, "pause"); });
-        actions.appendChild(pause);
+        actions.appendChild(textButton("⚡ Wake now", function () { act(goal.id, "wake"); }, "btn-wake"));
+        actions.appendChild(textButton("⏸️ Pause", function () { act(goal.id, "pause"); }));
+      }
+      if (goal.status === "paused") {
+        actions.appendChild(textButton("▶️ Wake again", function () { act(goal.id, "resume"); }, "btn-wake"));
       }
       if (goal.status !== "done") {
-        const close = document.createElement("button");
-        close.type = "button";
-        close.className = "ghost";
-        close.textContent = "Close";
-        close.addEventListener("click", function () { act(goal.id, "close"); });
+        const close = textButton("✕ Close", function () {
+          actions.dataset.mode = "confirm";
+          confirm.hidden = false;
+        });
+        const confirm = document.createElement("div");
+        confirm.className = "confirm";
+        confirm.hidden = true;
+        add(confirm, "p", "This stops scheduled wakes. The record stays.");
+        confirm.appendChild(textButton("Stop waking", function () { act(goal.id, "close"); }, "danger"));
+        confirm.appendChild(textButton("Keep watching", function () {
+          confirm.hidden = true;
+          delete actions.dataset.mode;
+        }));
         actions.appendChild(close);
+        actions.appendChild(confirm);
       }
       if (actions.childNodes.length) card.appendChild(actions);
       goalsEl.appendChild(card);
     });
+    newestId = "";
   }
 
   function renderActivity(entries) {
     clear(activityEl);
     if (!entries || !entries.length) {
-      empty(activityEl, "Nothing has woken yet.");
+      add(activityEl, "p", "Notes from autonomous wakes will show up here.", "empty");
       return;
     }
+    const list = document.createElement("ol");
+    list.className = "timeline";
     entries.forEach(function (entry) {
-      const card = document.createElement("article");
-      card.className = "card";
-      add(card, "h3", entry.goal_title || "Goal");
-      const meta = add(card, "p", "", "meta");
-      add(meta, "span", entry.status || "", statusClass(entry.status));
-      if (entry.at) meta.appendChild(document.createTextNode(" · " + entry.at));
-      if (entry.note) add(card, "p", entry.note, "note");
-      if (entry.see_tools && entry.see_tools.length) {
-        add(card, "p", "Reads " + entry.see_tools.join(", "), "meta");
+      const item = document.createElement("li");
+      const top = document.createElement("div");
+      top.style.cssText = "display:flex;justify-content:space-between;align-items:center;gap:12px;";
+      add(top, "h3", entry.goal_title || "A goal");
+      const word = stateWord(entry.status);
+      add(top, "span", word.text, word.className);
+      item.appendChild(top);
+
+      add(item, "p", "Woke " + friendlyWhen(entry.at), "meta");
+      if (entry.note) {
+        add(item, "div", entry.note, "note");
+      } else {
+        add(item, "div", "Quiet check completed — no immediate operator action needed.", "note");
       }
-      activityEl.appendChild(card);
+      const sources = sourceLabels(entry.see_tools);
+      if (sources) add(item, "p", "🔍 Read: " + sources, "meta");
+      list.appendChild(item);
     });
+    activityEl.appendChild(list);
   }
 
   function load() {
@@ -177,20 +342,40 @@
   }
 
   function act(id, name) {
-    setStatus("");
+    setStatus(name === "wake" ? "⚡ Triggering on-demand wake run..." : "");
     fetch("/v1/steward/goals/" + encodeURIComponent(id) + "/" + name, {
       method: "POST",
       headers: headers(),
     })
       .then(readJson)
       .then(function () {
-        setStatus(name === "pause" ? "Paused." : "Closed.");
+        if (name === "pause") setStatus("Paused. It will sit until you wake it.");
+        else if (name === "resume") setStatus("Watching again.");
+        else if (name === "wake") setStatus("⚡ Woken now. Findings recorded in Brought back.");
+        else setStatus("Closed. The record stays.");
         return load();
       })
       .catch(function (err) {
         setStatus(err.message || "The lab could not update that goal.");
       });
   }
+
+  rhythm.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-cron]");
+    if (!button) return;
+    const value = button.getAttribute("data-cron");
+    preset.value = value;
+    Array.prototype.forEach.call(rhythm.querySelectorAll("button"), function (item) {
+      item.setAttribute("aria-pressed", item === button ? "true" : "false");
+    });
+    if (value === "custom") {
+      cronRow.hidden = false;
+      cronInput.focus();
+      return;
+    }
+    cronInput.value = value;
+    cronRow.hidden = true;
+  });
 
   preset.addEventListener("change", function () {
     if (preset.value !== "custom") cronInput.value = preset.value;
@@ -200,7 +385,7 @@
     event.preventDefault();
     const tools = checkedTools();
     if (!tools.length) {
-      setStatus("Check at least one source a wake may read.");
+      setStatus("Leave it at least one thing to read.");
       return;
     }
     saveBtn.disabled = true;
@@ -216,10 +401,12 @@
       }),
     })
       .then(readJson)
-      .then(function () {
+      .then(function (goal) {
+        newestId = goal.id || "";
         titleInput.value = "";
         intentInput.value = "";
-        setStatus("Saved.");
+        setStatus("It has this in its care now.");
+        titleInput.focus();
         return load();
       })
       .catch(function (err) {
@@ -231,5 +418,7 @@
   });
 
   document.addEventListener("ai-lab-auth-ready", load);
-  load();
+  if (form) load();
+  window.loadSteward = load;
+  window.mountSteward = load;
 })();

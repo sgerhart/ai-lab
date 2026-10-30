@@ -36,9 +36,12 @@ from .steward import (
     close_goal,
     create_goal,
     default_goals_path,
+    enqueue_wake,
+    get_goal,
     list_activity,
     list_goals,
     pause_goal,
+    resume_goal,
     wake_due,
 )
 from .agent_worker import AgentRunWorker, drain_queued_runs
@@ -3014,6 +3017,15 @@ def create_control_app(
         _gate(request, authorization)
         return _steward_call(pause_goal, goal_id, path=_steward_path())
 
+    @app.post("/v1/steward/goals/{goal_id}/resume")
+    def post_steward_resume(
+        request: Request,
+        goal_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(resume_goal, goal_id, path=_steward_path())
+
     @app.post("/v1/steward/goals/{goal_id}/close")
     def post_steward_close(
         request: Request,
@@ -3022,6 +3034,30 @@ def create_control_app(
     ) -> dict[str, Any]:
         _gate(request, authorization)
         return _steward_call(close_goal, goal_id, path=_steward_path())
+
+    @app.post("/v1/steward/goals/{goal_id}/wake")
+    def post_steward_wake(
+        request: Request,
+        goal_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        path = _steward_path()
+
+        def _wake():
+            goal = get_goal(goal_id, path=path)
+            if goal.get("status") == "done":
+                raise StewardError("a closed goal stays closed")
+            return enqueue_wake(
+                goal,
+                store=store,
+                path=path,
+                model="qwen3.6:35b-a3b",
+                backend="ollama",
+            )
+
+        entry = _steward_call(_wake)
+        return {"ok": True, "entry": entry}
 
     @app.post("/v1/agent-definitions/{definition_id}/runs")
     def run_agent_definition(

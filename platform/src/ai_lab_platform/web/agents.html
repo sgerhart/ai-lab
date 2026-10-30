@@ -5,25 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ai-lab · Studio</title>
   <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
   <link rel="stylesheet" href="/static/studio.css?v=7">
+  <link rel="stylesheet" href="/static/steward.css">
   <style>
     :root {
-      --bg: #212121;
-      --side: #171717;
-      --side-hover: #212121;
-      --side-active: #2f2f2f;
-      --ink: #ececec;
-      --muted: #afafaf;
-      --line: #2f2f2f;
-      --composer: #303030;
-      --send: #ffffff;
-      --send-ink: #0d0d0d;
-      --accent: #7cb8ff;
-      --user-bg: #2f2f2f;
-      --warn: #e8b45c;
-      --down: #ff6b7a;
-      --panel: #1a1a1a;
+      --bg: #070a12;
+      --side: #0c111d;
+      --side-hover: #151d30;
+      --side-active: #1d2740;
+      --ink: #f1f5f9;
+      --muted: #94a3b8;
+      --line: rgba(255, 255, 255, 0.08);
+      --composer: #111827;
+      --send: #38bdf8;
+      --send-ink: #030712;
+      --accent: #38bdf8;
+      --user-bg: #1e293b;
+      --warn: #f59e0b;
+      --down: #f43f5e;
+      --live: #10b981;
+      --panel: #111827;
+      --glass: rgba(17, 24, 39, 0.75);
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
@@ -31,9 +37,12 @@
     .ai-lab-topnav { display: none !important; }
     body {
       color: var(--ink);
-      font: 15px/1.5 "Söhne", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font: 15px/1.5 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       display: flex; flex-direction: column;
+    }
+    h1, h2, h3, .brand {
+      font-family: "Outfit", "Inter", -apple-system, sans-serif;
     }
     .app { flex: 1; min-height: 0; display: flex; width: 100%; }
     .sidebar {
@@ -115,12 +124,27 @@
     .new-chat.sub { margin-top: 0; }
     .side-link, .conv-item {
       width: 100%; display: flex; align-items: center; gap: 10px;
-      text-align: left; border: 0; background: transparent; color: var(--ink);
-      padding: 9px 10px; border-radius: 10px; cursor: pointer; font: inherit;
+      text-align: left; border: 1px solid transparent; background: transparent; color: var(--muted);
+      padding: 9px 12px; border-radius: 10px; cursor: pointer; font: inherit;
       text-decoration: none; margin-bottom: 2px;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .side-link:hover, .conv-item:hover { background: var(--side-hover); }
-    .side-link.active, .conv-item.active { background: var(--side-active); }
+    .side-link:hover, .conv-item:hover {
+      background: var(--side-hover); color: var(--ink); border-color: rgba(255, 255, 255, 0.05);
+      transform: translateX(2px);
+    }
+    .side-link.active, .conv-item.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.15));
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #fff;
+      font-weight: 500;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.18);
+    }
+    #nav-steward.active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(56, 189, 248, 0.18));
+      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.22);
+    }
     .conv-item .t {
       flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       font-size: inherit;
@@ -133,15 +157,17 @@
     .conv-item .del:hover { color: var(--down); background: rgba(255,107,122,.12); }
     .side-foot {
       flex-shrink: 0;
-      border-top: 1px solid var(--line); padding: 10px 12px;
-      display: flex; align-items: center; gap: 10px;
-      width: 100%; background: transparent;
+      border-top: 1px solid var(--line); padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; background: rgba(0, 0, 0, 0.25);
       color: inherit; font: inherit; text-align: left;
     }
     .avatar {
       width: 32px; height: 32px; border-radius: 999px;
-      background: #444; display: grid; place-items: center;
-      font-size: 12px; font-weight: 650;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      color: #030712; display: grid; place-items: center;
+      font-size: 12px; font-weight: 700;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
     }
     .foot-meta { flex: 1; min-width: 0; }
     .foot-meta .name { font-size: 14px; }
@@ -1529,7 +1555,7 @@
         <button type="button" class="side-link" id="nav-r"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M8 12h4.2a2.2 2.2 0 0 1 0 4.4H8V20"/><path d="M11.2 16.2 15 20"/></svg>R Labs</button>
         <a class="side-link" id="nav-nexus" href="/nexus/"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Nexus</a>
         <a class="side-link" id="nav-classroom" href="/classroom"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M7 8h7M7 12h4"/></svg>Classroom</a>
-        <a class="side-link" id="nav-steward" href="/steward"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Steward</a>
+        <a class="side-link" id="nav-steward" href="/steward" data-view="steward"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Steward</a>
         <button type="button" class="side-link" id="nav-agents" data-view="agents"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>Agent Studio</button>
         <button type="button" class="side-link" id="nav-mcp" data-prefs="settings"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 12h6l4-5M14 13l4 4"/></svg>MCP</button>
         <button type="button" class="side-link" id="nav-security" data-prefs="security"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V7l8-4z"/></svg>Security</button>
@@ -1668,6 +1694,71 @@
 
       <div class="pane" id="pane-studio">
         <div id="studio-canvas"></div>
+      </div>
+
+      <!-- Steward Desk -->
+      <div class="pane" id="pane-steward">
+        <main class="desk">
+          <header class="presence">
+            <div class="mark" id="presence-mark" data-state="quiet" aria-hidden="true"></div>
+            <div>
+              <p class="eyebrow">Steward · Standing Autonomous Companion</p>
+              <h1 id="presence">Quiet</h1>
+              <p class="lead" id="presence-detail">Nothing is in its care. Leave a responsibility and it will keep watch.</p>
+              <div class="presence-stats" id="presence-stats">
+                <span class="stat-badge"><span class="stat-dot"></span> <span id="stat-active-count">0</span> Active Watches</span>
+                <span class="stat-badge">🛡️ Read-Only Ceiling</span>
+                <span class="stat-badge">⚡ Studio Ollama Powered</span>
+              </div>
+            </div>
+          </header>
+
+          <form id="goal-form" class="compose">
+            <label class="visually-hidden" for="goal-title">What it should look after</label>
+            <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off" placeholder="What should it look after?">
+            <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
+            <textarea id="goal-intent" name="intent" maxlength="4000" rows="2" placeholder="Anything more it should notice."></textarea>
+
+            <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
+              <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="true">Each morning</button>
+              <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
+              <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 minutes</button>
+              <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom</button>
+            </div>
+            <label class="visually-hidden" for="wake-preset">Wake schedule</label>
+            <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
+              <option value="0 9 * * *">Each morning</option>
+              <option value="0 * * * *">Hourly</option>
+              <option value="*/15 * * * *">Every 15 minutes</option>
+              <option value="custom">Custom</option>
+            </select>
+            <div class="cron-row" id="cron-row" hidden>
+              <label for="wake-cron">Custom schedule, minute hour day month weekday</label>
+              <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
+            </div>
+
+            <div class="sources">
+              <p>It may read (Lab Tools &amp; Governed MCPs)</p>
+              <ul class="chips" id="see-tools"></ul>
+              <p class="ceiling-hint">Ceiling: Read-only background wakes cannot modify files or send messages without approval.</p>
+            </div>
+            <div class="compose-bar">
+              <p id="status" role="status"></p>
+              <button type="submit" class="primary" id="save-goal">Keep watch</button>
+            </div>
+          </form>
+
+          <div class="board">
+            <section class="column" aria-label="Goals">
+              <h2>In its care</h2>
+              <div class="stack" id="goals"><p class="empty">The first responsibility will sit here. Leave one above to begin.</p></div>
+            </section>
+            <section class="column" aria-label="Activity">
+              <h2>Brought back</h2>
+              <div id="activity"><p class="empty">Notes from autonomous wakes will show up here.</p></div>
+            </section>
+          </div>
+        </main>
       </div>
 
       <!-- Runs list -->
@@ -2127,6 +2218,7 @@
   </div>
 
   <script src="/static/studio.js?v=11"></script>
+  <script src="/static/steward.js?v=4"></script>
   <script>
     const state = {
       view: "chat",
@@ -2618,6 +2710,7 @@
         agent: "Agent Studio",
         runs: "Runs",
         run: "Run",
+        steward: "Steward",
       };
       $("pane-title").textContent = titles[view] || view;
       const studioOn = view === "agents" || view === "agent" || view === "runs" || view === "run";
@@ -2628,12 +2721,13 @@
       }
       const canvas = view === "agents" || view === "agent";
       $("pane-studio").classList.toggle("active", canvas);
-      ["chat", "projects", "runs", "run"].forEach((v) => {
-        $("pane-" + v).classList.toggle("active", v === view);
+      ["chat", "projects", "runs", "run", "steward"].forEach((v) => {
+        if ($("pane-" + v)) $("pane-" + v).classList.toggle("active", v === view);
       });
       if (canvas && window.agentStudio) window.agentStudio.render();
       if ((view === "runs" || view === "run") && window.agentStudio) window.agentStudio.mark("runs");
-      const navFor = { chat: "nav-chat", projects: "nav-projects", agents: "nav-agents", agent: "nav-agents", runs: "nav-agents", run: "nav-agents" };
+      if (view === "steward" && window.loadSteward) window.loadSteward();
+      const navFor = { chat: "nav-chat", projects: "nav-projects", agents: "nav-agents", agent: "nav-agents", runs: "nav-agents", run: "nav-agents", steward: "nav-steward" };
       if (view === "projects" && !opts.keepDetail) loadProjects().catch((e) => showErr(e));
       markNav(navFor[view] || "");
       $("composer-dock").classList.toggle("hidden", view !== "chat");
@@ -4189,6 +4283,7 @@
       else setView("agents");
       loadDefinitions().catch((e) => showErr(e));
     };
+    if ($("nav-steward")) $("nav-steward").onclick = (e) => { e.preventDefault(); setView("steward"); };
     $("run-back").onclick = () => { setView("runs"); loadRuns().catch((e) => showErr(e)); };
     $("runs-refresh").onclick = () => loadRuns().catch((e) => showErr(e));
     if ($("prefs-back")) $("prefs-back").onclick = () => setView("chat");
@@ -5334,6 +5429,9 @@
       if (open === "antares") {
         history.replaceState(null, "", "/");
         openPrefs("antares");
+      } else if (open === "steward") {
+        history.replaceState(null, "", "/");
+        setView("steward");
       } else {
         setView("chat");
       }

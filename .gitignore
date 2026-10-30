@@ -107,3 +107,11 @@ backups/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Swift / macOS build outputs
+.build/
+**/.build/
+dist/
+**/dist/
+*.app
+*.dSYM

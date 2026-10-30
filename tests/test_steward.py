@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,6 +24,7 @@ from ai_lab_platform.steward import (
     classify_tool,
     close_goal,
     create_goal,
+    get_goal,
     list_activity,
     list_goals,
     note_wake_finished,
@@ -77,6 +80,10 @@ class GoalTests(unittest.TestCase):
         self.assertEqual(goal["intent"], "Keep the classroom notes current.")
         self.assertEqual(goal["status"], "active")
         self.assertEqual(goal["see_tools"], ["vault_read", "files_read"])
+        fetched = get_goal(goal["id"], path=self.path)
+        self.assertEqual(fetched["id"], goal["id"])
+        with self.assertRaises(StewardError):
+            get_goal("0" * 32, path=self.path)
         mode = self.path.stat().st_mode & 0o777
         self.assertEqual(mode, 0o600)
 
@@ -307,9 +314,11 @@ class StewardApiTests(unittest.TestCase):
         for needle in (
             'id="goal-form"',
             'id="goal-title"',
+            'id="presence"',
             'id="see-tools"',
             'id="goals"',
             'id="activity"',
+            "Keep watch",
             "/static/steward.js",
         ):
             self.assertIn(needle, page.text)
@@ -370,11 +379,151 @@ class StewardApiTests(unittest.TestCase):
         paused = self.client.post(f"/v1/steward/goals/{body['id']}/pause", headers=self.headers)
         self.assertEqual(paused.status_code, 200)
         self.assertEqual(paused.json()["status"], "paused")
+        resumed = self.client.post(f"/v1/steward/goals/{body['id']}/resume", headers=self.headers)
+        self.assertEqual(resumed.status_code, 200)
+        self.assertEqual(resumed.json()["status"], "active")
+        woken = self.client.post(f"/v1/steward/goals/{body['id']}/wake", headers=self.headers)
+        self.assertEqual(woken.status_code, 200)
+        self.assertTrue(woken.json()["ok"])
+        self.assertEqual(woken.json()["entry"]["status"], "queued")
         closed = self.client.post(f"/v1/steward/goals/{body['id']}/close", headers=self.headers)
         self.assertEqual(closed.status_code, 200)
         self.assertEqual(closed.json()["status"], "done")
+        refused_wake = self.client.post(f"/v1/steward/goals/{body['id']}/wake", headers=self.headers)
+        self.assertEqual(refused_wake.status_code, 409)
+        refused_resume = self.client.post(f"/v1/steward/goals/{body['id']}/resume", headers=self.headers)
+        self.assertEqual(refused_resume.status_code, 409)
         again = self.client.get("/v1/steward/goals", headers=self.headers)
         self.assertEqual(len(again.json()["goals"]), 1)
+
+
+class McpStewardTests(unittest.TestCase):
+    def setUp(self) -> None:
+        import json
+        from ai_lab_platform.store import SqliteStore
+
+        self.tmp = tempfile.TemporaryDirectory()
+        self.path = Path(self.tmp.name) / "steward" / "goals.json"
+        self.store = SqliteStore(Path(self.tmp.name) / "wo.sqlite")
+        self.mcp_path = Path(self.tmp.name) / "mcp-servers.json"
+        self.when = datetime(2026, 10, 18, 9, 0, tzinfo=ZoneInfo("America/New_York"))
+
+        server = {
+            "id": "mock-mcp",
+            "label": "Mock MCP Service",
+            "origin": "third-party",
+            "transport": "stdio",
+            "command": "true",
+            "args": [],
+            "network_policy": "none",
+            "credential_ref": "",
+            "capabilities": [
+                {"name": "search_data", "permission_class": "read"},
+                {"name": "delete_data", "permission_class": "privileged"},
+            ],
+            "bindings": [
+                {"agent_id": "personal", "capabilities": ["search_data", "delete_data"]},
+            ],
+            "listed": True,
+            "enabled": True,
+        }
+        self.mcp_path.write_text(json.dumps({"servers": [server]}), encoding="utf-8")
+        self.env = mock.patch.dict(os.environ, {"AI_LAB_MCP_SERVERS": str(self.mcp_path)})
+        self.env.start()
+
+    def tearDown(self) -> None:
+        self.env.stop()
+        self.tmp.cleanup()
+
+    def test_mcp_read_tools_join_manifest_see(self) -> None:
+        manifest = access_manifest()
+        self.assertIn("mcp/mock-mcp/search_data", manifest["see"])
+        self.assertIn("mcp/mock-mcp/delete_data", manifest["approval"])
+        self.assertNotIn("mcp/mock-mcp/delete_data", manifest["see"])
+
+    def test_goal_with_mcp_read_tool(self) -> None:
+        goal = create_goal(
+            title="Watch MCP search",
+            intent="Inspect mock service",
+            wake_cron="0 9 * * *",
+            see_tools=["files_read", "mcp/mock-mcp/search_data"],
+            path=self.path,
+        )
+        self.assertEqual(goal["see_tools"], ["files_read", "mcp/mock-mcp/search_data"])
+        self.assertEqual(goal["mcp_server_ids"], ["mock-mcp"])
+
+        with self.assertRaises(StewardError) as caught:
+            create_goal(
+                title="Privileged MCP",
+                intent="no",
+                wake_cron="0 9 * * *",
+                see_tools=["mcp/mock-mcp/delete_data"],
+                path=self.path,
+            )
+        self.assertIn("refused", str(caught.exception))
+
+    def test_wake_with_mcp_read_tool(self) -> None:
+        from unittest.mock import patch
+        from ai_lab_platform.agent_loop import step_agent_run
+        from ai_lab_platform.model_router import BillingClass, CompletionResponse, ModelRouter
+        from ai_lab_platform.tool_runtime import ToolContext
+
+        goal = create_goal(
+            title="Watch MCP search",
+            intent="Inspect mock service",
+            wake_cron="0 9 * * *",
+            see_tools=["files_read", "mcp/mock-mcp/search_data"],
+            path=self.path,
+        )
+        woken = wake_due(
+            self.when,
+            store=self.store,
+            path=self.path,
+            model="fake-instruct",
+            backend="capture",
+        )
+        self.assertEqual(len(woken), 1)
+        run = self.store.list_agent_runs(None)[0]
+        self.assertEqual(run.mcp_server_ids, ["mock-mcp"])
+        self.assertEqual(run.tool_ceiling, ["files_read", "mcp/mock-mcp/search_data"])
+
+        captured = {}
+
+        class CaptureBackend:
+            billing_class = BillingClass.LOCAL
+
+            def complete(self, request):
+                captured["system"] = request.system
+                if "Observations from tools" in request.prompt:
+                    return CompletionResponse(
+                        model=request.model,
+                        backend="capture",
+                        text="FINAL Found 2 items from MCP.",
+                        billing_class=BillingClass.LOCAL,
+                    )
+                return CompletionResponse(
+                    model=request.model,
+                    backend="capture",
+                    text='TOOL mcp/mock-mcp/search_data {"query": "test"}',
+                    billing_class=BillingClass.LOCAL,
+                )
+
+            def health(self) -> dict:
+                return {"ok": True, "backend": "capture"}
+
+        ctx = ToolContext(
+            workspace_root=Path(self.tmp.name) / "work",
+            artifact_root=Path(self.tmp.name) / "work" / "artifacts",
+            vault_root=Path(self.tmp.name) / "vault",
+        )
+        router = ModelRouter(backends={"capture": CaptureBackend()}, default_backend="capture")
+        with patch("ai_lab_platform.tool_runtime.call_mcp_tool", return_value={"ok": True, "observation": "search results"}):
+            step_1 = step_agent_run(run, router=router, store_put=self.store.put_agent_run, ctx=ctx)
+            self.assertEqual(step_1.traces[-1]["kind"], "tool_result")
+            self.assertEqual(step_1.traces[-1]["tool"], "mcp/mock-mcp/search_data")
+            step_2 = step_agent_run(step_1, router=router, store_put=self.store.put_agent_run, ctx=ctx)
+            self.assertEqual(step_2.status.value, "completed")
+            self.assertIn("Found 2 items from MCP", step_2.final_result)
 
 
 if __name__ == "__main__":

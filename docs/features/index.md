@@ -26,6 +26,7 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Model comparison on short fixtures (IWO-057) | Script, unit tests | First live Studio pass 2026-09-25: the three large tags each scored 4/4. The fixture did not separate them, so Coding Local stays `qwen3-coder:30b` |
 | Pull requests from an agent (FEAT-007) | Not started | No |
 | Classroom: name a topic, get a lesson plan, spoken teaching, and a whiteboard. Raise a hand or ask a question (FEAT-021, IWO-106) | Yes | Live on the mini 2026-10-17. Page and lesson API checked. Browser voice not watched in a session |
+| Phone Studio: chat from an iPhone browser on the tailnet (FEAT-023, IWO-110) | Specified only | No. Studio is still a desktop shell. No iPhone pass recorded |
 
 Lifecycle and entities: [README.md](README.md). Template: [TEMPLATE.md](TEMPLATE.md).  
 Protocol: [../work-order-protocol/](../work-order-protocol/README.md).
@@ -66,7 +67,8 @@ Do not treat this index as authorized implementation or deploy.
 | — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Partial**. Job model and fake adapter unit-tested (IWO-070, IWO-071). Live Proxmox calls are refused. IWO-072–075 and IWO-081 remain Draft | — |
 | — | [FEAT-020](FEAT-020-security-compute-agent.md) | Security Compute Agent | **Specified** (proposed). IWO-076–078 Draft. Agent identity not created | — |
 | — | [FEAT-021](FEAT-021-classroom.md) | Classroom: lesson plan, voice, whiteboard | **Live on the mini** (IWO-106, 2026-10-17). Browser voice not watched in a session | — |
-| — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Partial (code):** IWO-107 and IWO-108 Review. A due goal queues a read-only run. No lab page. Not deployed | — |
+| — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Live on the mini** (desk served 2026-10-21). A wake has not been watched there yet | — |
+| — | [FEAT-023](FEAT-023-phone-studio.md) | Phone Studio on the tailnet | **Specified.** IWO-110 Draft. Not implemented | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -157,6 +159,8 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-106](../work-orders/IWO-106-classroom-voice-whiteboard.md) | Classroom voice and whiteboard | FEAT-021 | **Review** (live on mini 2026-10-17; browser voice not watched in a session) |
 | [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
 | [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Steward read-only wake | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
+| [IWO-110](../work-orders/IWO-110-phone-studio-layout.md) | Phone Studio layout | FEAT-023 | **Draft** |
+| [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Steward activity page | FEAT-022 | **Review** (desk on the mini 2026-10-21; headless Chrome including 390px) |
 
 ## Historical phase work orders
 

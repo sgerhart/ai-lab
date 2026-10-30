@@ -223,6 +223,19 @@
           render();
         },
       }));
+      if (preset.id === "second-brain") {
+        actions.appendChild(el("button", {
+          class: "btn-action-chat",
+          style: "background: color-mix(in srgb, var(--live) 15%, transparent); border-color: color-mix(in srgb, var(--live) 40%, var(--line)); color: var(--ink);",
+          type: "button",
+          text: "🛡️ Steward Watches",
+          onclick: () => {
+            if (host && typeof host.setView === "function") {
+              host.setView("steward");
+            }
+          },
+        }));
+      }
       card.appendChild(actions);
       grid.appendChild(card);
     });

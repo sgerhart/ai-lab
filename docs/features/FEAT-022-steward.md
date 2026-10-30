@@ -1,6 +1,6 @@
 # FEAT-022 — Steward
 
-- **Status:** Partial (IWO-107 and IWO-108 in Git; wake is queued, not live)
+- **Status:** Live on the mini (desk served 2026-10-21; a wake has not been watched there)
 - **Created:** 2026-10-18
 - **Owner:** operator
 - **GitHub issue:** draft only
@@ -14,11 +14,11 @@ The Steward should know the operator's lab work. It does not receive every file,
 ## User workflow
 
 1. Open the personal agent chat.
-2. Hand it a responsibility in plain language ("keep the classroom notes current", "watch this research question").
-3. See the goal, what it may read, and whether background work may draft a local file.
+2. Open `/steward` and hand it a responsibility in plain language ("keep the classroom notes current", "watch this research question"). Choose how often it wakes and what it may read.
+3. See the goal on the same page, and later the note a wake brings back.
 4. Close the laptop. The mini scheduler wakes the goal when it is due.
 5. Reopen the lab and read the activity: what it looked at, what it drafted, and what it needs decided.
-6. Pause, redirect, or close the goal in the same chat.
+6. Pause it, wake it again, or close it on that page. Closing asks first. A closed goal stays closed.
 
 ## Access
 
@@ -70,12 +70,14 @@ Background wakes use the **See** list only. A wake that needs a draft or an appr
 |---------------|-------|------------|---------------------|
 | [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Access manifest and standing goals | FEAT-010, FEAT-009 | Goals persist. A wake allow-list is See only. Tick marks a goal due and does not call a model. |
 | [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Read-only wake | IWO-107 | A due goal enqueues one bounded personal run and records activity. |
-| IWO-109 | Activity in the lab UI | IWO-108 | The operator can read, pause, and close a goal from the lab. |
-| later | One grant per outside source | IWO-109 | Mail, calendar, repos, or another named source, each its own order. |
+| [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Activity in the lab UI | IWO-108 | The operator can read, pause, and close a goal from the lab. |
+| [IWO-111](../work-orders/IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | IWO-109 | Bound MCP read tools qualify for See class; workspace integration; Second Brain link. |
+| [IWO-112](../work-orders/IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | IWO-111 | Native macOS menu bar extra, HUD popover, notifications, and local Mac MCP bridge. |
+| later | One grant per outside source | IWO-111 | Mail, calendar, repos, or another named source, each its own order. |
 
 ## Acceptance criteria
 
-- [x] The operator can create, list, pause, and close a standing goal (API, unit-tested)
+- [x] The operator can create, list, pause, resume, and close a standing goal (API, unit-tested). A closed goal stays closed.
 - [x] `background_tools` returns only the See list named on the goal
 - [x] Draft, Approval, and unknown tools are refused on create and dropped by `background_tools`
 - [x] A goal cannot add a Never source
@@ -96,9 +98,9 @@ Background wakes use the **See** list only. A wake that needs a draft or an appr
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Specified | this file |
-| Code | partial | Goals, See ceiling, queued wake, activity file. No lab page. Not deployed. |
-| Host deploy | not authorized | — |
-| Live verified | no | unit tests only, 2026-10-18 |
+| Code | partial | Goals, See ceiling, queued wake, `/steward` desk (presence, rhythm, source chips, reversible pause). |
+| Host deploy | done | 2026-10-21: desk page, script, `steward.py`, and `control_app.py` copied. `com.ai-lab.control-plane` restarted. |
+| Live verified | partial | `GET http://mac-mini:8088/health` ok, role control-plane. `GET /steward` served the desk (`Keep watch`, presence, `steward.js?v=3`). `POST /v1/steward/goals/does-not-exist/resume` returned 404 unknown goal. A wake has not been watched on the mini. |
 
 ## Notes
 

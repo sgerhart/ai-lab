@@ -64,7 +64,7 @@ large dashboard framework.
 - [x] Run states visible; approve/deny specific action
 - [x] Billing class visible; secrets not exposed
 - [x] Streaming endpoints protected
-- [ ] Mobile-on-tailnet acceptable later (not blocking)
+- [ ] Phone on the tailnet is usable — specified as [FEAT-023](FEAT-023-phone-studio.md) / [IWO-110](../work-orders/IWO-110-phone-studio-layout.md). Still open.
 
 ## Out of scope
 

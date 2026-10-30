@@ -26,7 +26,7 @@ from .tool_runtime import (
 )
 from .work_order import utcnow
 
-_TOOL_START_RE = re.compile(r"(?m)^TOOL\s+([a-zA-Z0-9_\-.:]+)")
+_TOOL_START_RE = re.compile(r"(?m)^TOOL\s+([a-zA-Z0-9_\-.:/]+)")
 _TOOL_RE = re.compile(r"^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$", re.DOTALL)
 _TOOL_LINE_RE = re.compile(r"(?m)^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$")
 _FINAL_RE = re.compile(r"^FINAL(?::)?\s*(.*)$", re.DOTALL)
@@ -167,7 +167,20 @@ def _wake_tools(run: AgentRun, policy: AgentPolicy) -> list[str] | None:
 
     ceiling = getattr(run, "tool_ceiling", None) or []
     allowed = set(policy.allowed_tools) & SEE_TOOLS
-    return [name for name in ceiling if isinstance(name, str) and name in allowed]
+    mcp_allowed: set[str] = set()
+    try:
+        from .mcp_client import bound_agent_tool_names, capability_needs_approval, parse_mcp_tool_name
+
+        sids = list(getattr(run, "mcp_server_ids", []) or [])
+        if sids:
+            for t in bound_agent_tool_names(run.agent, sids):
+                parsed = parse_mcp_tool_name(t)
+                if parsed and not capability_needs_approval(parsed[0], parsed[1]):
+                    mcp_allowed.add(t)
+    except Exception:
+        pass
+    all_allowed = allowed | mcp_allowed
+    return [name for name in ceiling if isinstance(name, str) and name in all_allowed]
 
 
 def wake_system_prompt(agent_id: str, tools: list[str], brief: str = "") -> str:
@@ -471,7 +484,7 @@ def step_agent_run(
     if wake_tools is not None:
         effective_allowed = list(wake_tools)
         granted = []
-        mcp_tools = []
+        mcp_tools = [t for t in mcp_tools if t in wake_tools]
         system = wake_system_prompt(policy.id, wake_tools, brief)
     else:
         effective_allowed = list(policy.allowed_tools) + granted + list(policy.privileged_tools) + mcp_tools

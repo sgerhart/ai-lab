@@ -78,15 +78,35 @@ def classify_tool(name: str) -> str:
         return "draft"
     if name in APPROVAL_TOOLS:
         return "approval"
+    if name.startswith("mcp/"):
+        try:
+            from .mcp_client import capability_needs_approval, parse_mcp_tool_name
+
+            parsed = parse_mcp_tool_name(name)
+            if parsed:
+                sid, tname = parsed
+                return "approval" if capability_needs_approval(sid, tname) else "see"
+        except Exception:
+            pass
     return "never"
 
 
 def access_manifest(policy: AgentPolicy | None = None) -> dict[str, list[str]]:
-    """Classify the personal policy. Tools outside the three classes are never."""
+    """Classify the personal policy and bound MCP tools. Tools outside the three classes are never."""
     loaded = policy or load_policy("personal")
     classes: dict[str, list[str]] = {"see": [], "draft": [], "approval": [], "never": []}
     for name in tuple(loaded.allowed_tools) + tuple(loaded.privileged_tools):
         classes[classify_tool(name)].append(name)
+    try:
+        from .mcp_client import bound_agent_tool_names, local_servers
+
+        sids = [s["id"] for s in local_servers() if s.get("listed")]
+        for mcp_tool in bound_agent_tool_names("personal", sids):
+            c = classify_tool(mcp_tool)
+            if mcp_tool not in classes[c]:
+                classes[c].append(mcp_tool)
+    except Exception:
+        pass
     return classes
 
 
@@ -102,6 +122,8 @@ def background_tools(goal: dict[str, Any], *, policy: AgentPolicy | None = None)
 def _public(goal: dict[str, Any]) -> dict[str, Any]:
     see = goal.get("see_tools")
     names = [name for name in see if isinstance(name, str)] if isinstance(see, list) else []
+    mcps = goal.get("mcp_server_ids")
+    mcp_list = [str(x) for x in mcps if isinstance(x, str)] if isinstance(mcps, list) else []
     return {
         "id": str(goal.get("id") or ""),
         "title": str(goal.get("title") or ""),
@@ -109,6 +131,7 @@ def _public(goal: dict[str, Any]) -> dict[str, Any]:
         "status": str(goal.get("status") or ""),
         "wake_cron": str(goal.get("wake_cron") or ""),
         "see_tools": names,
+        "mcp_server_ids": mcp_list,
         "last_due_at": goal.get("last_due_at"),
     }
 
@@ -189,6 +212,17 @@ def create_goal(
     if not chosen:
         raise StewardError("a goal needs at least one see tool")
 
+    mcp_sids: list[str] = []
+    try:
+        from .mcp_client import parse_mcp_tool_name
+
+        for t in chosen:
+            parsed = parse_mcp_tool_name(t)
+            if parsed and parsed[0] not in mcp_sids:
+                mcp_sids.append(parsed[0])
+    except Exception:
+        pass
+
     goal = {
         "id": uuid.uuid4().hex,
         "title": cleaned_title,
@@ -196,6 +230,7 @@ def create_goal(
         "status": "active",
         "wake_cron": cron,
         "see_tools": chosen,
+        "mcp_server_ids": mcp_sids,
         "last_due_at": None,
         "last_due_minute": "",
     }
@@ -218,7 +253,7 @@ def _mutate(goal_id: str, status: str, *, path: Path | None = None) -> dict[str,
     data = _read(store_path)
     for item in data["goals"]:
         if isinstance(item, dict) and item.get("id") == cleaned:
-            if item.get("status") == "done" and status == "paused":
+            if item.get("status") == "done" and status != "done":
                 raise StewardError("a closed goal stays closed")
             item["status"] = status
             _write(store_path, data)
@@ -230,8 +265,22 @@ def pause_goal(goal_id: str, *, path: Path | None = None) -> dict[str, Any]:
     return _mutate(goal_id, "paused", path=path)
 
 
+def resume_goal(goal_id: str, *, path: Path | None = None) -> dict[str, Any]:
+    return _mutate(goal_id, "active", path=path)
+
+
 def close_goal(goal_id: str, *, path: Path | None = None) -> dict[str, Any]:
     return _mutate(goal_id, "done", path=path)
+
+
+def get_goal(goal_id: str, *, path: Path | None = None) -> dict[str, Any]:
+    cleaned = _require_id(goal_id)
+    store_path = path or default_goals_path()
+    data = _read(store_path)
+    for item in data["goals"]:
+        if isinstance(item, dict) and item.get("id") == cleaned:
+            return dict(item)
+    raise StewardError("unknown goal")
 
 
 def activity_path_for(goals_path: Path) -> Path:
@@ -326,7 +375,19 @@ def enqueue_wake(
     )
     run.tool_ceiling = list(tools)
     run.steward_goal_id = str(goal.get("id") or "")
-    run.mcp_server_ids = []
+    mcp_sids = goal.get("mcp_server_ids")
+    if not isinstance(mcp_sids, list):
+        mcp_sids = []
+        try:
+            from .mcp_client import parse_mcp_tool_name
+
+            for t in tools:
+                parsed = parse_mcp_tool_name(t)
+                if parsed and parsed[0] not in mcp_sids:
+                    mcp_sids.append(parsed[0])
+        except Exception:
+            pass
+    run.mcp_server_ids = list(mcp_sids)
     run.status = AgentRunStatus.QUEUED
     store.put_agent_run(run)
     return _append_activity(
@@ -453,10 +514,12 @@ __all__ = [
     "create_goal",
     "default_goals_path",
     "enqueue_wake",
+    "get_goal",
     "list_activity",
     "list_goals",
     "mark_due",
     "note_wake_finished",
     "pause_goal",
+    "resume_goal",
     "wake_due",
 ]

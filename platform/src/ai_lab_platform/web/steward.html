@@ -5,105 +5,96 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI Lab · Steward</title>
   <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
+  <link rel="stylesheet" href="/static/steward.css">
   <style>
-    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
-    body {
-      font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif;
-      background-image:
-        radial-gradient(900px 420px at 80% -10%, #1a2a3d 0%, transparent 55%),
-        linear-gradient(180deg, transparent, #0c1014 28%);
-    }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 22px 18px 48px; }
-    .eyebrow {
+    html { color-scheme: dark; }
+    html, body {
       margin: 0;
-      font: 12px/1 ui-monospace, Menlo, monospace;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      color: var(--accent);
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    h1 { margin: 8px 0 6px; font-size: 32px; letter-spacing: -.03em; }
-    h2 { margin: 0 0 8px; font-size: 18px; }
-    .lead { margin: 0 0 16px; max-width: 68ch; color: var(--muted); }
-    form, .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px;
-      margin-top: 14px;
+    body {
+      background-image:
+        radial-gradient(1000px 500px at 10% -5%, rgba(56, 189, 248, 0.1), transparent 60%),
+        radial-gradient(1100px 600px at 90% 10%, rgba(99, 102, 241, 0.08), transparent 60%),
+        radial-gradient(800px 800px at 50% 100%, rgba(16, 185, 129, 0.04), transparent 60%);
+      background-attachment: fixed;
     }
-    label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
-    input, textarea, select {
-      width: 100%; box-sizing: border-box;
-      background: #0e141b; color: var(--ink);
-      border: 1px solid var(--line); border-radius: 10px;
-      padding: 10px 12px; font: inherit;
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
     }
-    textarea { min-height: 76px; resize: vertical; }
-    button {
-      border: 0; border-radius: 10px; padding: 10px 14px;
-      background: var(--accent); color: #061018;
-      font: inherit; font-weight: 650; cursor: pointer;
-    }
-    button[disabled] { opacity: .45; cursor: default; }
-    button.ghost {
-      background: transparent; color: var(--ink);
-      border: 1px solid var(--line);
-    }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    #status { min-height: 1.3em; margin: 12px 0 0; color: var(--live); }
-    .tools { display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; padding: 0; list-style: none; }
-    .tools label { margin: 0; color: var(--ink); font-size: 14px; }
-    .card {
-      border-top: 1px solid var(--line);
-      padding: 12px 0;
-    }
-    .card:first-child { border-top: 0; padding-top: 0; }
-    .card h3 { margin: 0 0 4px; font-size: 16px; }
-    .meta, .empty { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
-    .note { margin: 6px 0; white-space: pre-wrap; }
-    .status-paused { color: var(--warn); }
-    .status-done, .status-failed, .status-error { color: var(--down); }
-    .status-active, .status-completed, .status-queued { color: var(--live); }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <p class="eyebrow">AI Lab · Steward</p>
-    <h1>Steward</h1>
-    <p class="lead">Hand the personal agent a responsibility. Between conversations it wakes on the mini, reads only the sources you check, and leaves a note here. Pause or close a goal when you want the wakes to stop. Closing keeps the record.</p>
-    <form id="goal-form">
-      <h2>New goal</h2>
-      <label for="goal-title">Title</label>
-      <input id="goal-title" name="title" maxlength="200" required autocomplete="off" placeholder="Keep the classroom notes current">
-      <label for="goal-intent">What it should look after</label>
-      <textarea id="goal-intent" name="intent" maxlength="4000" placeholder="Notice when the notes change and say what needs you."></textarea>
-      <label for="wake-preset">Wake</label>
-      <select id="wake-preset">
-        <option value="0 9 * * *">Every day at 9:00</option>
-        <option value="0 * * * *">Every hour</option>
+  <main class="desk">
+    <header class="presence">
+      <div class="mark" id="presence-mark" data-state="quiet" aria-hidden="true"></div>
+      <div>
+        <p class="eyebrow">Steward · Standing Autonomous Companion</p>
+        <h1 id="presence">Quiet</h1>
+        <p class="lead" id="presence-detail">Nothing is in its care. Leave a responsibility and it will keep watch.</p>
+        <div class="presence-stats" id="presence-stats">
+          <span class="stat-badge"><span class="stat-dot"></span> <span id="stat-active-count">0</span> Active Watches</span>
+          <span class="stat-badge">🛡️ Read-Only Ceiling</span>
+          <span class="stat-badge">⚡ Studio Ollama Powered</span>
+        </div>
+      </div>
+    </header>
+
+    <form id="goal-form" class="compose">
+      <label class="visually-hidden" for="goal-title">What it should look after</label>
+      <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off" placeholder="What should it look after?">
+      <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
+      <textarea id="goal-intent" name="intent" maxlength="4000" rows="2" placeholder="Anything more it should notice."></textarea>
+
+      <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
+        <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="true">Each morning</button>
+        <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
+        <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 minutes</button>
+        <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom</button>
+      </div>
+      <label class="visually-hidden" for="wake-preset">Wake schedule</label>
+      <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
+        <option value="0 9 * * *">Each morning</option>
+        <option value="0 * * * *">Hourly</option>
         <option value="*/15 * * * *">Every 15 minutes</option>
-        <option value="custom">Custom cron</option>
+        <option value="custom">Custom</option>
       </select>
-      <label for="wake-cron">Cron, minute hour day month weekday</label>
-      <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
-      <label>Sources a wake may read</label>
-      <ul class="tools" id="see-tools"></ul>
-      <div class="actions">
-        <button type="submit" id="save-goal">Save goal</button>
+      <div class="cron-row" id="cron-row" hidden>
+        <label for="wake-cron">Custom schedule, minute hour day month weekday</label>
+        <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
+      </div>
+
+      <div class="sources">
+        <p>It may read (Lab Tools &amp; Governed MCPs)</p>
+        <ul class="chips" id="see-tools"></ul>
+        <p class="ceiling-hint">Ceiling: Read-only background wakes cannot modify files or send messages without approval.</p>
+      </div>
+      <div class="compose-bar">
+        <p id="status" role="status"></p>
+        <button type="submit" class="primary" id="save-goal">Keep watch</button>
       </div>
     </form>
-    <p id="status" role="status"></p>
-    <section class="panel" aria-label="Goals">
-      <h2>Goals</h2>
-      <div id="goals"><p class="empty">No goals yet.</p></div>
-    </section>
-    <section class="panel" aria-label="Activity">
-      <h2>Activity</h2>
-      <div id="activity"><p class="empty">Nothing has woken yet.</p></div>
-    </section>
+
+    <div class="board">
+      <section class="column" aria-label="Goals">
+        <h2>In its care</h2>
+        <div class="stack" id="goals"><p class="empty">The first responsibility will sit here. Leave one above to begin.</p></div>
+      </section>
+      <section class="column" aria-label="Activity">
+        <h2>Brought back</h2>
+        <div id="activity"><p class="empty">Notes from autonomous wakes will show up here.</p></div>
+      </section>
+    </div>
   </main>
   <script src="/static/chrome.js"></script>
-  <script src="/static/steward.js?v=1"></script>
+  <script src="/static/steward.js?v=4"></script>
 </body>
 </html>

@@ -79,6 +79,20 @@ Optional local SQLite harness (not the M1 control plane):
 
 Optional: browse `http://mac-mini:8088/` for the status board (JSON still at `/health`).
 
+Optional: run the native Steward Menu Bar companion (IWO-112) for ambient presence and quick goal hand-off:
+
+```bash
+cd clients/steward-mac
+./build.sh
+open dist/Steward.app
+```
+
+Optional: start the local Mac MCP bridge so Steward on the mini can read personal markdown notes from this laptop:
+
+```bash
+./scripts/steward-mac-bridge.sh
+```
+
 Human approval:
 
 ```bash
