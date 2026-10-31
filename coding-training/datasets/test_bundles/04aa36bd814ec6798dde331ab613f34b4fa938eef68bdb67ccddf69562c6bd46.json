@@ -1,0 +1,147 @@
+{
+  "entry_point": "truncate_words",
+  "task_id": "py-str-006",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        "",
+        5
+      ]
+    },
+    {
+      "expected": "hello",
+      "inputs": [
+        "hello",
+        1
+      ]
+    },
+    {
+      "expected": "hello...",
+      "inputs": [
+        "hello world",
+        1
+      ]
+    },
+    {
+      "expected": "The quick...",
+      "inputs": [
+        "The quick brown fox",
+        2
+      ]
+    },
+    {
+      "expected": "The quick brown fox",
+      "inputs": [
+        "The quick brown fox",
+        4
+      ]
+    },
+    {
+      "expected": "The quick brown fox",
+      "inputs": [
+        "The quick brown fox",
+        10
+      ]
+    },
+    {
+      "expected": "one two three...",
+      "inputs": [
+        "one two three four five",
+        3
+      ]
+    },
+    {
+      "expected": "...",
+      "inputs": [
+        "single",
+        0
+      ]
+    },
+    {
+      "expected": "a...",
+      "inputs": [
+        "a b c d e f",
+        1
+      ]
+    },
+    {
+      "expected": "a b c d e...",
+      "inputs": [
+        "a b c d e f",
+        5
+      ]
+    },
+    {
+      "expected": "multiple spaces...",
+      "inputs": [
+        "   multiple    spaces   inside   ",
+        2
+      ]
+    },
+    {
+      "expected": "word",
+      "inputs": [
+        "word",
+        1
+      ]
+    },
+    {
+      "expected": "...",
+      "inputs": [
+        "word",
+        0
+      ]
+    },
+    {
+      "expected": "first second",
+      "inputs": [
+        "first second",
+        2
+      ]
+    },
+    {
+      "expected": "first...",
+      "inputs": [
+        "first second",
+        1
+      ]
+    },
+    {
+      "expected": "alpha beta...",
+      "inputs": [
+        "alpha beta gamma delta",
+        2
+      ]
+    },
+    {
+      "expected": "alpha beta gamma...",
+      "inputs": [
+        "alpha beta gamma delta",
+        3
+      ]
+    },
+    {
+      "expected": "alpha beta gamma delta",
+      "inputs": [
+        "alpha beta gamma delta",
+        4
+      ]
+    },
+    {
+      "expected": "1 2 3 4 5...",
+      "inputs": [
+        "1 2 3 4 5 6 7 8 9 10",
+        5
+      ]
+    },
+    {
+      "expected": "same same...",
+      "inputs": [
+        "same same same",
+        2
+      ]
+    }
+  ],
+  "test_count": 20
+}

@@ -1,0 +1,147 @@
+{
+  "entry_point": "gcd",
+  "task_id": "py-math-002",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        0,
+        0
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        0,
+        5
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        5,
+        0
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        1,
+        1
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        1,
+        100
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        12,
+        18
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        48,
+        18
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        101,
+        103
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        54,
+        24
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        100,
+        10
+      ]
+    },
+    {
+      "expected": 27,
+      "inputs": [
+        81,
+        27
+      ]
+    },
+    {
+      "expected": 17,
+      "inputs": [
+        17,
+        34
+      ]
+    },
+    {
+      "expected": 25,
+      "inputs": [
+        25,
+        25
+      ]
+    },
+    {
+      "expected": 500,
+      "inputs": [
+        1000,
+        500
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        7,
+        13
+      ]
+    },
+    {
+      "expected": 14,
+      "inputs": [
+        42,
+        56
+      ]
+    },
+    {
+      "expected": 14,
+      "inputs": [
+        14,
+        28
+      ]
+    },
+    {
+      "expected": 7,
+      "inputs": [
+        35,
+        49
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        60,
+        90
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        270,
+        192
+      ]
+    }
+  ],
+  "test_count": 20
+}

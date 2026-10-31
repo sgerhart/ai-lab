@@ -1,0 +1,127 @@
+{
+  "entry_point": "reverse_bits_16",
+  "task_id": "py-bit-003",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": 32768,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        32768
+      ]
+    },
+    {
+      "expected": 65535,
+      "inputs": [
+        65535
+      ]
+    },
+    {
+      "expected": 16384,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": 8192,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 4096,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": 2048,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": 49152,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": 40960,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": 61440,
+      "inputs": [
+        15
+      ]
+    },
+    {
+      "expected": 65280,
+      "inputs": [
+        255
+      ]
+    },
+    {
+      "expected": 255,
+      "inputs": [
+        65280
+      ]
+    },
+    {
+      "expected": 21845,
+      "inputs": [
+        43690
+      ]
+    },
+    {
+      "expected": 43690,
+      "inputs": [
+        21845
+      ]
+    },
+    {
+      "expected": 9728,
+      "inputs": [
+        100
+      ]
+    },
+    {
+      "expected": 6080,
+      "inputs": [
+        1000
+      ]
+    },
+    {
+      "expected": 39714,
+      "inputs": [
+        12345
+      ]
+    },
+    {
+      "expected": 35355,
+      "inputs": [
+        54321
+      ]
+    },
+    {
+      "expected": 57344,
+      "inputs": [
+        7
+      ]
+    }
+  ],
+  "test_count": 20
+}

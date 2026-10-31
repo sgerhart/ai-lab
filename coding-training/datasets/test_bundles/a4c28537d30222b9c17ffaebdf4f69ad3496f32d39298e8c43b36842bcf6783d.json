@@ -1,0 +1,127 @@
+{
+  "entry_point": "to_snake_case",
+  "task_id": "py-str-004",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": "hello",
+      "inputs": [
+        "hello"
+      ]
+    },
+    {
+      "expected": "camel_case",
+      "inputs": [
+        "camelCase"
+      ]
+    },
+    {
+      "expected": "pascal_case",
+      "inputs": [
+        "PascalCase"
+      ]
+    },
+    {
+      "expected": "camel_case_string",
+      "inputs": [
+        "camelCaseString"
+      ]
+    },
+    {
+      "expected": "html_parser",
+      "inputs": [
+        "HTMLParser"
+      ]
+    },
+    {
+      "expected": "json_to_xml",
+      "inputs": [
+        "JSONToXML"
+      ]
+    },
+    {
+      "expected": "my_var123",
+      "inputs": [
+        "myVar123"
+      ]
+    },
+    {
+      "expected": "already_snake_case",
+      "inputs": [
+        "already_snake_case"
+      ]
+    },
+    {
+      "expected": "a",
+      "inputs": [
+        "A"
+      ]
+    },
+    {
+      "expected": "ab",
+      "inputs": [
+        "AB"
+      ]
+    },
+    {
+      "expected": "abc_def",
+      "inputs": [
+        "ABCDef"
+      ]
+    },
+    {
+      "expected": "get_http_response_code",
+      "inputs": [
+        "getHTTPResponseCode"
+      ]
+    },
+    {
+      "expected": "simple_test",
+      "inputs": [
+        "simpleTest"
+      ]
+    },
+    {
+      "expected": "long_camel_case_identifier_with_many_words",
+      "inputs": [
+        "longCamelCaseIdentifierWithManyWords"
+      ]
+    },
+    {
+      "expected": "foo_bar_baz",
+      "inputs": [
+        "fooBarBaz"
+      ]
+    },
+    {
+      "expected": "x",
+      "inputs": [
+        "x"
+      ]
+    },
+    {
+      "expected": "xy",
+      "inputs": [
+        "xy"
+      ]
+    },
+    {
+      "expected": "x_y",
+      "inputs": [
+        "xY"
+      ]
+    },
+    {
+      "expected": "xy",
+      "inputs": [
+        "XY"
+      ]
+    }
+  ],
+  "test_count": 20
+}

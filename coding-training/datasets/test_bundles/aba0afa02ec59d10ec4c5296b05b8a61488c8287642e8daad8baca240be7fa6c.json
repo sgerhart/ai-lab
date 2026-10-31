@@ -1,0 +1,223 @@
+{
+  "entry_point": "single_number",
+  "task_id": "py-bit-004",
+  "test_cases": [
+    {
+      "expected": 1,
+      "inputs": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        [
+          2,
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        [
+          4,
+          1,
+          2,
+          1,
+          2
+        ]
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        [
+          1,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        [
+          5,
+          3,
+          5
+        ]
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        [
+          10,
+          20,
+          10,
+          30,
+          20
+        ]
+      ]
+    },
+    {
+      "expected": -2,
+      "inputs": [
+        [
+          -1,
+          -1,
+          -2
+        ]
+      ]
+    },
+    {
+      "expected": 200,
+      "inputs": [
+        [
+          100,
+          200,
+          100
+        ]
+      ]
+    },
+    {
+      "expected": 9,
+      "inputs": [
+        [
+          7,
+          8,
+          9,
+          8,
+          7
+        ]
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        [
+          0,
+          1,
+          0
+        ]
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        [
+          99,
+          99,
+          1,
+          2,
+          2
+        ]
+      ]
+    },
+    {
+      "expected": 15,
+      "inputs": [
+        [
+          12,
+          15,
+          12
+        ]
+      ]
+    },
+    {
+      "expected": 99,
+      "inputs": [
+        [
+          42,
+          99,
+          42
+        ]
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        [
+          3,
+          3,
+          4,
+          4,
+          5
+        ]
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        [
+          6,
+          7,
+          7,
+          8,
+          8
+        ]
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        [
+          1,
+          2,
+          3,
+          4,
+          1,
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        [
+          -5,
+          -5,
+          10
+        ]
+      ]
+    },
+    {
+      "expected": 2000,
+      "inputs": [
+        [
+          1000,
+          2000,
+          1000
+        ]
+      ]
+    },
+    {
+      "expected": 9,
+      "inputs": [
+        [
+          8,
+          9,
+          8
+        ]
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        [
+          14,
+          14,
+          21,
+          21,
+          28
+        ]
+      ]
+    }
+  ],
+  "test_count": 20
+}

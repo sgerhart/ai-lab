@@ -1,0 +1,127 @@
+{
+  "entry_point": "sum_of_digits",
+  "task_id": "py-math-007",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        12
+      ]
+    },
+    {
+      "expected": 18,
+      "inputs": [
+        99
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        123
+      ]
+    },
+    {
+      "expected": 15,
+      "inputs": [
+        12345
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        1000
+      ]
+    },
+    {
+      "expected": 36,
+      "inputs": [
+        9999
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        505
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        1111111111
+      ]
+    },
+    {
+      "expected": 24,
+      "inputs": [
+        789
+      ]
+    },
+    {
+      "expected": 15,
+      "inputs": [
+        456
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        1020304
+      ]
+    },
+    {
+      "expected": 18,
+      "inputs": [
+        9000000009
+      ]
+    },
+    {
+      "expected": 45,
+      "inputs": [
+        123456789
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        222
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        3333
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        88
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        1000000
+      ]
+    }
+  ],
+  "test_count": 20
+}

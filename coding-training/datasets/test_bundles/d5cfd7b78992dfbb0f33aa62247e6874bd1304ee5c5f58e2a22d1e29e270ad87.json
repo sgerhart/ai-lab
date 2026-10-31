@@ -1,0 +1,127 @@
+{
+  "entry_point": "seconds_to_hms",
+  "task_id": "py-dt-002",
+  "test_cases": [
+    {
+      "expected": "00:00:00",
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": "00:00:01",
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": "00:00:59",
+      "inputs": [
+        59
+      ]
+    },
+    {
+      "expected": "00:01:00",
+      "inputs": [
+        60
+      ]
+    },
+    {
+      "expected": "00:01:05",
+      "inputs": [
+        65
+      ]
+    },
+    {
+      "expected": "00:59:59",
+      "inputs": [
+        3599
+      ]
+    },
+    {
+      "expected": "01:00:00",
+      "inputs": [
+        3600
+      ]
+    },
+    {
+      "expected": "01:01:05",
+      "inputs": [
+        3665
+      ]
+    },
+    {
+      "expected": "02:00:00",
+      "inputs": [
+        7200
+      ]
+    },
+    {
+      "expected": "23:59:59",
+      "inputs": [
+        86399
+      ]
+    },
+    {
+      "expected": "24:00:00",
+      "inputs": [
+        86400
+      ]
+    },
+    {
+      "expected": "25:00:00",
+      "inputs": [
+        90000
+      ]
+    },
+    {
+      "expected": "00:00:10",
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": "00:02:00",
+      "inputs": [
+        120
+      ]
+    },
+    {
+      "expected": "00:30:00",
+      "inputs": [
+        1800
+      ]
+    },
+    {
+      "expected": "01:23:20",
+      "inputs": [
+        5000
+      ]
+    },
+    {
+      "expected": "02:46:40",
+      "inputs": [
+        10000
+      ]
+    },
+    {
+      "expected": "00:00:42",
+      "inputs": [
+        42
+      ]
+    },
+    {
+      "expected": "02:46:39",
+      "inputs": [
+        9999
+      ]
+    },
+    {
+      "expected": "10:00:00",
+      "inputs": [
+        36000
+      ]
+    }
+  ],
+  "test_count": 20
+}

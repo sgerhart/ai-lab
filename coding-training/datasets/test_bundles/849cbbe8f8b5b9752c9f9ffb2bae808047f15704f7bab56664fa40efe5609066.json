@@ -1,0 +1,147 @@
+{
+  "entry_point": "days_in_month",
+  "task_id": "py-dt-003",
+  "test_cases": [
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        1
+      ]
+    },
+    {
+      "expected": 29,
+      "inputs": [
+        2024,
+        2
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        2023,
+        2
+      ]
+    },
+    {
+      "expected": 29,
+      "inputs": [
+        2000,
+        2
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        1900,
+        2
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        3
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        2024,
+        4
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        5
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        2024,
+        6
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        7
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        8
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        2024,
+        9
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        10
+      ]
+    },
+    {
+      "expected": 30,
+      "inputs": [
+        2024,
+        11
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        2024,
+        12
+      ]
+    },
+    {
+      "expected": 29,
+      "inputs": [
+        2020,
+        2
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        2021,
+        2
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        2022,
+        2
+      ]
+    },
+    {
+      "expected": 28,
+      "inputs": [
+        2025,
+        2
+      ]
+    },
+    {
+      "expected": 29,
+      "inputs": [
+        2028,
+        2
+      ]
+    }
+  ],
+  "test_count": 20
+}

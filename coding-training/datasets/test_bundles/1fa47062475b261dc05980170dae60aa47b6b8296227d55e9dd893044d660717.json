@@ -1,0 +1,127 @@
+{
+  "entry_point": "is_power_of_two",
+  "task_id": "py-math-006",
+  "test_cases": [
+    {
+      "expected": false,
+      "inputs": [
+        -2
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        -1
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        24
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        32
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        64
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        100
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        128
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        256
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        512
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        1024
+      ]
+    }
+  ],
+  "test_count": 20
+}

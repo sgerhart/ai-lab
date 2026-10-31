@@ -1,0 +1,187 @@
+{
+  "entry_point": "rectangle_area",
+  "task_id": "py-geo-004",
+  "test_cases": [
+    {
+      "expected": 12,
+      "inputs": [
+        0,
+        1,
+        3,
+        5
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        1,
+        2,
+        4,
+        6
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        2,
+        3,
+        5,
+        7
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        3,
+        4,
+        6,
+        8
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        4,
+        5,
+        7,
+        9
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        5,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        6,
+        7,
+        9,
+        11
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        7,
+        8,
+        10,
+        12
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        8,
+        9,
+        11,
+        13
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        9,
+        10,
+        12,
+        14
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        10,
+        11,
+        13,
+        15
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        11,
+        12,
+        14,
+        16
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        12,
+        13,
+        15,
+        17
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        13,
+        14,
+        16,
+        18
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        14,
+        15,
+        17,
+        19
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        15,
+        16,
+        18,
+        20
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        16,
+        17,
+        19,
+        21
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        17,
+        18,
+        20,
+        22
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        18,
+        19,
+        21,
+        23
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        19,
+        20,
+        22,
+        24
+      ]
+    }
+  ],
+  "test_count": 20
+}

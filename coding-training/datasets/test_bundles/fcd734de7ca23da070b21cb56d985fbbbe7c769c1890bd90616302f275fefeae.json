@@ -1,0 +1,367 @@
+{
+  "entry_point": "max_tree_depth",
+  "task_id": "py-tree-002",
+  "test_cases": [
+    {
+      "expected": 1,
+      "inputs": [
+        {
+          "left": null,
+          "right": null,
+          "val": 0
+        }
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        {
+          "left": {
+            "left": null,
+            "right": null,
+            "val": 0
+          },
+          "right": null,
+          "val": 1
+        }
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": null,
+              "right": null,
+              "val": 0
+            },
+            "right": null,
+            "val": 1
+          },
+          "right": null,
+          "val": 2
+        }
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": null,
+                "right": null,
+                "val": 0
+              },
+              "right": null,
+              "val": 1
+            },
+            "right": null,
+            "val": 2
+          },
+          "right": null,
+          "val": 3
+        }
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": {
+                  "left": null,
+                  "right": null,
+                  "val": 0
+                },
+                "right": null,
+                "val": 1
+              },
+              "right": null,
+              "val": 2
+            },
+            "right": null,
+            "val": 3
+          },
+          "right": null,
+          "val": 4
+        }
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        {
+          "left": null,
+          "right": null,
+          "val": 0
+        }
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        {
+          "left": {
+            "left": null,
+            "right": null,
+            "val": 0
+          },
+          "right": null,
+          "val": 1
+        }
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": null,
+              "right": null,
+              "val": 0
+            },
+            "right": null,
+            "val": 1
+          },
+          "right": null,
+          "val": 2
+        }
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": null,
+                "right": null,
+                "val": 0
+              },
+              "right": null,
+              "val": 1
+            },
+            "right": null,
+            "val": 2
+          },
+          "right": null,
+          "val": 3
+        }
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": {
+                  "left": null,
+                  "right": null,
+                  "val": 0
+                },
+                "right": null,
+                "val": 1
+              },
+              "right": null,
+              "val": 2
+            },
+            "right": null,
+            "val": 3
+          },
+          "right": null,
+          "val": 4
+        }
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        {
+          "left": null,
+          "right": null,
+          "val": 0
+        }
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        {
+          "left": {
+            "left": null,
+            "right": null,
+            "val": 0
+          },
+          "right": null,
+          "val": 1
+        }
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": null,
+              "right": null,
+              "val": 0
+            },
+            "right": null,
+            "val": 1
+          },
+          "right": null,
+          "val": 2
+        }
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": null,
+                "right": null,
+                "val": 0
+              },
+              "right": null,
+              "val": 1
+            },
+            "right": null,
+            "val": 2
+          },
+          "right": null,
+          "val": 3
+        }
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": {
+                  "left": null,
+                  "right": null,
+                  "val": 0
+                },
+                "right": null,
+                "val": 1
+              },
+              "right": null,
+              "val": 2
+            },
+            "right": null,
+            "val": 3
+          },
+          "right": null,
+          "val": 4
+        }
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        {
+          "left": null,
+          "right": null,
+          "val": 0
+        }
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        {
+          "left": {
+            "left": null,
+            "right": null,
+            "val": 0
+          },
+          "right": null,
+          "val": 1
+        }
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": null,
+              "right": null,
+              "val": 0
+            },
+            "right": null,
+            "val": 1
+          },
+          "right": null,
+          "val": 2
+        }
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": null,
+                "right": null,
+                "val": 0
+              },
+              "right": null,
+              "val": 1
+            },
+            "right": null,
+            "val": 2
+          },
+          "right": null,
+          "val": 3
+        }
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        {
+          "left": {
+            "left": {
+              "left": {
+                "left": {
+                  "left": null,
+                  "right": null,
+                  "val": 0
+                },
+                "right": null,
+                "val": 1
+              },
+              "right": null,
+              "val": 2
+            },
+            "right": null,
+            "val": 3
+          },
+          "right": null,
+          "val": 4
+        }
+      ]
+    }
+  ],
+  "test_count": 20
+}

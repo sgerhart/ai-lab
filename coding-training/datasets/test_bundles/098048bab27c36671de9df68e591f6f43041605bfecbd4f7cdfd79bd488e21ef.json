@@ -1,0 +1,167 @@
+{
+  "entry_point": "day_of_week",
+  "task_id": "py-dt-004",
+  "test_cases": [
+    {
+      "expected": "Monday",
+      "inputs": [
+        2024,
+        1,
+        1
+      ]
+    },
+    {
+      "expected": "Tuesday",
+      "inputs": [
+        2024,
+        1,
+        2
+      ]
+    },
+    {
+      "expected": "Wednesday",
+      "inputs": [
+        2024,
+        1,
+        3
+      ]
+    },
+    {
+      "expected": "Thursday",
+      "inputs": [
+        2024,
+        1,
+        4
+      ]
+    },
+    {
+      "expected": "Friday",
+      "inputs": [
+        2024,
+        1,
+        5
+      ]
+    },
+    {
+      "expected": "Saturday",
+      "inputs": [
+        2024,
+        1,
+        6
+      ]
+    },
+    {
+      "expected": "Sunday",
+      "inputs": [
+        2024,
+        1,
+        7
+      ]
+    },
+    {
+      "expected": "Thursday",
+      "inputs": [
+        2024,
+        2,
+        29
+      ]
+    },
+    {
+      "expected": "Saturday",
+      "inputs": [
+        2000,
+        1,
+        1
+      ]
+    },
+    {
+      "expected": "Friday",
+      "inputs": [
+        1999,
+        12,
+        31
+      ]
+    },
+    {
+      "expected": "Friday",
+      "inputs": [
+        2020,
+        12,
+        25
+      ]
+    },
+    {
+      "expected": "Tuesday",
+      "inputs": [
+        2023,
+        10,
+        31
+      ]
+    },
+    {
+      "expected": "Friday",
+      "inputs": [
+        2026,
+        10,
+        30
+      ]
+    },
+    {
+      "expected": "Sunday",
+      "inputs": [
+        1969,
+        7,
+        20
+      ]
+    },
+    {
+      "expected": "Thursday",
+      "inputs": [
+        1776,
+        7,
+        4
+      ]
+    },
+    {
+      "expected": "Wednesday",
+      "inputs": [
+        2025,
+        1,
+        1
+      ]
+    },
+    {
+      "expected": "Friday",
+      "inputs": [
+        2025,
+        7,
+        4
+      ]
+    },
+    {
+      "expected": "Tuesday",
+      "inputs": [
+        2022,
+        2,
+        22
+      ]
+    },
+    {
+      "expected": "Monday",
+      "inputs": [
+        2021,
+        6,
+        21
+      ]
+    },
+    {
+      "expected": "Tuesday",
+      "inputs": [
+        2024,
+        12,
+        31
+      ]
+    }
+  ],
+  "test_count": 20
+}

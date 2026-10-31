@@ -1,0 +1,127 @@
+{
+  "entry_point": "rot13",
+  "task_id": "py-str-010",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": "n",
+      "inputs": [
+        "a"
+      ]
+    },
+    {
+      "expected": "a",
+      "inputs": [
+        "n"
+      ]
+    },
+    {
+      "expected": "N",
+      "inputs": [
+        "A"
+      ]
+    },
+    {
+      "expected": "Uryyb, Jbeyq!",
+      "inputs": [
+        "Hello, World!"
+      ]
+    },
+    {
+      "expected": "Hello, World!",
+      "inputs": [
+        "Uryyb, Jbeyq!"
+      ]
+    },
+    {
+      "expected": "12345",
+      "inputs": [
+        "12345"
+      ]
+    },
+    {
+      "expected": "!@#$%",
+      "inputs": [
+        "!@#$%"
+      ]
+    },
+    {
+      "expected": "nopklm",
+      "inputs": [
+        "abcxyz"
+      ]
+    },
+    {
+      "expected": "NOPKLM",
+      "inputs": [
+        "ABCXYZ"
+      ]
+    },
+    {
+      "expected": "Clguba",
+      "inputs": [
+        "Python"
+      ]
+    },
+    {
+      "expected": "Gur dhvpx oebja sbk",
+      "inputs": [
+        "The quick brown fox"
+      ]
+    },
+    {
+      "expected": "The quick brown fox",
+      "inputs": [
+        "Gur dhvpx oebja sbk"
+      ]
+    },
+    {
+      "expected": "grfg EBG13 grfg",
+      "inputs": [
+        "test ROT13 test"
+      ]
+    },
+    {
+      "expected": "fcnprf fcnprf",
+      "inputs": [
+        "spaces spaces"
+      ]
+    },
+    {
+      "expected": "n o p",
+      "inputs": [
+        "a b c"
+      ]
+    },
+    {
+      "expected": "klm",
+      "inputs": [
+        "xyz"
+      ]
+    },
+    {
+      "expected": "z a",
+      "inputs": [
+        "m n"
+      ]
+    },
+    {
+      "expected": "Z A",
+      "inputs": [
+        "M N"
+      ]
+    },
+    {
+      "expected": "EBG13 erirefvoyr",
+      "inputs": [
+        "ROT13 reversible"
+      ]
+    }
+  ],
+  "test_count": 20
+}

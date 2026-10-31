@@ -1,0 +1,127 @@
+{
+  "entry_point": "reverse_string",
+  "task_id": "py-str-001",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": "a",
+      "inputs": [
+        "a"
+      ]
+    },
+    {
+      "expected": "ba",
+      "inputs": [
+        "ab"
+      ]
+    },
+    {
+      "expected": "olleh",
+      "inputs": [
+        "hello"
+      ]
+    },
+    {
+      "expected": "racecar",
+      "inputs": [
+        "racecar"
+      ]
+    },
+    {
+      "expected": "54321",
+      "inputs": [
+        "12345"
+      ]
+    },
+    {
+      "expected": "  secaps  ",
+      "inputs": [
+        "  spaces  "
+      ]
+    },
+    {
+      "expected": ")(*&^%$#@!",
+      "inputs": [
+        "!@#$%^&*()"
+      ]
+    },
+    {
+      "expected": "gnimmargorP nohtyP",
+      "inputs": [
+        "Python Programming"
+      ]
+    },
+    {
+      "expected": "rewol dna REPPU",
+      "inputs": [
+        "UPPER and lower"
+      ]
+    },
+    {
+      "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "inputs": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "expected": "tset\nenilwen",
+      "inputs": [
+        "newline\ntest"
+      ]
+    },
+    {
+      "expected": "tset\ttab",
+      "inputs": [
+        "tab\ttest"
+      ]
+    },
+    {
+      "expected": "tset \ud83c\udf89 ijome",
+      "inputs": [
+        "emoji \ud83c\udf89 test"
+      ]
+    },
+    {
+      "expected": "emordnilap",
+      "inputs": [
+        "palindrome"
+      ]
+    },
+    {
+      "expected": "zyxwvutsrqponmlkjihgfedcba",
+      "inputs": [
+        "abcdefghijklmnopqrstuvwxyz"
+      ]
+    },
+    {
+      "expected": "0",
+      "inputs": [
+        "0"
+      ]
+    },
+    {
+      "expected": "10",
+      "inputs": [
+        "01"
+      ]
+    },
+    {
+      "expected": "?!# slobmys 4321 dexim",
+      "inputs": [
+        "mixed 1234 symbols #!?"
+      ]
+    },
+    {
+      "expected": " taeper taeper taeper taeper taeper",
+      "inputs": [
+        "repeat repeat repeat repeat repeat "
+      ]
+    }
+  ],
+  "test_count": 20
+}

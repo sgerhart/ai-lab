@@ -1,0 +1,187 @@
+{
+  "entry_point": "parse_query_params",
+  "task_id": "py-parse-004",
+  "test_cases": [
+    {
+      "expected": {
+        "id": "0",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=0"
+      ]
+    },
+    {
+      "expected": {
+        "id": "1",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=1"
+      ]
+    },
+    {
+      "expected": {
+        "id": "2",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=2"
+      ]
+    },
+    {
+      "expected": {
+        "id": "3",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=3"
+      ]
+    },
+    {
+      "expected": {
+        "id": "4",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=4"
+      ]
+    },
+    {
+      "expected": {
+        "id": "5",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=5"
+      ]
+    },
+    {
+      "expected": {
+        "id": "6",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=6"
+      ]
+    },
+    {
+      "expected": {
+        "id": "7",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=7"
+      ]
+    },
+    {
+      "expected": {
+        "id": "8",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=8"
+      ]
+    },
+    {
+      "expected": {
+        "id": "9",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=9"
+      ]
+    },
+    {
+      "expected": {
+        "id": "10",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=10"
+      ]
+    },
+    {
+      "expected": {
+        "id": "11",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=11"
+      ]
+    },
+    {
+      "expected": {
+        "id": "12",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=12"
+      ]
+    },
+    {
+      "expected": {
+        "id": "13",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=13"
+      ]
+    },
+    {
+      "expected": {
+        "id": "14",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=14"
+      ]
+    },
+    {
+      "expected": {
+        "id": "15",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=15"
+      ]
+    },
+    {
+      "expected": {
+        "id": "16",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=16"
+      ]
+    },
+    {
+      "expected": {
+        "id": "17",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=17"
+      ]
+    },
+    {
+      "expected": {
+        "id": "18",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=18"
+      ]
+    },
+    {
+      "expected": {
+        "id": "19",
+        "user": "alice"
+      },
+      "inputs": [
+        "?user=alice&id=19"
+      ]
+    }
+  ],
+  "test_count": 20
+}

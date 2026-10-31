@@ -1,0 +1,127 @@
+{
+  "entry_point": "count_parentheses_depth",
+  "task_id": "py-parse-007",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "()"
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        "(())"
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        "((()))"
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        "(((())))"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "((((()))))"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "()"
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        "(())"
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        "((()))"
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        "(((())))"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "((((()))))"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "()"
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        "(())"
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        "((()))"
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        "(((())))"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "((((()))))"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "()"
+      ]
+    }
+  ],
+  "test_count": 20
+}

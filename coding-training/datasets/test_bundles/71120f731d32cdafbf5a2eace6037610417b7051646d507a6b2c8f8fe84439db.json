@@ -1,0 +1,127 @@
+{
+  "entry_point": "slugify",
+  "task_id": "py-parse-010",
+  "test_cases": [
+    {
+      "expected": "hello-world-part-0",
+      "inputs": [
+        "Hello World! Part 0"
+      ]
+    },
+    {
+      "expected": "hello-world-part-1",
+      "inputs": [
+        "Hello World! Part 1"
+      ]
+    },
+    {
+      "expected": "hello-world-part-2",
+      "inputs": [
+        "Hello World! Part 2"
+      ]
+    },
+    {
+      "expected": "hello-world-part-3",
+      "inputs": [
+        "Hello World! Part 3"
+      ]
+    },
+    {
+      "expected": "hello-world-part-4",
+      "inputs": [
+        "Hello World! Part 4"
+      ]
+    },
+    {
+      "expected": "hello-world-part-5",
+      "inputs": [
+        "Hello World! Part 5"
+      ]
+    },
+    {
+      "expected": "hello-world-part-6",
+      "inputs": [
+        "Hello World! Part 6"
+      ]
+    },
+    {
+      "expected": "hello-world-part-7",
+      "inputs": [
+        "Hello World! Part 7"
+      ]
+    },
+    {
+      "expected": "hello-world-part-8",
+      "inputs": [
+        "Hello World! Part 8"
+      ]
+    },
+    {
+      "expected": "hello-world-part-9",
+      "inputs": [
+        "Hello World! Part 9"
+      ]
+    },
+    {
+      "expected": "hello-world-part-10",
+      "inputs": [
+        "Hello World! Part 10"
+      ]
+    },
+    {
+      "expected": "hello-world-part-11",
+      "inputs": [
+        "Hello World! Part 11"
+      ]
+    },
+    {
+      "expected": "hello-world-part-12",
+      "inputs": [
+        "Hello World! Part 12"
+      ]
+    },
+    {
+      "expected": "hello-world-part-13",
+      "inputs": [
+        "Hello World! Part 13"
+      ]
+    },
+    {
+      "expected": "hello-world-part-14",
+      "inputs": [
+        "Hello World! Part 14"
+      ]
+    },
+    {
+      "expected": "hello-world-part-15",
+      "inputs": [
+        "Hello World! Part 15"
+      ]
+    },
+    {
+      "expected": "hello-world-part-16",
+      "inputs": [
+        "Hello World! Part 16"
+      ]
+    },
+    {
+      "expected": "hello-world-part-17",
+      "inputs": [
+        "Hello World! Part 17"
+      ]
+    },
+    {
+      "expected": "hello-world-part-18",
+      "inputs": [
+        "Hello World! Part 18"
+      ]
+    },
+    {
+      "expected": "hello-world-part-19",
+      "inputs": [
+        "Hello World! Part 19"
+      ]
+    }
+  ],
+  "test_count": 20
+}

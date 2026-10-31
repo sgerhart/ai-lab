@@ -1,0 +1,167 @@
+{
+  "entry_point": "extract_emails_simple",
+  "task_id": "py-parse-005",
+  "test_cases": [
+    {
+      "expected": [
+        "user0@example.com"
+      ],
+      "inputs": [
+        "Contact user0@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user1@example.com"
+      ],
+      "inputs": [
+        "Contact user1@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user2@example.com"
+      ],
+      "inputs": [
+        "Contact user2@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user3@example.com"
+      ],
+      "inputs": [
+        "Contact user3@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user4@example.com"
+      ],
+      "inputs": [
+        "Contact user4@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user5@example.com"
+      ],
+      "inputs": [
+        "Contact user5@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user6@example.com"
+      ],
+      "inputs": [
+        "Contact user6@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user7@example.com"
+      ],
+      "inputs": [
+        "Contact user7@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user8@example.com"
+      ],
+      "inputs": [
+        "Contact user8@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user9@example.com"
+      ],
+      "inputs": [
+        "Contact user9@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user10@example.com"
+      ],
+      "inputs": [
+        "Contact user10@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user11@example.com"
+      ],
+      "inputs": [
+        "Contact user11@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user12@example.com"
+      ],
+      "inputs": [
+        "Contact user12@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user13@example.com"
+      ],
+      "inputs": [
+        "Contact user13@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user14@example.com"
+      ],
+      "inputs": [
+        "Contact user14@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user15@example.com"
+      ],
+      "inputs": [
+        "Contact user15@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user16@example.com"
+      ],
+      "inputs": [
+        "Contact user16@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user17@example.com"
+      ],
+      "inputs": [
+        "Contact user17@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user18@example.com"
+      ],
+      "inputs": [
+        "Contact user18@example.com for help."
+      ]
+    },
+    {
+      "expected": [
+        "user19@example.com"
+      ],
+      "inputs": [
+        "Contact user19@example.com for help."
+      ]
+    }
+  ],
+  "test_count": 20
+}

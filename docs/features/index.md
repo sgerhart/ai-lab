@@ -69,7 +69,7 @@ Do not treat this index as authorized implementation or deploy.
 | — | [FEAT-021](FEAT-021-classroom.md) | Classroom: lesson plan, voice, whiteboard | **Live on the mini** (IWO-106, 2026-10-17). Browser voice not watched in a session | — |
 | — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Live on the mini** (desk served 2026-10-21). A wake has not been watched there yet | — |
 | — | [FEAT-023](FEAT-023-phone-studio.md) | Phone Studio on the tailnet | **Specified.** IWO-110 Draft. Not implemented | — |
-| — | [FEAT-024](FEAT-024-execution-verified-coding-model-training.md) | Execution-Verified Coding Model Training | **In progress:** WO-00 Delivered; sub-platform in `coding-training/` | — |
+| — | [FEAT-024](FEAT-024-execution-verified-coding-model-training.md) | Execution-Verified Coding Model Training | **In progress:** WO-00, WO-01, WO-02 Delivered; sub-platform in `coding-training/` | — |
 
 ## Implementation Work Orders (protocol)
 
@@ -164,6 +164,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Steward activity page | FEAT-022 | **Review** (desk on the mini 2026-10-21; headless Chrome including 390px) |
 | [IWO-116](../work-orders/IWO-116-coding-training-reconnaissance-and-scaffold.md) | Coding training platform reconnaissance and scaffold | FEAT-024 | **Complete** (WO-00 & WO-01 Delivered) |
 | [IWO-117](../work-orders/IWO-117-coding-training-console.md) | Coding training console specification and plan | FEAT-024 | **Ready** (WO-10 Specified) |
+| [IWO-118](../work-orders/IWO-118-coding-training-datasets-and-tasks.md) | Coding training dataset and task contracts | FEAT-024 | **Complete** (WO-02 Delivered) |
 
 ## Historical phase work orders
 

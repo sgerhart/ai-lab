@@ -1,0 +1,204 @@
+{
+  "entry_point": "prime_factors",
+  "task_id": "py-math-003",
+  "test_cases": [
+    {
+      "expected": [
+        2
+      ],
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": [
+        3
+      ],
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2
+      ],
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": [
+        2,
+        3
+      ],
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        2
+      ],
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": [
+        3,
+        3
+      ],
+      "inputs": [
+        9
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        3
+      ],
+      "inputs": [
+        12
+      ]
+    },
+    {
+      "expected": [
+        3,
+        5
+      ],
+      "inputs": [
+        15
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": [
+        17
+      ],
+      "inputs": [
+        17
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        5
+      ],
+      "inputs": [
+        20
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        2,
+        3
+      ],
+      "inputs": [
+        24
+      ]
+    },
+    {
+      "expected": [
+        2,
+        3,
+        5
+      ],
+      "inputs": [
+        30
+      ]
+    },
+    {
+      "expected": [
+        7,
+        7
+      ],
+      "inputs": [
+        49
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        3,
+        5
+      ],
+      "inputs": [
+        60
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        3,
+        7
+      ],
+      "inputs": [
+        84
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        5,
+        5
+      ],
+      "inputs": [
+        100
+      ]
+    },
+    {
+      "expected": [
+        101
+      ],
+      "inputs": [
+        101
+      ]
+    },
+    {
+      "expected": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "inputs": [
+        128
+      ]
+    },
+    {
+      "expected": [
+        3,
+        3,
+        5,
+        7
+      ],
+      "inputs": [
+        315
+      ]
+    }
+  ],
+  "test_count": 20
+}

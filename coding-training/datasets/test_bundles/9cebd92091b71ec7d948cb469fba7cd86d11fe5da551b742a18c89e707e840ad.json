@@ -1,0 +1,127 @@
+{
+  "entry_point": "is_prime",
+  "task_id": "py-math-001",
+  "test_cases": [
+    {
+      "expected": false,
+      "inputs": [
+        -5
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        9
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        11
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        13
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        17
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        19
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        23
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        25
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        29
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        97
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        100
+      ]
+    }
+  ],
+  "test_count": 20
+}

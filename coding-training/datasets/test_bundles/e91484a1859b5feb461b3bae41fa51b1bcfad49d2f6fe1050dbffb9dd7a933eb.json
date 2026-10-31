@@ -1,0 +1,227 @@
+{
+  "entry_point": "is_point_on_segment",
+  "task_id": "py-geo-003",
+  "test_cases": [
+    {
+      "expected": true,
+      "inputs": [
+        0,
+        0,
+        0,
+        0,
+        2,
+        2
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        1,
+        1,
+        1,
+        1,
+        3,
+        3
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2,
+        2,
+        2,
+        2,
+        4,
+        4
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        3,
+        3,
+        3,
+        3,
+        5,
+        5
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        4,
+        4,
+        4,
+        4,
+        6,
+        6
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        5,
+        5,
+        5,
+        5,
+        7,
+        7
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        6,
+        6,
+        6,
+        6,
+        8,
+        8
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        7,
+        7,
+        7,
+        7,
+        9,
+        9
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        8,
+        8,
+        8,
+        8,
+        10,
+        10
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        9,
+        9,
+        9,
+        9,
+        11,
+        11
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        10,
+        10,
+        10,
+        10,
+        12,
+        12
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        11,
+        11,
+        11,
+        11,
+        13,
+        13
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        12,
+        12,
+        12,
+        12,
+        14,
+        14
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        13,
+        13,
+        13,
+        13,
+        15,
+        15
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        14,
+        14,
+        14,
+        14,
+        16,
+        16
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        15,
+        15,
+        15,
+        15,
+        17,
+        17
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        16,
+        16,
+        16,
+        16,
+        18,
+        18
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        17,
+        17,
+        17,
+        17,
+        19,
+        19
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        18,
+        18,
+        18,
+        18,
+        20,
+        20
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        19,
+        19,
+        19,
+        19,
+        21,
+        21
+      ]
+    }
+  ],
+  "test_count": 20
+}

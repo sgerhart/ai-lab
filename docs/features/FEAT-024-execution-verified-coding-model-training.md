@@ -1,10 +1,11 @@
 # FEAT-024 — Execution-Verified Coding Model Training Platform
 
-- **Status:** In progress (WO-00 Delivered)
+- **Status:** In progress (WO-00, WO-01, WO-02 Delivered)
 - **Created:** 2026-10-30
 - **Owner:** Steven Gerhart
 - **GitHub issue:** draft only
 - **Sub-platform path:** `coding-training/`
+- **Work Orders:** `IWO-116`, `IWO-117`, `IWO-118`
 
 ## Purpose
 
@@ -48,7 +49,7 @@ Build an operational, observable, and reproducible coding model training and eva
 
 - [x] WO-00: Reconnaissance and ADRs delivered.
 - [x] WO-01: Directory scaffold, pyproject, and test harness operational.
-- [ ] WO-02: 100+ curated Python tasks with immutable test bundles and disjoint splits.
+- [x] WO-02: 100+ curated Python tasks with immutable test bundles and disjoint splits.
 - [ ] WO-03: Sandbox worker passes 100% of negative security tests; operator approves execution.
 - [ ] WO-04: Control plane with idempotent job leases and audit logs.
 - [ ] WO-05: Reproducible holdout baseline report.

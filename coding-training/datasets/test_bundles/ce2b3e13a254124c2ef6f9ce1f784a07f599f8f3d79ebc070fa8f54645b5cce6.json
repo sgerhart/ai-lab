@@ -1,0 +1,127 @@
+{
+  "entry_point": "helper_algo_5",
+  "task_id": "py-algo-005",
+  "test_cases": [
+    {
+      "expected": 1,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 11,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": 21,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 26,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": 31,
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": 36,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": 41,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": 46,
+      "inputs": [
+        9
+      ]
+    },
+    {
+      "expected": 51,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 56,
+      "inputs": [
+        11
+      ]
+    },
+    {
+      "expected": 61,
+      "inputs": [
+        12
+      ]
+    },
+    {
+      "expected": 66,
+      "inputs": [
+        13
+      ]
+    },
+    {
+      "expected": 71,
+      "inputs": [
+        14
+      ]
+    },
+    {
+      "expected": 76,
+      "inputs": [
+        15
+      ]
+    },
+    {
+      "expected": 81,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": 86,
+      "inputs": [
+        17
+      ]
+    },
+    {
+      "expected": 91,
+      "inputs": [
+        18
+      ]
+    },
+    {
+      "expected": 96,
+      "inputs": [
+        19
+      ]
+    }
+  ],
+  "test_count": 20
+}

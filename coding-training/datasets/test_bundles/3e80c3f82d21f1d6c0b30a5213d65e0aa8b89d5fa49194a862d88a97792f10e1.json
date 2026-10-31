@@ -1,0 +1,308 @@
+{
+  "entry_point": "remove_duplicates",
+  "task_id": "py-arr-002",
+  "test_cases": [
+    {
+      "expected": [],
+      "inputs": [
+        []
+      ]
+    },
+    {
+      "expected": [
+        1
+      ],
+      "inputs": [
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        1
+      ],
+      "inputs": [
+        [
+          1,
+          1,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "inputs": [
+        [
+          1,
+          2,
+          2,
+          3,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        "a",
+        "b",
+        "c"
+      ],
+      "inputs": [
+        [
+          "a",
+          "b",
+          "a",
+          "c"
+        ]
+      ]
+    },
+    {
+      "expected": [
+        true,
+        false
+      ],
+      "inputs": [
+        [
+          true,
+          false,
+          true
+        ]
+      ]
+    },
+    {
+      "expected": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "inputs": [
+        [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      ]
+    },
+    {
+      "expected": [
+        5,
+        4,
+        3,
+        2,
+        1
+      ],
+      "inputs": [
+        [
+          5,
+          4,
+          3,
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        3,
+        2,
+        1
+      ],
+      "inputs": [
+        [
+          3,
+          3,
+          3,
+          2,
+          2,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        "x"
+      ],
+      "inputs": [
+        [
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x",
+          "x"
+        ]
+      ]
+    },
+    {
+      "expected": [
+        0,
+        -1,
+        2
+      ],
+      "inputs": [
+        [
+          0,
+          -1,
+          0,
+          -1,
+          2
+        ]
+      ]
+    },
+    {
+      "expected": [
+        "apple",
+        "banana"
+      ],
+      "inputs": [
+        [
+          "apple",
+          "banana",
+          "apple"
+        ]
+      ]
+    },
+    {
+      "expected": [
+        10,
+        20,
+        30
+      ],
+      "inputs": [
+        [
+          10,
+          20,
+          10,
+          30,
+          20
+        ]
+      ]
+    },
+    {
+      "expected": [
+        1,
+        2,
+        3
+      ],
+      "inputs": [
+        [
+          1,
+          2,
+          3,
+          1,
+          2,
+          3
+        ]
+      ]
+    },
+    {
+      "expected": [
+        42
+      ],
+      "inputs": [
+        [
+          42
+        ]
+      ]
+    },
+    {
+      "expected": [
+        1,
+        0,
+        -1
+      ],
+      "inputs": [
+        [
+          1,
+          0,
+          -1,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        "a",
+        "A"
+      ],
+      "inputs": [
+        [
+          "a",
+          "A",
+          "a"
+        ]
+      ]
+    },
+    {
+      "expected": [
+        null,
+        1
+      ],
+      "inputs": [
+        [
+          null,
+          null,
+          1
+        ]
+      ]
+    },
+    {
+      "expected": [
+        100,
+        200,
+        300
+      ],
+      "inputs": [
+        [
+          100,
+          200,
+          300,
+          200,
+          100
+        ]
+      ]
+    },
+    {
+      "expected": [
+        9,
+        8,
+        7
+      ],
+      "inputs": [
+        [
+          9,
+          8,
+          7,
+          8,
+          9,
+          7
+        ]
+      ]
+    }
+  ],
+  "test_count": 20
+}

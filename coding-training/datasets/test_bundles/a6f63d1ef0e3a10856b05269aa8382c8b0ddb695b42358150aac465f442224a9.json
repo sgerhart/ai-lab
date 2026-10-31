@@ -1,0 +1,185 @@
+{
+  "entry_point": "word_frequency",
+  "task_id": "py-str-008",
+  "test_cases": [
+    {
+      "expected": {},
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": {
+        "hello": 1
+      },
+      "inputs": [
+        "hello"
+      ]
+    },
+    {
+      "expected": {
+        "hello": 2
+      },
+      "inputs": [
+        "hello hello"
+      ]
+    },
+    {
+      "expected": {
+        "apple": 2,
+        "banana": 1
+      },
+      "inputs": [
+        "apple, banana, apple!"
+      ]
+    },
+    {
+      "expected": {
+        "one": 3
+      },
+      "inputs": [
+        "One one ONE!"
+      ]
+    },
+    {
+      "expected": {
+        "123": 2,
+        "456": 1
+      },
+      "inputs": [
+        "123 456 123"
+      ]
+    },
+    {
+      "expected": {
+        "a": 2,
+        "b": 2,
+        "c": 1
+      },
+      "inputs": [
+        "a.b.c a b"
+      ]
+    },
+    {
+      "expected": {
+        "word": 3
+      },
+      "inputs": [
+        "word-word word"
+      ]
+    },
+    {
+      "expected": {
+        "around": 1,
+        "spaces": 1
+      },
+      "inputs": [
+        "   spaces   around   "
+      ]
+    },
+    {
+      "expected": {
+        "bird": 1,
+        "cat": 3,
+        "dog": 2
+      },
+      "inputs": [
+        "Cat dog bird cat dog cat"
+      ]
+    },
+    {
+      "expected": {
+        "punctuation": 1
+      },
+      "inputs": [
+        "punctuation:;!?.,"
+      ]
+    },
+    {
+      "expected": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "inputs": [
+        "x y z"
+      ]
+    },
+    {
+      "expected": {
+        "repeated": 5
+      },
+      "inputs": [
+        "repeated repeated repeated repeated repeated "
+      ]
+    },
+    {
+      "expected": {
+        "case": 1,
+        "mixed": 1,
+        "text": 2
+      },
+      "inputs": [
+        "MIXED Case text Text"
+      ]
+    },
+    {
+      "expected": {
+        "first": 1,
+        "second": 1,
+        "third": 1
+      },
+      "inputs": [
+        "first second third"
+      ]
+    },
+    {
+      "expected": {
+        "a": 3,
+        "b": 2,
+        "c": 1
+      },
+      "inputs": [
+        "a b c a b a"
+      ]
+    },
+    {
+      "expected": {
+        "bar": 1,
+        "baz": 1,
+        "foo": 2
+      },
+      "inputs": [
+        "foo bar baz foo"
+      ]
+    },
+    {
+      "expected": {
+        "python": 2,
+        "python3": 1
+      },
+      "inputs": [
+        "python python3 python"
+      ]
+    },
+    {
+      "expected": {
+        "test": 3
+      },
+      "inputs": [
+        "test... test? test!"
+      ]
+    },
+    {
+      "expected": {
+        "alpha": 2,
+        "beta": 2,
+        "gamma": 1
+      },
+      "inputs": [
+        "alpha beta alpha beta gamma"
+      ]
+    }
+  ],
+  "test_count": 20
+}

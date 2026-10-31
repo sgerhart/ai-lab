@@ -1,0 +1,127 @@
+{
+  "entry_point": "strip_html_tags",
+  "task_id": "py-str-009",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": "hello",
+      "inputs": [
+        "hello"
+      ]
+    },
+    {
+      "expected": "hello",
+      "inputs": [
+        "<p>hello</p>"
+      ]
+    },
+    {
+      "expected": "Hello world",
+      "inputs": [
+        "<p>Hello <b>world</b></p>"
+      ]
+    },
+    {
+      "expected": "Link",
+      "inputs": [
+        "<a href='http://test.com'>Link</a>"
+      ]
+    },
+    {
+      "expected": "12",
+      "inputs": [
+        "<div><span>1</span><span>2</span></div>"
+      ]
+    },
+    {
+      "expected": "",
+      "inputs": [
+        "<br/><hr/>"
+      ]
+    },
+    {
+      "expected": "no tags here",
+      "inputs": [
+        "no tags here"
+      ]
+    },
+    {
+      "expected": "csstext",
+      "inputs": [
+        "<style>css</style>text"
+      ]
+    },
+    {
+      "expected": "TitleBody",
+      "inputs": [
+        "<h1>Title</h1><p>Body</p>"
+      ]
+    },
+    {
+      "expected": "",
+      "inputs": [
+        "<empty></empty>"
+      ]
+    },
+    {
+      "expected": "a  d",
+      "inputs": [
+        "a < b and c > d"
+      ]
+    },
+    {
+      "expected": "upper",
+      "inputs": [
+        "<TAG>upper</TAG>"
+      ]
+    },
+    {
+      "expected": "",
+      "inputs": [
+        "<img src='foo.jpg' alt='bar' />"
+      ]
+    },
+    {
+      "expected": "plain text with bold and italic",
+      "inputs": [
+        "plain text with <b>bold</b> and <i>italic</i>"
+      ]
+    },
+    {
+      "expected": "para",
+      "inputs": [
+        "<div class='container'><p>para</p></div>"
+      ]
+    },
+    {
+      "expected": "",
+      "inputs": [
+        "<<<nested>>>"
+      ]
+    },
+    {
+      "expected": "text  more  end",
+      "inputs": [
+        "text <tag> more </tag> end"
+      ]
+    },
+    {
+      "expected": "one two",
+      "inputs": [
+        "<b>one</b> <b>two</b>"
+      ]
+    },
+    {
+      "expected": "test",
+      "inputs": [
+        "<a b='c' d='e'>test</a>"
+      ]
+    }
+  ],
+  "test_count": 20
+}

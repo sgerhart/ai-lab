@@ -1,0 +1,127 @@
+{
+  "entry_point": "run_length_encode",
+  "task_id": "py-str-005",
+  "test_cases": [
+    {
+      "expected": "",
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": "a1",
+      "inputs": [
+        "a"
+      ]
+    },
+    {
+      "expected": "a2",
+      "inputs": [
+        "aa"
+      ]
+    },
+    {
+      "expected": "a3",
+      "inputs": [
+        "aaa"
+      ]
+    },
+    {
+      "expected": "a1b1",
+      "inputs": [
+        "ab"
+      ]
+    },
+    {
+      "expected": "a3b2c1",
+      "inputs": [
+        "aaabbc"
+      ]
+    },
+    {
+      "expected": "a2b2a2",
+      "inputs": [
+        "aabbaa"
+      ]
+    },
+    {
+      "expected": "132231",
+      "inputs": [
+        "111223"
+      ]
+    },
+    {
+      "expected": "a1b1c1d1e1f1",
+      "inputs": [
+        "abcdef"
+      ]
+    },
+    {
+      "expected": "W12B1W12B3W24B1W14",
+      "inputs": [
+        "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWBWWWWWWWWWWWWWW"
+      ]
+    },
+    {
+      "expected": " 3",
+      "inputs": [
+        "   "
+      ]
+    },
+    {
+      "expected": "-2+2=2",
+      "inputs": [
+        "--++=="
+      ]
+    },
+    {
+      "expected": "z10",
+      "inputs": [
+        "zzzzzzzzzz"
+      ]
+    },
+    {
+      "expected": "x25",
+      "inputs": [
+        "xxxxxxxxxxxxxxxxxxxxxxxxx"
+      ]
+    },
+    {
+      "expected": "a100",
+      "inputs": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "expected": "a1b1a1",
+      "inputs": [
+        "aba"
+      ]
+    },
+    {
+      "expected": "a1b1a1c1a1b1a1",
+      "inputs": [
+        "abacaba"
+      ]
+    },
+    {
+      "expected": "01",
+      "inputs": [
+        "0"
+      ]
+    },
+    {
+      "expected": "02",
+      "inputs": [
+        "00"
+      ]
+    },
+    {
+      "expected": "011101",
+      "inputs": [
+        "010"
+      ]
+    }
+  ],
+  "test_count": 20
+}

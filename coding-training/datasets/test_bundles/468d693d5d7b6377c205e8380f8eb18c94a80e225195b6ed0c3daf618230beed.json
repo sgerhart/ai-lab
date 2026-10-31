@@ -1,0 +1,127 @@
+{
+  "entry_point": "fibonacci",
+  "task_id": "py-math-009",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        0
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": 13,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": 21,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": 34,
+      "inputs": [
+        9
+      ]
+    },
+    {
+      "expected": 55,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 89,
+      "inputs": [
+        11
+      ]
+    },
+    {
+      "expected": 144,
+      "inputs": [
+        12
+      ]
+    },
+    {
+      "expected": 610,
+      "inputs": [
+        15
+      ]
+    },
+    {
+      "expected": 6765,
+      "inputs": [
+        20
+      ]
+    },
+    {
+      "expected": 75025,
+      "inputs": [
+        25
+      ]
+    },
+    {
+      "expected": 832040,
+      "inputs": [
+        30
+      ]
+    },
+    {
+      "expected": 9227465,
+      "inputs": [
+        35
+      ]
+    },
+    {
+      "expected": 102334155,
+      "inputs": [
+        40
+      ]
+    },
+    {
+      "expected": 12586269025,
+      "inputs": [
+        50
+      ]
+    }
+  ],
+  "test_count": 20
+}

@@ -1,0 +1,127 @@
+{
+  "entry_point": "collatz_length",
+  "task_id": "py-math-005",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        2
+      ]
+    },
+    {
+      "expected": 7,
+      "inputs": [
+        3
+      ]
+    },
+    {
+      "expected": 2,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        5
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        6
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        8
+      ]
+    },
+    {
+      "expected": 19,
+      "inputs": [
+        9
+      ]
+    },
+    {
+      "expected": 6,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 14,
+      "inputs": [
+        11
+      ]
+    },
+    {
+      "expected": 9,
+      "inputs": [
+        12
+      ]
+    },
+    {
+      "expected": 9,
+      "inputs": [
+        13
+      ]
+    },
+    {
+      "expected": 17,
+      "inputs": [
+        14
+      ]
+    },
+    {
+      "expected": 17,
+      "inputs": [
+        15
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": 12,
+      "inputs": [
+        17
+      ]
+    },
+    {
+      "expected": 20,
+      "inputs": [
+        18
+      ]
+    },
+    {
+      "expected": 20,
+      "inputs": [
+        19
+      ]
+    },
+    {
+      "expected": 111,
+      "inputs": [
+        27
+      ]
+    }
+  ],
+  "test_count": 20
+}

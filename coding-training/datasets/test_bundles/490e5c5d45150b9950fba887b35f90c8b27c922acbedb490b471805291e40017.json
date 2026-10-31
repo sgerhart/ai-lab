@@ -1,0 +1,127 @@
+{
+  "entry_point": "highest_set_bit",
+  "task_id": "py-bit-009",
+  "test_cases": [
+    {
+      "expected": 1,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 4,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        13
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        19
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        22
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        25
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        28
+      ]
+    },
+    {
+      "expected": 16,
+      "inputs": [
+        31
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        34
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        37
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        40
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        43
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        46
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        49
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        52
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        55
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        58
+      ]
+    }
+  ],
+  "test_count": 20
+}

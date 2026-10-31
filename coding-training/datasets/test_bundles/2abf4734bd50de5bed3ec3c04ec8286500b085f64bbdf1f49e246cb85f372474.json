@@ -1,0 +1,207 @@
+{
+  "entry_point": "csv_line_split",
+  "task_id": "py-parse-009",
+  "test_cases": [
+    {
+      "expected": [
+        "1",
+        "0",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,0,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "1",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,1,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "2",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,2,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "3",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,3,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "4",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,4,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "5",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,5,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "6",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,6,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "7",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,7,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "8",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,8,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "9",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,9,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "10",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,10,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "11",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,11,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "12",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,12,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "13",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,13,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "14",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,14,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "15",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,15,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "16",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,16,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "17",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,17,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "18",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,18,\"hello, world\""
+      ]
+    },
+    {
+      "expected": [
+        "1",
+        "19",
+        "hello, world"
+      ],
+      "inputs": [
+        "1,19,\"hello, world\""
+      ]
+    }
+  ],
+  "test_count": 20
+}

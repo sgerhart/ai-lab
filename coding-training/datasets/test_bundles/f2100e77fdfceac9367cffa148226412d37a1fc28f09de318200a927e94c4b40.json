@@ -1,0 +1,127 @@
+{
+  "entry_point": "is_leap_year",
+  "task_id": "py-dt-001",
+  "test_cases": [
+    {
+      "expected": true,
+      "inputs": [
+        2000
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        1900
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        2100
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2004
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2008
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2012
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2016
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2020
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        2024
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        2021
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        2022
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        2023
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        1600
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        1700
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        1800
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        100
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        400
+      ]
+    },
+    {
+      "expected": false,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": true,
+      "inputs": [
+        20000
+      ]
+    }
+  ],
+  "test_count": 20
+}

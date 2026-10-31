@@ -1,0 +1,127 @@
+{
+  "entry_point": "swap_odd_even_bits",
+  "task_id": "py-bit-008",
+  "test_cases": [
+    {
+      "expected": 2,
+      "inputs": [
+        1
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        4
+      ]
+    },
+    {
+      "expected": 11,
+      "inputs": [
+        7
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        10
+      ]
+    },
+    {
+      "expected": 14,
+      "inputs": [
+        13
+      ]
+    },
+    {
+      "expected": 32,
+      "inputs": [
+        16
+      ]
+    },
+    {
+      "expected": 35,
+      "inputs": [
+        19
+      ]
+    },
+    {
+      "expected": 41,
+      "inputs": [
+        22
+      ]
+    },
+    {
+      "expected": 38,
+      "inputs": [
+        25
+      ]
+    },
+    {
+      "expected": 44,
+      "inputs": [
+        28
+      ]
+    },
+    {
+      "expected": 47,
+      "inputs": [
+        31
+      ]
+    },
+    {
+      "expected": 17,
+      "inputs": [
+        34
+      ]
+    },
+    {
+      "expected": 26,
+      "inputs": [
+        37
+      ]
+    },
+    {
+      "expected": 20,
+      "inputs": [
+        40
+      ]
+    },
+    {
+      "expected": 23,
+      "inputs": [
+        43
+      ]
+    },
+    {
+      "expected": 29,
+      "inputs": [
+        46
+      ]
+    },
+    {
+      "expected": 50,
+      "inputs": [
+        49
+      ]
+    },
+    {
+      "expected": 56,
+      "inputs": [
+        52
+      ]
+    },
+    {
+      "expected": 59,
+      "inputs": [
+        55
+      ]
+    },
+    {
+      "expected": 53,
+      "inputs": [
+        58
+      ]
+    }
+  ],
+  "test_count": 20
+}

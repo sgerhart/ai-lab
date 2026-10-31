@@ -1,0 +1,127 @@
+{
+  "entry_point": "count_vowels",
+  "task_id": "py-str-002",
+  "test_cases": [
+    {
+      "expected": 0,
+      "inputs": [
+        ""
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "bcdfghjklmnpqrstvwxyz"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "aeiou"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "AEIOU"
+      ]
+    },
+    {
+      "expected": 3,
+      "inputs": [
+        "Hello World"
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "Python"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "1234567890"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "!@#$%^&*()"
+      ]
+    },
+    {
+      "expected": 11,
+      "inputs": [
+        "The quick brown fox jumps over the lazy dog"
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "A"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "b"
+      ]
+    },
+    {
+      "expected": 1,
+      "inputs": [
+        "o"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "rhythm"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "syzygy"
+      ]
+    },
+    {
+      "expected": 0,
+      "inputs": [
+        "cwm"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "Queueing"
+      ]
+    },
+    {
+      "expected": 5,
+      "inputs": [
+        "Sequioa"
+      ]
+    },
+    {
+      "expected": 10,
+      "inputs": [
+        "AaEeIiOoUu"
+      ]
+    },
+    {
+      "expected": 8,
+      "inputs": [
+        "MixedCaseStringWithVowels"
+      ]
+    },
+    {
+      "expected": 50,
+      "inputs": [
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      ]
+    }
+  ],
+  "test_count": 20
+}

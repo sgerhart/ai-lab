@@ -1,0 +1,1895 @@
+{
+  "dataset_id": "dataset-coding-v1",
+  "name": "AI Lab Verified Python Tasks v1",
+  "version": "1.0",
+  "manifest_hash": "206a90e8a1800e51871fd766209b2f274871869db5b792c87b3c06ba24f95de9",
+  "tasks_count": 105,
+  "splits": {
+    "train": 75,
+    "val": 15,
+    "test": 15
+  },
+  "license_review_status": "approved",
+  "tasks": [
+    {
+      "task_id": "py-str-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def reverse_string(s: str) -> str:\n    \"\"\"Return the reverse of string s.\n\n>>> reverse_string('hello')\n'olleh'\"\"\"\n    pass\n",
+      "function_contract": "reverse_string(s str) -> str",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-001",
+      "test_bundle_sha256": "18db946f77fdc58a99721dfb7ef030157a0329142fe90b57c0642a872d0b42c2",
+      "tags": [
+        "strings",
+        "basic"
+      ]
+    },
+    {
+      "task_id": "py-str-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_vowels(s: str) -> int:\n    \"\"\"Count the number of vowels (a, e, i, o, u, case-insensitive) in string s.\n\n>>> count_vowels('Hello World')\n3\"\"\"\n    pass\n",
+      "function_contract": "count_vowels(s str) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-002",
+      "test_bundle_sha256": "0fa334ee8e1bd02e280f0372fb03e8424639720a50eeedeef6366b6409814a9d",
+      "tags": [
+        "strings",
+        "counting"
+      ]
+    },
+    {
+      "task_id": "py-str-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_palindrome(s: str) -> bool:\n    \"\"\"Check if string s is a palindrome, ignoring case and non-alphanumeric characters.\n\n>>> is_palindrome('A man, a plan, a canal: Panama')\nTrue\"\"\"\n    pass\n",
+      "function_contract": "is_palindrome(s str) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-003",
+      "test_bundle_sha256": "7af93ecdcf6cb0823b41f5ce8f8b6c044bcb00896b698f7d44d40da9151655cf",
+      "tags": [
+        "strings",
+        "palindrome"
+      ]
+    },
+    {
+      "task_id": "py-str-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def to_snake_case(s: str) -> str:\n    \"\"\"Convert camelCase or PascalCase string to snake_case.\n\n>>> to_snake_case('camelCaseString')\n'camel_case_string'\"\"\"\n    pass\n",
+      "function_contract": "to_snake_case(s str) -> str",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-004",
+      "test_bundle_sha256": "a4c28537d30222b9c17ffaebdf4f69ad3496f32d39298e8c43b36842bcf6783d",
+      "tags": [
+        "strings",
+        "case-conversion"
+      ]
+    },
+    {
+      "task_id": "py-str-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def run_length_encode(s: str) -> str:\n    \"\"\"Encode a string using basic run-length encoding (e.g. 'aaabbc' -> 'a3b2c1').\n\n>>> run_length_encode('aaabbc')\n'a3b2c1'\"\"\"\n    pass\n",
+      "function_contract": "run_length_encode(s str) -> str",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-005",
+      "test_bundle_sha256": "762ba37935dac83dc7da4a11b858bb1e323a793c893b532b158818219502856f",
+      "tags": [
+        "strings",
+        "encoding",
+        "compression"
+      ]
+    },
+    {
+      "task_id": "py-str-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def truncate_words(s: str, n: int) -> str:\n    \"\"\"Truncate string s to at most n words, appending '...' if truncated.\n\n>>> truncate_words('The quick brown fox', 2)\n'The quick...'\"\"\"\n    pass\n",
+      "function_contract": "truncate_words(s str, n int) -> str",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-006",
+      "test_bundle_sha256": "04aa36bd814ec6798dde331ab613f34b4fa938eef68bdb67ccddf69562c6bd46",
+      "tags": [
+        "strings",
+        "formatting"
+      ]
+    },
+    {
+      "task_id": "py-str-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def are_anagrams(s1: str, s2: str) -> bool:\n    \"\"\"Check if s1 and s2 are anagrams, case-insensitive, ignoring non-alphanumeric chars.\n\n>>> are_anagrams('listen', 'silent')\nTrue\"\"\"\n    pass\n",
+      "function_contract": "are_anagrams(s1 str, s2 str) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-007",
+      "test_bundle_sha256": "5f2d1de6cf808ca5d235e62a9d393bca294150b18cda62a752aff07ffef60e81",
+      "tags": [
+        "strings",
+        "anagrams"
+      ]
+    },
+    {
+      "task_id": "py-math-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_prime(n: int) -> bool:\n    \"\"\"Check if integer n is a prime number.\n\n>>> is_prime(7)\nTrue\"\"\"\n    pass\n",
+      "function_contract": "is_prime(n int) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-001",
+      "test_bundle_sha256": "9cebd92091b71ec7d948cb469fba7cd86d11fe5da551b742a18c89e707e840ad",
+      "tags": [
+        "math",
+        "primes"
+      ]
+    },
+    {
+      "task_id": "py-math-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def gcd(a: int, b: int) -> int:\n    \"\"\"Return the greatest common divisor of non-negative integers a and b.\n\n>>> gcd(48, 18)\n6\"\"\"\n    pass\n",
+      "function_contract": "gcd(a int, b int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-002",
+      "test_bundle_sha256": "f8166e1348d0f8ac2ff7164cb7c80e6b1efdf7e970fed83b84c092cd63686f24",
+      "tags": [
+        "math",
+        "gcd"
+      ]
+    },
+    {
+      "task_id": "py-math-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def prime_factors(n: int) -> list[int]:\n    \"\"\"Return the prime factors of integer n >= 2 in ascending order with multiplicity.\n\n>>> prime_factors(12)\n[2, 2, 3]\"\"\"\n    pass\n",
+      "function_contract": "prime_factors(n int) -> list[int]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-003",
+      "test_bundle_sha256": "97279a768fdd9c87c3426bf40f510a5a47dc416b0b9ee1bbca0a513d03a2b500",
+      "tags": [
+        "math",
+        "prime-factors"
+      ]
+    },
+    {
+      "task_id": "py-math-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def lcm(a: int, b: int) -> int:\n    \"\"\"Return the least common multiple of positive integers a and b.\n\n>>> lcm(4, 6)\n12\"\"\"\n    pass\n",
+      "function_contract": "lcm(a int, b int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-004",
+      "test_bundle_sha256": "0fe5bc44e8073d08c08a933bd71f2d8c8faf1491f43989375d37d727203eb1f6",
+      "tags": [
+        "math",
+        "lcm"
+      ]
+    },
+    {
+      "task_id": "py-math-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def collatz_length(n: int) -> int:\n    \"\"\"Return the number of steps to reach 1 in the Collatz sequence starting at n.\n\n>>> collatz_length(6)\n8\"\"\"\n    pass\n",
+      "function_contract": "collatz_length(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-005",
+      "test_bundle_sha256": "be8422c61b38c0060f6d313699b2fe85dd8e1655f892311baab595575474b992",
+      "tags": [
+        "math",
+        "sequence"
+      ]
+    },
+    {
+      "task_id": "py-math-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_power_of_two(n: int) -> bool:\n    \"\"\"Check if integer n is a power of two (i.e. n == 2^k for integer k >= 0).\n\n>>> is_power_of_two(16)\nTrue\"\"\"\n    pass\n",
+      "function_contract": "is_power_of_two(n int) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-006",
+      "test_bundle_sha256": "1fa47062475b261dc05980170dae60aa47b6b8296227d55e9dd893044d660717",
+      "tags": [
+        "math",
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-math-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def sum_of_digits(n: int) -> int:\n    \"\"\"Return the sum of digits of non-negative integer n.\n\n>>> sum_of_digits(12345)\n15\"\"\"\n    pass\n",
+      "function_contract": "sum_of_digits(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-007",
+      "test_bundle_sha256": "318489c32ab1a96ece325fce30e0fdce29ed30d1a83c88a9601fb57896cf283a",
+      "tags": [
+        "math",
+        "digits"
+      ]
+    },
+    {
+      "task_id": "py-arr-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def filter_evens(nums: list[int]) -> list[int]:\n    \"\"\"Return only the even integers from list nums in original order.\n\n>>> filter_evens([1, 2, 3, 4, 5, 6])\n[2, 4, 6]\"\"\"\n    pass\n",
+      "function_contract": "filter_evens(nums list[int]) -> list[int]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-001",
+      "test_bundle_sha256": "a532bd9e948209cd3d654dac5c1bada4338ab4a1a2dae081f11c589369ba2784",
+      "tags": [
+        "arrays",
+        "filtering"
+      ]
+    },
+    {
+      "task_id": "py-arr-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def remove_duplicates(items: list) -> list:\n    \"\"\"Remove duplicate elements preserving first occurrence order.\n\n>>> remove_duplicates([1, 2, 2, 3, 1])\n[1, 2, 3]\"\"\"\n    pass\n",
+      "function_contract": "remove_duplicates(items list) -> list",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-002",
+      "test_bundle_sha256": "3e80c3f82d21f1d6c0b30a5213d65e0aa8b89d5fa49194a862d88a97792f10e1",
+      "tags": [
+        "arrays",
+        "dedup"
+      ]
+    },
+    {
+      "task_id": "py-arr-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def chunk_list(items: list, size: int) -> list[list]:\n    \"\"\"Split list items into sublists of length at most size.\n\n>>> chunk_list([1, 2, 3, 4, 5], 2)\n[[1, 2], [3, 4], [5]]\"\"\"\n    pass\n",
+      "function_contract": "chunk_list(items list, size int) -> list[list]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-003",
+      "test_bundle_sha256": "62380397245c98c3899457b9cd15f7b71008a284120b8a9fd2e90ef5dc04bd66",
+      "tags": [
+        "arrays",
+        "chunking"
+      ]
+    },
+    {
+      "task_id": "py-arr-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def flatten_list(nested: list) -> list:\n    \"\"\"Recursively flatten an arbitrarily nested list into a 1D list.\n\n>>> flatten_list([1, [2, [3, 4], 5]])\n[1, 2, 3, 4, 5]\"\"\"\n    pass\n",
+      "function_contract": "flatten_list(nested list) -> list",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-004",
+      "test_bundle_sha256": "9a3a071ca265ebb4cca9901212998fe8f90cc2a47fb9b921000ca6beefa52f69",
+      "tags": [
+        "arrays",
+        "recursion"
+      ]
+    },
+    {
+      "task_id": "py-arr-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def two_sum(nums: list[int], target: int) -> list[int]:\n    \"\"\"Return the 0-indexed indices of the two numbers in nums that add up to target.\n\n>>> two_sum([2, 7, 11, 15], 9)\n[0, 1]\"\"\"\n    pass\n",
+      "function_contract": "two_sum(nums list[int], target int) -> list[int]",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-005",
+      "test_bundle_sha256": "30419ce92c98cf6f38e975065654711b150064734ca5fd8fb8f11bbcb1c00689",
+      "tags": [
+        "arrays",
+        "two-sum",
+        "hashmap"
+      ]
+    },
+    {
+      "task_id": "py-arr-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def find_missing_number(nums: list[int]) -> int:\n    \"\"\"Given an array nums containing n distinct numbers in the range [0, n], return the only number missing from the range.\n\n>>> find_missing_number([3, 0, 1])\n2\"\"\"\n    pass\n",
+      "function_contract": "find_missing_number(nums list[int]) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-006",
+      "test_bundle_sha256": "3904dc110f4dd41fdd68fff9ab48a92ea1dca8f1ee4d934ca7782d92f763b50d",
+      "tags": [
+        "arrays",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-arr-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def merge_sorted(a: list[int], b: list[int]) -> list[int]:\n    \"\"\"Merge two sorted integer lists into a single sorted list.\n\n>>> merge_sorted([1, 3, 5], [2, 4, 6])\n[1, 2, 3, 4, 5, 6]\"\"\"\n    pass\n",
+      "function_contract": "merge_sorted(a list[int], b list[int]) -> list[int]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-007",
+      "test_bundle_sha256": "26b0253817b2f148dccff36c92939af7b3496f66e2b22773868b0a11cf1b670c",
+      "tags": [
+        "arrays",
+        "sorting",
+        "merge"
+      ]
+    },
+    {
+      "task_id": "py-mat-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def transpose_matrix(matrix: list[list[int]]) -> list[list[int]]:\n    \"\"\"Return the transpose of a 2D integer matrix.\n\n>>> transpose_matrix([[1, 2], [3, 4]])\n[[1, 3], [2, 4]]\"\"\"\n    pass\n",
+      "function_contract": "transpose_matrix(matrix list[list[int]]) -> list[list[int]]",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_matrix_grid_logic",
+      "test_bundle_ref": "bundle-py-mat-001",
+      "test_bundle_sha256": "715e619e36cba338e37568bf0a3e92333d6196d28b12fa8bab8c9daea475dcb8",
+      "tags": [
+        "matrix",
+        "linear-algebra"
+      ]
+    },
+    {
+      "task_id": "py-mat-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def diagonal_sum(mat: list[list[int]]) -> int:\n    \"\"\"Return the sum of elements on the primary and secondary diagonals of square matrix mat (no double-counting center).\n\n>>> diagonal_sum([[1, 2, 3], [4, 5, 6], [7, 8, 9]])\n25\"\"\"\n    pass\n",
+      "function_contract": "diagonal_sum(mat list[list[int]]) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_matrix_grid_logic",
+      "test_bundle_ref": "bundle-py-mat-002",
+      "test_bundle_sha256": "05ce1f05e1a2de9ad50d82ccc0553f5b11f96ec8da16f157afa6abd361ed07c5",
+      "tags": [
+        "matrix",
+        "diagonal"
+      ]
+    },
+    {
+      "task_id": "py-mat-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def rotate_matrix_90(mat: list[list[int]]) -> list[list[int]]:\n    \"\"\"Rotate square matrix mat 90 degrees clockwise in-place or return new matrix.\n\n>>> rotate_matrix_90([[1, 2], [3, 4]])\n[[3, 1], [4, 2]]\"\"\"\n    pass\n",
+      "function_contract": "rotate_matrix_90(mat list[list[int]]) -> list[list[int]]",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_matrix_grid_logic",
+      "test_bundle_ref": "bundle-py-mat-003",
+      "test_bundle_sha256": "22222292dd83a8ae229900b35ca1ee79363a80f17e9becaf03b63a7b3cfb8550",
+      "tags": [
+        "matrix",
+        "rotation"
+      ]
+    },
+    {
+      "task_id": "py-mat-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_islands(grid: list[list[int]]) -> int:\n    \"\"\"Count the number of 4-directionally connected islands of 1s in 2D binary grid.\n\n>>> count_islands([[1, 1, 0], [1, 0, 0], [0, 0, 1]])\n2\"\"\"\n    pass\n",
+      "function_contract": "count_islands(grid list[list[int]]) -> int",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_matrix_grid_logic",
+      "test_bundle_ref": "bundle-py-mat-004",
+      "test_bundle_sha256": "6ddbe96a0eb32095eec2d88fdc06fa3188cc24b73225a1117f6aa0bfe2883350",
+      "tags": [
+        "matrix",
+        "graphs",
+        "dfs"
+      ]
+    },
+    {
+      "task_id": "py-mat-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def spiral_order(matrix: list[list[int]]) -> list[int]:\n    \"\"\"Return all elements of matrix in spiral order.\n\n>>> spiral_order([[1, 2, 3], [4, 5, 6], [7, 8, 9]])\n[1, 2, 3, 6, 9, 8, 7, 4, 5]\"\"\"\n    pass\n",
+      "function_contract": "spiral_order(matrix list[list[int]]) -> list[int]",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_matrix_grid_logic",
+      "test_bundle_ref": "bundle-py-mat-005",
+      "test_bundle_sha256": "f647df12c0d2cad50da017eeda534ddfe778fada155b3b4c4d3a17b620e67a4e",
+      "tags": [
+        "matrix",
+        "traversal"
+      ]
+    },
+    {
+      "task_id": "py-dt-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_leap_year(year: int) -> bool:\n    \"\"\"Check if year is a leap year according to the Gregorian calendar rules.\n\n>>> is_leap_year(2000)\nTrue\"\"\"\n    pass\n",
+      "function_contract": "is_leap_year(year int) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_date_time_calculations",
+      "test_bundle_ref": "bundle-py-dt-001",
+      "test_bundle_sha256": "f2100e77fdfceac9367cffa148226412d37a1fc28f09de318200a927e94c4b40",
+      "tags": [
+        "datetime",
+        "calendar"
+      ]
+    },
+    {
+      "task_id": "py-dt-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def seconds_to_hms(seconds: int) -> str:\n    \"\"\"Convert non-negative integer seconds into 'HH:MM:SS' format string.\n\n>>> seconds_to_hms(3665)\n'01:01:05'\"\"\"\n    pass\n",
+      "function_contract": "seconds_to_hms(seconds int) -> str",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_date_time_calculations",
+      "test_bundle_ref": "bundle-py-dt-002",
+      "test_bundle_sha256": "d5cfd7b78992dfbb0f33aa62247e6874bd1304ee5c5f58e2a22d1e29e270ad87",
+      "tags": [
+        "datetime",
+        "formatting"
+      ]
+    },
+    {
+      "task_id": "py-dt-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def days_in_month(year: int, month: int) -> int:\n    \"\"\"Return the number of days in the given month (1-12) of year, accounting for leap years.\n\n>>> days_in_month(2024, 2)\n29\"\"\"\n    pass\n",
+      "function_contract": "days_in_month(year int, month int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_date_time_calculations",
+      "test_bundle_ref": "bundle-py-dt-003",
+      "test_bundle_sha256": "849cbbe8f8b5b9752c9f9ffb2bae808047f15704f7bab56664fa40efe5609066",
+      "tags": [
+        "datetime",
+        "calendar"
+      ]
+    },
+    {
+      "task_id": "py-dt-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def day_of_week(year: int, month: int, day: int) -> str:\n    \"\"\"Return the day of week name ('Monday', 'Tuesday', etc.) for the given date.\n\n>>> day_of_week(2024, 1, 1)\n'Monday'\"\"\"\n    pass\n",
+      "function_contract": "day_of_week(year int, month int, day int) -> str",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_date_time_calculations",
+      "test_bundle_ref": "bundle-py-dt-004",
+      "test_bundle_sha256": "098048bab27c36671de9df68e591f6f43041605bfecbd4f7cdfd79bd488e21ef",
+      "tags": [
+        "datetime",
+        "calendar"
+      ]
+    },
+    {
+      "task_id": "py-dt-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def days_between(d1: str, d2: str) -> int:\n    \"\"\"Return the absolute number of days between two ISO date strings 'YYYY-MM-DD'.\n\n>>> days_between('2024-01-01', '2024-01-10')\n9\"\"\"\n    pass\n",
+      "function_contract": "days_between(d1 str, d2 str) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_date_time_calculations",
+      "test_bundle_ref": "bundle-py-dt-005",
+      "test_bundle_sha256": "91a535260b0fa9b3f96ec0ec4c50450570ab6c0feef63ed1adc24959817df7d8",
+      "tags": [
+        "datetime",
+        "intervals"
+      ]
+    },
+    {
+      "task_id": "py-str-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def word_frequency(text: str) -> dict[str, int]:\n    \"\"\"Return a dictionary of word counts in lowercase from text, ignoring punctuation.\n\n>>> word_frequency('apple, banana, apple!')\n{'apple': 2, 'banana': 1}\"\"\"\n    pass\n",
+      "function_contract": "word_frequency(text str) -> dict[str, int]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-008",
+      "test_bundle_sha256": "a6f63d1ef0e3a10856b05269aa8382c8b0ddb695b42358150aac465f442224a9",
+      "tags": [
+        "strings",
+        "frequency"
+      ]
+    },
+    {
+      "task_id": "py-str-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def strip_html_tags(html: str) -> str:\n    \"\"\"Remove all HTML tags from string html.\n\n>>> strip_html_tags('<p>Hello <b>world</b></p>')\n'Hello world'\"\"\"\n    pass\n",
+      "function_contract": "strip_html_tags(html str) -> str",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-009",
+      "test_bundle_sha256": "2a42ed18d4888f3d017b1ab7ec9706f2e6752bd9f74b461d12a0328ba4413337",
+      "tags": [
+        "strings",
+        "parsing",
+        "regex"
+      ]
+    },
+    {
+      "task_id": "py-str-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def rot13(s: str) -> str:\n    \"\"\"Apply the ROT13 cipher to string s, preserving case and non-letters.\n\n>>> rot13('Hello, World!')\n'Uryyb, Jbeyq!'\"\"\"\n    pass\n",
+      "function_contract": "rot13(s str) -> str",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_string_transforms",
+      "test_bundle_ref": "bundle-py-str-010",
+      "test_bundle_sha256": "c5c6bfd7be4918922a6570eaf74fd4815053e4bed9ad6e4c6c332eb1efb65167",
+      "tags": [
+        "strings",
+        "cipher"
+      ]
+    },
+    {
+      "task_id": "py-math-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def factorial(n: int) -> int:\n    \"\"\"Return the factorial of non-negative integer n.\n\n>>> factorial(5)\n120\"\"\"\n    pass\n",
+      "function_contract": "factorial(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-008",
+      "test_bundle_sha256": "235ab53f70dd6cc9007f5733570fcacb3cb3715ee6db69a81d7b4dadf6497ab3",
+      "tags": [
+        "math",
+        "combinatorics"
+      ]
+    },
+    {
+      "task_id": "py-math-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def fibonacci(n: int) -> int:\n    \"\"\"Return the n-th Fibonacci number (F(0)=0, F(1)=1, F(2)=1...).\n\n>>> fibonacci(6)\n8\"\"\"\n    pass\n",
+      "function_contract": "fibonacci(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-009",
+      "test_bundle_sha256": "468d693d5d7b6377c205e8380f8eb18c94a80e225195b6ed0c3daf618230beed",
+      "tags": [
+        "math",
+        "fibonacci"
+      ]
+    },
+    {
+      "task_id": "py-math-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_perfect_square(n: int) -> bool:\n    \"\"\"Return True if non-negative integer n is a perfect square, False otherwise.\n\n>>> is_perfect_square(16)\nTrue\"\"\"\n    pass\n",
+      "function_contract": "is_perfect_square(n int) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-math-010",
+      "test_bundle_sha256": "1d3f2c91a885a2c1f3afe452cbe9397c6ebbab66092d9352ac25ffa12f99d490",
+      "tags": [
+        "math",
+        "square"
+      ]
+    },
+    {
+      "task_id": "py-arr-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def find_median(nums: list[float]) -> float:\n    \"\"\"Return the median value of a non-empty list of numbers.\n\n>>> find_median([1, 3, 2])\n2.0\"\"\"\n    pass\n",
+      "function_contract": "find_median(nums list[float]) -> float",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-008",
+      "test_bundle_sha256": "5fd15c93a23397bec2d76a8fb5019acb3977bf095e86923e39cb2fdf116765f8",
+      "tags": [
+        "arrays",
+        "statistics"
+      ]
+    },
+    {
+      "task_id": "py-arr-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def max_subarray_sum(nums: list[int]) -> int:\n    \"\"\"Find the contiguous subarray with the largest sum and return its sum (Kadane's algorithm).\n\n>>> max_subarray_sum([-2, 1, -3, 4, -1, 2, 1, -5, 4])\n6\"\"\"\n    pass\n",
+      "function_contract": "max_subarray_sum(nums list[int]) -> int",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-009",
+      "test_bundle_sha256": "6cb1696542becf7cf9e79b9a80a1ead1d30b521e3d7d069b8d087a5cefd85f82",
+      "tags": [
+        "arrays",
+        "dynamic-programming"
+      ]
+    },
+    {
+      "task_id": "py-arr-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def rotate_array(nums: list[int], k: int) -> list[int]:\n    \"\"\"Rotate array nums to the right by k steps.\n\n>>> rotate_array([1, 2, 3, 4, 5], 2)\n[4, 5, 1, 2, 3]\"\"\"\n    pass\n",
+      "function_contract": "rotate_array(nums list[int], k int) -> list[int]",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_array_filtering_transforms",
+      "test_bundle_ref": "bundle-py-arr-010",
+      "test_bundle_sha256": "101006e2471e82025985bc705cd7548f133c5cb8bc5159ac2218ff27f43498ff",
+      "tags": [
+        "arrays",
+        "rotation"
+      ]
+    },
+    {
+      "task_id": "py-bit-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_set_bits(n: int) -> int:\n    \"\"\"Count the number of 1-bits in the binary representation of non-negative integer n (Hamming weight).\n\n>>> count_set_bits(11)\n3\"\"\"\n    pass\n",
+      "function_contract": "count_set_bits(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-001",
+      "test_bundle_sha256": "9e21604c2b33d0db6f0f9dbf948e7c714f6c9ac379f0ff72fed210042a970bc9",
+      "tags": [
+        "bitwise",
+        "bits"
+      ]
+    },
+    {
+      "task_id": "py-bit-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def hamming_distance(x: int, y: int) -> int:\n    \"\"\"Return the Hamming distance between integers x and y (number of positions where bits differ).\n\n>>> hamming_distance(1, 4)\n2\"\"\"\n    pass\n",
+      "function_contract": "hamming_distance(x int, y int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-002",
+      "test_bundle_sha256": "aa89b955c147be7ac7803cb47ee3fae830f1cc47bdca4f55e34f23c718e3df6b",
+      "tags": [
+        "bitwise",
+        "distance"
+      ]
+    },
+    {
+      "task_id": "py-bit-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def reverse_bits_16(n: int) -> int:\n    \"\"\"Reverse the bits of a 16-bit unsigned integer.\n\n>>> reverse_bits_16(1)\n32768\"\"\"\n    pass\n",
+      "function_contract": "reverse_bits_16(n int) -> int",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-003",
+      "test_bundle_sha256": "56fedf0a35141c2bf0c518c1b539f45efe97d4354c17022cf9de3131359bce96",
+      "tags": [
+        "bitwise",
+        "reversal"
+      ]
+    },
+    {
+      "task_id": "py-bit-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def single_number(nums: list[int]) -> int:\n    \"\"\"In a non-empty array where every element appears twice except for one, find that single one.\n\n>>> single_number([2, 2, 1])\n1\"\"\"\n    pass\n",
+      "function_contract": "single_number(nums list[int]) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-004",
+      "test_bundle_sha256": "aba0afa02ec59d10ec4c5296b05b8a61488c8287642e8daad8baca240be7fa6c",
+      "tags": [
+        "bitwise",
+        "xor"
+      ]
+    },
+    {
+      "task_id": "py-bit-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def has_alternating_bits(n: int) -> bool:\n    \"\"\"Return True if adjacent bits of positive integer n always have different values.\n\n>>> has_alternating_bits(5)\nTrue\"\"\"\n    pass\n",
+      "function_contract": "has_alternating_bits(n int) -> bool",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-005",
+      "test_bundle_sha256": "c206ae3105b712fbfeb8f9793e1b4b6e5c4640bfa2236e9ccdafcf53827fc66b",
+      "tags": [
+        "bitwise",
+        "binary"
+      ]
+    },
+    {
+      "task_id": "py-bit-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def bitwise_and_range(*args) -> object:\n    \"\"\"Return bitwise AND of all numbers in [m, n].\"\"\"\n    pass\n",
+      "function_contract": "bitwise_and_range(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-006",
+      "test_bundle_sha256": "2d5e17e4e7d1e547ae9e5032ab91bbf58be034581a8fc12ff5d119e965a59e69",
+      "tags": [
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-bit-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_even_bitwise(*args) -> object:\n    \"\"\"Return True if integer n is even using bitwise operation.\"\"\"\n    pass\n",
+      "function_contract": "is_even_bitwise(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-007",
+      "test_bundle_sha256": "1995353788e80bcaec01220be6602d0210718fdaf7bc5eadcf944a425911c7ad",
+      "tags": [
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-bit-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def swap_odd_even_bits(*args) -> object:\n    \"\"\"Swap odd and even bits of 32-bit integer n.\"\"\"\n    pass\n",
+      "function_contract": "swap_odd_even_bits(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-008",
+      "test_bundle_sha256": "08651b7d60bc7fdb74c71d4be48d05bae69b9223830756416fb6a1de83d80335",
+      "tags": [
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-bit-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def highest_set_bit(*args) -> object:\n    \"\"\"Return the value of the highest set bit in positive integer n.\"\"\"\n    pass\n",
+      "function_contract": "highest_set_bit(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-009",
+      "test_bundle_sha256": "490e5c5d45150b9950fba887b35f90c8b27c922acbedb490b471805291e40017",
+      "tags": [
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-bit-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_bitwise_subset(*args) -> object:\n    \"\"\"Return True if all 1-bits of sub are also 1-bits in mask.\"\"\"\n    pass\n",
+      "function_contract": "is_bitwise_subset(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_bitwise_logic",
+      "test_bundle_ref": "bundle-py-bit-010",
+      "test_bundle_sha256": "1469823b4f13b70bd69bf6c860f19467cbbd347c53dc36023a6435ff64e228cc",
+      "tags": [
+        "bitwise"
+      ]
+    },
+    {
+      "task_id": "py-geo-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def manhattan_dist(*args) -> object:\n    \"\"\"Return Manhattan distance between 2D points p1 and p2.\"\"\"\n    pass\n",
+      "function_contract": "manhattan_dist(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-001",
+      "test_bundle_sha256": "52aa349bff4bceb5a9b7beb755f9ca666e10feb984e0af26cc7c1362c5932a66",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def euclidean_dist_sq(*args) -> object:\n    \"\"\"Return squared Euclidean distance between p1 and p2.\"\"\"\n    pass\n",
+      "function_contract": "euclidean_dist_sq(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-002",
+      "test_bundle_sha256": "e6969896d4dae2ec318db92d5ecbbbcee9a8b949167b6b3c6b36c8775c63bbc2",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_point_on_segment(*args) -> object:\n    \"\"\"Check if point (px, py) lies on line segment (x1, y1)-(x2, y2).\"\"\"\n    pass\n",
+      "function_contract": "is_point_on_segment(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-003",
+      "test_bundle_sha256": "e91484a1859b5feb461b3bae41fa51b1bcfad49d2f6fe1050dbffb9dd7a933eb",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def rectangle_area(*args) -> object:\n    \"\"\"Return area of axis-aligned rectangle given two opposite corners.\"\"\"\n    pass\n",
+      "function_contract": "rectangle_area(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-004",
+      "test_bundle_sha256": "8fbdc49c8a4ce7e947594a260cb3a5765ad6ffaf71c979dad383ed59b985b057",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_square_coords(*args) -> object:\n    \"\"\"Check if 4 2D points form a valid square.\"\"\"\n    pass\n",
+      "function_contract": "is_square_coords(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-005",
+      "test_bundle_sha256": "ed3178e00a0d35d9af4fd7a7c6b94881656e3ab2234c9521bec5caf7b11a18d1",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def midpoint(*args) -> object:\n    \"\"\"Return midpoint of segment between p1 and p2.\"\"\"\n    pass\n",
+      "function_contract": "midpoint(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-006",
+      "test_bundle_sha256": "8f76ec69b33a8fdb4222baf99cd4608ad39690c47513f1b14545d2951f6f4b3c",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def slope(*args) -> object:\n    \"\"\"Return slope of line through p1 and p2 or None if vertical.\"\"\"\n    pass\n",
+      "function_contract": "slope(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-007",
+      "test_bundle_sha256": "1a50e133e00e558d7870cb1251a164d640cecb6bc9cdf3af36eac25f3f575ae2",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def point_in_circle(*args) -> object:\n    \"\"\"Return True if point (px, py) is inside or on circle (cx, cy, r).\"\"\"\n    pass\n",
+      "function_contract": "point_in_circle(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-008",
+      "test_bundle_sha256": "9598692c927c7ccad2c58926c5b32a6668ef2c4d5fb8211f448ff4be90d9a2ad",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def triangle_perimeter(*args) -> object:\n    \"\"\"Return perimeter of triangle with sides a, b, c if valid else 0.0.\"\"\"\n    pass\n",
+      "function_contract": "triangle_perimeter(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-009",
+      "test_bundle_sha256": "605282947a0d383806206f5fd1288bfdc0c7cae67561ad4319a1654236b95c00",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-geo-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def rectangles_overlap(*args) -> object:\n    \"\"\"Check if two rectangles [x1, y1, x2, y2] overlap.\"\"\"\n    pass\n",
+      "function_contract": "rectangles_overlap(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_geometry_coordinates",
+      "test_bundle_ref": "bundle-py-geo-010",
+      "test_bundle_sha256": "3c6f02107fdca904775e42bf7e2f47ca791a7fc1a683321b63b6b5199c86ccf5",
+      "tags": [
+        "geometry"
+      ]
+    },
+    {
+      "task_id": "py-stat-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def mean(*args) -> object:\n    \"\"\"Return arithmetic mean of list of numbers.\"\"\"\n    pass\n",
+      "function_contract": "mean(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-001",
+      "test_bundle_sha256": "636e5e3a8ff3b44f0b049a87a381663345edc6ca58124532eb7227fdc3df0823",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def variance(*args) -> object:\n    \"\"\"Return population variance of numbers.\"\"\"\n    pass\n",
+      "function_contract": "variance(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-002",
+      "test_bundle_sha256": "f5e6583a591d0a2e161a8bbda387bf3b373cdf6789ca99abe757eb02c93b8070",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def std_dev(*args) -> object:\n    \"\"\"Return population standard deviation.\"\"\"\n    pass\n",
+      "function_contract": "std_dev(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-003",
+      "test_bundle_sha256": "8677088f5a2b12d7b9ff9ced00d7fa7da25f6cfbde0ae843a5ef7f8f7d7ac415",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def range_val(*args) -> object:\n    \"\"\"Return range (max - min) of numbers.\"\"\"\n    pass\n",
+      "function_contract": "range_val(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-004",
+      "test_bundle_sha256": "062542e27ebc63dc873f625dad95293abf8998e3ea77dfa5c728b6c93fcea615",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def mode_single(*args) -> object:\n    \"\"\"Return the most frequent element in non-empty integer list.\"\"\"\n    pass\n",
+      "function_contract": "mode_single(*args) -> object",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-005",
+      "test_bundle_sha256": "f2076d27f0d265646bd932c3fec22c43a58a654c34f00c9d98fcb93ee3656107",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def percentile_rank(*args) -> object:\n    \"\"\"Return percentile rank of val in nums (0-100).\"\"\"\n    pass\n",
+      "function_contract": "percentile_rank(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-006",
+      "test_bundle_sha256": "19c5688ca945f06e30ca9de63a3a26eb62ffb525493c6bf32de53d861a3a2d80",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def z_score(*args) -> object:\n    \"\"\"Calculate z-score given value, mean, and standard deviation.\"\"\"\n    pass\n",
+      "function_contract": "z_score(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-007",
+      "test_bundle_sha256": "c701b1e35625307a3b73cf100df7052f19698c07cf0dd2ef8a8484aa0458451d",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def interquartile_range(*args) -> object:\n    \"\"\"Calculate IQR for list of numbers.\"\"\"\n    pass\n",
+      "function_contract": "interquartile_range(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-008",
+      "test_bundle_sha256": "0fdf4e93d63bd1093a18ff499db97b3d80f18519744513e928feb8bc4ea9de43",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def covariance(*args) -> object:\n    \"\"\"Calculate population covariance between x and y.\"\"\"\n    pass\n",
+      "function_contract": "covariance(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-009",
+      "test_bundle_sha256": "dd7511cc3db263bd71d4ca6e425c984053e882a9a4d16b6116c0bc288ea4eea8",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-stat-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def harmonic_mean(*args) -> object:\n    \"\"\"Return harmonic mean of positive numbers.\"\"\"\n    pass\n",
+      "function_contract": "harmonic_mean(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_statistics_metrics",
+      "test_bundle_ref": "bundle-py-stat-010",
+      "test_bundle_sha256": "6746ec397b5d2f9bf1e6de9e50347948f3d06a5ea9f5260df78650628c655e28",
+      "tags": [
+        "statistics",
+        "math"
+      ]
+    },
+    {
+      "task_id": "py-tree-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_tree_nodes(*args) -> object:\n    \"\"\"Count nodes in binary tree dict {'val': x, 'left': ..., 'right': ...}.\"\"\"\n    pass\n",
+      "function_contract": "count_tree_nodes(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-001",
+      "test_bundle_sha256": "f636afe0d9ba79a4e1aa558bd76e8d826f6b823876b39e497f0ff1b24b7c3176",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def max_tree_depth(*args) -> object:\n    \"\"\"Find maximum depth of binary tree dict.\"\"\"\n    pass\n",
+      "function_contract": "max_tree_depth(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-002",
+      "test_bundle_sha256": "fcd734de7ca23da070b21cb56d985fbbbe7c769c1890bd90616302f275fefeae",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def sum_tree_values(*args) -> object:\n    \"\"\"Return sum of all node values in binary tree.\"\"\"\n    pass\n",
+      "function_contract": "sum_tree_values(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-003",
+      "test_bundle_sha256": "3b4e01d7b093486dbbee74dde8b201bc9797d069690a2bb4537c5a43ffd24be7",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def tree_to_inorder(*args) -> object:\n    \"\"\"Return in-order traversal of binary tree values.\"\"\"\n    pass\n",
+      "function_contract": "tree_to_inorder(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-004",
+      "test_bundle_sha256": "8306803944a1d3dd5acd8958c777b0cf3e4546c77fc0650917723b70177088a7",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_leaf_node(*args) -> object:\n    \"\"\"Check if root tree dict is a leaf node.\"\"\"\n    pass\n",
+      "function_contract": "is_leaf_node(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-005",
+      "test_bundle_sha256": "d06b9318f8f09ab3fab1b4caf22bbd18c8337a5c897f32469fc2b327d6363e33",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_leaves(*args) -> object:\n    \"\"\"Count leaf nodes in binary tree dict.\"\"\"\n    pass\n",
+      "function_contract": "count_leaves(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-006",
+      "test_bundle_sha256": "f2b9ba92c849e346fa35691f927f2fb4b50edd44802329d82b70af9f92b209de",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def invert_tree(*args) -> object:\n    \"\"\"Invert a binary tree dict.\"\"\"\n    pass\n",
+      "function_contract": "invert_tree(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-007",
+      "test_bundle_sha256": "f01479ef9e88f39a638290efb788426154ff9a0e8bd06f3874a992169d7948fb",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def graph_path_exists(*args) -> object:\n    \"\"\"Return True if path exists from src to dst in directed graph adj list.\"\"\"\n    pass\n",
+      "function_contract": "graph_path_exists(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-008",
+      "test_bundle_sha256": "b6ef721ccb89a3335a7137cda5b9fed243bde9fc5f4e67eb508bc6893b6c12cc",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def graph_node_degree(*args) -> object:\n    \"\"\"Return out-degree of node in adjacency list.\"\"\"\n    pass\n",
+      "function_contract": "graph_node_degree(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-009",
+      "test_bundle_sha256": "a8e8960b858931af3923112009c71c9889adc173ba93596fbfa1496efe0db252",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-tree-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_connected_components(*args) -> object:\n    \"\"\"Count connected components in undirected graph.\"\"\"\n    pass\n",
+      "function_contract": "count_connected_components(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "val",
+      "family_id": "family_tree_graph_basics",
+      "test_bundle_ref": "bundle-py-tree-010",
+      "test_bundle_sha256": "62b295be8f4ab34fc44afedfb70040260f9ee56270d6b1ad1d6f7f489f0ef697",
+      "tags": [
+        "trees",
+        "graphs"
+      ]
+    },
+    {
+      "task_id": "py-parse-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def parse_key_values(*args) -> object:\n    \"\"\"Parse 'k1=v1, k2=v2' string into dictionary.\"\"\"\n    pass\n",
+      "function_contract": "parse_key_values(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-001",
+      "test_bundle_sha256": "724e583c457359937b84a2dced2fc8463aec9e9705e6bc226ecad34e8d5bef19",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def is_valid_ipv4(*args) -> object:\n    \"\"\"Check if string is a valid IPv4 address in dot-decimal notation.\"\"\"\n    pass\n",
+      "function_contract": "is_valid_ipv4(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-002",
+      "test_bundle_sha256": "aeb6165fd61e61835f71c561792460261cf562b4bcadce227bba56ba693b3bce",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def tokenize_simple(*args) -> object:\n    \"\"\"Tokenize simple arithmetic expression into numbers and operators.\"\"\"\n    pass\n",
+      "function_contract": "tokenize_simple(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-003",
+      "test_bundle_sha256": "42b7d2c169a2e0fbc538e62bd336d3f76348e4736019c355fba6513c613ab5ef",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def parse_query_params(*args) -> object:\n    \"\"\"Parse URL query string 'a=1&b=2' into dictionary.\"\"\"\n    pass\n",
+      "function_contract": "parse_query_params(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-004",
+      "test_bundle_sha256": "88ae1eb842a89d09df6a799eb9a2d576c0fedeb92b9bf140bfcb21be80f5e5b1",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def extract_emails_simple(*args) -> object:\n    \"\"\"Extract email addresses from plain text.\"\"\"\n    pass\n",
+      "function_contract": "extract_emails_simple(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-005",
+      "test_bundle_sha256": "a19665453913d3bbc62e3c6bd7b7e78f3669191cf0d6e16090b42d893f7fbd75",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def evaluate_rpn(*args) -> object:\n    \"\"\"Evaluate Reverse Polish Notation arithmetic expression.\"\"\"\n    pass\n",
+      "function_contract": "evaluate_rpn(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-006",
+      "test_bundle_sha256": "447478d586106d40c594acec754e1e841a120815e9045b341078b315686871a2",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def count_parentheses_depth(*args) -> object:\n    \"\"\"Calculate maximum nesting depth of parentheses.\"\"\"\n    pass\n",
+      "function_contract": "count_parentheses_depth(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-007",
+      "test_bundle_sha256": "7cb50c0cbd5d1943462328d55532b525b65abc250cd8880be6894c35fbd1b2d7",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def mask_credit_card(*args) -> object:\n    \"\"\"Mask credit card digits except the last 4.\"\"\"\n    pass\n",
+      "function_contract": "mask_credit_card(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-008",
+      "test_bundle_sha256": "4f5ad13a1c18f59423b3ae1602b3b7f7e9d0b2da00445c0a5eb8670e95da93de",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def csv_line_split(*args) -> object:\n    \"\"\"Split a single CSV line into column values handling quotes.\"\"\"\n    pass\n",
+      "function_contract": "csv_line_split(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-009",
+      "test_bundle_sha256": "2abf4734bd50de5bed3ec3c04ec8286500b085f64bbdf1f49e246cb85f372474",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-parse-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def slugify(*args) -> object:\n    \"\"\"Convert title text into a URL slug.\"\"\"\n    pass\n",
+      "function_contract": "slugify(*args) -> object",
+      "difficulty": "medium",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "test",
+      "family_id": "family_parsing_and_tokenizing",
+      "test_bundle_ref": "bundle-py-parse-010",
+      "test_bundle_sha256": "71120f731d32cdafbf5a2eace6037610417b7051646d507a6b2c8f8fe84439db",
+      "tags": [
+        "parsing",
+        "strings"
+      ]
+    },
+    {
+      "task_id": "py-algo-001",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_1(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 1 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_1(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-001",
+      "test_bundle_sha256": "b2f21805f44b85e0d5576e72305145840d1b4f220e8a9fe7aaeb7a2f327bd1c9",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-002",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_2(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 2 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_2(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-002",
+      "test_bundle_sha256": "8c950fae7967fac2d713885b8176033accce14baf7a77785c11886c38cf100b7",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-003",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_3(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 3 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_3(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-003",
+      "test_bundle_sha256": "87411cd9e5898c76926865c75ecc4aac7a872f86f1a82ba795a5efff601a9e9b",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-004",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_4(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 4 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_4(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-004",
+      "test_bundle_sha256": "eb7184c2f567e5ae86fa3ea13b661a40ce9e960360569df1783cdc8755a1e392",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-005",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_5(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 5 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_5(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-005",
+      "test_bundle_sha256": "ce2b3e13a254124c2ef6f9ce1f784a07f599f8f3d79ebc070fa8f54645b5cce6",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-006",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_6(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 6 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_6(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-006",
+      "test_bundle_sha256": "f230d6e2eeb162b7a9f98ba4ab556613121da8917d2fdbb9c6a69c5f76b52778",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-007",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_7(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 7 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_7(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-007",
+      "test_bundle_sha256": "366fcff6902f47e228faf9854cf2535737d4f50fb4ad9e393d50db54f0a6abff",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-008",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_8(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 8 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_8(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-008",
+      "test_bundle_sha256": "a2c4dac87202332c4b7c8b5c6ad3af3842526ba3e5a6f3d9fee28f8945b48132",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-009",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_9(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 9 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_9(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-009",
+      "test_bundle_sha256": "c8efe344d945867e67d1b6741ba1b7cd10594baa6827503ab1c148ba8cc415e7",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-010",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_10(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 10 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_10(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-010",
+      "test_bundle_sha256": "e015cbe8aeb95fdc7b90e9cbc9d099e4fdf23d09d31f21e930359e6d08ec8616",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-011",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_11(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 11 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_11(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-011",
+      "test_bundle_sha256": "103678373a2a4c2780d3f0922e45e86f0b0d27e88620bbc12d9bf031e7dae245",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-012",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_12(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 12 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_12(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-012",
+      "test_bundle_sha256": "19f6c7346e90df759a216abc12c6e1f28b6b5276a7954e2f65f29e1bf6b6d482",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-013",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_13(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 13 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_13(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-013",
+      "test_bundle_sha256": "f5c42b1a9b066a210ef403d7d03d581b3d407fe1eb749fb12dae2d85c10ab4ae",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-014",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_14(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 14 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_14(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-014",
+      "test_bundle_sha256": "4680cba6338008748e7679c82e95bded6fd214c701aab41cf30d2d1f644411f7",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    },
+    {
+      "task_id": "py-algo-015",
+      "version": "1.0",
+      "language": "python",
+      "prompt": "def helper_algo_15(n: int) -> int:\n    \"\"\"Compute algorithmic transformation 15 on integer n.\"\"\"\n    pass\n",
+      "function_contract": "helper_algo_15(n int) -> int",
+      "difficulty": "easy",
+      "license": "Apache-2.0",
+      "source_provenance": "ai-lab-curated-v1",
+      "split": "train",
+      "family_id": "family_math_primes_and_factors",
+      "test_bundle_ref": "bundle-py-algo-015",
+      "test_bundle_sha256": "0b5520ff20a30f494943561e91e52a0d3ebc9db4ea95f537abc8ed1639dad92f",
+      "tags": [
+        "math",
+        "arithmetic"
+      ]
+    }
+  ]
+}
