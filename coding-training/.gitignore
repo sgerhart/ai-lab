@@ -1,0 +1,7 @@
+# Local training artifacts, weights, and caches (AGENTS.md compliance)
+checkpoints/
+datasets/sft/
+__pycache__/
+*.pyc
+*.safetensors
+*.bin

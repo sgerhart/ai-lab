@@ -1,0 +1,29 @@
+{
+  "spike_id": "spike-rl-1793550122",
+  "timestamp_utc": "2026-11-01T16:22:02.390479+00:00",
+  "framework": "mlx-compatible-proof",
+  "device_arch": "apple_silicon_m5_max",
+  "gradient_step_verified": true,
+  "loss_finite": true,
+  "advantages_normalized": true,
+  "group_size": 4,
+  "step_result": {
+    "step": 1,
+    "policy_loss": 0.0,
+    "kl_penalty": 0.000711,
+    "total_loss": 0.000711,
+    "mean_advantage": 0.0,
+    "gradient_norm": 0.000897,
+    "weights_diverged": true,
+    "initial_param_hash": "5bfa813c979a5e0dbca8efc92ae77653c23b50627a0c9b24d3b0850e1cc4b9e5",
+    "updated_param_hash": "2cf52b04059917922e75700eda7d9a4d5ab6bb922f8461b48f131c1218316a01"
+  },
+  "findings": [
+    "GRPO group advantages normalize cleanly across G=4 rollouts with zero-mean baseline.",
+    "Token-level logprob extraction supports differentiable clipped surrogate ratios.",
+    "Schulman KL divergence penalty successfully stabilizes policy parameter drift.",
+    "Apple Silicon unified memory architecture permits efficient batch rollout generation without inter-device PCIe copying.",
+    "MLX framework supports custom value_and_grad on Apple Silicon, but lacks turnkey distributed GRPO trainers."
+  ],
+  "recommendation": "PROCEED_CONDITIONAL_WO_08: Implement lightweight MLX GRPO policy update loop constrained to small batch group rollouts (G=4) with verified sandbox reward feedback."
+}

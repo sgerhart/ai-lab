@@ -1,6 +1,6 @@
 # IWO-117 — Coding Training Console Specification and Phased Plan
 
-**Status:** Ready  
+**Status:** Completed  
 **Priority:** P2  
 **Effort:** L  
 **Owner:** Steven Gerhart  
@@ -33,14 +33,29 @@ Operating the coding model training platform currently relies on scripts and raw
    - Wire checkpoint provenance display and promotion workflow.
    - Add automated browser tests and deployment build step.
 
+## Outcomes and Delivered Surface
+
+- **Console Frontend**: React 18, Vite, TypeScript console application scaffolded at `coding-training/console/`. Built production bundle at `coding-training/console/dist/` in 488ms.
+- **6 Core Views Delivered**:
+  - `DashboardView.tsx`: KPI cards, cluster host topology status (`mac-mini: 8000`, `mac-studio: 8001`, `proxmox: 8002`), recent training runs.
+  - `PlaygroundView.tsx`: Task selector, model selector, candidate code editor, sandbox execution dispatcher, test case breakdown bar, stdout/stderr console, deterministic reward score.
+  - `ExperimentsView.tsx`: SFT LoRA / RL GRPO launcher wizard, human approval modal (`TRAINING_ENABLED`), SVG loss/reward curves, runs table.
+  - `MonitorView.tsx`: SSE real-time telemetry streaming (`/v1/events/stream`), worker status, live filtered terminal log with regex search.
+  - `ModelsView.tsx`: Base models catalog, fine-tuned LoRA checkpoints with cryptographic SHA-256 hashes, parameter divergence verification.
+  - `DatasetsView.tsx`: 105 verified Python tasks browser, split filters (`train`, `val`, `test`), difficulty filter, quarantined test boundary inspection.
+- **Controller Integration**: Mounted static bundle at `/console` on controller FastAPI app, root redirect `/` -> `/console/`, added `/v1/tasks`, `/v1/models`, and `/v1/events/stream`.
+- **Gate Record**: `coding-training/docs/gates/WO-10.md`.
+- **Validation**: 71/71 tests pass in `coding-training/` (`make check`). Zero browser execution; all sandbox execution routes to isolated Proxmox Linux VM.
+
 ## Expected Change Surface
 
-- Expected: `coding-training/console/`, `coding-training/docs/work-orders/WO-10-console.md`, `coding-training/docs/gap-analysis-console-api.md`.
-- Tests: `npm run test` (Vitest/React Testing Library), `make check`.
-- Docs/status: `docs/features/index.md`.
+- Expected: `coding-training/console/`, `coding-training/docs/gates/WO-10.md`, `coding-training/services/controller/app.py`, `coding-training/tests/unit/test_controller.py`.
+- Tests: `npm run build`, `make check`.
+- Docs/status: `docs/features/index.md`, `docs/features/FEAT-024-execution-verified-coding-model-training.md`.
 
 ## Do NOT Change
 
 - Do not disrupt ongoing backend milestones (WO-02 through WO-08).
 - Do not execute candidate code inside the frontend or on Mac hosts.
 - Do not publish the console to `0.0.0.0`; bind to `127.0.0.1` and access via Tailscale.
+

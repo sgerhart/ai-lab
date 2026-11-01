@@ -1,0 +1,16 @@
+{
+  "checkpoint_id": "ckpt-run-rl-1793550586-step25",
+  "training_run_id": "run-rl-1793550586",
+  "training_type": "grpo",
+  "group_size": 4,
+  "steps_completed": 25,
+  "mean_reward": 0.5,
+  "weights_diverged": true,
+  "holdout_evaluation": {
+    "split": "validation",
+    "total_tasks": 15,
+    "passed_tasks": 15,
+    "pass_at_1": 1.0,
+    "syntax_validity_rate": 1.0
+  }
+}

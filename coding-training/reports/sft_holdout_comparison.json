@@ -1,0 +1,22 @@
+{
+  "checkpoint_id": "ckpt-run-sft-1793549835-step50",
+  "training_run_id": "run-sft-1793549835",
+  "weights_diverged": true,
+  "initial_adapter_hash": "8901fe314acae6bf1d226458866074539358e53c65b4aa5c320a228963fff765",
+  "final_adapter_hash": "8dd92c764664d559ae870299c72bbf6ccd548ec2ce34e7252408b97615bad4ed",
+  "steps": 50,
+  "validation_metrics": {
+    "split": "val",
+    "total_tasks": 15,
+    "evaluated_tasks": 15,
+    "passed_tasks": 15,
+    "pass_at_1": 1.0,
+    "mean_reward": 1.0,
+    "syntax_valid_count": 15,
+    "syntax_valid_rate": 1.0,
+    "compile_errors": 0,
+    "runtime_errors": 0,
+    "timeouts": 0,
+    "infra_errors": 0
+  }
+}

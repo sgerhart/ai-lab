@@ -1,4 +1,4 @@
-.PHONY: test lint check clean
+.PHONY: test lint check clean console-build
 
 PYTHON ?= python3
 
@@ -8,9 +8,13 @@ test:
 lint:
 	ruff check .
 
+console-build:
+	cd console && npm run build
+
 check: lint test
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type d -name ".ruff_cache" -exec rm -rf {} +
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+

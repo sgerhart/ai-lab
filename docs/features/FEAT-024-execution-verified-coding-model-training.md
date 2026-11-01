@@ -1,11 +1,12 @@
 # FEAT-024 — Execution-Verified Coding Model Training Platform
 
-- **Status:** In progress (WO-00, WO-01, WO-02 Delivered)
+- **Status:** Delivered (WO-00 through WO-10 complete)
 - **Created:** 2026-10-30
 - **Owner:** Steven Gerhart
 - **GitHub issue:** draft only
 - **Sub-platform path:** `coding-training/`
-- **Work Orders:** `IWO-116`, `IWO-117`, `IWO-118`
+- **Work Orders:** `IWO-116`, `IWO-117`, `IWO-118`, `IWO-119`, `IWO-120`, `IWO-121`, `IWO-122`, `IWO-123`, `IWO-124`, `IWO-125`
+
 
 ## Purpose
 
@@ -50,15 +51,16 @@ Build an operational, observable, and reproducible coding model training and eva
 - [x] WO-00: Reconnaissance and ADRs delivered.
 - [x] WO-01: Directory scaffold, pyproject, and test harness operational.
 - [x] WO-02: 100+ curated Python tasks with immutable test bundles and disjoint splits.
-- [ ] WO-03: Sandbox worker passes 100% of negative security tests; operator approves execution.
-- [ ] WO-04: Control plane with idempotent job leases and audit logs.
-- [ ] WO-05: Reproducible holdout baseline report.
-- [ ] WO-06: Verified SFT LoRA training on Studio with measured adapter weight changes.
-- [ ] WO-07: RL backend compatibility spike on Apple Silicon.
-- [ ] WO-08: Execution-reward RL training (conditional).
-- [ ] WO-09: Complete operator runbooks and clean-start handover.
-- [ ] WO-10: Web-based Coding Training Console (Dashboard, Playground, Experiments, Monitor, Models, Datasets) with SSE telemetry.
-- [ ] Human approval gates enforced at every phase (no self-approval).
+- [x] WO-03: Sandbox worker passes 100% of negative security tests; operator approves execution.
+- [x] WO-04: Control plane with idempotent job leases and audit logs.
+- [x] WO-05: Reproducible holdout baseline report.
+- [x] WO-06: Verified SFT LoRA training on Studio with measured adapter weight changes.
+- [x] WO-07: RL backend compatibility spike on Apple Silicon.
+- [x] WO-08: Execution-reward RL training (conditional).
+- [x] WO-09: Complete operator runbooks and clean-start handover.
+- [x] WO-10: Web-based Coding Training Console (Dashboard, Playground, Experiments, Monitor, Models, Datasets) with SSE telemetry.
+- [x] Human approval gates enforced at every phase (no self-approval).
+
 
 ## Out of scope
 

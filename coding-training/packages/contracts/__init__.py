@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .attestation import WorkerAttestation
+from .attestation import AuditEvent, WorkerAttestation
 from .checkpoints import CheckpointManifest
 from .configs import (
     EnvironmentConfig,
@@ -11,6 +11,7 @@ from .configs import (
     SandboxPolicy,
     SFTConfig,
 )
+from .evaluation import BaselineReport, SplitMetrics, TaskEvaluationResult
 from .executions import (
     ExecutionRequest,
     ExecutionResult,
@@ -24,9 +25,17 @@ from .models import (
     ModelConfig,
 )
 from .rewards import RewardResult, RewardVersion
+from .rl import (
+    PolicyGradientStepResult,
+    RLSpikeReport,
+    RolloutCandidate,
+    RolloutGroup,
+)
 from .tasks import DatasetManifest, Split, Task, TestBundleRef
 
 __all__ = [
+    "AuditEvent",
+    "BaselineReport",
     "CheckpointManifest",
     "DatasetManifest",
     "EnvironmentConfig",
@@ -39,13 +48,19 @@ __all__ = [
     "HealthStatus",
     "ModelCapabilities",
     "ModelConfig",
+    "PolicyGradientStepResult",
     "RewardResult",
     "RewardVersion",
     "RLConfig",
+    "RLSpikeReport",
+    "RolloutCandidate",
+    "RolloutGroup",
     "SandboxPolicy",
     "SFTConfig",
     "Split",
+    "SplitMetrics",
     "Task",
+    "TaskEvaluationResult",
     "TestBundleRef",
     "WorkerAttestation",
 ]
