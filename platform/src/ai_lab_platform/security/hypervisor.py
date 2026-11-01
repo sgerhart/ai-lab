@@ -72,7 +72,15 @@ class HypervisorPort(Protocol):
 
     def inventory(self) -> dict[str, object]: ...
 
-    def validate_template(self, template_id: str, auth: AuthContext) -> dict[str, object]: ...
+    def validate_template(
+        self,
+        template_id: str,
+        auth: AuthContext,
+        *,
+        manifest: Any = None,
+        expected_snapshot: str = "",
+        required_tools: tuple[str, ...] | None = None,
+    ) -> dict[str, object]: ...
 
     def validate_network(
         self,
@@ -111,7 +119,15 @@ class UnconfiguredHypervisor:
     def inventory(self) -> dict[str, object]:
         raise _refuse(self.provider)
 
-    def validate_template(self, template_id: str, auth: AuthContext) -> dict[str, object]:
+    def validate_template(
+        self,
+        template_id: str,
+        auth: AuthContext,
+        *,
+        manifest: Any = None,
+        expected_snapshot: str = "",
+        required_tools: tuple[str, ...] | None = None,
+    ) -> dict[str, object]:
         auth.require_mutation()
         raise _refuse(self.provider)
 
@@ -169,6 +185,39 @@ class FakeHypervisor:
                 "gateway_policy": "isolated",
             }
         }
+        self._template_metadata: dict[str, dict[str, Any]] = {
+            "fixture-linux": {
+                "template_id": "fixture-linux",
+                "os_type": "linux",
+                "os_version": "ubuntu-24.04",
+                "version": "1.0.0",
+                "snapshot": "clean-baseline",
+                "tools": ["wireshark", "tcpdump", "auditd", "yara", "strace", "gdb"],
+                "sensors": ["auditd", "osquery"],
+                "guest_agent_ready": True,
+                "disposable_credentials_policy": "ephemeral-per-job",
+                "network_policy": "isolated",
+                "immutable": True,
+            },
+            "fixture-windows": {
+                "template_id": "fixture-windows",
+                "os_type": "windows",
+                "os_version": "windows-11-23h2",
+                "version": "1.0.0",
+                "snapshot": "clean-baseline",
+                "tools": ["sysinternals", "wireshark", "procmon", "procexp", "yara"],
+                "sensors": ["sysmon", "osquery"],
+                "guest_agent_ready": True,
+                "disposable_credentials_policy": "ephemeral-per-job",
+                "network_policy": "isolated",
+                "immutable": True,
+            },
+        }
+
+    def set_template_metadata(self, template_id: str, metadata: dict[str, Any]) -> None:
+        self._template_metadata[template_id] = dict(metadata)
+        if template_id not in self.templates:
+            self.templates = frozenset(set(self.templates) | {template_id})
 
     def add_network(
         self,
@@ -195,11 +244,62 @@ class FakeHypervisor:
             "networks": list(self._networks.values()),
         }
 
-    def validate_template(self, template_id: str, auth: AuthContext) -> dict[str, object]:
+    def validate_template(
+        self,
+        template_id: str,
+        auth: AuthContext,
+        *,
+        manifest: Any = None,
+        expected_snapshot: str = "",
+        required_tools: tuple[str, ...] | None = None,
+    ) -> dict[str, object]:
         auth.require_mutation()
         if template_id not in self.templates:
             raise ValueError("template is not allowlisted")
-        return {"template_id": template_id, "allowlisted": True}
+        tmpl = self._template_metadata.get(template_id, {})
+        if tmpl.get("immutable") is False:
+            raise IsolationError(f"template {template_id!r} is not marked immutable")
+        if tmpl.get("guest_agent_ready") is False:
+            raise IsolationError(f"template {template_id!r} guest agent is not ready")
+
+        # Snapshot check
+        target_snap = expected_snapshot or (getattr(manifest, "expected_snapshot", "") if manifest else "") or "clean-baseline"
+        current_snap = tmpl.get("snapshot", "")
+        if target_snap and current_snap != target_snap:
+            raise IsolationError(
+                f"template {template_id!r} expected snapshot {target_snap!r}, found {current_snap!r}"
+            )
+
+        # Required tools check
+        tools_req = required_tools if required_tools is not None else (getattr(manifest, "tools", ()) if manifest else ())
+        installed = set(tmpl.get("tools", [])) | set(tmpl.get("sensors", []))
+        for t in tools_req:
+            if t not in installed:
+                raise IsolationError(f"template {template_id!r} is missing required tool: {t}")
+
+        # Version drift check
+        manifest_ver = getattr(manifest, "version", "") if manifest else ""
+        actual_ver = str(tmpl.get("version", "1.0.0"))
+        version_drift = bool(manifest_ver and actual_ver and manifest_ver != actual_ver)
+        drift_details = (
+            {"manifest_version": manifest_ver, "template_version": actual_ver}
+            if version_drift
+            else {}
+        )
+
+        return {
+            "template_id": template_id,
+            "allowlisted": True,
+            "os_type": tmpl.get("os_type", "linux"),
+            "version": actual_ver,
+            "version_drift": version_drift,
+            "drift_details": drift_details,
+            "snapshot": current_snap,
+            "tools": list(tmpl.get("tools", [])),
+            "sensors": list(tmpl.get("sensors", [])),
+            "immutable": True,
+            "ok": True,
+        }
 
     def validate_network(
         self,

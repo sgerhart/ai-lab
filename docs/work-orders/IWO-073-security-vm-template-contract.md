@@ -1,11 +1,11 @@
 # IWO-073 — Security VM template contract
 
-**Status:** Draft  
-**Priority:** P1  
-**Effort:** L  
-**Owner:** implementation agent  
-**Feature:** FEAT-019  
-**Services / Areas:** docs, platform/security, tests, infrastructure
+- **Status:** Complete  
+- **Priority:** P1  
+- **Effort:** L  
+- **Owner:** implementation agent  
+- **Feature:** FEAT-019  
+- **Services / Areas:** docs, platform/security, tests, infrastructure
 
 ## Problem
 
@@ -71,11 +71,11 @@ Security agent may validate but not silently modify golden templates.
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_template_contract.py` (6 passed), `tests/test_isolated_network_contract.py` (6 passed), `tests/test_vise.py` (5 passed), `tests/test_security_platform.py` (10 passed), `./scripts/validate-repo.sh` (OK), `./scripts/preflight.sh` (OK), `./tests/test_structure.sh` (OK). Full unit suite 466 passed.
+- Follow-ons filed: IWO-074 (Vise evidence collection pipeline), IWO-075 (Cybersecurity Vise operator UI)
+- Residual risks: Operator must provision physical/virtual golden VM templates on hypervisor out of band; live host validation only upon explicit deploy gate.
+- Docs/status updated: FEAT-019, features index, work orders README.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded

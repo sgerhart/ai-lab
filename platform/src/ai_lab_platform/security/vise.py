@@ -78,6 +78,8 @@ class ViseJob:
     network_id: str = ""
     controlled_egress: bool = False
     network_denylist: tuple[str, ...] = field(default_factory=tuple)
+    expected_snapshot: str = ""
+    required_tools: tuple[str, ...] = field(default_factory=tuple)
     state: str = "submitted"
     cleanup_status: str = "pending"
     approval_id: str = ""
@@ -103,6 +105,8 @@ class ViseJob:
             "network_id": self.network_id,
             "controlled_egress": self.controlled_egress,
             "network_denylist": list(self.network_denylist),
+            "expected_snapshot": self.expected_snapshot,
+            "required_tools": list(self.required_tools),
             "state": self.state,
             "cleanup_status": self.cleanup_status,
             "approval_id": self.approval_id,
@@ -133,6 +137,11 @@ class ViseStore:
             denylist = tuple(str(x) for x in denylist_input)
         else:
             denylist = ()
+        tools_input = cleaned.get("required_tools")
+        if isinstance(tools_input, (list, tuple)):
+            required_tools = tuple(str(x) for x in tools_input)
+        else:
+            required_tools = ()
         job = ViseJob(
             job_id=uuid.uuid4().hex,
             sha256=_sha256(str(cleaned.get("sha256") or "")),
@@ -146,6 +155,8 @@ class ViseStore:
             network_id=str(cleaned.get("network_id") or ""),
             controlled_egress=bool(cleaned.get("controlled_egress", False)),
             network_denylist=denylist,
+            expected_snapshot=str(cleaned.get("expected_snapshot") or ""),
+            required_tools=required_tools,
         )
         if job.byte_length < 0:
             raise ValueError("byte_length must be zero or positive")
@@ -203,7 +214,15 @@ class ViseStore:
     ) -> None:
         hypervisor = self.hypervisors[job.provider]
         if state == "preflight":
-            checked = hypervisor.validate_template(job.template_id, auth)
+            from .templates import BASELINE_PROFILES
+            manifest = BASELINE_PROFILES.get(job.template_id)
+            checked = hypervisor.validate_template(
+                job.template_id,
+                auth,
+                manifest=manifest,
+                expected_snapshot=job.expected_snapshot,
+                required_tools=job.required_tools or None,
+            )
             target_network = job.network_id or _isolated_network(hypervisor)
             network = hypervisor.validate_network(
                 target_network,
@@ -229,6 +248,9 @@ class ViseStore:
             job.state = "preflight"
             return
         if state == "ready":
+            tmpl_res = job.isolation.get("template") if isinstance(job.isolation, dict) else None
+            if not isinstance(tmpl_res, dict) or tmpl_res.get("ok") is not True:
+                raise ViseTransitionError("template preflight has not passed")
             network = job.isolation.get("network") if isinstance(job.isolation, dict) else None
             if not isinstance(network, dict) or network.get("ok") is not True or network.get("denylist_cleared") is not True:
                 raise ViseTransitionError("preflight has not passed")

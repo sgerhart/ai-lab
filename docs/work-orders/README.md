@@ -83,7 +83,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-070](IWO-070-cybersecurity-vise-job-and-api-model.md) | Cybersecurity Vise job and API model | Complete (unit; not deployed) |
 | [IWO-071](IWO-071-hypervisor-adapter-abstraction.md) | Hypervisor adapter abstraction | Complete (unit; fake adapter only) |
 | [IWO-072](IWO-072-security-compute-isolated-network-contract.md) | Security Compute isolated network contract | Complete (unit; not deployed) |
-| [IWO-073](IWO-073-security-vm-template-contract.md) | Security VM template contract | Draft |
+| [IWO-073](IWO-073-security-vm-template-contract.md) | Security VM template contract | Complete (unit; not deployed) |
 | [IWO-074](IWO-074-vise-evidence-collection-pipeline.md) | Vise evidence collection pipeline | Draft |
 | [IWO-075](IWO-075-cybersecurity-vise-operator-ui.md) | Cybersecurity Vise operator UI | Draft |
 | [IWO-076](IWO-076-security-agent-definition-and-policy.md) | Security agent definition and policy | Draft |

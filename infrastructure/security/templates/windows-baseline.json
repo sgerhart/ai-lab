@@ -1,0 +1,27 @@
+{
+  "template_id": "fixture-windows",
+  "os_type": "windows",
+  "os_version": "windows-11-23h2",
+  "version": "1.0.0",
+  "expected_snapshot": "clean-baseline",
+  "tools": [
+    "sysinternals",
+    "wireshark",
+    "procmon",
+    "procexp",
+    "yara"
+  ],
+  "sensors": [
+    "sysmon",
+    "osquery"
+  ],
+  "network_policy": "isolated",
+  "guest_agent_ready": true,
+  "disposable_credentials_policy": "ephemeral-per-job",
+  "immutable": true,
+  "min_ram_mb": 4096,
+  "min_cpu_cores": 2,
+  "hashes": {
+    "vhd_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  }
+}

@@ -2250,6 +2250,51 @@ def create_control_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return job.to_dict()
 
+    @app.get("/v1/security/templates")
+    def get_security_templates(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .security.templates import BASELINE_PROFILES, validate_manifest_offline
+        templates = []
+        for name, profile in BASELINE_PROFILES.items():
+            report = validate_manifest_offline(profile)
+            templates.append({
+                "profile_id": name,
+                "manifest": profile.to_dict(),
+                "valid": report.valid,
+                "errors": list(report.errors),
+                "warnings": list(report.warnings),
+            })
+        return {"templates": templates}
+
+    @app.post("/v1/security/templates/validate")
+    def validate_security_template(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .security.templates import (
+            BASELINE_PROFILES,
+            check_template_drift,
+            validate_manifest_offline,
+        )
+        report = validate_manifest_offline(body)
+        drift = False
+        drift_details: dict[str, str] = {}
+        template_id = str(body.get("template_id") or "")
+        if template_id in BASELINE_PROFILES:
+            base = BASELINE_PROFILES[template_id]
+            drift, drift_details = check_template_drift(base, str(body.get("version") or ""))
+        return {
+            "valid": report.valid,
+            "report": report.to_dict(),
+            "version_drift": drift,
+            "drift_details": drift_details,
+        }
+
     @app.get("/v1/security/mcp")
     def get_mcp_registry(
         request: Request,

@@ -1,0 +1,28 @@
+{
+  "template_id": "fixture-linux",
+  "os_type": "linux",
+  "os_version": "ubuntu-24.04",
+  "version": "1.0.0",
+  "expected_snapshot": "clean-baseline",
+  "tools": [
+    "wireshark",
+    "tcpdump",
+    "auditd",
+    "yara",
+    "strace",
+    "gdb"
+  ],
+  "sensors": [
+    "auditd",
+    "osquery"
+  ],
+  "network_policy": "isolated",
+  "guest_agent_ready": true,
+  "disposable_credentials_policy": "ephemeral-per-job",
+  "immutable": true,
+  "min_ram_mb": 4096,
+  "min_cpu_cores": 2,
+  "hashes": {
+    "root_fs_sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+  }
+}
