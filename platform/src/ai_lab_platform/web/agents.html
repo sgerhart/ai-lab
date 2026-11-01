@@ -2184,9 +2184,18 @@
 
       <div class="prefs-pane" id="prefs-security">
         <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
-        <h1>Security</h1>
-        <p class="prefs-lead">DefenseClaw runs on the Air. Antares runs on the Studio. Open a badge for the detail.</p>
-        <div class="prefs-grid">
+        <div class="sec-header-row">
+          <div>
+            <h1>Security Center</h1>
+            <p class="prefs-lead">Unified operator console for security providers, telemetry findings & evidence, agent isolation posture, governed MCP, and hypervisor quarantine.</p>
+          </div>
+          <div class="sec-header-actions">
+            <button type="button" class="btn" id="sec-refresh-btn">↻ Refresh Telemetry</button>
+            <button type="button" class="btn" id="sec-view-permissions-btn">🛡️ Fleet Permissions Board</button>
+          </div>
+        </div>
+
+        <div class="prefs-grid" style="margin-bottom: 24px;">
           <button type="button" class="prefs-card config-badge" id="badge-defenseclaw">
             <span class="prefs-pill off" id="dc-pill">no report</span>
             <h2>DefenseClaw</h2>
@@ -2198,6 +2207,113 @@
             <p>Localize a finding. This does not change the repo.</p>
           </button>
         </div>
+
+        <div class="posture-metrics-grid" id="sec-metrics-grid" style="margin-bottom: 24px;">
+          <div class="posture-card">
+            <div class="posture-card-label">Security Providers</div>
+            <div class="posture-card-val" id="sec-metric-providers">…</div>
+            <div class="posture-card-sub" id="sec-metric-providers-sub">Registered services</div>
+          </div>
+          <div class="posture-card">
+            <div class="posture-card-label">Telemetry Events</div>
+            <div class="posture-card-val" id="sec-metric-events">0</div>
+            <div class="posture-card-sub" id="sec-metric-events-sub">0 critical · 0 high</div>
+          </div>
+          <div class="posture-card">
+            <div class="posture-card-label">Cybersecurity Vise</div>
+            <div class="posture-card-val" id="sec-metric-vise">Ready</div>
+            <div class="posture-card-sub" id="sec-metric-vise-sub">0 jobs · containment intact</div>
+          </div>
+          <div class="posture-card">
+            <div class="posture-card-label">Governed MCP</div>
+            <div class="posture-card-val" id="sec-metric-mcp">deny-unlisted</div>
+            <div class="posture-card-sub" id="sec-metric-mcp-sub">0 allowlisted servers</div>
+          </div>
+        </div>
+
+        <div class="dc-tabs" id="sec-nav-tabs" style="margin-bottom: 20px;">
+          <button type="button" class="dc-tab active" data-sec-tab="overview">Overview & Providers</button>
+          <button type="button" class="dc-tab" data-sec-tab="events">Findings & Evidence Log</button>
+          <button type="button" class="dc-tab" data-sec-tab="vise">Cybersecurity Vise</button>
+          <button type="button" class="dc-tab" data-sec-tab="mcp">Governed MCP</button>
+          <button type="button" class="dc-tab" data-sec-tab="policies">System Policies</button>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-overview">
+          <h2 class="dc-h">Registered Security Providers</h2>
+          <div class="sec-provider-grid" id="sec-providers-list">
+            <p class="dc-note">Loading provider status…</p>
+          </div>
+
+          <h2 class="dc-h" style="margin-top: 28px;">Fleet Security & Isolation Posture</h2>
+          <div class="posture-policy-banner" id="sec-fleet-banner" style="margin-bottom: 14px;">
+            Enforced fleet isolation tiers: <strong>Tier 0 User Vault</strong>, <strong>Tier 1 Read-only Baseline</strong>, and <strong>Tier 2 Isolated Worktree</strong>.
+          </div>
+          <div id="sec-fleet-summary-table"></div>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-events" hidden>
+          <h2 class="dc-h">Security Events & Correlated Evidence</h2>
+          <p class="dc-note">Normalized security telemetry with correlated Job, Run, and Agent IDs. Zero raw malware payloads or secrets stored.</p>
+          
+          <div class="sec-filters-bar" style="margin: 12px 0 16px;">
+            <div class="sec-filter-group">
+              <span class="sec-filter-label">Severity:</span>
+              <button type="button" class="dc-tab active sec-sev-btn" data-sev="all">All</button>
+              <button type="button" class="dc-tab sec-sev-btn" data-sev="critical">Critical</button>
+              <button type="button" class="dc-tab sec-sev-btn" data-sev="high">High</button>
+              <button type="button" class="dc-tab sec-sev-btn" data-sev="medium">Medium</button>
+              <button type="button" class="dc-tab sec-sev-btn" data-sev="low">Low</button>
+              <button type="button" class="dc-tab sec-sev-btn" data-sev="info">Info</button>
+            </div>
+            <div class="sec-filter-group" style="margin-top: 8px;">
+              <span class="sec-filter-label">Classification:</span>
+              <button type="button" class="dc-tab active sec-cls-btn" data-cls="all">All</button>
+              <button type="button" class="dc-tab sec-cls-btn" data-cls="finding">Findings</button>
+              <button type="button" class="dc-tab sec-cls-btn" data-cls="policy">Policy</button>
+              <button type="button" class="dc-tab sec-cls-btn" data-cls="approval">Approvals</button>
+              <button type="button" class="dc-tab sec-cls-btn" data-cls="mcp">MCP</button>
+              <button type="button" class="dc-tab sec-cls-btn" data-cls="evidence">Evidence</button>
+            </div>
+          </div>
+
+          <div id="sec-events-table-slot"></div>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-vise" hidden>
+          <h2 class="dc-h">Cybersecurity Vise — Sandboxed Execution Control</h2>
+          <p class="dc-note">Hostile-workload containment pipeline on the external Security Compute Plane (ADR 0043). Never run malicious binaries on Mac hosts.</p>
+          
+          <div class="posture-policy-banner" style="margin: 14px 0;">
+            🛡️ <strong>Safety Invariant:</strong> The fake hypervisor adapter is the active implementation in test mode. Live Proxmox/ESXi connections are refused until operator supplies isolated network configuration.
+          </div>
+
+          <div id="sec-vise-jobs-slot"></div>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-mcp" hidden>
+          <h2 class="dc-h">Governed MCP Registry</h2>
+          <p class="dc-note">Enforces <code>deny-unlisted</code> policy at the tool boundary. Capabilities require explicit permission class classification.</p>
+          <div id="sec-mcp-slot"></div>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-policies" hidden>
+          <h2 class="dc-h">System Security Policies & Architectural Invariants</h2>
+          <p class="dc-note">Non-negotiable architectural boundaries and least-privilege enforcement rules across the AI Lab platform.</p>
+          <div class="sec-policies-grid" id="sec-policies-slot"></div>
+        </div>
+
+        <dialog id="sec-evidence-dialog" class="sec-dialog" aria-labelledby="sec-ev-title">
+          <p class="dc-note">Correlated Evidence Reference (ADR 0043)</p>
+          <h2 id="sec-ev-title">Evidence Details</h2>
+          <div id="sec-ev-content" style="margin: 16px 0;"></div>
+          <p class="dc-note" style="border-top: 1px solid var(--line); padding-top: 8px;">
+            🔒 <strong>Containment Rule:</strong> Raw sample bytes and malware payloads are stored strictly on quarantined hypervisor storage, never inside the control plane.
+          </p>
+          <div class="form-actions" style="margin-top: 16px;">
+            <button type="button" class="btn primary" id="sec-ev-close">Close</button>
+          </div>
+        </dialog>
       </div>
 
       <div class="prefs-pane" id="prefs-antares">
@@ -2651,7 +2767,11 @@
       if (section === "settings") loadMcp().catch((e) => showErr(e));
       if (section === "lab") refreshPrefsLab().catch((e) => showErr(e));
       if (section === "keys") refreshPrefsKeys().catch((e) => showErr(e));
-      if (section === "security" || section === "defenseclaw") loadDefenseClaw().catch((e) => showErr(e));
+      if (section === "security") {
+        loadSecurityOverview().catch((e) => showErr(e));
+      } else if (section === "defenseclaw") {
+        loadDefenseClaw().catch((e) => showErr(e));
+      }
       if (section === "antares") loadAntares().catch((e) => showErr(e));
       else stopAntaresPoll();
       if (section === "status") {
@@ -3014,6 +3134,448 @@
       const view = await api("/v1/security/posture");
       dcLast = view;
       renderDefenseClaw(view);
+    }
+
+    let secOverviewData = null;
+    let secCurrentTab = "overview";
+    let secSeverityFilter = "all";
+    let secClassFilter = "all";
+
+    async function loadSecurityOverview() {
+      try {
+        const data = await api("/v1/security/overview");
+        secOverviewData = data;
+        if (data.defenseclaw) {
+          dcLast = data.defenseclaw;
+          if ($("dc-pill")) {
+            const hasRep = !!data.defenseclaw.reported_at;
+            $("dc-pill").className = hasRep ? "prefs-pill on" : "prefs-pill off";
+            $("dc-pill").textContent = hasRep ? "reported" : "no report";
+          }
+          if ($("dc-lead") && data.defenseclaw.reported_at) {
+            $("dc-lead").textContent = `Reported: ${data.defenseclaw.reported_at.replace("T", " ").replace(/\.\d+Z$/, "Z")}`;
+          }
+        }
+        renderSecurityCenter(data);
+      } catch (err) {
+        showErr(err);
+      }
+    }
+
+    function renderSecurityCenter(data) {
+      if (!data) return;
+      const metrics = data.metrics || {};
+      
+      const providers = data.providers || [];
+      const readyProviders = providers.filter(p => p.status === "active" || p.status === "online" || p.status === "ready").length;
+      if ($("sec-metric-providers")) $("sec-metric-providers").textContent = `${readyProviders} / ${providers.length}`;
+      if ($("sec-metric-providers-sub")) $("sec-metric-providers-sub").textContent = `${readyProviders} active / online`;
+
+      if ($("sec-metric-events")) $("sec-metric-events").textContent = String(metrics.events_total || 0);
+      if ($("sec-metric-events-sub")) {
+        const sc = metrics.severity_counts || {};
+        $("sec-metric-events-sub").textContent = `${sc.critical || 0} crit · ${sc.high || 0} high · ${sc.medium || 0} med`;
+      }
+
+      if ($("sec-metric-vise")) $("sec-metric-vise").textContent = `${metrics.active_vise_jobs || 0} active`;
+      if ($("sec-metric-vise-sub")) $("sec-metric-vise-sub").textContent = `${metrics.vise_jobs_total || 0} total jobs · sandboxed`;
+
+      if ($("sec-metric-mcp")) $("sec-metric-mcp").textContent = "deny-unlisted";
+      if ($("sec-metric-mcp-sub")) $("sec-metric-mcp-sub").textContent = `${metrics.mcp_authorized_count || 0} allowlisted server(s)`;
+
+      renderSecurityProviders(providers);
+      renderSecurityFleetSummary(metrics.fleet_summary || {});
+      renderSecurityEvents(data.recent_events || []);
+      renderSecurityVise(data.vise_jobs || []);
+      renderSecurityMcp(data.mcp_view || {});
+      renderSecurityPolicies(data.system_policies || []);
+    }
+
+    function renderSecurityProviders(providers) {
+      const container = $("sec-providers-list");
+      if (!container) return;
+      container.innerHTML = "";
+      providers.forEach((p) => {
+        const card = document.createElement("div");
+        card.className = "sec-provider-card";
+
+        const topRow = document.createElement("div");
+        topRow.className = "sec-provider-title-row";
+
+        const title = document.createElement("h3");
+        title.textContent = p.title || p.id;
+        topRow.appendChild(title);
+
+        const statusPill = document.createElement("span");
+        const isUp = p.status === "active" || p.status === "online" || p.status === "ready";
+        statusPill.className = isUp ? "prefs-pill on" : "prefs-pill off";
+        statusPill.textContent = p.status_label || p.status;
+        topRow.appendChild(statusPill);
+
+        card.appendChild(topRow);
+
+        const hostPill = document.createElement("span");
+        hostPill.className = "sec-provider-host";
+        hostPill.textContent = `host: ${p.host || "local"}`;
+        card.appendChild(hostPill);
+
+        const desc = document.createElement("p");
+        desc.className = "sec-provider-desc";
+        desc.textContent = p.description || "";
+        card.appendChild(desc);
+
+        const footer = document.createElement("div");
+        footer.className = "sec-provider-footer";
+
+        const meta = document.createElement("span");
+        meta.className = "prefs-meta";
+        if (p.last_reported) {
+          meta.textContent = `Reported: ${p.last_reported.replace("T", " ").slice(0, 19)}Z`;
+        } else if (p.findings_count != null && p.findings_count > 0) {
+          meta.textContent = `${p.findings_count} finding(s)`;
+        } else if (p.active_jobs_count != null) {
+          meta.textContent = `${p.active_jobs_count} running`;
+        } else if (p.servers_count != null) {
+          meta.textContent = `${p.servers_count} allowlisted`;
+        } else {
+          meta.textContent = "Bound to invariant";
+        }
+        footer.appendChild(meta);
+
+        if (p.url_target === "defenseclaw") {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn";
+          btn.textContent = "DefenseClaw →";
+          btn.onclick = () => openPrefs("defenseclaw");
+          footer.appendChild(btn);
+        } else if (p.url_target === "antares") {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn";
+          btn.textContent = "Antares Localize →";
+          btn.onclick = () => openPrefs("antares");
+          footer.appendChild(btn);
+        } else if (p.url_target === "vise") {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn";
+          btn.textContent = "Vise Jobs →";
+          btn.onclick = () => switchSecurityTab("vise");
+          footer.appendChild(btn);
+        } else if (p.url_target === "mcp") {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn";
+          btn.textContent = "MCP Registry →";
+          btn.onclick = () => switchSecurityTab("mcp");
+          footer.appendChild(btn);
+        }
+
+        card.appendChild(footer);
+        container.appendChild(card);
+      });
+    }
+
+    function renderSecurityFleetSummary(fleet) {
+      const slot = $("sec-fleet-summary-table");
+      if (!slot) return;
+      slot.innerHTML = "";
+
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "posture-table-wrap";
+
+      const table = document.createElement("table");
+      table.className = "posture-table";
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Agent / Archetype</th><th>Type</th><th>Tier</th><th>Filesystem Isolation</th><th>Network Egress</th><th>Approval Gated Tools</th></tr>";
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      const agents = fleet.agents || [];
+      if (!agents.length) {
+        tbody.innerHTML = "<tr><td colspan='6' class='dc-note'>No agents registered.</td></tr>";
+      } else {
+        agents.forEach((a) => {
+          const tr = document.createElement("tr");
+          const tierPill = a.tier === 0 ? "<span class='prefs-pill'>Tier 0 Vault</span>" :
+                           a.tier === 2 ? "<span class='prefs-pill warn'>Tier 2 Worktree</span>" :
+                           "<span class='prefs-pill on'>Tier 1 Read-only</span>";
+          const gated = (a.approval_required || []).map(t => `<code class='sec-cls-pill'>${t}</code>`).join(" ") || "<span class='prefs-meta'>none</span>";
+          tr.innerHTML = `
+            <td><strong>${a.title || a.id}</strong><br><span class='prefs-meta'>${a.id}</span></td>
+            <td><span class='sec-cls-pill'>${a.kind}</span></td>
+            <td>${tierPill}</td>
+            <td><code>${a.filesystem || "read-only"}</code></td>
+            <td><code>${a.network || "none"}</code></td>
+            <td>${gated}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      slot.appendChild(tableWrap);
+    }
+
+    function renderSecurityEvents(events) {
+      const slot = $("sec-events-table-slot");
+      if (!slot) return;
+      slot.innerHTML = "";
+
+      let filtered = events.slice();
+      if (secSeverityFilter !== "all") {
+        filtered = filtered.filter(e => (e.severity || "info").toLowerCase() === secSeverityFilter);
+      }
+      if (secClassFilter !== "all") {
+        filtered = filtered.filter(e => (e.classification || "policy").toLowerCase() === secClassFilter);
+      }
+
+      if (!filtered.length) {
+        const p = document.createElement("p");
+        p.className = "dc-note";
+        p.textContent = "No security events match the current filter criteria.";
+        slot.appendChild(p);
+        return;
+      }
+
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "posture-table-wrap";
+
+      const table = document.createElement("table");
+      table.className = "posture-table";
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Occurred</th><th>Severity</th><th>Class</th><th>Provider</th><th>Correlated IDs</th><th>Summary & Evidence</th></tr>";
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      filtered.forEach((ev) => {
+        const tr = document.createElement("tr");
+
+        const tdWhen = document.createElement("td");
+        tdWhen.style.whiteSpace = "nowrap";
+        const when = (ev.occurred_at || "").replace("T", " ").replace(/\.\d+Z$/, "Z");
+        tdWhen.innerHTML = `<span class='prefs-meta'>${when}</span>`;
+        tr.appendChild(tdWhen);
+
+        const tdSev = document.createElement("td");
+        const sev = (ev.severity || "info").toLowerCase();
+        tdSev.innerHTML = `<span class='sec-sev-pill sec-sev-${sev}'>${sev}</span>`;
+        tr.appendChild(tdSev);
+
+        const tdCls = document.createElement("td");
+        tdCls.innerHTML = `<span class='sec-cls-pill'>${ev.classification || "policy"}</span>`;
+        tr.appendChild(tdCls);
+
+        const tdProv = document.createElement("td");
+        tdProv.innerHTML = `<span class='prefs-meta'>${ev.provider || "platform"}</span>`;
+        tr.appendChild(tdProv);
+
+        const tdCorr = document.createElement("td");
+        if (ev.job_id) {
+          const jBtn = document.createElement("span");
+          jBtn.className = "sec-corr-badge";
+          jBtn.textContent = `job: ${ev.job_id}`;
+          jBtn.title = "View correlated Vise Job";
+          jBtn.onclick = () => {
+            switchSecurityTab("vise");
+            const row = document.getElementById(`vise-row-${ev.job_id}`);
+            if (row) row.scrollIntoView({ behavior: "smooth", block: "center" });
+          };
+          tdCorr.appendChild(jBtn);
+        }
+        if (ev.run_id) {
+          const rBtn = document.createElement("span");
+          rBtn.className = "sec-corr-badge";
+          rBtn.textContent = `run: ${ev.run_id}`;
+          rBtn.title = "Jump to Agent Run";
+          rBtn.onclick = () => {
+            closePrefs();
+            setView("run");
+            state.runId = ev.run_id;
+            loadRun(ev.run_id).catch((e) => showErr(e));
+          };
+          tdCorr.appendChild(rBtn);
+        }
+        if (ev.agent_id) {
+          const aSpan = document.createElement("span");
+          aSpan.className = "sec-cls-pill";
+          aSpan.textContent = ev.agent_id;
+          tdCorr.appendChild(aSpan);
+        }
+        if (!ev.job_id && !ev.run_id && !ev.agent_id) {
+          tdCorr.innerHTML = "<span class='prefs-meta'>—</span>";
+        }
+        tr.appendChild(tdCorr);
+
+        const tdSumm = document.createElement("td");
+        const summaryText = document.createElement("div");
+        summaryText.innerHTML = `<strong>${ev.summary || "Security event"}</strong>`;
+        if (ev.tool) {
+          summaryText.innerHTML += ` · <code>${ev.tool}</code>`;
+        }
+        tdSumm.appendChild(summaryText);
+
+        if (ev.evidence && ev.evidence.length) {
+          const evWrap = document.createElement("div");
+          evWrap.style.marginTop = "4px";
+          ev.evidence.forEach((ref) => {
+            const evBtn = document.createElement("button");
+            evBtn.type = "button";
+            evBtn.className = "sec-evidence-pill";
+            evBtn.textContent = `📎 ${ref.evidence_id} (${ref.sha256 ? ref.sha256.slice(0, 8) : 'sha'}…)`;
+            evBtn.onclick = () => openEvidenceDialog(ref);
+            evWrap.appendChild(evBtn);
+          });
+          tdSumm.appendChild(evWrap);
+        }
+
+        if (ev.details && Object.keys(ev.details).length > 0) {
+          const detBtn = document.createElement("button");
+          detBtn.type = "button";
+          detBtn.className = "dc-tab";
+          detBtn.style.marginTop = "6px";
+          detBtn.style.padding = "2px 8px";
+          detBtn.style.fontSize = "11px";
+          detBtn.textContent = "View Redacted Details";
+          
+          const detBlock = document.createElement("pre");
+          detBlock.className = "sec-details-pre";
+          detBlock.textContent = JSON.stringify(ev.details, null, 2);
+          detBlock.hidden = true;
+
+          detBtn.onclick = () => {
+            detBlock.hidden = !detBlock.hidden;
+            detBtn.textContent = detBlock.hidden ? "View Redacted Details" : "Hide Details";
+          };
+
+          tdSumm.appendChild(detBtn);
+          tdSumm.appendChild(detBlock);
+        }
+
+        tr.appendChild(tdSumm);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      slot.appendChild(tableWrap);
+    }
+
+    function renderSecurityVise(jobs) {
+      const slot = $("sec-vise-jobs-slot");
+      if (!slot) return;
+      slot.innerHTML = "";
+
+      if (!jobs || !jobs.length) {
+        slot.innerHTML = "<p class='dc-note'>No sandboxed execution jobs queued. Hypervisor containment boundary intact.</p>";
+        return;
+      }
+
+      const tableWrap = document.createElement("div");
+      tableWrap.className = "posture-table-wrap";
+
+      const table = document.createElement("table");
+      table.className = "posture-table";
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Job ID</th><th>State</th><th>Profile</th><th>SHA256 (Safe Hash)</th><th>Actor</th><th>Evidence</th></tr>";
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      jobs.forEach((j) => {
+        const tr = document.createElement("tr");
+        tr.id = `vise-row-${j.job_id}`;
+        const isLive = j.state === "running" || j.state === "ready" || j.state === "collecting";
+        const statePill = `<span class='prefs-pill ${isLive ? "warn" : (j.state === "complete" ? "on" : "off")}'>${j.state}</span>`;
+        const shaPreview = j.sample_sha256 ? `<code>${j.sample_sha256.slice(0, 16)}…</code>` : "<span class='prefs-meta'>none</span>";
+        const evCount = (j.evidence || []).length;
+        
+        tr.innerHTML = `
+          <td><strong>${j.job_id}</strong></td>
+          <td>${statePill}</td>
+          <td><code>${j.profile || "linux-static"}</code></td>
+          <td>${shaPreview}</td>
+          <td><span class='prefs-meta'>${j.actor || "operator"}</span></td>
+          <td>${evCount ? `<span class='sec-evidence-pill'>📎 ${evCount} ref(s)</span>` : "<span class='prefs-meta'>0</span>"}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      tableWrap.appendChild(table);
+      slot.appendChild(tableWrap);
+    }
+
+    function renderSecurityMcp(mcpView) {
+      const slot = $("sec-mcp-slot");
+      if (!slot) return;
+      slot.innerHTML = "";
+
+      const servers = mcpView.servers || [];
+      const catalog = mcpView.catalog || [];
+
+      let html = `<div class="posture-policy-banner" style="margin-bottom: 14px;">Policy: <strong>deny-unlisted</strong>. Registered tools must be allowlisted in <code>platform/mcp/allowlist.json</code>.</div>`;
+      html += `<div class="posture-table-wrap"><table class="posture-table"><thead><tr><th>Server ID</th><th>Title</th><th>Transport</th><th>Network Policy</th><th>Capabilities (Class)</th><th>Allowlist Status</th></tr></thead><tbody>`;
+
+      if (!catalog.length && !servers.length) {
+        html += `<tr><td colspan="6" class="dc-note">No MCP servers registered in catalog.</td></tr>`;
+      } else {
+        const items = catalog.length ? catalog : servers;
+        items.forEach((s) => {
+          const isAllowed = !!s.listed || !!s.authorized;
+          const statusPill = isAllowed ? "<span class='prefs-pill on'>Allowlisted</span>" : "<span class='prefs-pill off'>Unlisted (Denied)</span>";
+          const caps = (s.capabilities || []).map(c => {
+            const name = typeof c === 'string' ? c : c.name;
+            const cls = typeof c === 'object' && c.permission_class ? c.permission_class : 'read';
+            return `<code class='sec-cls-pill'>${name} (${cls})</code>`;
+          }).join(" ") || "<span class='prefs-meta'>none</span>";
+          html += `<tr><td><strong>${s.id}</strong></td><td>${s.title || s.id}</td><td><code>${s.transport || 'stdio'}</code></td><td><code>${s.network_policy || 'none'}</code></td><td>${caps}</td><td>${statusPill}</td></tr>`;
+        });
+      }
+      html += `</tbody></table></div>`;
+      slot.innerHTML = html;
+    }
+
+    function renderSecurityPolicies(policies) {
+      const slot = $("sec-policies-slot");
+      if (!slot) return;
+      slot.innerHTML = "";
+      policies.forEach((pol) => {
+        const item = document.createElement("div");
+        item.className = "sec-policy-item";
+        item.innerHTML = `
+          <h3><span>${pol.name}</span> <span class="prefs-pill on">Enforced</span></h3>
+          <p>${pol.value}</p>
+        `;
+        slot.appendChild(item);
+      });
+    }
+
+    function switchSecurityTab(tabName) {
+      secCurrentTab = tabName;
+      document.querySelectorAll("#sec-nav-tabs .dc-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.getAttribute("data-sec-tab") === tabName);
+      });
+      const panels = ["overview", "events", "vise", "mcp", "policies"];
+      panels.forEach((p) => {
+        const el = $("sec-tab-" + p);
+        if (el) el.hidden = (p !== tabName);
+      });
+    }
+
+    function openEvidenceDialog(evidence) {
+      const dialog = $("sec-evidence-dialog");
+      const content = $("sec-ev-content");
+      if (!dialog || !content) return;
+      content.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div><strong>Evidence ID:</strong> <code>${evidence.evidence_id || "ev-unknown"}</code></div>
+          <div><strong>Storage Locator:</strong> <code>${evidence.locator || "quarantine://datastores/evidence"}</code></div>
+          <div><strong>SHA-256 Hash:</strong> <code style="word-break:break-all;">${evidence.sha256 || "—"}</code></div>
+          <div><strong>Media Type:</strong> <code>${evidence.media_type || "application/octet-stream"}</code></div>
+          <div><strong>Byte Length:</strong> <code>${evidence.byte_length != null ? evidence.byte_length + ' bytes' : 'unknown'}</code></div>
+        </div>
+      `;
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "true");
     }
 
     function setView(view, opts = {}) {
@@ -4624,6 +5186,36 @@
     });
     $("badge-ai").onclick = () => openPrefs("keys");
     $("badge-defenseclaw").onclick = () => openPrefs("defenseclaw");
+    if ($("sec-refresh-btn")) $("sec-refresh-btn").onclick = () => loadSecurityOverview().catch((e) => showErr(e));
+    if ($("sec-view-permissions-btn")) $("sec-view-permissions-btn").onclick = () => {
+      closePrefs();
+      setView("agents");
+      if (window.agentStudio) window.agentStudio.openPage("permissions");
+    };
+    if ($("sec-ev-close")) $("sec-ev-close").onclick = () => {
+      const d = $("sec-evidence-dialog");
+      if (d) {
+        if (typeof d.close === "function") d.close();
+        else d.removeAttribute("open");
+      }
+    };
+    document.querySelectorAll("#sec-nav-tabs .dc-tab").forEach((tab) => {
+      tab.onclick = () => switchSecurityTab(tab.getAttribute("data-sec-tab"));
+    });
+    document.querySelectorAll(".sec-sev-btn").forEach((btn) => {
+      btn.onclick = () => {
+        secSeverityFilter = btn.getAttribute("data-sev");
+        document.querySelectorAll(".sec-sev-btn").forEach(b => b.classList.toggle("active", b === btn));
+        if (secOverviewData) renderSecurityEvents(secOverviewData.recent_events || []);
+      };
+    });
+    document.querySelectorAll(".sec-cls-btn").forEach((btn) => {
+      btn.onclick = () => {
+        secClassFilter = btn.getAttribute("data-cls");
+        document.querySelectorAll(".sec-cls-btn").forEach(b => b.classList.toggle("active", b === btn));
+        if (secOverviewData) renderSecurityEvents(secOverviewData.recent_events || []);
+      };
+    });
     let antaresTimer = null;
     function stopAntaresPoll() {
       if (antaresTimer) clearTimeout(antaresTimer);

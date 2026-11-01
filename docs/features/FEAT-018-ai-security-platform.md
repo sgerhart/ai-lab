@@ -1,6 +1,6 @@
 # FEAT-018 — AI Security Platform
 
-- **Status:** Partial (IWO-065–068 in Git, unit-tested, not deployed)
+- **Status:** Partial (IWO-065–069 in Git, unit-tested, not deployed)
 - **Created:** 2026-09-26
 - **Owner:** human (operator)
 - **Priority:** Core security capability
@@ -45,7 +45,7 @@ MCP, models, code-analysis services, approvals, findings, and audit.
 - IWO-066 — common security event and evidence model
 - IWO-067 — MCP registry and governed capabilities
 - IWO-068 — Agent Studio security posture (**Complete**)
-- IWO-069 — Security Center expansion
+- IWO-069 — Security Center expansion (**Complete**)
 - IWO-085 — AISVS 1.0 Level 1 gap register (**Review**; register written, ADR 0044 still Proposed)
 - IWO-086 — input validation (**Draft**)
 - IWO-087 — model admission and AI BOM (**Draft**)

@@ -1913,6 +1913,242 @@ def create_control_app(
             raise HTTPException(status_code=404, detail="not found")
         return {"ok": True, "id": document_id}
 
+    def _evaluate_def_posture(definition: Any) -> dict[str, Any]:
+        from .security.posture import evaluate_agent_posture
+
+        mcp_reg = getattr(app.state, "mcp_registry", None)
+        tools = list(getattr(definition, "tools", []))
+        studio = getattr(definition, "studio", None)
+        if isinstance(studio, dict) and studio.get("tools"):
+            for t in studio["tools"]:
+                if t not in tools:
+                    tools.append(t)
+        posture = evaluate_agent_posture(
+            getattr(definition, "agent", "coding-assistant"),
+            title=getattr(definition, "title", ""),
+            requested_tools=tools,
+            mcp_server_ids=getattr(definition, "mcp_server_ids", []),
+            mcp_registry=mcp_reg,
+        )
+        return posture.to_dict()
+
+    def _fleet_posture_summary() -> dict[str, Any]:
+        from .security.posture import evaluate_agent_posture
+
+        tier_counts = {0: 0, 1: 0, 2: 0}
+        archetypes = [
+            ("coding-assistant", "Coding Assistant"),
+            ("personal", "Personal Agent"),
+            ("research", "Research Agent"),
+            ("lab-operations", "Lab Operations"),
+            ("vuln-localize", "Vulnerability Localizer"),
+        ]
+        mcp_reg = getattr(app.state, "mcp_registry", None)
+        agents: list[dict[str, Any]] = []
+        for arch_id, title in archetypes:
+            try:
+                p = evaluate_agent_posture(arch_id, title=title, mcp_registry=mcp_reg).to_dict()
+                tier = int(p.get("isolation_tier", 1))
+                tier_counts[tier] = tier_counts.get(tier, 0) + 1
+                agents.append({
+                    "id": arch_id,
+                    "title": title,
+                    "kind": "archetype",
+                    "tier": tier,
+                    "filesystem": p.get("filesystem_access"),
+                    "network": p.get("network_access"),
+                    "approval_required": p.get("approval_required_tools", []),
+                    "denied_tools": p.get("permanently_denied_tools", []),
+                })
+            except Exception:
+                pass
+
+        def_store = getattr(app.state, "agent_definition_store", None)
+        if def_store:
+            try:
+                for d in def_store.list():
+                    p = _evaluate_def_posture(d)
+                    tier = int(p.get("isolation_tier", 1))
+                    tier_counts[tier] = tier_counts.get(tier, 0) + 1
+                    agents.append({
+                        "id": getattr(d, "id", ""),
+                        "title": getattr(d, "title", ""),
+                        "kind": "custom",
+                        "archetype": getattr(d, "agent", ""),
+                        "tier": tier,
+                        "filesystem": p.get("filesystem_access"),
+                        "network": p.get("network_access"),
+                        "approval_required": p.get("approval_required_tools", []),
+                        "denied_tools": p.get("permanently_denied_tools", []),
+                    })
+            except Exception:
+                pass
+
+        return {
+            "tier_0_count": tier_counts.get(0, 0),
+            "tier_1_count": tier_counts.get(1, 0),
+            "tier_2_count": tier_counts.get(2, 0),
+            "total_agents": len(agents),
+            "agents": agents,
+        }
+
+    @app.get("/v1/security/overview")
+    def get_security_overview(
+        request: Request,
+        authorization: str | None = Header(default=None),
+        events_limit: int = Query(default=50, ge=1, le=200),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+
+        # 1. Provider health & registry (missing providers handled gracefully)
+        providers: list[dict[str, Any]] = []
+
+        # DefenseClaw
+        dc_posture: dict[str, Any] = {}
+        try:
+            dc_posture = posture_view(app.state.security_posture.load())
+        except Exception:
+            pass
+        dc_reported = bool(dc_posture.get("reported_at"))
+        dc_findings_cnt = len(dc_posture.get("findings") or [])
+        dc_status = "active" if dc_reported else "no-report"
+        providers.append({
+            "id": "defenseclaw",
+            "title": "DefenseClaw Governance",
+            "kind": "defenseclaw",
+            "host": "mac-air",
+            "status": dc_status,
+            "status_label": "Active" if dc_reported else "No report from Air (stale)",
+            "last_reported": dc_posture.get("reported_at") or None,
+            "findings_count": dc_findings_cnt,
+            "description": "Continuous operator governance on Air (rule monitoring, block episodes, finding glossary).",
+            "url_target": "defenseclaw",
+        })
+
+        # Antares
+        antares_ok = False
+        antares_comp = False
+        if settings.antares_job_url:
+            antares_ok, antares_comp = _antares_flags(settings.antares_job_url)
+        antares_status = "online" if antares_ok else ("offline" if settings.antares_job_url else "not-configured")
+        providers.append({
+            "id": "antares",
+            "title": "Antares Software Security",
+            "kind": "antares",
+            "host": "studio",
+            "status": antares_status,
+            "status_label": "Online" if antares_ok else ("Offline" if settings.antares_job_url else "Not configured / unavailable"),
+            "completions_local": antares_comp,
+            "description": "CWE vulnerability localization model (reads snapshot fixtures, creates work order leads).",
+            "url_target": "antares",
+        })
+
+        # Cybersecurity Vise
+        vise_jobs: list[dict[str, Any]] = []
+        try:
+            vise_jobs = [j.to_dict() for j in app.state.vise.list()]
+        except Exception:
+            pass
+        active_vise = [j for j in vise_jobs if j.get("state") in ("submitted", "preflight", "ready", "approval", "running", "collecting")]
+        providers.append({
+            "id": "vise",
+            "title": "Cybersecurity Vise",
+            "kind": "vise",
+            "host": "security-compute",
+            "status": "ready",
+            "status_label": "Quarantine Ready",
+            "active_jobs_count": len(active_vise),
+            "total_jobs_count": len(vise_jobs),
+            "description": "Quarantine and behavioral analysis pipeline for untrusted workloads (ADR 0043).",
+            "url_target": "vise",
+        })
+
+        # Governed MCP Registry
+        mcp_view: dict[str, Any] = {}
+        try:
+            mcp_view = app.state.mcp_registry.view()
+        except Exception:
+            pass
+        servers = mcp_view.get("servers") or []
+        catalog = mcp_view.get("catalog") or []
+        providers.append({
+            "id": "mcp",
+            "title": "Governed MCP Registry",
+            "kind": "mcp",
+            "host": "mac-mini",
+            "status": "active",
+            "status_label": "Active (deny-unlisted)",
+            "servers_count": len(servers),
+            "catalog_count": len(catalog),
+            "description": "Capability gate for local and IDE tools; blocks unallowlisted servers at the boundary.",
+            "url_target": "mcp",
+        })
+
+        # Security Compute Hypervisor
+        providers.append({
+            "id": "hypervisor",
+            "title": "Security Compute Hypervisor",
+            "kind": "hypervisor",
+            "host": "esxi-proxmox",
+            "status": "unconfigured",
+            "status_label": "Refusing calls (ADR 0043)",
+            "description": "External hypervisor for VM detonation. Refuses all calls until operator supplies inventory.",
+            "url_target": "hypervisor",
+        })
+
+        # 2. Events breakdown
+        all_events: list[dict[str, Any]] = []
+        try:
+            all_events = [e.to_dict() for e in app.state.security_events.list()]
+        except Exception:
+            pass
+
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+        classification_counts = {"finding": 0, "policy": 0, "approval": 0, "mcp": 0, "evidence": 0, "inventory": 0}
+        for ev in all_events:
+            sev = str(ev.get("severity") or "info").lower()
+            if sev in severity_counts:
+                severity_counts[sev] += 1
+            cls = str(ev.get("classification") or "policy").lower()
+            if cls in classification_counts:
+                classification_counts[cls] += 1
+
+        recent_events = all_events[-events_limit:] if len(all_events) > events_limit else list(all_events)
+        recent_events.reverse()
+
+        # 3. Fleet security posture summary
+        fleet_posture = _fleet_posture_summary()
+
+        # 4. System security policies summary
+        system_policies = [
+            {"name": "Localhost Binding Invariant", "value": "127.0.0.1 loopback default (0.0.0.0 denied in Git)", "enforced": True},
+            {"name": "Architectural Network Boundary", "value": "platform/security has 0 network imports (ADR 0043)", "enforced": True},
+            {"name": "Isolated Worktree Writes", "value": "Agent commits only inside git worktree after approval", "enforced": True},
+            {"name": "Hostile Workload Quarantine", "value": "Malware detonation hypervisor-only; zero local containers", "enforced": True},
+            {"name": "MCP Server Allowlist", "value": "deny-unlisted policy enforced for all external tools", "enforced": True},
+            {"name": "Permanently Denied Tools", "value": "git_push, pr_create, deploy, host_mutate, rm_rf blocked", "enforced": True},
+            {"name": "Zero-Secret Payload Policy", "value": "Secrets, passwords, credentials scrubbed at event boundary", "enforced": True},
+        ]
+
+        return {
+            "ok": True,
+            "providers": providers,
+            "metrics": {
+                "events_total": len(all_events),
+                "severity_counts": severity_counts,
+                "classification_counts": classification_counts,
+                "vise_jobs_total": len(vise_jobs),
+                "active_vise_jobs": len(active_vise),
+                "mcp_authorized_count": len(servers),
+                "fleet_summary": fleet_posture,
+            },
+            "recent_events": recent_events,
+            "vise_jobs": list(reversed(vise_jobs[-20:])),
+            "mcp_view": mcp_view,
+            "defenseclaw": dc_posture,
+            "system_policies": system_policies,
+        }
+
     @app.get("/v1/security/providers")
     def get_security_providers(
         request: Request,
@@ -2762,24 +2998,6 @@ def create_control_app(
             if errors:
                 draft["registration_error"] = "; ".join(errors)
         return result
-
-    def _evaluate_def_posture(definition: AgentDefinition) -> dict[str, Any]:
-        from .security.posture import evaluate_agent_posture
-
-        mcp_reg = getattr(app.state, "mcp_registry", None)
-        tools = list(definition.tools)
-        if isinstance(definition.studio, dict) and definition.studio.get("tools"):
-            for t in definition.studio["tools"]:
-                if t not in tools:
-                    tools.append(t)
-        posture = evaluate_agent_posture(
-            definition.agent,
-            title=definition.title,
-            requested_tools=tools,
-            mcp_server_ids=definition.mcp_server_ids,
-            mcp_registry=mcp_reg,
-        )
-        return posture.to_dict()
 
     @app.get("/v1/agent-definitions")
     def list_agent_definitions(

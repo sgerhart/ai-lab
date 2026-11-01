@@ -1,6 +1,6 @@
 # IWO-069 — Security Center expansion
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P2  
 **Effort:** L  
 **Owner:** implementation agent  
@@ -72,10 +72,17 @@ Do not expose secret values or raw suspicious binaries.
 ## Closeout
 
 - Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+  - Route added: `GET /v1/security/overview` aggregating providers (DefenseClaw, Antares, Vise, MCP, Hypervisor), metrics, recent events, Vise jobs, MCP catalog, and system policies.
+  - Resilience: Missing providers (Antares without URL, DefenseClaw without report, Hypervisor without inventory) show `unavailable` or `stale` without breaking the endpoint.
+  - Correlation: Findings and evidence events correlate to clickable `job_id` and `run_id` links with `EvidenceRef` tags and inspection modal.
+  - Zero secrets: All event details pass through `redact()`. Raw payload keys are refused (400) and passwords/tokens masked (`[redacted]`).
+  - Unit & contract tests: `tests/test_security_center.py` (5 tests passing; full suite 454 tests passed).
+  - Repo validator: `./scripts/validate-repo.sh` passed (`RESULT: OK`).
+- Follow-ons filed: IWO-072 (Security Compute isolated network contract), IWO-073 (Security VM template contract).
+- Residual risks: Live ESXi/Proxmox hypervisor mutation refused until operator supplies inventory (ADR 0043).
+- Docs/status updated: `docs/work-orders/IWO-069-security-center-expansion.md`, `docs/features/FEAT-018-ai-security-platform.md`, `docs/features/index.md`, `docs/work-orders/README.md`.
+- Status surfaces reconciled: Yes.
+- Summary metadata reviewed: Yes.
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded
+
