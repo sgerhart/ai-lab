@@ -133,6 +133,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-124](IWO-124-coding-training-execution-reward-rl.md) | Coding training execution-reward RL training | Complete (WO-08 Delivered) |
 | [IWO-125](IWO-125-coding-training-documentation-and-handover.md) | Coding training operator documentation and handover | Complete (WO-09 Delivered) |
 | [IWO-126](IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | Complete (unit-tested) |
+| [IWO-127](IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Frontier Model Token Usage Telemetry & Cost Estimation | Complete (unit-tested) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

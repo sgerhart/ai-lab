@@ -1,6 +1,6 @@
 # FEAT-011 — Frontier model access and provider router
 
-- **Status:** Partial (Ollama live; cloud adapters gated — IWO-021)
+- **Status:** Complete (gated; Ollama live, cloud adapters gated with telemetry — IWO-127)
 - **Created:** 2026-09-21
 - **Priority:** Core platform (with FEAT-010)
 - **Owner:** human (operator)
@@ -68,6 +68,7 @@ No silent switch from local → paid API.
 | [IWO-021](../work-orders/IWO-021-cloud-provider-adapters.md) | OpenAI + Anthropic from secret store | IWO-004, IWO-018 | Gate + mocked HTTP; no live $ in CI |
 | [IWO-019](../work-orders/IWO-019-studio-ollama-provider.md) | Studio Ollama provider | FEAT-003 host | Health + Agents completion |
 | IWO-004-d | Optional Gemini adapter | IWO-004 | Same disable-by-default pattern |
+| [IWO-127](../work-orders/IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Token telemetry and cost estimation | IWO-021 | Complete (unit-tested; SSE metrics) |
 
 ## Acceptance criteria
 
@@ -77,6 +78,7 @@ No silent switch from local → paid API.
 - [x] No silent paid fallback
 - [x] Secrets never in browser responses
 - [x] No live chargeable tests without separate authorization
+- [x] Token telemetry and dollar cost estimation on cloud responses (IWO-127)
 
 ## Out of scope
 
@@ -89,7 +91,7 @@ No silent switch from local → paid API.
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done | this file |
-| Code | Partial: Ollama live; OpenAI/Anthropic adapters gated (IWO-021); Gemini stub | `cloud_backends.py` |
+| Code | Complete: Ollama live; OpenAI/Anthropic/Gemini adapters gated with telemetry (IWO-127) | `cloud_backends.py`, `control_app.py` |
 | Host deploy | Cloud off until `/secrets` authorize + keys | — |
 | Live verified | Partial | Studio Ollama; cloud not live-charged |
 

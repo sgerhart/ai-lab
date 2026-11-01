@@ -47,7 +47,7 @@ Do not treat this index as authorized implementation or deploy.
 | Pri | ID | Capability | Status | GitHub |
 |-----|----|------------|--------|--------|
 | 0 | [FEAT-010](FEAT-010-mini-personal-agent-loop.md) | Mini personal-agent loop and harness | **Partial (live):** IWO-020 Studio Ollama tool loop | [#11](https://github.com/sgerhart/ai-lab/issues/11) |
-| 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Partial:** Ollama live; OpenAI/Anthropic gated (IWO-021) | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
+| 0 | [FEAT-011](FEAT-011-frontier-model-access.md) | Frontier model access / provider router | **Complete (gated):** Ollama live; OpenAI/Anthropic/Gemini telemetry (IWO-127) | [#12](https://github.com/sgerhart/ai-lab/issues/12) |
 | 1 | [FEAT-001](FEAT-001-work-order-planning-and-approval.md) | Feature backlog and WO planning | **Partial (docs)** + protocol IWO-001 | [#2](https://github.com/sgerhart/ai-lab/issues/2) |
 | 2 | [FEAT-002](FEAT-002-durable-background-execution.md) | Durable background execution | **Partial (live):** IWO-031 agent-run worker | [#3](https://github.com/sgerhart/ai-lab/issues/3) |
 | 3 | [FEAT-004](FEAT-004-agent-chat-and-dashboard.md) | Interactive agent chat UI + dashboard | **Partial (live):** Personal Agent Studio shell | [#5](https://github.com/sgerhart/ai-lab/issues/5) |
@@ -182,6 +182,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-124](../work-orders/IWO-124-coding-training-execution-reward-rl.md) | Coding training execution-reward RL training | FEAT-024 | **Complete** (WO-08 Delivered) |
 | [IWO-125](../work-orders/IWO-125-coding-training-documentation-and-handover.md) | Coding training operator documentation and handover | FEAT-024 | **Complete** (WO-09 Delivered) |
 | [IWO-126](../work-orders/IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | FEAT-022 | **Complete** (unit-tested) |
+| [IWO-127](../work-orders/IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Frontier model telemetry & cost estimation | FEAT-011 | **Complete** (unit-tested) |
 
 ## Historical phase work orders
 

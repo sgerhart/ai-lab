@@ -2418,6 +2418,22 @@ def create_control_app(
                     completion = router.complete(req)
                     full = completion.text
                     billing = completion.billing_class.value
+                    if completion.usage:
+                        u = completion.usage
+                        inp = u.get("input_tokens")
+                        out = u.get("output_tokens")
+                        tot = u.get("total_tokens") or (
+                            (inp or 0) + (out or 0) if (inp is not None or out is not None) else None
+                        )
+                        cost = u.get("estimated_cost_usd")
+                        metrics = {
+                            "input_tokens": inp,
+                            "output_tokens": out,
+                            "total_tokens": tot,
+                            "estimated_cost_usd": cost,
+                            "source": backend,
+                        }
+                        yield f"data: {json.dumps({'event': 'metrics', **metrics})}\n\n"
                     if not suppress:
                         yield f"data: {json.dumps({'event': 'token', 'text': full})}\n\n"
             except ModelSlotBusy as exc:

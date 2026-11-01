@@ -19,6 +19,57 @@ DEFAULT_MODELS: dict[str, list[str]] = {
     "gemini": ["gemini-2.0-flash"],
 }
 
+# Price in USD per 1M tokens: (input_per_million, output_per_million)
+PROVIDER_MODEL_RATES: dict[str, dict[str, tuple[float, float]]] = {
+    "openai": {
+        "gpt-4o-mini": (0.15, 0.60),
+        "gpt-4o": (2.50, 10.00),
+        "default": (0.15, 0.60),
+    },
+    "anthropic": {
+        "claude-3-5-haiku": (0.80, 4.00),
+        "claude-3-5-haiku-latest": (0.80, 4.00),
+        "claude-sonnet-4-5": (3.00, 15.00),
+        "claude-3-5-sonnet": (3.00, 15.00),
+        "default": (0.80, 4.00),
+    },
+    "gemini": {
+        "gemini-2.0-flash": (0.075, 0.30),
+        "gemini-1.5-flash": (0.075, 0.30),
+        "gemini-1.5-pro": (1.25, 5.00),
+        "default": (0.10, 0.40),
+    },
+}
+
+
+def estimate_cost_usd(
+    provider: str,
+    model: str,
+    input_tokens: int | None,
+    output_tokens: int | None,
+) -> float | None:
+    """Estimate completion cost in USD based on model rate cards."""
+    if input_tokens is None and output_tokens is None:
+        return None
+    rates_by_provider = PROVIDER_MODEL_RATES.get(provider.lower())
+    if not rates_by_provider:
+        return None
+
+    model_lower = (model or "").lower()
+    rates = rates_by_provider.get(model_lower)
+    if rates is None:
+        for k, v in rates_by_provider.items():
+            if k != "default" and k in model_lower:
+                rates = v
+                break
+    if rates is None:
+        rates = rates_by_provider.get("default", (0.0, 0.0))
+
+    in_rate_per_token = rates[0] / 1_000_000.0
+    out_rate_per_token = rates[1] / 1_000_000.0
+    cost = (input_tokens or 0) * in_rate_per_token + (output_tokens or 0) * out_rate_per_token
+    return round(cost, 8)
+
 
 class CloudUnavailable(RuntimeError):
     """Transport or API error from a usage-billed provider."""
@@ -105,8 +156,13 @@ class OpenAIBackend:
                 text = str(msg.get("content") or "")
             u = data.get("usage") or {}
             if isinstance(u, dict):
-                usage["input_tokens"] = u.get("prompt_tokens")
-                usage["output_tokens"] = u.get("completion_tokens")
+                inp = u.get("prompt_tokens")
+                out = u.get("completion_tokens")
+                usage["input_tokens"] = inp
+                usage["output_tokens"] = out
+                if inp is not None or out is not None:
+                    usage["total_tokens"] = u.get("total_tokens", (inp or 0) + (out or 0))
+                    usage["estimated_cost_usd"] = estimate_cost_usd(self.provider_id, model, inp, out)
         return CompletionResponse(
             model=model,
             backend=self.provider_id,
@@ -198,8 +254,13 @@ class AnthropicBackend:
             text = "".join(parts)
             u = data.get("usage") or {}
             if isinstance(u, dict):
-                usage["input_tokens"] = u.get("input_tokens")
-                usage["output_tokens"] = u.get("output_tokens")
+                inp = u.get("input_tokens")
+                out = u.get("output_tokens")
+                usage["input_tokens"] = inp
+                usage["output_tokens"] = out
+                if inp is not None or out is not None:
+                    usage["total_tokens"] = (inp or 0) + (out or 0)
+                    usage["estimated_cost_usd"] = estimate_cost_usd(self.provider_id, model, inp, out)
         return CompletionResponse(
             model=model,
             backend=self.provider_id,
@@ -293,8 +354,13 @@ class GeminiBackend:
                 text = "".join(str(p.get("text") or "") for p in parts if isinstance(p, dict))
             u = data.get("usageMetadata") or {}
             if isinstance(u, dict):
-                usage["input_tokens"] = u.get("promptTokenCount")
-                usage["output_tokens"] = u.get("candidatesTokenCount")
+                inp = u.get("promptTokenCount")
+                out = u.get("candidatesTokenCount")
+                usage["input_tokens"] = inp
+                usage["output_tokens"] = out
+                if inp is not None or out is not None:
+                    usage["total_tokens"] = u.get("totalTokenCount", (inp or 0) + (out or 0))
+                    usage["estimated_cost_usd"] = estimate_cost_usd(self.provider_id, model, inp, out)
         return CompletionResponse(
             model=model,
             backend=self.provider_id,

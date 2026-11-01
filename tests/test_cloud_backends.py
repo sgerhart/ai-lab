@@ -16,8 +16,13 @@ from ai_lab_platform.cloud_backends import (
     CloudUnavailable,
     GeminiBackend,
     OpenAIBackend,
+    estimate_cost_usd,
 )
-from ai_lab_platform.model_router import CompletionRequest, build_router_from_settings
+from ai_lab_platform.model_router import (
+    CompletionRequest,
+    CompletionResponse,
+    build_router_from_settings,
+)
 from ai_lab_platform.secrets_store import SecretStore
 from ai_lab_platform.settings import Settings
 
@@ -67,6 +72,11 @@ class CloudBackendGateTests(unittest.TestCase):
         self.assertEqual(text.text, "hello-cloud")
         self.assertEqual(text.backend, "openai")
         self.assertEqual(text.billing_class.value, "usage_billed_api")
+        self.assertEqual(text.usage["input_tokens"], 3)
+        self.assertEqual(text.usage["output_tokens"], 2)
+        self.assertEqual(text.usage["total_tokens"], 5)
+        self.assertIsNotNone(text.usage["estimated_cost_usd"])
+        self.assertAlmostEqual(text.usage["estimated_cost_usd"], 0.00000165, places=8)
         args, kwargs = mocked.call_args
         self.assertIn("/chat/completions", args[0])
         self.assertEqual(kwargs["headers"]["Authorization"], "Bearer sk-test-not-real")
@@ -94,6 +104,11 @@ class CloudBackendGateTests(unittest.TestCase):
                 )
             )
         self.assertEqual(text.text, "claude-hi")
+        self.assertEqual(text.usage["input_tokens"], 4)
+        self.assertEqual(text.usage["output_tokens"], 1)
+        self.assertEqual(text.usage["total_tokens"], 5)
+        self.assertIsNotNone(text.usage["estimated_cost_usd"])
+        self.assertAlmostEqual(text.usage["estimated_cost_usd"], 0.0000072, places=8)
         self.assertEqual(mocked.call_args.kwargs["headers"]["x-api-key"], "ant-test-not-real")
 
     def test_gemini_complete_mocked(self) -> None:
@@ -117,7 +132,26 @@ class CloudBackendGateTests(unittest.TestCase):
             )
         self.assertEqual(text.text, "gemini-hi")
         self.assertEqual(text.backend, "gemini")
+        self.assertEqual(text.usage["input_tokens"], 5)
+        self.assertEqual(text.usage["output_tokens"], 2)
+        self.assertEqual(text.usage["total_tokens"], 7)
+        self.assertIsNotNone(text.usage["estimated_cost_usd"])
+        self.assertAlmostEqual(text.usage["estimated_cost_usd"], 0.00000097, places=8)
         self.assertEqual(mocked.call_args.kwargs["headers"]["x-goog-api-key"], "gem-test-not-real")
+
+    def test_estimate_cost_usd_function(self) -> None:
+        # None inputs
+        self.assertIsNone(estimate_cost_usd("openai", "gpt-4o", None, None))
+        # Unknown provider
+        self.assertIsNone(estimate_cost_usd("unknown_provider", "model-x", 100, 100))
+        # Exact model
+        cost = estimate_cost_usd("openai", "gpt-4o", 1000, 500)
+        self.assertIsNotNone(cost)
+        self.assertAlmostEqual(cost, 0.0075, places=6)
+        # Fallback rates for known provider with unknown model
+        cost_fallback = estimate_cost_usd("openai", "unknown-future-model", 1000, 1000)
+        self.assertIsNotNone(cost_fallback)
+        self.assertAlmostEqual(cost_fallback, 0.00075, places=6)
 
     def test_http_error_is_cloud_unavailable(self) -> None:
         try:
@@ -146,6 +180,64 @@ class CloudBackendGateTests(unittest.TestCase):
         self.assertIn("gpt-4o-mini", providers["openai"]["models"])
         blob = str(providers)
         self.assertNotIn("sk-x", blob)
+
+    def test_stream_message_emits_cloud_metrics(self) -> None:
+        try:
+            from fastapi.testclient import TestClient
+            from langgraph.checkpoint.memory import MemorySaver
+            from ai_lab_platform.control_app import create_control_app
+            from ai_lab_platform.store import SqliteStore
+            from ai_lab_platform.model_router import ModelRouter
+        except ImportError:
+            self.skipTest("fastapi or langgraph not installed")
+
+        self.store.set_usage_billed_authorized(True)
+        self.store.set_provider("openai", "sk-test-real")
+
+        class MockCloudBackend(OpenAIBackend):
+            def complete(self, request: CompletionRequest) -> CompletionResponse:
+                return CompletionResponse(
+                    model=request.model or "gpt-4o-mini",
+                    backend="openai",
+                    text="Hello from cloud",
+                    billing_class=self.billing_class,
+                    usage={
+                        "input_tokens": 100,
+                        "output_tokens": 50,
+                        "total_tokens": 150,
+                        "estimated_cost_usd": 0.000045,
+                    },
+                )
+
+        router = ModelRouter(
+            backends={"openai": MockCloudBackend(self.store)},
+            default_backend="openai",
+        )
+        sqlite_store = SqliteStore(str(self.tmp / "test.db"))
+        app = create_control_app(
+            store=sqlite_store,
+            checkpointer=MemorySaver(),
+            token="test-token",
+            dispatch=lambda _p: {"ok": True, "detail": "unused"},
+            model_router=router,
+            secret_store=self.store,
+        )
+        client = TestClient(app)
+        headers = {"Authorization": "Bearer test-token"}
+        conv = client.post("/v1/conversations", headers=headers, json={"agent": "lab-operations"})
+        conv_id = conv.json()["id"]
+
+        resp = client.post(
+            f"/v1/conversations/{conv_id}/messages/stream",
+            headers=headers,
+            json={"content": "hello", "role": "user", "backend": "openai", "model": "gpt-4o-mini"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('"event": "metrics"', resp.text)
+        self.assertIn('"estimated_cost_usd": 4.5e-05', resp.text)
+        self.assertIn('"input_tokens": 100', resp.text)
+        self.assertIn('"output_tokens": 50', resp.text)
+        self.assertIn('"total_tokens": 150', resp.text)
 
 
 if __name__ == "__main__":
