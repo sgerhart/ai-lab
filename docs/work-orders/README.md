@@ -78,7 +78,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-065](IWO-065-security-platform-foundation.md) | Security platform foundation | Complete (unit; not deployed) |
 | [IWO-066](IWO-066-common-security-event-and-evidence-model.md) | Common security event and evidence model | Complete (unit; not deployed) |
 | [IWO-067](IWO-067-mcp-registry-and-governed-capabilities.md) | MCP registry and governed capabilities | Complete (unit; not deployed) |
-| [IWO-068](IWO-068-agent-studio-security-posture.md) | Agent Studio security posture | Draft |
+| [IWO-068](IWO-068-agent-studio-security-posture.md) | Agent Studio security posture | Complete (unit; not deployed) |
 | [IWO-069](IWO-069-security-center-expansion.md) | Security Center expansion | Draft |
 | [IWO-070](IWO-070-cybersecurity-vise-job-and-api-model.md) | Cybersecurity Vise job and API model | Complete (unit; not deployed) |
 | [IWO-071](IWO-071-hypervisor-adapter-abstraction.md) | Hypervisor adapter abstraction | Complete (unit; fake adapter only) |

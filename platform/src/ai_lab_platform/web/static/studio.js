@@ -87,6 +87,79 @@
   let currentRun = null;
   let openStep = -1;
 
+  function evaluateDraftPosture(d) {
+    if (!d) return { isolation_tier: 1, filesystem_class: "read-only", network_class: "none", approval_required_tools: [], warnings: [] };
+    const agent = d.agent || "personal";
+    const tools = (d.studio && d.studio.tools) || d.tools || [];
+    let tier = 1;
+    let tierLabel = "Bounded Local Sandbox";
+    let fs = "Read-Only";
+    let fsSub = "Zero primary tree mutation";
+    let net = "None";
+    let netSub = "Zero external network egress";
+    const approval = [];
+    const warnings = [];
+
+    if (agent === "coding-assistant") {
+      const hasWorktree = tools.includes("sandbox") || tools.includes("git_commit") || tools.includes("apply_patch");
+      tier = hasWorktree ? 2 : 1;
+      tierLabel = hasWorktree ? "Isolated Worktree Sandbox" : "Bounded Local Read-Only";
+      fs = "Isolated Worktree";
+      fsSub = "Changes restricted to throwaway git worktree";
+      net = "None";
+      netSub = "Zero external network egress";
+      approval.push("apply_patch", "git_commit");
+    } else if (agent === "personal") {
+      tier = 0;
+      tierLabel = "Trusted User Vault";
+      fs = "User Vault Scoped";
+      fsSub = "Scoped strictly to ~/.ai-lab/";
+      net = "Egress Allowlist";
+      netSub = "Public web search & cited fetch allowlist";
+    } else if (agent === "research") {
+      tier = 1;
+      tierLabel = "Bounded Research Loop";
+      fs = "Reports Scoped";
+      fsSub = "Writes restricted to markdown reports";
+      net = "Egress Allowlist";
+      netSub = "Public web search & verified sources";
+    } else if (agent === "lab-operations") {
+      tier = 1;
+      tierLabel = "Local Host Inspection";
+      fs = "Read-Only";
+      fsSub = "Host metrics and telemetry only";
+      net = "None";
+      netSub = "Zero external egress";
+      if (tools.includes("memory_write")) approval.push("lab_memory_upsert");
+    } else if (agent === "vuln-localize") {
+      tier = 1;
+      tierLabel = "Antares Fixture Sandbox";
+      fs = "Read-Only Fixture";
+      fsSub = "Target repo checked in read-only mode";
+      net = "Loopback Only";
+      netSub = "127.0.0.1:8001 Antares completion loop";
+    }
+
+    const denied = ["git_push", "pr_create", "deploy", "host_mutate", "rm_rf", "secrets_read"];
+    tools.forEach((t) => {
+      const name = typeof t === "string" ? t : (t.name || "");
+      if (denied.includes(name)) {
+        warnings.push("Tool '" + name + "' is permanently denied for automated agents under ADR 0038 / AGENTS.md.");
+      }
+    });
+
+    return {
+      isolation_tier: tier,
+      isolation_label: tierLabel,
+      filesystem_class: fs,
+      filesystem_sub: fsSub,
+      network_class: net,
+      network_sub: netSub,
+      approval_required_tools: approval,
+      warnings: warnings,
+    };
+  }
+
   function $(id) { return document.getElementById(id); }
 
   function el(tag, attrs, kids) {
@@ -200,6 +273,8 @@
       const badges = el("div", { class: "badge-row" });
       preset.tools.forEach((t) => badges.appendChild(el("span", { class: "pill", text: t })));
       badges.appendChild(el("span", { class: "pill on", text: preset.model }));
+      const pPost = evaluateDraftPosture(preset);
+      badges.appendChild(el("span", { class: "pill", style: "border-color: #38bdf8; color: #38bdf8;", text: "Tier " + pPost.isolation_tier + " · " + pPost.filesystem_class }));
       card.appendChild(badges);
 
       const actions = el("div", { class: "fleet-actions" });
@@ -271,6 +346,8 @@
         const badges = el("div", { class: "badge-row" });
         (studio.tools || d.tools || []).forEach((t) => badges.appendChild(el("span", { class: "pill", text: typeof t === "string" ? t : t.name })));
         if (studio.model) badges.appendChild(el("span", { class: "pill on", text: studio.model }));
+        const pPost = d.security_posture || evaluateDraftPosture(d);
+        badges.appendChild(el("span", { class: "pill", style: "border-color: #38bdf8; color: #38bdf8;", text: "Tier " + pPost.isolation_tier + " · " + pPost.filesystem_class }));
         card.appendChild(badges);
 
         const actions = el("div", { class: "fleet-actions" });
@@ -418,6 +495,52 @@
     });
     toolStep.appendChild(toolRow);
     steps.appendChild(toolStep);
+
+    // Security & Isolation Posture (IWO-068)
+    const secStep = el("section", { class: "step security-posture-box" });
+    secStep.appendChild(el("div", { class: "n", text: "🛡️ Effective Security & Isolation Posture" }));
+
+    const posture = evaluateDraftPosture(draft);
+    const secContent = el("div", { style: "margin-top:10px;" });
+
+    const pGrid = el("div", { class: "posture-metrics-grid" });
+    pGrid.appendChild(el("div", { class: "posture-card" }, [
+      el("div", { class: "posture-label", text: "Isolation Tier" }),
+      el("div", { class: "posture-val", text: "Tier " + posture.isolation_tier }),
+      el("div", { class: "posture-sub", text: posture.isolation_label }),
+    ]));
+    pGrid.appendChild(el("div", { class: "posture-card" }, [
+      el("div", { class: "posture-label", text: "Filesystem Class" }),
+      el("div", { class: "posture-val", text: posture.filesystem_class }),
+      el("div", { class: "posture-sub", text: posture.filesystem_sub }),
+    ]));
+    pGrid.appendChild(el("div", { class: "posture-card" }, [
+      el("div", { class: "posture-label", text: "Network Class" }),
+      el("div", { class: "posture-val", text: posture.network_class }),
+      el("div", { class: "posture-sub", text: posture.network_sub }),
+    ]));
+    pGrid.appendChild(el("div", { class: "posture-card" }, [
+      el("div", { class: "posture-label", text: "Human Approval Gate" }),
+      el("div", { class: "posture-val", text: posture.approval_required_tools.length ? "Enforced" : "Not Required" }),
+      el("div", { class: "posture-sub", text: posture.approval_required_tools.length ? posture.approval_required_tools.join(", ") : "Read-only operations" }),
+    ]));
+    secContent.appendChild(pGrid);
+
+    const policyBanner = el("div", { class: "posture-policy-banner", style: "margin-top:12px;" }, [
+      el("div", { class: "posture-banner-title", text: "Enforced Policy vs Draft Intent" }),
+      el("p", { class: "note", text: "The runtime strictly enforces boundaries from agents/" + draft.agent + "/policy.json. Tool requests outside the policy ceiling or mutative actions without human approval are blocked." }),
+    ]);
+    secContent.appendChild(policyBanner);
+
+    if (posture.warnings && posture.warnings.length) {
+      const warnBox = el("div", { class: "posture-warnings", style: "margin-top:10px;" });
+      posture.warnings.forEach((w) => {
+        warnBox.appendChild(el("div", { class: "warn-pill", text: "⚠️ " + w }));
+      });
+      secContent.appendChild(warnBox);
+    }
+    secStep.appendChild(secContent);
+    steps.appendChild(secStep);
 
     // System Instructions
     const promptStep = el("section", { class: "step" });
@@ -751,9 +874,113 @@
     runs: renderRuns,
     run: renderRun,
     evaluations: renderRuns,
-    permissions: renderWorkflows,
+    permissions: renderPermissions,
     published: renderFleet,
   };
+
+  /* ------------------- PERMISSIONS & SECURITY POSTURE VIEW (IWO-068) ------------------- */
+  function renderPermissions(root) {
+    root.appendChild(el("div", { class: "studio-hero" }, [
+      el("h1", { text: "Fleet Security Posture & Permissions" }),
+      el("p", { text: "Real-time governance, isolation tiers, and approval ceilings across AI Lab agent archetypes and custom definitions." }),
+    ]));
+
+    root.appendChild(el("div", { class: "studio-h", text: "Enforced Security Boundaries" }));
+    const tableWrap = el("div", { class: "posture-table-wrap" });
+    const table = el("table", { class: "posture-table" });
+    table.innerHTML = "<thead><tr>" +
+      "<th>Agent Identity</th>" +
+      "<th>Isolation Tier</th>" +
+      "<th>Filesystem Class</th>" +
+      "<th>Network Class</th>" +
+      "<th>Allowed Tools</th>" +
+      "<th>Approval Gate</th>" +
+      "<th>Audit & Events</th>" +
+      "</tr></thead><tbody></tbody>";
+    const tbody = table.querySelector("tbody");
+
+    const ARCHETYPES = [
+      {
+        id: "coding-assistant",
+        title: "Coding Assistant",
+        tier: "Tier 2",
+        fs: "Isolated Worktree",
+        net: "None (zero egress)",
+        allowed: "repo_read, repo_search, git_status, git_diff",
+        approval: "apply_patch, git_commit (worktree only)",
+        audit: "Active (SecurityEvent)",
+      },
+      {
+        id: "personal",
+        title: "Personal / Second Brain",
+        tier: "Tier 0",
+        fs: "User Vault Scoped (~/.ai-lab)",
+        net: "Egress Allowlist (public web)",
+        allowed: "vault_read, web_search, nexus_search, files_read, report_write",
+        approval: "None (read-only ceiling)",
+        audit: "Active (SecurityEvent)",
+      },
+      {
+        id: "research",
+        title: "Research Agent",
+        tier: "Tier 1",
+        fs: "Reports Scoped",
+        net: "Egress Allowlist (public web)",
+        allowed: "web_search, research, report_write",
+        approval: "None (read-only ceiling)",
+        audit: "Active (SecurityEvent)",
+      },
+      {
+        id: "lab-operations",
+        title: "Lab Operations",
+        tier: "Tier 1",
+        fs: "Read-Only",
+        net: "None (local inspection)",
+        allowed: "files_read, lab_health, memory_search",
+        approval: "lab_memory_upsert",
+        audit: "Active (SecurityEvent)",
+      },
+      {
+        id: "vuln-localize",
+        title: "Antares Vuln Localize",
+        tier: "Tier 1",
+        fs: "Read-Only Fixture",
+        net: "Loopback Only (127.0.0.1:8001)",
+        allowed: "fixture_read, localize",
+        approval: "None (sandbox completions)",
+        audit: "Active (SecurityEvent)",
+      },
+    ];
+
+    ARCHETYPES.forEach((a) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>" + a.title + "</strong><br><small class='muted'>" + a.id + "</small></td>" +
+        "<td><span class='pill on'>" + a.tier + "</span></td>" +
+        "<td>" + a.fs + "</td>" +
+        "<td>" + a.net + "</td>" +
+        "<td><small>" + a.allowed + "</small></td>" +
+        "<td>" + (a.approval.includes("None") ? "<small class='muted'>None</small>" : "<span class='pill' style='border-color:var(--warn, #f59e0b);color:var(--warn, #f59e0b);'>" + a.approval + "</span>") + "</td>" +
+        "<td><span class='pill on' style='border-color:var(--live, #10b981);color:var(--live, #10b981);'>✓ " + a.audit + "</span></td>";
+      tbody.appendChild(tr);
+    });
+
+    const defs = host && host.state && host.state.definitions ? host.state.definitions : [];
+    defs.forEach((d) => {
+      const p = d.security_posture || evaluateDraftPosture(d);
+      const tr = document.createElement("tr");
+      tr.innerHTML = "<td><strong>🤖 " + (d.title || "Custom Agent") + "</strong><br><small class='muted'>agent: " + (d.agent || "custom") + "</small></td>" +
+        "<td><span class='pill on'>Tier " + p.isolation_tier + "</span></td>" +
+        "<td>" + p.filesystem_class + "</td>" +
+        "<td>" + p.network_class + "</td>" +
+        "<td><small>" + ((p.allowed_tools || []).slice(0, 4).join(", ") || "standard") + "</small></td>" +
+        "<td>" + ((p.approval_required_tools || []).length ? "<span class='pill' style='border-color:var(--warn, #f59e0b);color:var(--warn, #f59e0b);'>" + p.approval_required_tools.join(", ") + "</span>" : "<small class='muted'>None</small>") + "</td>" +
+        "<td><span class='pill on' style='border-color:var(--live, #10b981);color:var(--live, #10b981);'>✓ Active</span></td>";
+      tbody.appendChild(tr);
+    });
+
+    tableWrap.appendChild(table);
+    root.appendChild(tableWrap);
+  }
 
   function render() {
     const root = $("studio-canvas");

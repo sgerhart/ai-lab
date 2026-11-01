@@ -2763,6 +2763,24 @@ def create_control_app(
                 draft["registration_error"] = "; ".join(errors)
         return result
 
+    def _evaluate_def_posture(definition: AgentDefinition) -> dict[str, Any]:
+        from .security.posture import evaluate_agent_posture
+
+        mcp_reg = getattr(app.state, "mcp_registry", None)
+        tools = list(definition.tools)
+        if isinstance(definition.studio, dict) and definition.studio.get("tools"):
+            for t in definition.studio["tools"]:
+                if t not in tools:
+                    tools.append(t)
+        posture = evaluate_agent_posture(
+            definition.agent,
+            title=definition.title,
+            requested_tools=tools,
+            mcp_server_ids=definition.mcp_server_ids,
+            mcp_registry=mcp_reg,
+        )
+        return posture.to_dict()
+
     @app.get("/v1/agent-definitions")
     def list_agent_definitions(
         request: Request,
@@ -2770,7 +2788,12 @@ def create_control_app(
     ) -> dict[str, Any]:
         _gate(request, authorization)
         items = app.state.agent_definition_store.list()
-        return {"definitions": [d.to_dict() for d in items]}
+        defs = []
+        for d in items:
+            row = d.to_dict()
+            row["security_posture"] = _evaluate_def_posture(d)
+            defs.append(row)
+        return {"definitions": defs}
 
     @app.post("/v1/agent-definitions")
     def create_agent_definition(
@@ -2803,7 +2826,9 @@ def create_control_app(
             studio=_studio_payload(body.studio),
         )
         app.state.agent_definition_store.put(definition)
-        return definition.to_dict()
+        row = definition.to_dict()
+        row["security_posture"] = _evaluate_def_posture(definition)
+        return row
 
     @app.put("/v1/agent-definitions/{definition_id}")
     def update_agent_definition(
@@ -2838,7 +2863,46 @@ def create_control_app(
         definition.schedule_cron = body.schedule_cron.strip()
         definition.studio = _studio_payload(body.studio)
         app.state.agent_definition_store.put(definition)
-        return definition.to_dict()
+        row = definition.to_dict()
+        row["security_posture"] = _evaluate_def_posture(definition)
+        return row
+
+    @app.get("/v1/agent-definitions/{definition_id}/security-posture")
+    def get_agent_definition_security_posture(
+        request: Request,
+        definition_id: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Fetch effective security posture for a saved agent definition."""
+        _gate(request, authorization)
+        definition = app.state.agent_definition_store.get(definition_id)
+        if definition is None:
+            raise HTTPException(status_code=404, detail="not found")
+        return _evaluate_def_posture(definition)
+
+    @app.post("/v1/agent-studio/security-posture")
+    def draft_agent_security_posture(
+        request: Request,
+        body: dict[str, Any] = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Evaluate security posture of an in-progress draft agent on the canvas."""
+        _gate(request, authorization)
+        from .security.posture import evaluate_agent_posture
+
+        agent = str(body.get("agent") or "lab-operations")
+        title = str(body.get("title") or "")
+        tools = list(body.get("tools") or [])
+        mcp_ids = list(body.get("mcp_server_ids") or [])
+        mcp_reg = getattr(app.state, "mcp_registry", None)
+        posture = evaluate_agent_posture(
+            agent,
+            title=title,
+            requested_tools=tools,
+            mcp_server_ids=mcp_ids,
+            mcp_registry=mcp_reg,
+        )
+        return posture.to_dict()
 
     def _coding_workspace(worktree_id: str) -> Path:
         from .workspace_isolation import resolve_worktree
@@ -2891,7 +2955,9 @@ def create_control_app(
         definition = app.state.agent_definition_store.get(definition_id)
         if definition is None:
             raise HTTPException(status_code=404, detail="not found")
-        return definition.to_dict()
+        row = definition.to_dict()
+        row["security_posture"] = _evaluate_def_posture(definition)
+        return row
 
     def _run_definition(
         definition: AgentDefinition,
