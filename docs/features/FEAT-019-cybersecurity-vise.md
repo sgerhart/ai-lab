@@ -60,9 +60,9 @@ The fake adapter runs that lifecycle in memory. The Proxmox and ESXi adapters ra
 
 ## Work Orders
 
-- IWO-070 — Vise job/API data model
-- IWO-071 — hypervisor adapter abstraction
-- IWO-072 — isolated network contract
+- [IWO-070](../work-orders/IWO-070-vise-job-model-and-lifecycle.md) — Vise job/API data model
+- [IWO-071](../work-orders/IWO-071-hypervisor-adapter-contract.md) — hypervisor adapter abstraction
+- [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) — isolated network contract
 - IWO-073 — base VM template contract
 - IWO-074 — evidence collection pipeline
 - IWO-075 — Vise UI and job review

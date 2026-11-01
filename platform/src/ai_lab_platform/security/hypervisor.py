@@ -23,6 +23,29 @@ class HypervisorDenied(PermissionError):
     """Mutating call lacked a job id and an actor."""
 
 
+DEFAULT_TRUSTED_NETWORK_DENYLIST: tuple[str, ...] = (
+    "tailscale",
+    "lan",
+    "home",
+    "mgmt",
+    "management",
+    "trusted",
+    "lab-trusted",
+    "internal",
+    "corp",
+)
+
+
+@dataclass(frozen=True)
+class IsolatedNetworkSpec:
+    network_id: str
+    nic_count: int = 1
+    uplink: bool = False
+    controlled_egress: bool = False
+    gateway_policy: str = "isolated"
+    denylisted_identifiers: tuple[str, ...] = DEFAULT_TRUSTED_NETWORK_DENYLIST
+
+
 @dataclass(frozen=True)
 class AuthContext:
     job_id: str
@@ -51,7 +74,14 @@ class HypervisorPort(Protocol):
 
     def validate_template(self, template_id: str, auth: AuthContext) -> dict[str, object]: ...
 
-    def validate_network(self, network_id: str, auth: AuthContext) -> dict[str, object]: ...
+    def validate_network(
+        self,
+        network_id: str,
+        auth: AuthContext,
+        *,
+        denylist: tuple[str, ...] | None = None,
+        allow_controlled_egress: bool = False,
+    ) -> dict[str, object]: ...
 
     def clone(self, template_id: str, auth: AuthContext) -> str: ...
 
@@ -85,7 +115,14 @@ class UnconfiguredHypervisor:
         auth.require_mutation()
         raise _refuse(self.provider)
 
-    def validate_network(self, network_id: str, auth: AuthContext) -> dict[str, object]:
+    def validate_network(
+        self,
+        network_id: str,
+        auth: AuthContext,
+        *,
+        denylist: tuple[str, ...] | None = None,
+        allow_controlled_egress: bool = False,
+    ) -> dict[str, object]:
         auth.require_mutation()
         raise _refuse(self.provider)
 
@@ -123,20 +160,39 @@ class FakeHypervisor:
     def __init__(self) -> None:
         self._guests: dict[str, _Guest] = {}
         self._seq = 0
+        self._networks: dict[str, dict[str, Any]] = {
+            self.isolated_network: {
+                "id": self.isolated_network,
+                "nic_count": 1,
+                "uplink": False,
+                "controlled_egress": False,
+                "gateway_policy": "isolated",
+            }
+        }
+
+    def add_network(
+        self,
+        network_id: str,
+        *,
+        nic_count: int = 1,
+        uplink: bool = False,
+        controlled_egress: bool = False,
+        gateway_policy: str = "isolated",
+    ) -> None:
+        self._networks[network_id] = {
+            "id": network_id,
+            "nic_count": nic_count,
+            "uplink": uplink,
+            "controlled_egress": controlled_egress,
+            "gateway_policy": gateway_policy,
+        }
 
     def inventory(self) -> dict[str, object]:
         return {
             "provider": self.provider,
             "endpoint": "",
             "templates": sorted(self.templates),
-            "networks": [
-                {
-                    "id": self.isolated_network,
-                    "nic_count": 1,
-                    "uplink": False,
-                    "controlled_egress": False,
-                }
-            ],
+            "networks": list(self._networks.values()),
         }
 
     def validate_template(self, template_id: str, auth: AuthContext) -> dict[str, object]:
@@ -145,15 +201,38 @@ class FakeHypervisor:
             raise ValueError("template is not allowlisted")
         return {"template_id": template_id, "allowlisted": True}
 
-    def validate_network(self, network_id: str, auth: AuthContext) -> dict[str, object]:
+    def validate_network(
+        self,
+        network_id: str,
+        auth: AuthContext,
+        *,
+        denylist: tuple[str, ...] | None = None,
+        allow_controlled_egress: bool = False,
+    ) -> dict[str, object]:
         auth.require_mutation()
-        if network_id != self.isolated_network:
-            raise IsolationError("analysis guest can attach only the isolated fixture network")
+        effective_denylist = denylist if denylist is not None else DEFAULT_TRUSTED_NETWORK_DENYLIST
+        net_lower = network_id.lower()
+        for bad in effective_denylist:
+            if bad.lower() in net_lower:
+                raise IsolationError(f"network {network_id!r} is denylisted as trusted ({bad})")
+        if network_id not in self._networks:
+            raise IsolationError(f"network {network_id!r} is not known to provider")
+        net = self._networks[network_id]
+        nic_count = int(net.get("nic_count", 1))
+        if nic_count != 1:
+            raise IsolationError(f"analysis guest requires exactly 1 NIC, found {nic_count}")
+        if net.get("uplink", False):
+            raise IsolationError(f"network {network_id!r} has an active uplink to trusted network")
+        has_egress = bool(net.get("controlled_egress", False))
+        if has_egress and not allow_controlled_egress:
+            raise IsolationError("controlled egress defaults to false and was not permitted")
         return {
             "network_id": network_id,
             "nic_count": 1,
             "uplink": False,
-            "controlled_egress": False,
+            "controlled_egress": has_egress and allow_controlled_egress,
+            "gateway_policy": str(net.get("gateway_policy") or "isolated"),
+            "denylist_cleared": True,
             "ok": True,
         }
 

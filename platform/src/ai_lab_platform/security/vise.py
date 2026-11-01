@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -73,6 +75,9 @@ class ViseJob:
     provider: str
     template_id: str
     execution_class: str
+    network_id: str = ""
+    controlled_egress: bool = False
+    network_denylist: tuple[str, ...] = field(default_factory=tuple)
     state: str = "submitted"
     cleanup_status: str = "pending"
     approval_id: str = ""
@@ -95,6 +100,9 @@ class ViseJob:
             "provider": self.provider,
             "template_id": self.template_id,
             "execution_class": self.execution_class,
+            "network_id": self.network_id,
+            "controlled_egress": self.controlled_egress,
+            "network_denylist": list(self.network_denylist),
             "state": self.state,
             "cleanup_status": self.cleanup_status,
             "approval_id": self.approval_id,
@@ -120,6 +128,11 @@ class ViseStore:
         provider = str(cleaned.get("provider") or "fake")
         if provider not in self.hypervisors:
             raise ValueError("unknown hypervisor provider")
+        denylist_input = cleaned.get("network_denylist")
+        if isinstance(denylist_input, (list, tuple)):
+            denylist = tuple(str(x) for x in denylist_input)
+        else:
+            denylist = ()
         job = ViseJob(
             job_id=uuid.uuid4().hex,
             sha256=_sha256(str(cleaned.get("sha256") or "")),
@@ -130,6 +143,9 @@ class ViseStore:
             provider=provider,
             template_id=str(cleaned.get("template_id") or ""),
             execution_class=_execution_class(profile, str(cleaned.get("execution_class") or "")),
+            network_id=str(cleaned.get("network_id") or ""),
+            controlled_egress=bool(cleaned.get("controlled_egress", False)),
+            network_denylist=denylist,
         )
         if job.byte_length < 0:
             raise ValueError("byte_length must be zero or positive")
@@ -188,14 +204,37 @@ class ViseStore:
         hypervisor = self.hypervisors[job.provider]
         if state == "preflight":
             checked = hypervisor.validate_template(job.template_id, auth)
-            network = hypervisor.validate_network(_isolated_network(hypervisor), auth)
-            job.isolation = {"template": checked, "network": network}
+            target_network = job.network_id or _isolated_network(hypervisor)
+            network = hypervisor.validate_network(
+                target_network,
+                auth,
+                denylist=job.network_denylist or None,
+                allow_controlled_egress=job.controlled_egress,
+            )
+            report_bytes = json.dumps(network, sort_keys=True).encode("utf-8")
+            report_sha = hashlib.sha256(report_bytes).hexdigest()
+            ev_ref = EvidenceRef(
+                evidence_id=f"ev-net-{job.job_id[:8]}",
+                locator=f"quarantine://evidence/isolation/{job.job_id}",
+                sha256=report_sha,
+                media_type="application/json",
+                byte_length=len(report_bytes),
+            )
+            network["evidence"] = ev_ref.to_dict()
+            job.isolation = {
+                "template": checked,
+                "network": network,
+                "evidence": ev_ref.to_dict(),
+            }
             job.state = "preflight"
             return
         if state == "ready":
             network = job.isolation.get("network") if isinstance(job.isolation, dict) else None
-            if not isinstance(network, dict) or network.get("ok") is not True:
+            if not isinstance(network, dict) or network.get("ok") is not True or network.get("denylist_cleared") is not True:
                 raise ViseTransitionError("preflight has not passed")
+            ev = job.isolation.get("evidence")
+            if not isinstance(ev, dict) or not str(ev.get("locator", "")).startswith("quarantine://evidence/isolation"):
+                raise ViseTransitionError("isolation evidence is missing or invalid")
             job.state = "ready"
             return
         if state == "approval":

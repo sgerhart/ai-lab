@@ -1,11 +1,11 @@
 # IWO-072 — Security Compute isolated network contract
 
-**Status:** Draft  
-**Priority:** P0  
-**Effort:** M  
-**Owner:** implementation agent  
-**Feature:** FEAT-019  
-**Services / Areas:** platform/security, docs, tests
+- **Status:** Complete  
+- **Priority:** P0  
+- **Effort:** M  
+- **Owner:** implementation agent  
+- **Feature:** FEAT-019  
+- **Services / Areas:** platform/security, docs, tests
 
 ## Problem
 
@@ -71,11 +71,11 @@ Never invent or auto-create network names. Never treat provider-reported attachm
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_isolated_network_contract.py` (6 passed), `tests/test_vise.py` (5 passed), `tests/test_security_platform.py` (10 passed), `./scripts/validate-repo.sh` (OK), `./scripts/preflight.sh` (OK), `./tests/test_structure.sh` (OK). Full unit suite 460 passed.
+- Follow-ons filed: IWO-073 (Security VM template contract), IWO-074 (Evidence collection pipeline)
+- Residual risks: Operator must provision physical/virtual isolated bridge on hypervisor out of band; live host validation only upon explicit deploy gate.
+- Docs/status updated: FEAT-019, features index, work orders README.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded
