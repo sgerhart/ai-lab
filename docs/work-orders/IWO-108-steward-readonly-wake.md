@@ -1,7 +1,8 @@
 # IWO-108 — Steward read-only wake
 
-**Status:** Review  
+**Status:** Complete (unit-tested; deployed to mac-mini 2026-10-21)  
 **Priority:** P1  
+
 **Effort:** M  
 **Owner:** operator  
 **Feature:** FEAT-022  

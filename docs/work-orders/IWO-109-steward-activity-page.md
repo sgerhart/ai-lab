@@ -1,7 +1,8 @@
 # IWO-109 — Steward activity page
 
-**Status:** Review  
+**Status:** Complete (deployed to mac-mini 2026-10-21)  
 **Priority:** P2  
+
 **Effort:** S  
 **Owner:** operator  
 **Feature:** FEAT-022  

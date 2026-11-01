@@ -122,6 +122,17 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-113](IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | Complete (unit; not deployed) |
 | [IWO-114](IWO-114-steward-conversational-chief-of-staff-desk.md) | Steward Conversational Chief of Staff Desk Redesign | Complete (unit; not deployed) |
 | [IWO-115](IWO-115-nexus-masterpiece-ui-and-study-copilot.md) | Knowledge Nexus Masterpiece UI & Grounded Study Copilot | Complete (deployed to mac-mini) |
+| [IWO-116](IWO-116-coding-training-reconnaissance-and-scaffold.md) | Coding training platform reconnaissance and scaffold | Complete (WO-00 & WO-01 Delivered) |
+| [IWO-117](IWO-117-coding-training-console.md) | Coding training console specification and plan | Complete (WO-10 Delivered) |
+| [IWO-118](IWO-118-coding-training-datasets-and-tasks.md) | Coding training dataset and task contracts | Complete (WO-02 Delivered) |
+| [IWO-119](IWO-119-coding-training-sandbox-worker-and-hardening.md) | Coding training sandbox worker and hardening | Complete (WO-03 Delivered) |
+| [IWO-120](IWO-120-coding-training-control-plane-and-execution-loop.md) | Coding training control plane and execution loop | Complete (WO-04 Delivered) |
+| [IWO-121](IWO-121-coding-training-model-adapter-and-baseline.md) | Coding training model adapter and baseline | Complete (WO-05 Delivered) |
+| [IWO-122](IWO-122-coding-training-verified-sft-lora.md) | Coding training verified SFT LoRA on Apple Silicon | Complete (WO-06 Delivered) |
+| [IWO-123](IWO-123-coding-training-rl-compatibility-spike.md) | Coding training RL backend compatibility spike | Complete (WO-07 Delivered) |
+| [IWO-124](IWO-124-coding-training-execution-reward-rl.md) | Coding training execution-reward RL training | Complete (WO-08 Delivered) |
+| [IWO-125](IWO-125-coding-training-documentation-and-handover.md) | Coding training operator documentation and handover | Complete (WO-09 Delivered) |
+| [IWO-126](IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | Complete (unit-tested) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  

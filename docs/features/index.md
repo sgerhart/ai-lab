@@ -160,12 +160,18 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-100](../work-orders/IWO-100-personal-thread-memory.md) | Personal chat remembers the thread | FEAT-010 | **Complete** (unit; not deployed) |
 | [IWO-101](../work-orders/IWO-101-personal-research-reports.md) | Personal research reports | FEAT-010 | **Complete** (unit; not deployed) |
 | [IWO-106](../work-orders/IWO-106-classroom-voice-whiteboard.md) | Classroom voice and whiteboard | FEAT-021 | **Review** (live on mini 2026-10-17; browser voice not watched in a session) |
-| [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
-| [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Steward read-only wake | FEAT-022 | **Review** (unit-tested 2026-10-18; not deployed) |
+| [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | FEAT-022 | **Complete** (unit-tested; deployed to mini) |
+| [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Steward read-only wake | FEAT-022 | **Complete** (unit-tested; deployed to mini) |
+| [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Steward activity page | FEAT-022 | **Complete** (desk on mini 2026-10-21) |
 | [IWO-110](../work-orders/IWO-110-phone-studio-layout.md) | Phone Studio layout | FEAT-023 | **Draft** |
-| [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Steward activity page | FEAT-022 | **Review** (desk on the mini 2026-10-21; headless Chrome including 390px) |
+| [IWO-111](../work-orders/IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | FEAT-022 | **Complete** (unit-tested) |
+| [IWO-112](../work-orders/IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | FEAT-022 | **Complete** (unit-tested) |
+| [IWO-113](../work-orders/IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | FEAT-022 | **Complete** (unit-tested) |
+| [IWO-114](../work-orders/IWO-114-steward-conversational-chief-of-staff-desk.md) | Steward Conversational Chief of Staff Desk Redesign | FEAT-022 | **Complete** (unit-tested) |
+| [IWO-115](../work-orders/IWO-115-nexus-masterpiece-ui-and-study-copilot.md) | Knowledge Nexus Masterpiece UI & Grounded Study Copilot | FEAT-022 | **Complete** (deployed to mac-mini) |
 | [IWO-116](../work-orders/IWO-116-coding-training-reconnaissance-and-scaffold.md) | Coding training platform reconnaissance and scaffold | FEAT-024 | **Complete** (WO-00 & WO-01 Delivered) |
 | [IWO-117](../work-orders/IWO-117-coding-training-console.md) | Coding training console specification and plan | FEAT-024 | **Complete** (WO-10 Delivered) |
+
 
 | [IWO-118](../work-orders/IWO-118-coding-training-datasets-and-tasks.md) | Coding training dataset and task contracts | FEAT-024 | **Complete** (WO-02 Delivered) |
 | [IWO-119](../work-orders/IWO-119-coding-training-sandbox-worker-and-hardening.md) | Coding training sandbox worker and hardening | FEAT-024 | **Complete** (WO-03 Delivered) |
@@ -175,6 +181,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-123](../work-orders/IWO-123-coding-training-rl-compatibility-spike.md) | Coding training RL backend compatibility spike | FEAT-024 | **Complete** (WO-07 Delivered) |
 | [IWO-124](../work-orders/IWO-124-coding-training-execution-reward-rl.md) | Coding training execution-reward RL training | FEAT-024 | **Complete** (WO-08 Delivered) |
 | [IWO-125](../work-orders/IWO-125-coding-training-documentation-and-handover.md) | Coding training operator documentation and handover | FEAT-024 | **Complete** (WO-09 Delivered) |
+| [IWO-126](../work-orders/IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | FEAT-022 | **Complete** (unit-tested) |
 
 ## Historical phase work orders
 

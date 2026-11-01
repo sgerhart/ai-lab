@@ -73,7 +73,12 @@ Background wakes use the **See** list only. A wake that needs a draft or an appr
 | [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Activity in the lab UI | IWO-108 | The operator can read, pause, and close a goal from the lab. |
 | [IWO-111](../work-orders/IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | IWO-109 | Bound MCP read tools qualify for See class; workspace integration; Second Brain link. |
 | [IWO-112](../work-orders/IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | IWO-111 | Native macOS menu bar extra, HUD popover, notifications, and local Mac MCP bridge. |
+| [IWO-113](../work-orders/IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | IWO-109 | Chief of staff desk elevation, glassmorphic layout, token cleanup. |
+| [IWO-114](../work-orders/IWO-114-steward-conversational-chief-of-staff-desk.md) | Steward Conversational Chief of Staff Desk Redesign | IWO-113 | Interactive conversational desk, quick templates, active watch deck. |
+| [IWO-115](../work-orders/IWO-115-nexus-masterpiece-ui-and-study-copilot.md) | Knowledge Nexus Masterpiece UI & Grounded Study Copilot | IWO-114 | Library cover gallery, grounded study copilot, dual-format reading workflows. |
+| [IWO-126](../work-orders/IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | IWO-115 | Deep excerpt grounding for nexus_search, chapter extraction, TOC breakdown, Study Sentinel template. |
 | later | One grant per outside source | IWO-111 | Mail, calendar, repos, or another named source, each its own order. |
+
 
 ## Acceptance criteria
 

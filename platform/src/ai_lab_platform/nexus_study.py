@@ -437,6 +437,17 @@ def find_nexus_root() -> Path | None:
 
 def resolve_book_file(rel_path: str) -> Path | None:
     """Locate the actual book file on disk from a relative path."""
+    try:
+        p_abs = Path(rel_path)
+        if p_abs.is_file():
+            return p_abs
+        if p_abs.with_suffix(".epub").is_file():
+            return p_abs.with_suffix(".epub")
+        if p_abs.with_suffix(".pdf").is_file():
+            return p_abs.with_suffix(".pdf")
+    except (TypeError, ValueError, OSError):
+        pass
+
     root = find_nexus_root()
     if not root:
         return None
@@ -448,6 +459,7 @@ def resolve_book_file(rel_path: str) -> Path | None:
             return full
     except (PermissionError, OSError):
         pass
+
 
     # Try sibling with .epub or .pdf extension
     p_epub = full.with_suffix(".epub")

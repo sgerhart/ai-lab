@@ -190,15 +190,59 @@ def _files_read(ctx: ToolContext, args: dict[str, Any]) -> str:
 
 
 def _nexus_search(ctx: ToolContext, args: dict[str, Any]) -> str:
-    """Search the Knowledge Nexus shelf. Read-only."""
+    """Search the Knowledge Nexus shelf with deep excerpts. Read-only."""
     del ctx
     query = str(args.get("query") or args.get("q") or "").strip()
-    if len(query) < 3:
-        raise ToolError("nexus_search needs a question about the library.")
-    from .nexus_library import books_for_query
+    book = str(args.get("book") or args.get("title") or args.get("path") or "").strip()
+    chapter = args.get("chapter")
+    toc = bool(args.get("toc"))
 
-    found = books_for_query(query, limit=4)
-    return found or "No Nexus book, paper, or course matched that question."
+    if not query and not book and not toc:
+        raise ToolError("nexus_search needs a question about the library.")
+    if query and len(query) < 3 and not book:
+        raise ToolError("nexus_search needs a question about the library.")
+
+    from .nexus_library import books_for_query, suggest_books
+    from .nexus_study import extract_book_context, format_book_title, resolve_book_file
+
+    # 1. Target a specific book if requested
+    if book:
+        resolved = resolve_book_file(book)
+        if not resolved:
+            hits = suggest_books(book, limit=1)
+            if hits and hits[0].get("path"):
+                resolved = resolve_book_file(str(hits[0]["path"]))
+
+        if resolved:
+            title = format_book_title(resolved.name)
+            subquery = query
+            if toc:
+                subquery = "table of contents"
+            elif chapter:
+                subquery = f"chapter {chapter} {query}".strip()
+            elif not subquery:
+                subquery = "table of contents"
+
+            context = extract_book_context(str(resolved), subquery, max_chars=4000)
+            if context:
+                return f'Knowledge Nexus book: "{title}"\n{context}'
+            return f'Found "{title}" in Knowledge Nexus, but no matching excerpts found for "{subquery}".'
+
+    # 2. General library query: search catalog and ground with deep excerpts
+    catalog_block = books_for_query(query, limit=3)
+    if not catalog_block:
+        return "No Nexus book, paper, or course matched that question."
+
+    hits = suggest_books(query, limit=2, snippet_chars=700)
+    if hits and hits[0].get("path"):
+        top_hit = hits[0]
+        top_path = str(top_hit["path"])
+        excerpts = extract_book_context(top_path, query, max_chars=2500)
+        if excerpts and "The title matches" not in excerpts:
+            catalog_block += f"\n\nDeep Excerpts from top match ({top_hit['title']}):\n{excerpts}"
+
+    return catalog_block
+
 
 
 def _web_search(ctx: ToolContext, args: dict[str, Any]) -> str:

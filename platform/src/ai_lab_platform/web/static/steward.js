@@ -44,7 +44,14 @@
       cron: "*/15 * * * *",
       tools: ["vault_list", "vault_read", "files_list", "files_read"],
     },
+    study: {
+      title: "Nexus Technical Study Sentinel",
+      intent: "Search Knowledge Nexus shelf for key chapters on cybersecurity, network architecture, and AI engineering.",
+      cron: "0 9 * * *",
+      tools: ["nexus_search", "vault_read"],
+    },
   };
+
 
   // DOM Elements
   const form = document.getElementById("goal-form");
