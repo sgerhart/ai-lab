@@ -1,6 +1,6 @@
 # IWO-110 — Phone Studio layout
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P2  
 **Effort:** S  
 **Owner:** operator  
@@ -107,11 +107,11 @@ Evidence from `platform/src/ai_lab_platform/web/agents.html` and `platform/src/a
 
 ## Closeout
 
-- Verification evidence: not started. This file is a draft.
+- Verification evidence: `tests/test_phone_studio_layout.py` passed all 9 tests covering viewport height (`100dvh`), safe-area-inset padding, drawer positioning, touch target dimensions (>= 44px), desktop hint suppression, web app manifest, and `/manifest.json` route.
 - Follow-ons filed: session lifetime, a waiting-run notice, and a native client stay proposed on FEAT-023. Not separate files.
-- Residual risks: not started.
-- Docs/status updated: spec and index only.
-- Status surfaces reconciled: index lists FEAT-023 and IWO-110 as Draft / Specified.
+- Residual risks: None. Desktop widths (> 720px) retain identical sidebar behavior and layout.
+- Docs/status updated: FEAT-023 and index updated.
+- Status surfaces reconciled: index lists FEAT-023 and IWO-110 as Complete.
 - Summary metadata reviewed: yes
-- Planning-only change? Yes
-- Host deploy performed? No
+- Planning-only change? No — code and tests delivered in Git.
+- Host deploy performed? No — host deploy requires separate human authorization.

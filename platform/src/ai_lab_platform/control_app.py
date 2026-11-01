@@ -736,6 +736,18 @@ def create_control_app(
             headers={"Cache-Control": "no-store"},
         )
 
+    @app.get("/manifest.json")
+    def manifest_json() -> FileResponse:
+        """Web app manifest for Home Screen and mobile PWA."""
+        manifest_file = STATIC_DIR / "manifest.json"
+        if not manifest_file.is_file():
+            raise HTTPException(status_code=404, detail="manifest not found")
+        return FileResponse(
+            manifest_file,
+            media_type="application/manifest+json",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
     @app.get("/agents")
     def agents_page() -> RedirectResponse:
         """Older Studio URL. The main page is now /."""

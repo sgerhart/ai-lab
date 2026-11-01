@@ -116,7 +116,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-107](IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | Complete |
 | [IWO-108](IWO-108-steward-readonly-wake.md) | Steward read-only wake | Complete |
 | [IWO-109](IWO-109-steward-activity-page.md) | Steward activity in the lab UI | Complete |
-| [IWO-110](IWO-110-phone-studio-layout.md) | Phone Studio layout | Draft |
+| [IWO-110](IWO-110-phone-studio-layout.md) | Phone Studio layout | Complete (unit; not deployed) |
 | [IWO-111](IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | Complete (unit; not deployed) |
 | [IWO-112](IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | Complete (unit; not deployed) |
 | [IWO-113](IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | Complete (unit; not deployed) |

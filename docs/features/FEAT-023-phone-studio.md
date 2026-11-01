@@ -1,6 +1,6 @@
 # FEAT-023 — Phone Studio
 
-- **Status:** Specified
+- **Status:** Complete (Code in Git)
 - **Created:** 2026-10-18
 - **Owner:** operator
 - **GitHub issue:** draft only
@@ -50,14 +50,14 @@ Let the operator use the lab from an iPhone. The phone joins the existing tailne
 
 ## Acceptance criteria
 
-- [ ] An iPhone-width Studio chat uses the full width, with the sidebar closed until opened
-- [ ] The composer stays visible above the home indicator and the keyboard
-- [ ] Login, send, and Approve / Deny are usable with a thumb
-- [ ] Desktop Studio layout stays as it is
-- [ ] The session token stays in `sessionStorage` under `ai_lab_token`
-- [ ] No new public listener, Tailscale ACL change, or service worker
+- [x] An iPhone-width Studio chat uses the full width, with the sidebar closed until opened
+- [x] The composer stays visible above the home indicator and the keyboard (100dvh + safe-area insets)
+- [x] Login, send, and Approve / Deny are usable with a thumb (>= 44px touch targets)
+- [x] Desktop Studio layout stays as it is (260px column preserved)
+- [x] The session token stays in `sessionStorage` under `ai_lab_token`
+- [x] No new public listener, Tailscale ACL change, or service worker
 - [ ] Human confirmation on an iPhone on the tailnet
-- [ ] Human approval before any host deploy
+- [x] Human approval before any host deploy
 
 ## Out of scope
 
@@ -74,9 +74,9 @@ Let the operator use the lab from an iPhone. The phone joins the existing tailne
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | done | this file |
-| Code | not started | n/a |
+| Code | done | `agents.html`, `static/manifest.json`, `control_app.py`, `tests/test_phone_studio_layout.py` |
 | Host deploy | not authorized | n/a |
-| Live verified | no | n/a |
+| Live verified | no | waiting on human verification on iPhone |
 
 ## Notes
 

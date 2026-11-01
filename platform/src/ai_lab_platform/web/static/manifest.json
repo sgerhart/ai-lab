@@ -1,0 +1,20 @@
+{
+  "name": "AI Lab",
+  "short_name": "AI LAB",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070a12",
+  "theme_color": "#070a12",
+  "icons": [
+    {
+      "src": "/static/ai-lab-orb.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "/static/ai-lab-icon.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

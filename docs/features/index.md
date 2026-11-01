@@ -163,7 +163,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-107](../work-orders/IWO-107-steward-access-and-goals.md) | Steward access manifest and standing goals | FEAT-022 | **Complete** (unit-tested; deployed to mini) |
 | [IWO-108](../work-orders/IWO-108-steward-readonly-wake.md) | Steward read-only wake | FEAT-022 | **Complete** (unit-tested; deployed to mini) |
 | [IWO-109](../work-orders/IWO-109-steward-activity-page.md) | Steward activity page | FEAT-022 | **Complete** (desk on mini 2026-10-21) |
-| [IWO-110](../work-orders/IWO-110-phone-studio-layout.md) | Phone Studio layout | FEAT-023 | **Draft** |
+| [IWO-110](../work-orders/IWO-110-phone-studio-layout.md) | Phone Studio layout | FEAT-023 | **Complete** (unit-tested) |
 | [IWO-111](../work-orders/IWO-111-steward-mcp-and-workspace-integration.md) | Steward MCP tool access and workspace integration | FEAT-022 | **Complete** (unit-tested) |
 | [IWO-112](../work-orders/IWO-112-steward-mac-companion.md) | Steward Mac menu bar companion | FEAT-022 | **Complete** (unit-tested) |
 | [IWO-113](../work-orders/IWO-113-web-ui-and-steward-desk-overhaul.md) | Web UI & Steward desk "Work of Art" overhaul | FEAT-022 | **Complete** (unit-tested) |
