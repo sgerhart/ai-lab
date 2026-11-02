@@ -29,6 +29,9 @@ CONTENT_DIRS = (
 _CATEGORY_RULES = (
     ("04_Books_Library/Cybersecurity/", "cyber-books"),
     ("04_Books_Library/Cloud_Platform_and_eBPF/", "cloud-books"),
+    ("04_Books_Library/Robotics_and_Automation/", "robotics-books"),
+    ("04_Books_Library/Data_Engineering/", "python-ds"),
+    ("04_Books_Library/Data_Science/", "python-ds"),
     ("04_Books_Library/", "ai-books"),
     ("02_Python_and_Data_Science/", "python-ds"),
     ("05_Cybersecurity/", "cyber-books"),
@@ -42,6 +45,7 @@ _CATEGORY_LABELS = {
     "python-ds": "Python and data science",
     "cloud-books": "Cloud and platform",
     "cyber-books": "Cybersecurity",
+    "robotics-books": "Robotics and automation",
     "papers": "Research paper",
     "courses": "Course",
 }
@@ -203,6 +207,7 @@ def sync_tree(
                 command,
                 capture_output=True,
                 text=True,
+                errors="replace",
                 timeout=timeout_s,
                 check=False,
             )

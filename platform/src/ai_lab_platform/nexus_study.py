@@ -53,6 +53,15 @@ _TITLE_WORDS = frozenset(
     these those one two three four five six seven eight nine ten first second
     third fourth beginner beginners operations operation guides systems system
     engineers engineer platforms
+    smart home automation solutions assistant robotics robot drones drone
+    arduino contracts governance definitive management scale quality scratch
+    command line aws google cloud platform deciphering purpose built ardupilot
+    pixhawk concept flight essential visualization apis industrial mastering
+    associate guide portal beginners projects raspberry pico example modeling
+    mindstorms inventor recipes solving most common multimodal analysis
+    handbook 3d statistics scientists ready blueprints patterns hard parts
+    architectures designing fundamentals analyst development lego
+    siemens software engineering semantic microsoft power assisted design
     """.split()
 )
 _TITLE_ACRONYMS = {
@@ -91,8 +100,20 @@ _TITLE_ACRONYMS = {
     "json": "JSON",
     "rlcd": "RLCD",
     "bg": "BG",
+    "esp": "ESP",
+    "plc": "PLC",
+    "plcs": "PLCs",
+    "ros": "ROS",
+    "ros2": "ROS2",
+    "hmi": "HMI",
+    "tia": "TIA",
+    "bi": "BI",
+    "aws": "AWS",
+    "gcp": "GCP",
+    "3d": "3D",
 }
 _TITLE_SPECIAL = {
+    "3d": "3D",
     "ebpf": "eBPF",
     "numpy": "NumPy",
     "pytorch": "PyTorch",
@@ -106,6 +127,15 @@ _TITLE_SPECIAL = {
     "hdbscan": "HDBScan",
     "genai": "GenAI",
     "javascript": "JavaScript",
+    "raspberrypi": "Raspberry Pi",
+    "homeassistant": "Home Assistant",
+    "ardupilot": "ArduPilot",
+    "pixhawk": "Pixhawk",
+    "mindstorms": "MINDSTORMS",
+    "powerbi": "Power BI",
+    "cplusplus": "C++",
+    "lego": "LEGO",
+    "siemens": "Siemens",
 }
 _TITLE_SMALL = frozenset(
     {"a", "an", "the", "and", "but", "or", "nor", "for", "on", "at", "to", "from", "by", "of", "in", "with", "vs", "as"}
@@ -282,6 +312,13 @@ def format_book_title(name: str) -> str:
     text = text.replace("_", " ")
     text = re.sub(r"(\d+)(st|nd|rd|th)", r" \1\2 ", text, flags=re.I)
     text = re.sub(r"\(From Scrat\b\)?", "(From Scratch)", text, flags=re.I)
+    text = re.sub(
+        r"recipesforsolvingthemostcommondataen\b",
+        "Recipes for Solving Common Data Engineering Problems",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"\b3ddatasciencewithpython\b", "3d data science with python", text, flags=re.I)
     text = re.sub(r"\s+-\s+", " : ", text)
     text = re.sub(r"\s+", " ", text).strip()
 
@@ -311,7 +348,7 @@ def format_book_title(name: str) -> str:
             and not _COURSE.match(tok)
             and not _ORDINAL.match(tok)
         ):
-            bits = re.findall(r"[A-Za-z]+|\d+(?:st|nd|rd|th)|\d+|[()]", tok, flags=re.I) or [tok]
+            bits = re.findall(r"\b3[dD]|[A-Za-z]+|\d+(?:st|nd|rd|th)|\d+|[()]", tok, flags=re.I) or [tok]
         for bit in bits:
             if bit in {"(", ")"}:
                 if bit == ")" and tokens:
@@ -428,6 +465,15 @@ def find_nexus_root() -> Path | None:
     ]
     for c in candidates:
         try:
+            if c.is_dir() and any(
+                (c / name).is_dir()
+                for name in ("01_AI_and_GenAI", "04_Books_Library", "02_Python_and_Data_Science")
+            ):
+                return c
+        except (PermissionError, OSError):
+            continue
+    for c in candidates:
+        try:
             if c.is_dir():
                 return c
         except (PermissionError, OSError):
@@ -475,6 +521,15 @@ def resolve_book_file(rel_path: str) -> Path | None:
             return p_pdf
     except (PermissionError, OSError):
         pass
+
+    clean_name = Path(clean_rel).name
+    for pattern in (clean_name, f"{clean_name}.epub", f"{clean_name}.pdf"):
+        try:
+            found = next(root.rglob(pattern), None)
+            if found and found.is_file():
+                return found
+        except (PermissionError, OSError):
+            continue
 
     return None
 

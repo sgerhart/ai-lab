@@ -141,6 +141,7 @@ const SHELF_ORDER = [
   ["python-ds", "Python & Data Science"],
   ["cloud-books", "Cloud & Platform"],
   ["cyber-books", "Cybersecurity"],
+  ["robotics-books", "Robotics & Automation"],
   ["papers", "Research Papers"],
   ["courses", "Courses & Bootcamps"],
 ];

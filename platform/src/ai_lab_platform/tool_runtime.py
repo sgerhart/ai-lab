@@ -227,6 +227,7 @@ def _nexus_search(ctx: ToolContext, args: dict[str, Any]) -> str:
             if context:
                 return f'Knowledge Nexus book: "{title}"\n{context}'
             return f'Found "{title}" in Knowledge Nexus, but no matching excerpts found for "{subquery}".'
+        return f'No Nexus book, paper, or course matched "{book}".'
 
     # 2. General library query: search catalog and ground with deep excerpts
     catalog_block = books_for_query(query, limit=3)
