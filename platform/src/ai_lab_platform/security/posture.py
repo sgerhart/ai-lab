@@ -30,6 +30,11 @@ PERMANENTLY_DENIED_TOOLS = frozenset(
         "host_mutate",
         "rm_rf",
         "secrets_read",
+        "hypervisor_admin",
+        "network_bridge_mutate",
+        "trusted_network_attach",
+        "raw_shell_exec",
+        "template_mutate",
     }
 )
 
@@ -105,6 +110,8 @@ def evaluate_agent_posture(
     isolation_tier = policy.isolation_tier
     if agent_id == "coding-assistant":
         isolation_tier = 2 if any(t in req_tools for t in ("apply_patch", "git_commit", "sandbox")) else 1
+    elif agent_id == "security":
+        isolation_tier = 2
 
     # 2. Filesystem class
     if agent_id == "coding-assistant":
@@ -113,15 +120,20 @@ def evaluate_agent_posture(
         filesystem_class = "user-vault-scoped"
     elif agent_id == "research":
         filesystem_class = "reports-scoped"
+    elif agent_id == "security":
+        filesystem_class = "isolated-vm"
     elif policy.read_only and not any(is_privileged(t) for t in req_tools):
         filesystem_class = "read-only"
     else:
         filesystem_class = "bounded-local"
 
     # 3. Network class
-    if any(t in req_tools for t in ("web_search", "research", "web")) or "allowlist" in policy.network or agent_id in ("research", "personal"):
+    if agent_id == "security":
+        network_class = "isolated-bridge"
+        endpoints = ()
+    elif any(t in req_tools for t in ("web_search", "research", "web")) or "allowlist" in policy.network or agent_id in ("research", "personal"):
         network_class = "egress-allowlist"
-        endpoints: tuple[str, ...] = ("https://*",)
+        endpoints = ("https://*",)
     elif "tailscale-health" in policy.network or "tailnet" in policy.network:
         network_class = "tailnet-client"
         endpoints = policy.network

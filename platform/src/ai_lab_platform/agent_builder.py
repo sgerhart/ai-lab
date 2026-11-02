@@ -21,6 +21,7 @@ _LEARN = ("teach", "learn", "explain", "tutor", "lesson", "study")
 _PRODUCT = ("spec", "product", "roadmap", "feature", "decision")
 _COMPANY = ("company", "weekly", "brief", "invoice", "mail", "customer")
 _LAB = ("lab", "health", "status", "disk", "scheduler")
+_SECURITY = ("security", "malware", "hypervisor", "vm", "vise", "isolation", "quarantine")
 _FAST = ("fast", "quick", "short")
 _DONE = (
     "everything is good",
@@ -109,6 +110,8 @@ def classify_purpose(text: str) -> tuple[str, str]:
     blob = (text or "").lower()
     if any(word in blob for word in _CODING):
         return "build", "coding-assistant"
+    if any(word in blob for word in _SECURITY):
+        return "security", "security"
     if any(word in blob for word in _LEARN):
         return "learn", "research"
     if any(word in blob for word in _COMPANY):

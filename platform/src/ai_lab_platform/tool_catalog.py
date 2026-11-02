@@ -35,6 +35,14 @@ READ_TOOLS = frozenset(
         "report_write",
         "write_report_artifact",
         "consult_frontier",
+        "security_inventory_read",
+        "security_template_validate",
+        "security_network_validate",
+        "security_preflight_dry_run",
+        "security_guest_status_read",
+        "security_evidence_read",
+        "security_report_read",
+        "security_job_status_read",
     }
 )
 

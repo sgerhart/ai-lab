@@ -1942,6 +1942,7 @@ def create_control_app(
             ("research", "Research Agent"),
             ("lab-operations", "Lab Operations"),
             ("vuln-localize", "Vulnerability Localizer"),
+            ("security", "Security Compute Agent"),
         ]
         mcp_reg = getattr(app.state, "mcp_registry", None)
         agents: list[dict[str, Any]] = []

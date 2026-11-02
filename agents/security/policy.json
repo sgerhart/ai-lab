@@ -1,0 +1,25 @@
+{
+  "id": "security",
+  "isolation_tier": 2,
+  "read_only": false,
+  "allowed_tools": [
+    "security_inventory_read",
+    "security_template_validate",
+    "security_network_validate",
+    "security_preflight_dry_run",
+    "security_guest_status_read",
+    "security_evidence_read",
+    "security_report_read",
+    "security_job_status_read"
+  ],
+  "privileged_tools": [
+    "security_vm_clone",
+    "security_vm_power",
+    "security_vm_destroy",
+    "security_benign_validate",
+    "security_untrusted_execute",
+    "security_vm_cleanup"
+  ],
+  "network": [],
+  "notes": "Dedicated security compute agent identity (FEAT-020 / IWO-076). Read tools (inventory, preflight, template/network validation, status/evidence reads) are allowlisted. Mutating lifecycle actions (clone, power, destroy, benign validation, untrusted sample execution, cleanup) require human approval. Host configuration, firewall/bridge mutation, trusted network attachment, and unvetted credentials are permanently denied."
+}

@@ -17,6 +17,12 @@ PRIVILEGED_TOOLS = frozenset(
         "firewall_change",
         "ssh_config_write",
         "memory_write",
+        "security_vm_clone",
+        "security_vm_power",
+        "security_vm_destroy",
+        "security_benign_validate",
+        "security_untrusted_execute",
+        "security_vm_cleanup",
     }
 )
 

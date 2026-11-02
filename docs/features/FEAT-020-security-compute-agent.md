@@ -1,6 +1,6 @@
 # FEAT-020 — Security Compute Agent
 
-- **Status:** Partial (code)
+- **Status:** Complete (unit-tested; not deployed)
 - **Created:** 2026-09-26
 - **Owner:** human (operator)
 - **Priority:** Core security automation
@@ -71,14 +71,14 @@ Approval-gated initially:
 
 ## Work Orders
 
-- IWO-076 — security agent definition and policy
+- IWO-076 — security agent definition and policy (Complete; unit-tested)
 - IWO-077 — VM lifecycle workflow and validation state machine (Complete; unit-tested)
 - IWO-078 — hypervisor test harness and end-to-end benign validation (Complete; unit-tested)
 
 ## Acceptance criteria
 
-- [ ] Agent can validate environment without changing it
-- [ ] Agent can execute approved ephemeral lifecycle with full audit
-- [ ] Failures leave a deterministic cleanup/recovery action
-- [ ] Hypervisor operations are allowlisted and correlated to a Vise job
-- [ ] Untrusted execution remains an explicit human approval
+- [x] Agent can validate environment without changing it
+- [x] Agent can execute approved ephemeral lifecycle with full audit
+- [x] Failures leave a deterministic cleanup/recovery action
+- [x] Hypervisor operations are allowlisted and correlated to a Vise job
+- [x] Untrusted execution remains an explicit human approval

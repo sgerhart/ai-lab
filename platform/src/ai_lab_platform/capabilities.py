@@ -38,6 +38,20 @@ _TOOL_BLURB = {
     "files_read": "Read one .md or .txt note in the personal files folder.",
     "apply_patch": "Apply a patch. Requires approval and an isolated copy.",
     "git_commit": "Commit in an isolated copy. Requires approval.",
+    "security_inventory_read": "Read security compute plane templates and network inventory.",
+    "security_template_validate": "Validate security template manifests and immutability.",
+    "security_network_validate": "Validate isolated network bridge isolation constraints.",
+    "security_preflight_dry_run": "Run dry-run preflight checks without VM creation.",
+    "security_guest_status_read": "Query ephemeral analysis VM status and readiness.",
+    "security_evidence_read": "Read signed security validation evidence records.",
+    "security_report_read": "Read structured operator validation reports.",
+    "security_job_status_read": "Read security Vise job status.",
+    "security_vm_clone": "Request ephemeral clone of security VM template. Requires approval.",
+    "security_vm_power": "Power on or off ephemeral security VM. Requires approval.",
+    "security_vm_destroy": "Destroy ephemeral analysis VM. Requires approval.",
+    "security_benign_validate": "Execute benign validation fixtures in ephemeral VM. Requires approval.",
+    "security_untrusted_execute": "Execute untrusted sample analysis in isolated VM. Strictly approval-gated.",
+    "security_vm_cleanup": "Enforce teardown and residual verification. Requires approval.",
 }
 
 
@@ -46,6 +60,8 @@ def assistant_name(agent_id: str) -> str:
         return "AI Lab Assistant"
     if agent_id == "personal":
         return "Personal Agent"
+    if agent_id == "security":
+        return "Security Compute Agent"
     return agent_id
 
 

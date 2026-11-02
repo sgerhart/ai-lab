@@ -9,8 +9,7 @@ Harness identities. None of these is autonomous or production-ready. Studio chat
 | [research](research/README.md) | sourced reports | HTTP allowlist | Scaffolded |
 | [lab-operations](lab-operations/README.md) | **read-only** | health endpoints | Scaffolded |
 | [personal](personal/README.md) | vault, files, web lookup, and research reports | `~/.ai-lab/memory`, `~/.ai-lab/files`, and `~/.ai-lab/reports` | IWO-095 reads memory. IWO-096 files finished UTC days. IWO-097 searches the web. IWO-098 reads the notes folder. IWO-099 starts it from the sidebar. IWO-100 keeps the thread. IWO-101 researches and writes a report |
-
-The security agent in [FEAT-020](../docs/features/FEAT-020-security-compute-agent.md) is specified and not implemented. Add `agents/security/` when [IWO-076](../docs/work-orders/IWO-076-security-agent-definition-and-policy.md) is accepted and built. Until then it has no policy file and no tools.
+| [security](security/README.md) | read inventory/preflight; lifecycle/exec after approval | isolated analysis VM only | IWO-076 policy defined. Read tools allowlisted; mutating lifecycle actions approval-gated. Live hypervisors not connected |
 
 Catalog: [catalog.md](catalog.md)
 

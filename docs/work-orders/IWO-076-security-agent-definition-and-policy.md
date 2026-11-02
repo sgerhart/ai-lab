@@ -1,6 +1,6 @@
 # IWO-076 — Security agent definition and policy
 
-**Status:** Draft  
+**Status:** Implemented  
 **Priority:** P1  
 **Effort:** M  
 **Owner:** implementation agent  
@@ -47,7 +47,7 @@ Agent policy must not include generic host administration or trusted-network att
 
 ## Validation Plan
 
-- Automated: policy and tool-runtime denial tests.
+- Automated: policy and tool-runtime denial tests (`tests/test_security_agent.py`).
 - Manual: inspect effective Agent Studio posture.
 - Evidence: permission matrix.
 
@@ -60,7 +60,7 @@ Agent policy must not include generic host administration or trusted-network att
 
 ## Execution
 
-- **Branch:** `iwo/076-security-agent-definition-and-policy`
+- **Branch:** `main`
 - **Risk tier:** P1
 - **Pre-PR / pre-merge gate:** `./scripts/validate-repo.sh` plus targeted tests
 - **Depends on:** IWO-067,IWO-071
@@ -71,11 +71,11 @@ Agent policy must not include generic host administration or trusted-network att
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_security_agent.py` passed (7 tests in 0.006s) covering AC 1 (only listed security tools callable; unlisted tools dropped), AC 2 (read vs lifecycle permissions distinguishable; read tools recognized in READ_TOOLS and not privileged; lifecycle tools flagged as privileged), AC 3 (untrusted execution strictly approval-gated), AC 4 (generic hypervisor/admin actions denied; posture evaluation produces tier 2, isolated-vm, isolated-bridge, with warnings on denied tools), and local deterministic plan execution (inventory + preflight run without VM creation). Full test suite passed 487 tests in 10.037s.
+- Follow-ons filed: IWO-074 (cybersecurity VISE evidence collection pipeline).
+- Residual risks: Live ESXi/Proxmox deployment remains unauthorized and requires operator-supplied inventory, endpoint, and isolated network parameters.
+- Docs/status updated: `docs/features/FEAT-020-security-compute-agent.md`, `docs/features/index.md`, `docs/work-orders/README.md`, `docs/roadmap.md`.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded

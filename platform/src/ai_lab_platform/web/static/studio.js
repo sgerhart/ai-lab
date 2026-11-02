@@ -45,6 +45,17 @@
       model: "llama3.2:3b",
       instructions: "You are the AI Lab Systems Engineer. Monitor host health, inspect logs, check Tailscale networking, and ensure zero-downtime control plane operation.",
     },
+    {
+      id: "security-compute",
+      title: "Security Compute Agent",
+      agent: "security",
+      purpose: "security",
+      icon: "🛡️",
+      blurb: "Security compute lifecycle specialist. Validates templates, isolated networks, and bounded analysis VMs with strict human approval gates and residual cleanup audit.",
+      tools: ["files", "sandbox", "reports"],
+      model: "qwen3.6:35b-a3b",
+      instructions: "You are the Security Compute Agent. Validate VM templates and isolated analysis networks. Ephemeral lifecycle operations and untrusted executions strictly require human approval. Residual resources are permanently audited.",
+    },
   ];
 
   const PURPOSES = [
@@ -53,6 +64,7 @@
     { id: "research", label: "Deep Research", agent: "research", blurb: "Internet deep dives and sourced reports." },
     { id: "product", label: "Product & Spec", agent: "research", blurb: "Specs, architecture decisions, and roadmaps." },
     { id: "lab", label: "System Ops", agent: "lab-operations", blurb: "Host health, tailnet checks, telemetry." },
+    { id: "security", label: "Security Compute", agent: "security", blurb: "VM template validation, isolated analysis, residual cleanup audit." },
   ];
 
   const AVAILABLE_TOOLS = [
@@ -138,6 +150,14 @@
       fsSub = "Target repo checked in read-only mode";
       net = "Loopback Only";
       netSub = "127.0.0.1:8001 Antares completion loop";
+    } else if (agent === "security") {
+      tier = 2;
+      tierLabel = "Security Compute Sandbox";
+      fs = "Isolated Analysis VM";
+      fsSub = "Ephemeral hypervisor clone with zero host mutation";
+      net = "Isolated Bridge";
+      netSub = "Strict 1-NIC isolated network with zero external egress";
+      approval.push("security_vm_clone", "security_vm_power", "security_vm_destroy", "security_benign_validate", "security_untrusted_execute", "security_vm_cleanup");
     }
 
     const denied = ["git_push", "pr_create", "deploy", "host_mutate", "rm_rf", "secrets_read"];
