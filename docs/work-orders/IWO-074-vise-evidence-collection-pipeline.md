@@ -1,6 +1,6 @@
 # IWO-074 — Vise evidence collection pipeline
 
-**Status:** Draft  
+**Status:** Implemented  
 **Priority:** P1  
 **Effort:** L  
 **Owner:** implementation agent  
@@ -71,11 +71,11 @@ Raw suspicious artifacts require an explicit quarantine/export policy and are no
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `python3 -m unittest tests/test_evidence_pipeline.py -v` (6 tests passed, covering schema normalization, graceful degradation, binary byte rejection, LLM briefing generation, and ViseStore integration); full test suite passed (493 tests); `./scripts/preflight.sh && ./scripts/validate-repo.sh && ./tests/test_structure.sh` passed.
+- Follow-ons filed: IWO-075 (Vise analyst reporting and findings workflow)
+- Residual risks: None in unit mode; live analysis requires operator-authorized deployment and hypervisor inventory.
+- Docs/status updated: `docs/features/index.md`, `docs/features/FEAT-019-cybersecurity-vise.md`, `docs/work-orders/README.md`, `docs/roadmap.md`.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded

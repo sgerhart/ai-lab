@@ -64,7 +64,7 @@ Do not treat this index as authorized implementation or deploy.
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 UI live; IWO-070 drafts Work Orders from a finished review | — |
 | 3 | [FEAT-017](FEAT-017-agent-operating-studio.md) | Agent Operating Studio | **In progress:** IWO-063 shell in Git. Live layout pass open (D-019) | — |
 | — | [FEAT-018](FEAT-018-ai-security-platform.md) | AI Security Platform | **Partial (code):** IWO-065–069 unit-tested. AISVS register written (IWO-085, Review). IWO-086–094 Draft. ADR 0044 Proposed. Not deployed | — |
-| — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Partial**. Job model, fake adapter, isolated network, and template contracts unit-tested (IWO-070–073). Live Proxmox calls are refused. IWO-074–075 and IWO-081 remain Draft | — |
+| — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Partial**. Job model, fake adapter, isolated network, template contracts, and evidence pipeline unit-tested (IWO-070–074). Live Proxmox calls are refused. IWO-075 and IWO-081 remain Draft | — |
 | — | [FEAT-020](FEAT-020-security-compute-agent.md) | Security Compute Agent | **Complete (unit-tested; not deployed):** IWO-076–078 unit-tested | — |
 | — | [FEAT-021](FEAT-021-classroom.md) | Classroom: lesson plan, voice, whiteboard | **Live on the mini** (IWO-106, 2026-10-17). Browser voice not watched in a session | — |
 | — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Live on the mini** (desk served 2026-10-21). A wake has not been watched there yet | — |
@@ -131,7 +131,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-071](../work-orders/IWO-071-hypervisor-adapter-abstraction.md) | Hypervisor adapter abstraction | FEAT-019 | **Complete** (unit; fake adapter only) |
 | [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) | Security Compute isolated network contract | FEAT-019 | **Complete** (unit-tested; not deployed) |
 | [IWO-073](../work-orders/IWO-073-security-vm-template-contract.md) | Security VM template contract | FEAT-019 | **Complete** (unit-tested; not deployed) |
-| [IWO-074](../work-orders/IWO-074-vise-evidence-collection-pipeline.md) | Vise evidence collection pipeline | FEAT-019 | **Draft** |
+| [IWO-074](../work-orders/IWO-074-vise-evidence-collection-pipeline.md) | Vise evidence collection pipeline | FEAT-019 | **Complete** (unit-tested; not deployed) |
 | [IWO-075](../work-orders/IWO-075-cybersecurity-vise-operator-ui.md) | Cybersecurity Vise operator UI | FEAT-019 | **Draft** |
 | [IWO-076](../work-orders/IWO-076-security-agent-definition-and-policy.md) | Security agent definition and policy | FEAT-020 | **Complete** (unit-tested; not deployed) |
 | [IWO-077](../work-orders/IWO-077-security-vm-lifecycle-and-validation-workflow.md) | Security VM lifecycle and validation workflow | FEAT-020 | **Complete** (unit-tested; not deployed) |

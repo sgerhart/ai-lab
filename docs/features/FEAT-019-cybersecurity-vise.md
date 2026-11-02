@@ -64,8 +64,8 @@ The fake adapter runs that lifecycle in memory. The Proxmox and ESXi adapters ra
 - [IWO-071](../work-orders/IWO-071-hypervisor-adapter-contract.md) — hypervisor adapter abstraction
 - [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) — isolated network contract
 - [IWO-073](../work-orders/IWO-073-security-vm-template-contract.md) — base VM template contract
-- IWO-074 — evidence collection pipeline
-- IWO-075 — Vise UI and job review
+- [IWO-074](../work-orders/IWO-074-vise-evidence-collection-pipeline.md) — evidence collection pipeline (Complete; unit-tested)
+- [IWO-075](../work-orders/IWO-075-cybersecurity-vise-operator-ui.md) — Vise UI and job review (Draft)
 - [IWO-081](../work-orders/IWO-081-security-compute-tool-guests.md) — tool guests stay on an isolated VM on the operator's Proxmox server. Does not connect to it.
 
 ## Acceptance criteria
