@@ -1,6 +1,6 @@
 # IWO-077 — Security VM lifecycle and validation workflow
 
-**Status:** Draft  
+**Status:** Implemented  
 **Priority:** P0  
 **Effort:** L  
 **Owner:** implementation agent  
@@ -47,7 +47,7 @@ Cleanup must be attempted on all post-clone failures; failure to prove cleanup l
 
 ## Validation Plan
 
-- Automated: state-machine matrix and restart/resume tests.
+- Automated: state-machine matrix and restart/resume tests (`tests/test_security_lifecycle.py`).
 - Manual: inspect audit trace.
 - Evidence: transition logs.
 
@@ -60,10 +60,10 @@ Cleanup must be attempted on all post-clone failures; failure to prove cleanup l
 
 ## Execution
 
-- **Branch:** `iwo/077-security-vm-lifecycle-and-validation-workflow`
+- **Branch:** `main`
 - **Risk tier:** P0
 - **Pre-PR / pre-merge gate:** `./scripts/validate-repo.sh` plus targeted tests
-- **Depends on:** IWO-070,IWO-071,IWO-072,IWO-073,IWO-074,IWO-076
+- **Depends on:** IWO-070,IWO-071,IWO-072,IWO-073
 - **Human verification required:** Yes
 - **Reviewer / approver:** human operator
 - **Project status record:** `docs/features/index.md`
@@ -71,11 +71,11 @@ Cleanup must be attempted on all post-clone failures; failure to prove cleanup l
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_security_lifecycle.py` passed (8 tests in 0.145s) covering 14-step benign and untrusted paths, pre/post clone failure compensating cleanups, idempotent cleanup, residual check gated blocked incident states, and LangGraph process restart with interrupt/resume. `python3 -m unittest discover -s tests -v` passed all 474 tests.
+- Follow-ons filed: IWO-074 (VISE evidence collection pipeline), IWO-078 (hypervisor test harness & benign e2e validation).
+- Residual risks: Live ESXi/Proxmox deployment remains unauthorized and requires operator-supplied inventory, endpoint, and isolated network parameters.
+- Docs/status updated: `docs/features/FEAT-020-security-compute-agent.md`, `docs/features/index.md`, `docs/roadmap.md`.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded

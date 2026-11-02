@@ -28,6 +28,7 @@ STATES = (
     "cleanup",
     "complete",
     "failed",
+    "blocked",
 )
 PROFILES = ("linux-static", "windows-static", "linux-behavioral", "windows-behavioral")
 CLEANUP = ("pending", "verified", "failed")
@@ -38,9 +39,10 @@ _NEXT = {
     "approval": {"running", "failed"},
     "running": {"collecting", "failed"},
     "collecting": {"cleanup", "failed"},
-    "cleanup": {"complete", "failed"},
-    "failed": {"cleanup"},
+    "cleanup": {"complete", "failed", "blocked"},
+    "failed": {"cleanup", "blocked"},
     "complete": set(),
+    "blocked": set(),
 }
 _PAYLOAD_KEYS = frozenset({"content", "bytes", "payload", "sample", "malware", "binary", "raw"})
 
@@ -290,8 +292,8 @@ class ViseStore:
             left = hypervisor.residual(job.job_id)
             if left:
                 job.cleanup_status = "failed"
-                job.failure = "residual guests remain"
-                job.state = "failed"
+                job.failure = f"residual guests remain: {left}"
+                job.state = "blocked"
                 return
             job.vm_id = ""
             job.cleanup_status = "verified"

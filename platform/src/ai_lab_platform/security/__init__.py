@@ -12,6 +12,14 @@ from .mcp_registry import McpRegistry
 from .policy_eval import evaluate_tool
 from .posture import AgentSecurityPosture, evaluate_agent_posture
 from .providers import ProviderRegistry, default_providers
+from .lifecycle import (
+    SecurityVmLifecycleEngine,
+    SecurityVmWorkflowState,
+    StepName,
+    WorkflowStatus,
+    build_security_vm_graph,
+    init_workflow_state,
+)
 from .templates import (
     BASELINE_PROFILES,
     LINUX_BASELINE_PROFILE,
@@ -33,12 +41,18 @@ __all__ = [
     "McpRegistry",
     "ProviderRegistry",
     "SecurityEvent",
+    "SecurityVmLifecycleEngine",
+    "SecurityVmWorkflowState",
+    "StepName",
     "TemplateManifest",
     "TemplateValidationReport",
     "WINDOWS_BASELINE_PROFILE",
+    "WorkflowStatus",
+    "build_security_vm_graph",
     "check_template_drift",
     "default_providers",
     "evaluate_agent_posture",
     "evaluate_tool",
+    "init_workflow_state",
     "validate_manifest_offline",
 ]

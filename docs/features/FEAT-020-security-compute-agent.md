@@ -1,6 +1,6 @@
 # FEAT-020 — Security Compute Agent
 
-- **Status:** Proposed
+- **Status:** Partial (code)
 - **Created:** 2026-09-26
 - **Owner:** human (operator)
 - **Priority:** Core security automation
@@ -72,7 +72,7 @@ Approval-gated initially:
 ## Work Orders
 
 - IWO-076 — security agent definition and policy
-- IWO-077 — VM lifecycle workflow and validation state machine
+- IWO-077 — VM lifecycle workflow and validation state machine (Complete; unit-tested)
 - IWO-078 — hypervisor test harness and end-to-end benign validation
 
 ## Acceptance criteria
