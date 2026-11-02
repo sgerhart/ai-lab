@@ -88,7 +88,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-075](IWO-075-cybersecurity-vise-operator-ui.md) | Cybersecurity Vise operator UI | Draft |
 | [IWO-076](IWO-076-security-agent-definition-and-policy.md) | Security agent definition and policy | Draft |
 | [IWO-077](IWO-077-security-vm-lifecycle-and-validation-workflow.md) | Security VM lifecycle and validation workflow | Complete (unit; not deployed) |
-| [IWO-078](IWO-078-hypervisor-test-harness-and-benign-end-to-end-validation.md) | Hypervisor test harness and benign end-to-end validation | Draft |
+| [IWO-078](IWO-078-hypervisor-test-harness-and-benign-end-to-end-validation.md) | Hypervisor test harness and benign end-to-end validation | Complete (unit; not deployed) |
 | [IWO-079](IWO-079-mcp-server-intake.md) | MCP server intake | Complete (unit; not deployed) |
 | [IWO-080](IWO-080-readonly-third-party-mcp.md) | Read-only third-party MCP candidates | Complete (unit; not deployed) |
 | [IWO-081](IWO-081-security-compute-tool-guests.md) | Security Compute tool guests | Draft |

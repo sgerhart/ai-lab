@@ -1,6 +1,6 @@
 # IWO-078 — Hypervisor test harness and benign end-to-end validation
 
-**Status:** Draft  
+**Status:** Implemented  
 **Priority:** P0  
 **Effort:** L  
 **Owner:** implementation agent  
@@ -47,7 +47,7 @@ No test may require a real hypervisor by default. Live test must be separately a
 
 ## Validation Plan
 
-- Automated: full fake-provider E2E.
+- Automated: full fake-provider E2E (`tests/test_hypervisor_harness.py`).
 - Manual/live: separate operator authorization required.
 - Evidence: generated validation report.
 
@@ -60,7 +60,7 @@ No test may require a real hypervisor by default. Live test must be separately a
 
 ## Execution
 
-- **Branch:** `iwo/078-hypervisor-test-harness-and-benign-end-to-end`
+- **Branch:** `main`
 - **Risk tier:** P0
 - **Pre-PR / pre-merge gate:** `./scripts/validate-repo.sh` plus targeted tests
 - **Depends on:** IWO-077
@@ -71,11 +71,11 @@ No test may require a real hypervisor by default. Live test must be separately a
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_hypervisor_harness.py` passed (6 tests in 0.002s) covering fake provider contract verification, dry-run preflight planning without VM creation, end-to-end benign fixture execution and evidence collection, residual leak injection resulting in blocked state, host/network safety checks (loopback bind, network denylist, live authorization token gating), and custom fixtures. Script `scripts/security-hypervisor-preflight.sh` verified for help, dry-run, and safe refusal of `--apply`. Full unittest suite passed all 480 tests.
+- Follow-ons filed: IWO-076 (security agent definition and policy), IWO-074 (cybersecurity VISE evidence collection pipeline).
+- Residual risks: Live ESXi/Proxmox deployment remains unauthorized and requires operator-supplied inventory, endpoint, and isolated network parameters.
+- Docs/status updated: `docs/features/FEAT-020-security-compute-agent.md`, `docs/features/index.md`, `docs/work-orders/README.md`, `docs/roadmap.md`.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded

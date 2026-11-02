@@ -73,7 +73,7 @@ Approval-gated initially:
 
 - IWO-076 — security agent definition and policy
 - IWO-077 — VM lifecycle workflow and validation state machine (Complete; unit-tested)
-- IWO-078 — hypervisor test harness and end-to-end benign validation
+- IWO-078 — hypervisor test harness and end-to-end benign validation (Complete; unit-tested)
 
 ## Acceptance criteria
 
