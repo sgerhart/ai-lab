@@ -556,6 +556,10 @@ class UsageBilledAuthIn(BaseModel):
     authorized: bool
 
 
+class NexusSyncIn(BaseModel):
+    apply: bool = False
+
+
 def _studio_payload(raw: Any) -> dict[str, Any]:
     """Operator-facing builder fields. Not secrets, not a second policy engine."""
     if raw is None:
@@ -3725,13 +3729,10 @@ def create_control_app(
             headers={"Cache-Control": "private, max-age=86400"},
         )
 
-    class _NexusSyncBody(BaseModel):
-        apply: bool = False
-
     @app.post("/v1/nexus/sync")
     def nexus_sync_endpoint(
         request: Request,
-        body: _NexusSyncBody,
+        body: NexusSyncIn = Body(default_factory=NexusSyncIn),
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         """Copy new iCloud books into the local mirror, then list what is on disk.
