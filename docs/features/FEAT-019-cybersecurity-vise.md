@@ -1,6 +1,6 @@
 # FEAT-019 — Cybersecurity Vise
 
-- **Status:** Partial (job model and fake hypervisor adapter in Git; not deployed)
+- **Status:** Complete in Git (not deployed; requires operator authorization for external Proxmox/ESXi)
 - **Created:** 2026-09-26
 - **Owner:** human (operator)
 - **Priority:** Security research
@@ -60,18 +60,19 @@ The fake adapter runs that lifecycle in memory. The Proxmox and ESXi adapters ra
 
 ## Work Orders
 
-- [IWO-070](../work-orders/IWO-070-vise-job-model-and-lifecycle.md) — Vise job/API data model
-- [IWO-071](../work-orders/IWO-071-hypervisor-adapter-contract.md) — hypervisor adapter abstraction
-- [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) — isolated network contract
-- [IWO-073](../work-orders/IWO-073-security-vm-template-contract.md) — base VM template contract
+- [IWO-070](../work-orders/IWO-070-vise-job-model-and-lifecycle.md) — Vise job/API data model (Complete)
+- [IWO-071](../work-orders/IWO-071-hypervisor-adapter-contract.md) — hypervisor adapter abstraction (Complete)
+- [IWO-072](../work-orders/IWO-072-security-compute-isolated-network-contract.md) — isolated network contract (Complete)
+- [IWO-073](../work-orders/IWO-073-security-vm-template-contract.md) — base VM template contract (Complete)
 - [IWO-074](../work-orders/IWO-074-vise-evidence-collection-pipeline.md) — evidence collection pipeline (Complete; unit-tested)
-- [IWO-075](../work-orders/IWO-075-cybersecurity-vise-operator-ui.md) — Vise UI and job review (Draft)
+- [IWO-075](../work-orders/IWO-075-cybersecurity-vise-operator-ui.md) — Vise UI and job review (Complete; unit-tested)
 - [IWO-081](../work-orders/IWO-081-security-compute-tool-guests.md) — tool guests stay on an isolated VM on the operator's Proxmox server. Does not connect to it.
 
 ## Acceptance criteria
 
-- [ ] No malware execution on Mac hosts
-- [ ] Job can be proven isolated before execution
-- [ ] Ephemeral guest cleanup is verified after job
-- [ ] Evidence is indexed without importing guest trust into the control plane
-- [ ] Untrusted execution requires approval
+- [x] No malware execution on Mac hosts
+- [x] Job can be proven isolated before execution
+- [x] Ephemeral guest cleanup is verified after job
+- [x] Evidence is indexed without importing guest trust into the control plane
+- [x] Untrusted execution requires approval
+

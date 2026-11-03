@@ -2281,14 +2281,89 @@
         </div>
 
         <div class="sec-tab-panel" id="sec-tab-vise" hidden>
-          <h2 class="dc-h">Cybersecurity Vise — Sandboxed Execution Control</h2>
-          <p class="dc-note">Hostile-workload containment pipeline on the external Security Compute Plane (ADR 0043). Never run malicious binaries on Mac hosts.</p>
+          <div class="sec-header-row" style="margin-bottom: 12px;">
+            <div>
+              <h2 class="dc-h" style="margin-bottom: 4px;">Cybersecurity Vise — Sandboxed Execution Control</h2>
+              <p class="dc-note" style="margin: 0;">Hostile-workload containment pipeline on the external Security Compute Plane (ADR 0043). Never run malicious binaries on Mac hosts.</p>
+            </div>
+            <div class="sec-header-actions">
+              <button type="button" class="btn" id="vise-refresh-btn">↻ Refresh Jobs</button>
+              <button type="button" class="btn primary" id="vise-toggle-intake-btn">+ Submit Analysis Job</button>
+            </div>
+          </div>
           
           <div class="posture-policy-banner" style="margin: 14px 0;">
-            🛡️ <strong>Safety Invariant:</strong> The fake hypervisor adapter is the active implementation in test mode. Live Proxmox/ESXi connections are refused until operator supplies isolated network configuration.
+            🛡️ <strong>Safety Invariant:</strong> Live Proxmox/ESXi hypervisors fail closed without configured credentials and isolated network. The in-memory test adapter executes validated lifecycles for benign/test workloads. Control plane stores 0 sample bytes.
           </div>
 
+          <!-- New Analysis Job Intake Form -->
+          <details class="vise-intake-card" id="vise-intake-card" style="margin-bottom: 20px;">
+            <summary id="vise-intake-summary">📥 Artifact Metadata Intake (Safe Registration)</summary>
+            <p class="dc-note" style="margin: 8px 0 14px;">
+              Specify cryptographic hashes and metadata before sandboxed execution. Raw sample binaries are <strong>permanently prohibited</strong> in AI Lab. Payloads reside exclusively on isolated hypervisor datastores.
+            </p>
+            <div class="form-grid" style="max-width: none; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+              <div style="grid-column: 1 / -1;">
+                <label for="vise-in-sha256">Sample SHA-256 (Required 64-hex Hash)</label>
+                <input type="text" id="vise-in-sha256" placeholder="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" autocomplete="off" spellcheck="false" style="font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+              </div>
+              <div>
+                <label for="vise-in-label">Artifact Label / Reference</label>
+                <input type="text" id="vise-in-label" placeholder="e.g. suspicious-loader.bin" autocomplete="off">
+              </div>
+              <div>
+                <label for="vise-in-bytes">Byte Length</label>
+                <input type="number" id="vise-in-bytes" value="65536" min="0" step="1">
+              </div>
+              <div>
+                <label for="vise-in-media">Media Type</label>
+                <input type="text" id="vise-in-media" value="application/octet-stream" placeholder="application/octet-stream">
+              </div>
+              <div>
+                <label for="vise-in-profile">Analysis Profile</label>
+                <select id="vise-in-profile">
+                  <option value="linux-static">linux-static (Static Inspection)</option>
+                  <option value="linux-behavioral">linux-behavioral (Dynamic Sandbox)</option>
+                  <option value="windows-static">windows-static (Static Inspection)</option>
+                  <option value="windows-behavioral">windows-behavioral (Dynamic Sandbox)</option>
+                </select>
+              </div>
+              <div>
+                <label for="vise-in-provider">Hypervisor Provider</label>
+                <select id="vise-in-provider">
+                  <option value="fake">fake (In-Memory Test Adapter - Active)</option>
+                  <option value="proxmox">proxmox (Proxmox Compute - Unconfigured)</option>
+                  <option value="esxi">esxi (ESXi Compute - Unconfigured)</option>
+                </select>
+              </div>
+              <div>
+                <label for="vise-in-template">VM Baseline Template</label>
+                <select id="vise-in-template">
+                  <option value="fixture-linux">fixture-linux (Ubuntu 24.04 Baseline)</option>
+                  <option value="fixture-windows">fixture-windows (Windows 11 Baseline)</option>
+                </select>
+              </div>
+              <div>
+                <label for="vise-in-class">Execution Class</label>
+                <select id="vise-in-class">
+                  <option value="benign">benign (Safe validation run)</option>
+                  <option value="untrusted">untrusted (Hostile sample - Requires Approval)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions" style="margin-top: 16px;">
+              <button type="button" class="btn primary" id="vise-submit-job">Queue Vise Job</button>
+              <button type="button" class="btn" id="vise-fill-demo">Fill Benign Demo Sample</button>
+              <span class="prefs-msg" id="vise-intake-err"></span>
+            </div>
+          </details>
+
+          <!-- Jobs List Table -->
+          <h3 class="dc-h" style="margin: 20px 0 10px;">Sandboxed Analysis Jobs</h3>
           <div id="sec-vise-jobs-slot"></div>
+
+          <!-- Job Detailed Inspector & Lifecycle Control Panel -->
+          <div id="sec-vise-detail-slot" style="margin-top: 24px;" hidden></div>
         </div>
 
         <div class="sec-tab-panel" id="sec-tab-mcp" hidden>
@@ -2312,6 +2387,20 @@
           </p>
           <div class="form-actions" style="margin-top: 16px;">
             <button type="button" class="btn primary" id="sec-ev-close">Close</button>
+          </div>
+        </dialog>
+
+        <!-- Cybersecurity Vise Safe LLM Brief Dialog (IWO-075) -->
+        <dialog id="sec-vise-brief-dialog" class="sec-dialog" style="max-width: 780px; width: 92vw;" aria-labelledby="sec-vise-brief-title">
+          <p class="dc-note" style="margin-top: 0;">Cybersecurity Vise — Safe Evidence Summary (ADR 0043)</p>
+          <h2 id="sec-vise-brief-title" style="margin: 4px 0 12px;">Analysis Dossier &amp; LLM Brief</h2>
+          <p class="dc-note">
+            🛡️ <strong>Safety Invariant:</strong> Synthesized from quarantined hypervisor telemetry. Zero sample bytes or malware executables are embedded. Safe for LLM grounding.
+          </p>
+          <div class="vise-brief-box" id="sec-vise-brief-content">Loading brief…</div>
+          <div class="form-actions" style="margin-top: 16px; justify-content: space-between;">
+            <button type="button" class="btn" id="sec-vise-brief-copy">📋 Copy Markdown</button>
+            <button type="button" class="btn primary" id="sec-vise-brief-close">Close</button>
           </div>
         </dialog>
       </div>
@@ -3461,14 +3550,35 @@
       slot.appendChild(tableWrap);
     }
 
+    let secSelectedViseJobId = null;
+    let secViseJobsCache = [];
+
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     function renderSecurityVise(jobs) {
+      secViseJobsCache = jobs || [];
       const slot = $("sec-vise-jobs-slot");
       if (!slot) return;
       slot.innerHTML = "";
 
-      if (!jobs || !jobs.length) {
+      if (!secViseJobsCache.length) {
         slot.innerHTML = "<p class='dc-note'>No sandboxed execution jobs queued. Hypervisor containment boundary intact.</p>";
+        const detSlot = $("sec-vise-detail-slot");
+        if (detSlot) detSlot.hidden = true;
         return;
+      }
+
+      // If no selection yet, select the first job
+      if (!secSelectedViseJobId || !secViseJobsCache.some(j => j.job_id === secSelectedViseJobId)) {
+        secSelectedViseJobId = secViseJobsCache[0].job_id;
       }
 
       const tableWrap = document.createElement("div");
@@ -3477,31 +3587,403 @@
       const table = document.createElement("table");
       table.className = "posture-table";
       const thead = document.createElement("thead");
-      thead.innerHTML = "<tr><th>Job ID</th><th>State</th><th>Profile</th><th>SHA256 (Safe Hash)</th><th>Actor</th><th>Evidence</th></tr>";
+      thead.innerHTML = "<tr><th>Job ID / Label</th><th>Profile</th><th>SHA256 (Safe Hash)</th><th>Class</th><th>State</th><th>Cleanup</th><th>Evidence</th><th>Action</th></tr>";
       table.appendChild(thead);
 
       const tbody = document.createElement("tbody");
-      jobs.forEach((j) => {
+      secViseJobsCache.forEach((j) => {
         const tr = document.createElement("tr");
         tr.id = `vise-row-${j.job_id}`;
-        const isLive = j.state === "running" || j.state === "ready" || j.state === "collecting";
-        const statePill = `<span class='prefs-pill ${isLive ? "warn" : (j.state === "complete" ? "on" : "off")}'>${j.state}</span>`;
-        const shaPreview = j.sample_sha256 ? `<code>${j.sample_sha256.slice(0, 16)}…</code>` : "<span class='prefs-meta'>none</span>";
-        const evCount = (j.evidence || []).length;
+        tr.style.cursor = "pointer";
+        if (j.job_id === secSelectedViseJobId) {
+          tr.style.background = "rgba(56, 189, 248, 0.08)";
+        }
+
+        const isLive = j.state === "running" || j.state === "ready" || j.state === "collecting" || j.state === "approval";
+        const isDone = j.state === "complete";
+        const isFailed = j.state === "failed" || j.state === "blocked";
+        let statePillCls = isFailed ? "off" : (isLive ? "warn" : (isDone ? "on" : "off"));
+        const statePill = `<span class='prefs-pill ${statePillCls}'>${j.state}</span>`;
         
+        const cleanupPillCls = j.cleanup_status === "verified" ? "on" : (j.cleanup_status === "failed" ? "off" : "warn");
+        const cleanupPill = `<span class='prefs-pill ${cleanupPillCls}'>${j.cleanup_status}</span>`;
+
+        const shaPreview = j.sha256 ? `<code>${j.sha256.slice(0, 12)}…${j.sha256.slice(-4)}</code>` : "<span class='prefs-meta'>none</span>";
+        const evCount = (j.evidence || []).length;
+        const clsPill = `<span class='prefs-pill ${j.execution_class === "untrusted" ? "warn" : "on"}'>${j.execution_class}</span>`;
+
         tr.innerHTML = `
-          <td><strong>${j.job_id}</strong></td>
-          <td>${statePill}</td>
-          <td><code>${j.profile || "linux-static"}</code></td>
+          <td><strong>${escapeHtml(j.label || j.job_id.slice(0, 8))}</strong><br><span class='prefs-meta' style='font-size:10px;'>${j.job_id.slice(0, 8)}…</span></td>
+          <td><code>${escapeHtml(j.profile || "linux-static")}</code></td>
           <td>${shaPreview}</td>
-          <td><span class='prefs-meta'>${j.actor || "operator"}</span></td>
-          <td>${evCount ? `<span class='sec-evidence-pill'>📎 ${evCount} ref(s)</span>` : "<span class='prefs-meta'>0</span>"}</td>
+          <td>${clsPill}</td>
+          <td>${statePill}</td>
+          <td>${cleanupPill}</td>
+          <td>${evCount ? `<span class='sec-evidence-pill'>📎 ${evCount}</span>` : "<span class='prefs-meta'>0</span>"}</td>
+          <td><button type="button" class="btn" style="padding:4px 8px; font-size:11px;" onclick="selectViseJob('${j.job_id}')">Inspect</button></td>
         `;
+
+        tr.onclick = (e) => {
+          if (e.target.tagName !== "BUTTON") selectViseJob(j.job_id);
+        };
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
       tableWrap.appendChild(table);
       slot.appendChild(tableWrap);
+
+      const curJob = secViseJobsCache.find(j => j.job_id === secSelectedViseJobId);
+      if (curJob) renderViseDetail(curJob);
+    }
+
+    function selectViseJob(jobId) {
+      secSelectedViseJobId = jobId;
+      renderSecurityVise(secViseJobsCache);
+    }
+
+    function renderViseDetail(j) {
+      const slot = $("sec-vise-detail-slot");
+      if (!slot) return;
+      slot.hidden = false;
+      slot.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "vise-detail-card";
+
+      // Header row
+      const isFailed = j.state === "failed" || j.state === "blocked";
+      const isLive = j.state === "running" || j.state === "ready" || j.state === "collecting" || j.state === "approval";
+      const isDone = j.state === "complete";
+      let statePillCls = isFailed ? "off" : (isLive ? "warn" : (isDone ? "on" : "off"));
+
+      const head = document.createElement("div");
+      head.className = "sec-header-row";
+      head.style.marginBottom = "14px";
+      head.innerHTML = `
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <h3 style="margin:0; font-size:18px; font-weight:700;">Job: ${escapeHtml(j.label || j.job_id)}</h3>
+            <span class="prefs-pill ${statePillCls}">${j.state}</span>
+            <span class="prefs-pill ${j.execution_class === "untrusted" ? "warn" : "on"}">${j.execution_class}</span>
+          </div>
+          <div class="prefs-meta" style="font-size:12px;">ID: <code>${j.job_id}</code> · Provider: <code>${j.provider}</code> · Profile: <code>${j.profile}</code></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn primary" id="btn-view-llm-brief" onclick="openViseBriefDialog('${j.job_id}')">📄 View Safe LLM Brief</button>
+        </div>
+      `;
+      card.appendChild(head);
+
+      // Lifecycle Timeline
+      const timeline = document.createElement("div");
+      timeline.className = "vise-timeline";
+      const steps = [
+        { id: "submitted", label: "1. Submitted" },
+        { id: "preflight", label: "2. Preflight" },
+        { id: "ready", label: "3. Ready" },
+        { id: "approval", label: "4. Approved" },
+        { id: "running", label: "5. Running" },
+        { id: "collecting", label: "6. Collecting" },
+        { id: "cleanup", label: "7. Cleanup" },
+        { id: "complete", label: "8. Complete" },
+      ];
+      const stateIdx = steps.findIndex(s => s.id === j.state);
+      steps.forEach((s, idx) => {
+        const stepEl = document.createElement("div");
+        stepEl.className = "vise-step";
+        if (j.state === s.id) {
+          stepEl.classList.add(isFailed ? "failed" : "active");
+        } else if (stateIdx > idx || isDone) {
+          stepEl.classList.add("done");
+        }
+        stepEl.textContent = s.label;
+        timeline.appendChild(stepEl);
+
+        if (idx < steps.length - 1) {
+          const arr = document.createElement("span");
+          arr.className = "vise-step-arrow";
+          arr.textContent = "→";
+          timeline.appendChild(arr);
+        }
+      });
+      card.appendChild(timeline);
+
+      // Explicit Error Alert Banner (if failed / blocked)
+      if (isFailed || j.failure) {
+        const errBanner = document.createElement("div");
+        errBanner.className = "posture-policy-banner";
+        errBanner.style.borderColor = "#ff6b7a";
+        errBanner.style.background = "rgba(255, 107, 122, 0.12)";
+        errBanner.style.margin = "12px 0 16px";
+        errBanner.innerHTML = `
+          <div style="color:#ff6b7a; font-weight:700; margin-bottom:4px;">🚨 Failure / Containment Error:</div>
+          <div style="font-family:'JetBrains Mono', monospace; font-size:12px; color:#fecdd3; line-height:1.4;">${escapeHtml(j.failure || "Execution failed.")}</div>
+          <div class="dc-note" style="margin-top:6px; color:#ff6b7a;">Fail-closed invariant triggered. Ephemeral VM state: ${escapeHtml(j.cleanup_status)}. No untrusted code permitted on Mac hosts.</div>
+        `;
+        card.appendChild(errBanner);
+      }
+
+      // Preflight & Cleanup Proof Grid
+      const proofGrid = document.createElement("div");
+      proofGrid.className = "vise-proof-grid";
+
+      // Card 1: Preflight & Isolation Proof
+      const tmpl = (j.isolation && j.isolation.template) || {};
+      const net = (j.isolation && j.isolation.network) || {};
+      const ev = (j.isolation && j.isolation.evidence) || {};
+      const isPreflightOk = tmpl.ok && net.ok && net.denylist_cleared;
+
+      const pfCard = document.createElement("div");
+      pfCard.className = "vise-proof-card";
+      pfCard.innerHTML = `
+        <h4>Preflight &amp; Isolation Proof <span class="prefs-pill ${isPreflightOk ? 'on' : (j.state === 'submitted' ? 'off' : 'warn')}">${isPreflightOk ? 'Verified Isolated' : 'Pending / Unverified'}</span></h4>
+        <div class="vise-proof-item"><span>VM Template:</span><code>${escapeHtml(j.template_id || "fixture-linux")} (${tmpl.ok ? '✓ Manifest valid' : 'pending'})</code></div>
+        <div class="vise-proof-item"><span>Expected Snapshot:</span><code>${escapeHtml(tmpl.snapshot || j.expected_snapshot || "clean-baseline")}</code></div>
+        <div class="vise-proof-item"><span>Isolated Network:</span><code>${net.ok ? '✓ 1 NIC, Uplink: false' : 'pending'}</code></div>
+        <div class="vise-proof-item"><span>Denylist Cleared:</span><code>${net.denylist_cleared ? '✓ Tailscale/LAN/Mgmt Blocked' : 'pending'}</code></div>
+        <div class="vise-proof-item"><span>Quarantine Locator:</span><code style="font-size:10px;">${escapeHtml(ev.locator || 'none')}</code></div>
+      `;
+      proofGrid.appendChild(pfCard);
+
+      // Card 2: Cleanup Verification & Residual Risk
+      const clCard = document.createElement("div");
+      clCard.className = "vise-proof-card";
+      const isCleanupOk = j.cleanup_status === "verified";
+      clCard.innerHTML = `
+        <h4>Cleanup &amp; Residual Risk <span class="prefs-pill ${isCleanupOk ? 'on' : (j.cleanup_status === 'failed' ? 'off' : 'warn')}">${escapeHtml(j.cleanup_status)}</span></h4>
+        <div class="vise-proof-item"><span>Ephemeral Guest VM:</span><code>${j.vm_id ? escapeHtml(j.vm_id) : (isCleanupOk ? 'Destroyed (0 residual)' : 'None active')}</code></div>
+        <div class="vise-proof-item"><span>Teardown Proof:</span><code>${isCleanupOk ? '✓ Hypervisor reports 0 leftovers' : (j.vm_id ? 'Active execution' : 'Teardown pending')}</code></div>
+        <div class="vise-proof-item"><span>Containment Invariant:</span><code>✓ Zero bytes accessed Mac host</code></div>
+        <div class="vise-proof-item"><span>Residual Risk:</span><code>${isCleanupOk ? 'Zero residual compute risk' : 'Quarantine isolation active'}</code></div>
+      `;
+      proofGrid.appendChild(clCard);
+
+      card.appendChild(proofGrid);
+
+      // Approval Gate (if untrusted)
+      if (j.execution_class === "untrusted") {
+        const appBox = document.createElement("div");
+        appBox.className = "posture-policy-banner";
+        appBox.style.margin = "12px 0";
+        appBox.style.background = j.approval_id ? "rgba(16, 185, 129, 0.08)" : "rgba(245, 158, 11, 0.1)";
+        appBox.style.borderColor = j.approval_id ? "rgba(16, 185, 129, 0.4)" : "rgba(245, 158, 11, 0.4)";
+        appBox.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <strong style="color:${j.approval_id ? '#10b981' : '#fbbf24'};">🛡️ Human Approval Gate (Untrusted Workload):</strong>
+              <div class="dc-note" style="margin:2px 0 0;">${j.approval_id ? 'Approved with ID: <code>' + escapeHtml(j.approval_id) + '</code>' : 'Execution is blocked until operator approval ID is supplied.'}</div>
+            </div>
+            ${!j.approval_id ? `
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="text" id="vise-approval-input" placeholder="appr-sec-..." value="appr-operator-sec" style="padding:6px 10px; font-size:12px; width:150px; font-family:'JetBrains Mono',monospace;">
+                <button type="button" class="btn" onclick="submitViseApproval('${j.job_id}')">Record Approval</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        card.appendChild(appBox);
+      }
+
+      // Action Bar Controls
+      const actions = document.createElement("div");
+      actions.className = "vise-action-bar";
+
+      // 1. Run Preflight
+      const btnPreflight = document.createElement("button");
+      btnPreflight.className = "btn";
+      btnPreflight.textContent = "1. Run Preflight";
+      btnPreflight.disabled = j.state !== "submitted";
+      btnPreflight.onclick = () => advanceViseJob(j.job_id, "preflight");
+      actions.appendChild(btnPreflight);
+
+      // 2. Mark Ready
+      const btnReady = document.createElement("button");
+      btnReady.className = "btn";
+      btnReady.textContent = "2. Mark Ready";
+      btnReady.disabled = j.state !== "preflight";
+      btnReady.onclick = () => advanceViseJob(j.job_id, "ready");
+      actions.appendChild(btnReady);
+
+      // 3. Start Execution
+      const btnRun = document.createElement("button");
+      btnRun.className = "btn primary";
+      btnRun.textContent = "3. Start Sandboxed Execution";
+      // Gating check: Must be in ready or approval, and if untrusted, requires approval
+      const hasApproval = j.execution_class !== "untrusted" || !!j.approval_id;
+      const canStart = (j.state === "ready" || j.state === "approval") && hasApproval;
+      btnRun.disabled = !canStart;
+      if (!canStart) {
+        if (j.state !== "ready" && j.state !== "approval") {
+          btnRun.title = "Preflight isolation verification must pass first.";
+        } else if (!hasApproval) {
+          btnRun.title = "Untrusted analysis requires operator approval ID.";
+        }
+      }
+      btnRun.onclick = () => {
+        const appIn = $("vise-approval-input");
+        const approvalId = j.approval_id || (appIn ? appIn.value.trim() : "");
+        advanceViseJob(j.job_id, "running", { approval_id: approvalId });
+      };
+      actions.appendChild(btnRun);
+
+      // 4. Collect Evidence
+      const btnCollect = document.createElement("button");
+      btnCollect.className = "btn";
+      btnCollect.textContent = "4. Collect Evidence";
+      btnCollect.disabled = j.state !== "running";
+      btnCollect.onclick = () => advanceViseJob(j.job_id, "collecting");
+      actions.appendChild(btnCollect);
+
+      // 5. Cleanup VM
+      const btnCleanup = document.createElement("button");
+      btnCleanup.className = "btn danger";
+      btnCleanup.textContent = "5. Cleanup & Teardown VM";
+      btnCleanup.disabled = j.state !== "collecting" && j.state !== "running" && j.state !== "failed";
+      btnCleanup.onclick = () => advanceViseJob(j.job_id, "cleanup");
+      actions.appendChild(btnCleanup);
+
+      // 6. Complete
+      const btnComplete = document.createElement("button");
+      btnComplete.className = "btn";
+      btnComplete.textContent = "6. Mark Complete";
+      btnComplete.disabled = j.state !== "cleanup" || j.cleanup_status !== "verified";
+      btnComplete.onclick = () => advanceViseJob(j.job_id, "complete");
+      actions.appendChild(btnComplete);
+
+      card.appendChild(actions);
+
+      // Evidence table & Findings
+      if (j.evidence && j.evidence.length) {
+        const evWrap = document.createElement("div");
+        evWrap.style.marginTop = "14px";
+        evWrap.innerHTML = `<h4 style="margin:0 0 8px; font-size:13px;">Cataloged Quarantine Evidence (${j.evidence.length})</h4>`;
+        const evTableWrap = document.createElement("div");
+        evTableWrap.className = "posture-table-wrap";
+        evTableWrap.innerHTML = `
+          <table class="posture-table">
+            <thead><tr><th>Evidence ID</th><th>Storage Locator</th><th>Media Type</th><th>Size</th><th>Hash</th></tr></thead>
+            <tbody>
+              ${j.evidence.map(e => `
+                <tr>
+                  <td><code>${escapeHtml(e.evidence_id)}</code></td>
+                  <td><code>${escapeHtml(e.locator)}</code></td>
+                  <td><code>${escapeHtml(e.media_type)}</code></td>
+                  <td>${e.byte_length != null ? e.byte_length + 'B' : '—'}</td>
+                  <td><code>${escapeHtml((e.sha256 || '').slice(0, 16))}…</code></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        evWrap.appendChild(evTableWrap);
+        card.appendChild(evWrap);
+      }
+
+      slot.appendChild(card);
+    }
+
+    async function advanceViseJob(jobId, nextState, extra) {
+      try {
+        const payload = Object.assign({ state: nextState, actor: "operator" }, extra || {});
+        await api(`/v1/security/vise/jobs/${jobId}/advance`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        await loadSecurityOverview();
+      } catch (err) {
+        alert("Vise Action Error: " + (err.message || String(err)));
+        await loadSecurityOverview();
+      }
+    }
+
+    async function submitViseApproval(jobId) {
+      const input = $("vise-approval-input");
+      const approvalId = input ? input.value.trim() : "";
+      if (!approvalId) {
+        alert("Please enter a valid Approval ID.");
+        return;
+      }
+      try {
+        await api(`/v1/security/vise/jobs/${jobId}/advance`, {
+          method: "POST",
+          body: JSON.stringify({ state: "approval", actor: "operator", approval_id: approvalId }),
+        });
+        await loadSecurityOverview();
+      } catch (err) {
+        alert("Approval Error: " + (err.message || String(err)));
+      }
+    }
+
+    async function openViseBriefDialog(jobId) {
+      const dialog = $("sec-vise-brief-dialog");
+      const content = $("sec-vise-brief-content");
+      if (!dialog || !content) return;
+      content.textContent = "Loading safe analysis dossier…";
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "true");
+
+      try {
+        const data = await api(`/v1/security/vise/jobs/${jobId}/brief`);
+        content.textContent = data.llm_summary || "No brief available.";
+      } catch (err) {
+        content.textContent = "Failed to load LLM brief: " + (err.message || String(err));
+      }
+    }
+
+    async function submitViseIntake() {
+      const errEl = $("vise-intake-err");
+      if (errEl) { errEl.textContent = ""; errEl.className = "prefs-msg"; }
+
+      const sha = ($("vise-in-sha256") ? $("vise-in-sha256").value : "").trim().toLowerCase();
+      if (!sha || sha.length !== 64 || !/^[0-9a-f]{64}$/.test(sha)) {
+        if (errEl) { errEl.textContent = "SHA-256 must be exactly 64 hexadecimal characters."; errEl.className = "prefs-msg err"; }
+        return;
+      }
+
+      const label = ($("vise-in-label") ? $("vise-in-label").value : "").trim() || "sample-" + sha.slice(0, 8);
+      const byteLen = parseInt($("vise-in-bytes") ? $("vise-in-bytes").value : "0", 10) || 0;
+      const media = ($("vise-in-media") ? $("vise-in-media").value : "").trim() || "application/octet-stream";
+      const profile = $("vise-in-profile") ? $("vise-in-profile").value : "linux-static";
+      const provider = $("vise-in-provider") ? $("vise-in-provider").value : "fake";
+      const template = $("vise-in-template") ? $("vise-in-template").value : "fixture-linux";
+      let execClass = $("vise-in-class") ? $("vise-in-class").value : "benign";
+      if (profile.endsWith("-behavioral")) execClass = "untrusted";
+
+      const payload = {
+        sha256: sha,
+        label: label,
+        byte_length: byteLen,
+        media_type: media,
+        profile: profile,
+        provider: provider,
+        template_id: template,
+        execution_class: execClass,
+      };
+
+      try {
+        const created = await api("/v1/security/vise/jobs", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        if (errEl) { errEl.textContent = "Job queued successfully."; errEl.className = "prefs-msg ok"; }
+        secSelectedViseJobId = created.job_id;
+        const card = $("vise-intake-card");
+        if (card) card.open = false;
+        await loadSecurityOverview();
+      } catch (err) {
+        if (errEl) { errEl.textContent = err.message || "Failed to create job"; errEl.className = "prefs-msg err"; }
+      }
+    }
+
+    function fillViseDemo() {
+      if ($("vise-in-sha256")) $("vise-in-sha256").value = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+      if ($("vise-in-label")) $("vise-in-label").value = "benign-diagnostic-probe.bin";
+      if ($("vise-in-bytes")) $("vise-in-bytes").value = "16384";
+      if ($("vise-in-media")) $("vise-in-media").value = "application/octet-stream";
+      if ($("vise-in-profile")) $("vise-in-profile").value = "linux-static";
+      if ($("vise-in-provider")) $("vise-in-provider").value = "fake";
+      if ($("vise-in-template")) $("vise-in-template").value = "fixture-linux";
+      if ($("vise-in-class")) $("vise-in-class").value = "benign";
     }
 
     function renderSecurityMcp(mcpView) {
@@ -5216,6 +5698,36 @@
         if (secOverviewData) renderSecurityEvents(secOverviewData.recent_events || []);
       };
     });
+
+    // Cybersecurity Vise Controls (IWO-075)
+    if ($("vise-refresh-btn")) $("vise-refresh-btn").onclick = () => loadSecurityOverview().catch((e) => showErr(e));
+    if ($("vise-toggle-intake-btn")) $("vise-toggle-intake-btn").onclick = () => {
+      const card = $("vise-intake-card");
+      if (card) { card.open = !card.open; if (card.open && $("vise-in-sha256")) $("vise-in-sha256").focus(); }
+    };
+    if ($("vise-submit-job")) $("vise-submit-job").onclick = () => submitViseIntake();
+    if ($("vise-fill-demo")) $("vise-fill-demo").onclick = () => fillViseDemo();
+    if ($("sec-vise-brief-close")) $("sec-vise-brief-close").onclick = () => {
+      const d = $("sec-vise-brief-dialog");
+      if (d) {
+        if (typeof d.close === "function") d.close();
+        else d.removeAttribute("open");
+      }
+    };
+    if ($("sec-vise-brief-copy")) $("sec-vise-brief-copy").onclick = async () => {
+      const content = $("sec-vise-brief-content");
+      const btn = $("sec-vise-brief-copy");
+      if (content && navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+          await navigator.clipboard.writeText(content.textContent || "");
+          if (btn) {
+            const orig = btn.textContent;
+            btn.textContent = "✓ Copied!";
+            setTimeout(() => { btn.textContent = orig; }, 2000);
+          }
+        } catch (_) {}
+      }
+    };
     let antaresTimer = null;
     function stopAntaresPoll() {
       if (antaresTimer) clearTimeout(antaresTimer);

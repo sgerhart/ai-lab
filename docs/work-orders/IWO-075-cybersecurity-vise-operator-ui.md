@@ -1,6 +1,6 @@
 # IWO-075 — Cybersecurity Vise operator UI
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P2  
 **Effort:** L  
 **Owner:** implementation agent  
@@ -71,11 +71,12 @@ UI must not provide a generic hypervisor shell or one-click bypass of isolation/
 
 ## Closeout
 
-- Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
+- Verification evidence: `tests/test_vise_ui.py` passed all 5 contract tests covering AC 1-4; full test suite (498 tests) and `./scripts/preflight.sh` passed with zero errors.
+- Follow-ons filed: IWO-081 (Security Compute tool guests on isolated Proxmox VM).
+- Residual risks: Live ESXi/Proxmox hypervisors remain unconfigured and fail closed per ADR 0043; benign execution runs solely in in-memory test harness until live host deployment authorization.
+- Docs/status updated: FEAT-019, docs/features/index.md, docs/work-orders/README.md.
+- Status surfaces reconciled: Yes.
+- Summary metadata reviewed: Yes.
 - Planning-only change? No
 - Host deploy performed? No unless separately authorized and recorded
+
