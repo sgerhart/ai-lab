@@ -1,4 +1,5 @@
 import type {
+  ChatMessage,
   CheckpointItem,
   ExecutionResultSummary,
   ExperimentRun,
@@ -390,6 +391,104 @@ export class ApiClient {
       failure_class: 'none',
       stdout: `[SANDBOX ATTESTATION OK]\nUnshared network namespace (isolated)\nCPU time: 0.024s, Memory max: 18.4MB\nRan 20 test cases in 0.038s: PASS (100.0%)`,
       stderr: '',
+    }
+  }
+
+  async askTrainingAssistant(
+    message: string,
+    context?: { currentView?: string; taskId?: string; modelId?: string }
+  ): Promise<ChatMessage> {
+    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+    // Try backend controller /v1/assistant/chat
+    try {
+      const resp = await fetch('/v1/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          context_view: context?.currentView,
+          task_id: context?.taskId,
+          model_id: context?.modelId,
+        }),
+      })
+
+      if (resp.ok) {
+        const data = await resp.json()
+        return {
+          id: `msg-${Date.now()}`,
+          sender: 'assistant',
+          text: data.reply,
+          timestamp,
+          contextRef: data.context_ref,
+          suggestedActions: data.suggested_actions,
+          codeSnippet: data.code_snippet,
+        }
+      }
+    } catch {
+      // Fallback to grounded client logic
+    }
+
+    const lower = message.toLowerCase()
+
+    if (lower.includes('grpo') || lower.includes('reinforcement') || lower.includes('advantage') || lower.includes('policy')) {
+      return {
+        id: `msg-${Date.now()}`,
+        sender: 'assistant',
+        text: `**Group Relative Policy Optimization (GRPO)** runs on-policy on Apple Silicon Metal GPUs.\n\n### Core Mechanics:\n1. Samples a group of $G=4$ outputs for each prompt.\n2. Executes candidates in the air-gapped Proxmox Linux jail against 20 test assertions.\n3. Normalizes rewards across the group to calculate relative advantages $A_i = \\frac{r_i - \\mu}{\\sigma + \\epsilon}$.\n4. Updates LoRA adapter weights using surrogate policy loss with KL divergence constraint.`,
+        timestamp,
+        contextRef: 'docs/architecture.md#rl-grpo',
+        suggestedActions: ['Inspect Loss Curves', 'Review GRPO Run', 'Open Playground'],
+        codeSnippet: `def compute_group_advantages(rewards: list[float], eps: float = 1e-4) -> list[float]:\n    import numpy as np\n    arr = np.array(rewards, dtype=np.float32)\n    std = np.std(arr)\n    if std < eps:\n        return [0.0] * len(rewards)\n    return ((arr - np.mean(arr)) / (std + eps)).tolist()\n`,
+      }
+    }
+
+    if (lower.includes('sft') || lower.includes('lora') || lower.includes('divergence') || lower.includes('adapter')) {
+      return {
+        id: `msg-${Date.now()}`,
+        sender: 'assistant',
+        text: `**Supervised Fine-Tuning (SFT)** mines passing candidate executions from the 75 training tasks into instruction pairs.\n\n### Key Safeguards:\n- Uses MLX-LM on Mac Studio to train rank-8 LoRA adapters.\n- Enforces cryptographic proof: initial vs final adapter SHA-256 digests must diverge (\`weights_diverged=True\`).\n- Evaluates against 15 holdout validation and test tasks to confirm generalization.`,
+        timestamp,
+        contextRef: 'docs/architecture.md#sft-pipeline',
+        suggestedActions: ['View Models Catalog', 'Launch SFT Run', 'Inspect Holdout Tasks'],
+        codeSnippet: `# Provenance verification\nassert initial_adapter_sha256 != final_adapter_sha256, "Weight divergence required"\n`,
+      }
+    }
+
+    if (lower.includes('sandbox') || lower.includes('isolation') || lower.includes('proxmox') || lower.includes('cgroups')) {
+      return {
+        id: `msg-${Date.now()}`,
+        sender: 'assistant',
+        text: `**Sandbox Security Isolation:**\n- **Zero Network Egress:** \`CLONE_NEWNET\` disables all outbound traffic (including DNS).\n- **Resource Quotas:** cgroups v2 caps memory at 512MB and execution runtime at 5.0s.\n- **Failure Invariance:** VM or worker crashes are flagged as \`unscorable\` and never given 0.0 to prevent gradient corruption.`,
+        timestamp,
+        contextRef: 'docs/security/SECURITY_ASSESSMENT.md',
+        suggestedActions: ['Check Sandbox Health', 'Open Playground Test'],
+      }
+    }
+
+    if (lower.includes('fib') || context?.taskId === 'py-fib-001') {
+      return {
+        id: `msg-${Date.now()}`,
+        sender: 'assistant',
+        text: `**Task py-fib-001 (Fibonacci DP):**\nComputes the $n$-th Fibonacci number in $O(n)$ time.\n\n*Base model pitfall:* Naive recursion $O(2^n)$ times out in the sandbox on $n \\ge 35$. The SFT model uses accumulator swapping.`,
+        timestamp,
+        contextRef: 'py-fib-001',
+        suggestedActions: ['Insert Fibonacci Solution', 'Execute in Sandbox'],
+        codeSnippet: `def fibonacci(n: int) -> int:\n    if n <= 0:\n        return 0\n    if n == 1:\n        return 1\n    a, b = 0, 1\n    for _ in range(2, n + 1):\n        a, b = b, a + b\n    return b\n`,
+      }
+    }
+
+    return {
+      id: `msg-${Date.now()}`,
+      sender: 'assistant',
+      text: `Hello! I am your **AI Lab Training Copilot**.\n\nI can help you navigate the platform, explain Apple Silicon GRPO / SFT fine-tuning, inspect the 105 curated tasks, or analyze sandbox execution results.\n\nWhat would you like to explore?`,
+      timestamp,
+      suggestedActions: [
+        'How does GRPO work on Apple Silicon?',
+        'Explain Sandbox Isolation',
+        'How does SFT adapter divergence work?',
+        'Help with py-fib-001',
+      ],
     }
   }
 }

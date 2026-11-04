@@ -1,4 +1,4 @@
-import { Activity, Cpu, Server, Shield } from 'lucide-react'
+import { Activity, Bot, Cpu, Server, Shield } from 'lucide-react'
 import type { HostHealth, ViewType } from '../types'
 
 interface HeaderProps {
@@ -78,6 +78,14 @@ export const Header: React.FC<HeaderProps> = ({ hosts, currentView, onSelectView
         >
           <Shield size={16} />
           Datasets & Tasks
+        </button>
+        <button
+          className={`nav-tab-btn ${currentView === 'assistant' ? 'active' : ''}`}
+          onClick={() => onSelectView('assistant')}
+          style={{ borderLeft: '1px solid var(--line-strong)', marginLeft: '4px' }}
+        >
+          <Bot size={16} color="var(--accent)" />
+          Training Copilot
         </button>
       </nav>
     </header>

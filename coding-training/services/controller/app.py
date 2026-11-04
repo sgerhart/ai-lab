@@ -223,6 +223,19 @@ def list_models() -> dict[str, Any]:
     }
 
 
+@app.post("/v1/assistant/chat")
+def assistant_chat(req: dict[str, Any]) -> dict[str, Any]:
+    """Answers operator queries regarding the training pipeline, sandbox isolation, and tasks."""
+    from .assistant import generate_assistant_reply
+    resp = generate_assistant_reply(
+        message=req.get("message", ""),
+        context_view=req.get("context_view"),
+        task_id=req.get("task_id"),
+        model_id=req.get("model_id"),
+    )
+    return resp.model_dump()
+
+
 # Mount compiled web console if present
 console_dist = Path(__file__).resolve().parents[2] / "console" / "dist"
 if console_dist.exists():

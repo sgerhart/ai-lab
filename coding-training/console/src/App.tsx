@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { Header } from './components/Header'
 import { api, MOCK_CHECKPOINTS, MOCK_EXPERIMENTS, MOCK_HOSTS, MOCK_TASKS } from './services/api'
 import type { CheckpointItem, ExperimentRun, HostHealth, TaskItem, ViewType } from './types'
+import { AssistantView } from './views/AssistantView'
 import { DashboardView } from './views/DashboardView'
 import { DatasetsView } from './views/DatasetsView'
 import { ExperimentsView } from './views/ExperimentsView'
 import { ModelsView } from './views/ModelsView'
 import { MonitorView } from './views/MonitorView'
 import { PlaygroundView } from './views/PlaygroundView'
+import { FloatingAssistantDrawer } from './components/FloatingAssistantDrawer'
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard')
@@ -77,7 +79,21 @@ export const App: React.FC = () => {
         )}
 
         {currentView === 'datasets' && <DatasetsView tasks={tasks} />}
+
+        {currentView === 'assistant' && (
+          <AssistantView
+            hosts={hosts}
+            checkpoints={checkpoints}
+            tasks={tasks}
+            onNavigate={setCurrentView}
+          />
+        )}
       </main>
+
+      <FloatingAssistantDrawer
+        currentView={currentView}
+        onNavigate={setCurrentView}
+      />
 
       <footer
         style={{

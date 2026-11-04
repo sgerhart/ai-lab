@@ -265,6 +265,26 @@ class TestController(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("text/event-stream", resp.headers.get("content-type", ""))
 
+    def test_controller_assistant_chat(self) -> None:
+        """Verifies /v1/assistant/chat conversational endpoint."""
+        # Query about GRPO
+        resp = self.client.post("/v1/assistant/chat", json={"message": "How does GRPO work?"})
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("reply", data)
+        self.assertIn("GRPO", data["reply"])
+        self.assertIsNotNone(data.get("code_snippet"))
+        self.assertGreater(len(data.get("suggested_actions", [])), 0)
+
+        # Query about Fibonacci task
+        task_resp = self.client.post(
+            "/v1/assistant/chat",
+            json={"message": "Help me with Fibonacci", "task_id": "py-fib-001", "context_view": "playground"},
+        )
+        self.assertEqual(task_resp.status_code, 200)
+        task_data = task_resp.json()
+        self.assertIn("fibonacci", task_data["reply"].lower())
+
 
 if __name__ == "__main__":
     unittest.main()

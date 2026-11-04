@@ -1,4 +1,14 @@
-export type ViewType = 'dashboard' | 'playground' | 'experiments' | 'monitor' | 'models' | 'datasets'
+export type ViewType = 'dashboard' | 'playground' | 'experiments' | 'monitor' | 'models' | 'datasets' | 'assistant'
+
+export interface ChatMessage {
+  id: string
+  sender: 'user' | 'assistant' | 'system'
+  text: string
+  timestamp: string
+  contextRef?: string
+  suggestedActions?: string[]
+  codeSnippet?: string
+}
 
 export interface HostHealth {
   name: string
