@@ -21,7 +21,7 @@ Honest snapshot for the operator. Code in Git is not the same as a path exercise
 | Studio Jupyter | Host scripts. Sidebar **R Labs** opens `~/ai-lab-notebooks/r.ipynb`, whose kernelspec is `ir` | Up on `:8888`. R 4.6.1 and kernelspec `ir` installed on the Studio 2026-09-26. Mini control plane serves the R link |
 | Antares-1B completions, jobs, Security form | Yes | The localize form opens inside **Security**. `GET /antares` redirects there. Jobs run on the Studio. Reboot LaunchAgents not set. Repo choice beyond the Studio fixture is direction ([ADR 0040](../decisions/0040-security-plane-gateway-and-antares.md)) |
 | Security plane: DefenseClaw summary, billed-API gateway, **Security** as the board | DefenseClaw summary and finding glossary in Git (IWO-061, IWO-062). Gateway not built. The page does not edit DefenseClaw config | DefenseClaw live on the Air. The Air posts a summary every 10 minutes (2026-09-26). The operator confirmed the Findings pane the same day |
-| Security platform, Vise, security compute agent | Foundation in Git (IWO-065–067, unit-tested). Vise, security agent, and Security Center UI still Draft. AISVS 1.0 Level 1 gap register is written (IWO-085, Review). ADR 0044 is Proposed. IWO-086–094 are Draft | No. No hypervisor connection. API routes wait for an authorized restart |
+| Security platform, Vise, security compute agent | Foundation in Git (IWO-065–067, unit-tested). Vise, security agent, and Security Center UI still Draft. AISVS 1.0 Level 1 gap register is written (IWO-085, Review). ADR 0044 is Proposed. IWO-086 is Complete (unit-tested); IWO-087–094 are Draft | No. No hypervisor connection. API routes wait for an authorized restart |
 | Studio worker `:8090` | Scripts | Not running |
 | Model comparison on short fixtures (IWO-057) | Script, unit tests | First live Studio pass 2026-09-25: the three large tags each scored 4/4. The fixture did not separate them, so Coding Local stays `qwen3-coder:30b` |
 | Pull requests from an agent (FEAT-007) | Not started | No |
@@ -63,7 +63,7 @@ Do not treat this index as authorized implementation or deploy.
 | 9 | [FEAT-014](FEAT-014-defenseclaw-operator-governance.md) | DefenseClaw on Air (operator governance) | **Partial (live):** Cursor+Antigravity action (IWO-044/045) | — |
 | 10 | [FEAT-015](FEAT-015-antares-vuln-localization.md) | Antares vuln-localization (Studio) | **Partial** — IWO-047–049 UI live; IWO-070 drafts Work Orders from a finished review | — |
 | 3 | [FEAT-017](FEAT-017-agent-operating-studio.md) | Agent Operating Studio | **In progress:** IWO-063 shell in Git. Live layout pass open (D-019) | — |
-| — | [FEAT-018](FEAT-018-ai-security-platform.md) | AI Security Platform | **Partial (code):** IWO-065–069 unit-tested. AISVS register written (IWO-085, Review). IWO-086–094 Draft. ADR 0044 Proposed. Not deployed | — |
+| — | [FEAT-018](FEAT-018-ai-security-platform.md) | AI Security Platform | **Partial (code):** IWO-065–069 unit-tested. AISVS register written (IWO-085, Review). IWO-086 Complete (unit-tested). IWO-087–094 Draft. ADR 0044 Proposed. Not deployed | — |
 | — | [FEAT-019](FEAT-019-cybersecurity-vise.md) | Cybersecurity Vise | **Complete in Git**. Job model, fake adapter, isolated network, template contracts, evidence pipeline, and operator UI complete and unit-tested (IWO-070–075). Live Proxmox/ESXi calls refuse without deploy authorization | — |
 | — | [FEAT-020](FEAT-020-security-compute-agent.md) | Security Compute Agent | **Complete (unit-tested; not deployed):** IWO-076–078 unit-tested | — |
 | — | [FEAT-021](FEAT-021-classroom.md) | Classroom: lesson plan, voice, whiteboard | **Live on the mini** (IWO-106, 2026-10-17). Browser voice not watched in a session | — |
@@ -143,7 +143,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-083](../work-orders/IWO-083-chat-library-and-reads.md) | Shared fetched pages, PDF text, and complete chat answers | FEAT-008 | **Complete** (unit; control plane restarted) |
 | [IWO-084](../work-orders/IWO-084-embeddings-and-images.md) | Page embeddings and image chat | FEAT-008 | **Complete** (unit; control plane restarted) |
 | [IWO-085](../work-orders/IWO-085-aisvs-level-1-gap-register.md) | AISVS 1.0 Level 1 gap register | FEAT-018 | **Review** (register written; ADR 0044 still Proposed) |
-| [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) | AISVS input validation | FEAT-018 | **Draft** |
+| [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) | AISVS input validation | FEAT-018 | **Complete** (unit; not deployed) |
 | [IWO-087](../work-orders/IWO-087-aisvs-model-admission.md) | AISVS model admission and AI BOM | FEAT-018 | **Draft** |
 | [IWO-088](../work-orders/IWO-088-aisvs-model-load-isolation.md) | AISVS model load isolation contract | FEAT-018 | **Draft** |
 | [IWO-089](../work-orders/IWO-089-aisvs-output-controls.md) | AISVS output controls | FEAT-018 | **Draft** |

@@ -2519,6 +2519,25 @@ def create_control_app(
                 status_code=400,
                 detail="personal conversations answer through an agent run",
             )
+        # AISVS Level 1 Input Validation (IWO-086)
+        if body.content and role == MessageRole.USER:
+            from .security.input_validation import validate_input
+            val_res = validate_input(
+                body.content,
+                is_tool_output=False,
+                agent_id=getattr(conversation, "agent", "studio") or "studio",
+                conversation_id=conversation_id,
+            )
+            if not val_res.valid:
+                sec_events = getattr(app.state, "security_events", None)
+                if val_res.security_event and sec_events:
+                    try:
+                        sec_events.append(val_res.security_event)
+                    except Exception:
+                        pass
+                raise HTTPException(status_code=400, detail=val_res.error_message)
+            body.content = val_res.normalized_text
+
         message = Message.new(
             conversation_id=conversation_id,
             role=role,
@@ -2709,6 +2728,25 @@ def create_control_app(
             )
         if body.role != "user":
             raise HTTPException(status_code=400, detail="stream only supports role=user")
+
+        # AISVS Level 1 Input Validation (IWO-086)
+        if body.content:
+            from .security.input_validation import validate_input
+            val_res = validate_input(
+                body.content,
+                is_tool_output=False,
+                agent_id=getattr(conversation, "agent", "studio") or "studio",
+                conversation_id=conversation_id,
+            )
+            if not val_res.valid:
+                sec_events = getattr(app.state, "security_events", None)
+                if val_res.security_event and sec_events:
+                    try:
+                        sec_events.append(val_res.security_event)
+                    except Exception:
+                        pass
+                raise HTTPException(status_code=400, detail=val_res.error_message)
+            body.content = val_res.normalized_text
 
         from .cloud_backends import CloudUnavailable
         from .ollama_backend import OllamaBackend, OllamaUnavailable

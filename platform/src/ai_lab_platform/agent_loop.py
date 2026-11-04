@@ -105,6 +105,19 @@ _HISTORY_CAP = 3200
 _OBSERVATION_CAP = 9_000
 
 
+def _screen_tool_observation(raw_obs: str, agent_id: str = "", run_id: str = "") -> str:
+    """Screen untrusted tool steering results before returning to agent model (AISVS 2.1.3)."""
+    if not raw_obs:
+        return ""
+    from .security.input_validation import validate_input
+    clipped = raw_obs[:_OBSERVATION_CAP]
+    res = validate_input(clipped, is_tool_output=True, agent_id=agent_id, run_id=run_id)
+    if not res.valid:
+        return f"[AISVS 2.1.3 BLOCKED: {res.error_message}]"
+    return res.normalized_text
+
+
+
 def _account_tool_block(objective: str, tool_name: str) -> str | None:
     """Lab memory is the repository, not an outside account."""
     from .agent_builder import external_account
@@ -719,7 +732,11 @@ def step_agent_run(
                 "args": tool_args,
                 "ok": result.ok,
                 "denied": result.denied,
-                "observation": result.observation[:_OBSERVATION_CAP],
+                "observation": _screen_tool_observation(
+                    result.observation,
+                    getattr(run, "agent", "agent"),
+                    getattr(run, "id", ""),
+                ),
             }
         )
         if result.denied:
@@ -770,7 +787,11 @@ def step_agent_run(
             "args": tool_args,
             "ok": result.ok,
             "denied": result.denied,
-            "observation": result.observation[:_OBSERVATION_CAP],
+            "observation": _screen_tool_observation(
+                result.observation,
+                getattr(run, "agent", "agent"),
+                getattr(run, "id", ""),
+            ),
         }
     )
     if result.denied:
@@ -877,7 +898,11 @@ def resolve_pending_action(
             "tool": tool_name,
             "args": tool_args,
             "ok": result.ok,
-            "observation": result.observation[:_OBSERVATION_CAP],
+            "observation": _screen_tool_observation(
+                result.observation,
+                getattr(run, "agent", "agent"),
+                getattr(run, "id", ""),
+            ),
             "approved": True,
         }
     )

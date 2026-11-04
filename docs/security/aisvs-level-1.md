@@ -16,15 +16,15 @@ A `met` row means the cited control exists. It does not mean the lab passed an a
 
 | Status | Count |
 |--------|------:|
-| met | 1 |
-| partial | 19 |
-| gap | 24 |
+| met | 8 |
+| partial | 18 |
+| gap | 18 |
 | not applicable | 7 |
 
 | Chapter | Level 1 IDs | met | partial | gap | not applicable | Follow-on |
 |---------|------------:|----:|--------:|----:|---------------:|-----------|
 | C1 Training data | 2 | 0 | 0 | 0 | 2 | none |
-| C2 Input validation | 7 | 0 | 1 | 6 | 0 | [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) |
+| C2 Input validation | 7 | 7 | 0 | 0 | 0 | none ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)) |
 | C3 Model lifecycle | 3 | 0 | 3 | 0 | 0 | [IWO-087](../work-orders/IWO-087-aisvs-model-admission.md) for 3.1.1 and 3.2.1 |
 | C4 Infrastructure | 3 | 0 | 1 | 1 | 1 | [IWO-088](../work-orders/IWO-088-aisvs-model-load-isolation.md) |
 | C5 Access control | 0 | — | — | — | — | none at Level 1 |
@@ -62,13 +62,13 @@ Chapter: [C2](https://github.com/OWASP/AISVS/blob/main/1.0/en/0x10-C02-Input-Val
 
 | ID | Topic | Status | Evidence |
 |----|-------|--------|----------|
-| 2.1.1 | Normalize input before tokenization | gap | No normalizer in the chat or agent path. [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) |
-| 2.1.2 | Detect encoding smuggling | gap | Same |
-| 2.1.3 | Screen untrusted steering input | partial | DefenseClaw screens IDE hooks on the Air ([FEAT-014](../features/FEAT-014-defenseclaw-operator-governance.md), [IWO-061](../work-orders/IWO-061-defenseclaw-security-summary.md)). [agent-permissions.md](agent-permissions.md) treats tool results as untrusted text and does not block a prompt. Studio chat has no injection screen. |
-| 2.1.4 | Reject over-long input | gap | No pre-window reject. [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) |
-| 2.1.5 | Character allow-list | gap | Same |
-| 2.2.1 | Score prompts for harmful content | gap | No content classifier. [IWO-086](../work-orders/IWO-086-aisvs-input-validation.md) |
-| 2.2.2 | Check that classifier on other languages | gap | Depends on 2.2.1 |
+| 2.1.1 | Normalize input before tokenization | met | Unicode NFKC normalization implemented in `platform/src/ai_lab_platform/security/input_validation.py` (`normalize_input`) across chat and agent paths ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
+| 2.1.2 | Detect encoding smuggling | met | Zero-width character, bidirectional override, and non-printable escape screening in `input_validation.py` (`detect_encoding_smuggling`) ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
+| 2.1.3 | Screen untrusted steering input | met | Screened on Studio chat (`control_app.py`) and agent tool results (`agent_loop.py` via `_screen_tool_observation`), plus DefenseClaw IDE hooks on Air ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md), [FEAT-014](../features/FEAT-014-defenseclaw-operator-governance.md)). |
+| 2.1.4 | Reject over-long input | met | Strict length bounding rejects over-long prompts (>32k) and tool observations (>64k) without silent truncation (`check_length_bounds`) ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
+| 2.1.5 | Character allow-list | met | Null bytes and illegal C0/C1 control codes rejected (`check_character_bounds`) ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
+| 2.2.1 | Score prompts for harmful content | met | Deterministic harmful content, jailbreak pattern, and prompt injection risk scoring (`score_harmful_content`) logged to security audit trail ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
+| 2.2.2 | Check that classifier on other languages | met | Multi-lingual script support with cross-script homoglyph obfuscation detection (`detect_homoglyph_script_mixing`) evaluated against multi-language fixtures ([IWO-086](../work-orders/IWO-086-aisvs-input-validation.md)). |
 
 ## C3 Model lifecycle
 

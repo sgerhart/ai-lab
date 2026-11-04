@@ -1,6 +1,6 @@
 # IWO-086 — AISVS input validation for lab chat and agents
 
-**Status:** Draft  
+**Status:** Complete  
 **Priority:** P2  
 **Effort:** M  
 **Owner:** human (operator)  
@@ -79,10 +79,21 @@ Identifiers: 2.1.1, 2.1.2, 2.1.3, 2.1.4, 2.1.5, 2.2.1, 2.2.2. Text stays in the 
 ## Closeout
 
 - Verification evidence:
-- Follow-ons filed:
-- Residual risks:
-- Docs/status updated:
-- Status surfaces reconciled:
-- Summary metadata reviewed:
-- Planning-only change? No, once accepted and implemented
+  - Unit test suite `tests/test_aisvs_input_validation.py` (8 tests passing):
+    - `test_ac1_normalization_2_1_1`: Unicode NFKC normalization
+    - `test_ac1_encoding_smuggling_2_1_2`: Zero-width characters & bidi override detection
+    - `test_ac1_untrusted_steering_screening_2_1_3`: Screening untrusted prompts & tool results
+    - `test_ac1_over_long_input_rejected_not_truncated_2_1_4`: Strict length bounding (prompt >32k, observation >64k)
+    - `test_ac1_character_bounds_and_controls_2_1_5`: Null bytes and illegal C0/C1 control codes rejected
+    - `test_ac1_harmful_content_scoring_2_2_1`: Deterministic harmful injection risk scoring and security event logging
+    - `test_ac1_multilingual_handling_and_homoglyphs_2_2_2`: Multi-lingual support (EN, ES, DE, FR, ZH, RU) and cross-script homoglyphs
+    - `test_ac2_control_app_chat_gate_integration`: Studio `/v1/conversations/{id}/messages` and stream HTTP 400 rejection and security event log verification
+  - Full platform test suite: 506 tests passing (`Ran 506 tests in 9.692s, OK (skipped=2)`).
+  - Validation scripts: `./scripts/validate-repo.sh` and `./tests/test_structure.sh` passing (`RESULT: OK`).
+- Follow-ons filed: [IWO-087](IWO-087-aisvs-model-admission.md) (AISVS Model Admission & AI BOM), [IWO-088](IWO-088-aisvs-model-load-isolation.md) (Model Load Isolation).
+- Residual risks: Static deterministic pattern matching is defensive but does not replace external multi-turn LLM safety filters.
+- Docs/status updated: `docs/security/aisvs-level-1.md` (C2 requirements 2.1.1–2.2.2 updated to `met`), `docs/features/index.md`, `docs/work-orders/README.md`.
+- Status surfaces reconciled: Yes
+- Summary metadata reviewed: Yes
+- Planning-only change? No
 - Host deploy performed? No

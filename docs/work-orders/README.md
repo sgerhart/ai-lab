@@ -96,7 +96,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-083](IWO-083-chat-library-and-reads.md) | Shared fetched pages, PDF text, and complete chat answers | Complete (unit; control plane restarted) |
 | [IWO-084](IWO-084-embeddings-and-images.md) | Page embeddings and image chat | Complete (unit; control plane restarted) |
 | [IWO-085](IWO-085-aisvs-level-1-gap-register.md) | AISVS 1.0 Level 1 gap register | Review (register written) |
-| [IWO-086](IWO-086-aisvs-input-validation.md) | AISVS input validation | Draft |
+| [IWO-086](IWO-086-aisvs-input-validation.md) | AISVS input validation | Complete |
 | [IWO-087](IWO-087-aisvs-model-admission.md) | AISVS model admission and AI BOM | Draft |
 | [IWO-088](IWO-088-aisvs-model-load-isolation.md) | AISVS model load isolation contract | Draft |
 | [IWO-089](IWO-089-aisvs-output-controls.md) | AISVS output controls | Draft |

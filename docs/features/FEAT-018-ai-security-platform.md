@@ -47,7 +47,7 @@ MCP, models, code-analysis services, approvals, findings, and audit.
 - IWO-068 — Agent Studio security posture (**Complete**)
 - IWO-069 — Security Center expansion (**Complete**)
 - IWO-085 — AISVS 1.0 Level 1 gap register (**Review**; register written, ADR 0044 still Proposed)
-- IWO-086 — input validation (**Draft**)
+- IWO-086 — input validation (**Complete**)
 - IWO-087 — model admission and AI BOM (**Draft**)
 - IWO-088 — model load isolation contract (**Draft**)
 - IWO-089 — output bounds, safety, and citations (**Draft**)
