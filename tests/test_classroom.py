@@ -297,14 +297,9 @@ class ClassroomApiTests(unittest.TestCase):
         self.headers = {"Authorization": "Bearer lab-token"}
 
     def test_page_and_sidebar_link(self) -> None:
-        page = self.client.get("/classroom")
-        self.assertEqual(page.status_code, 200)
-        self.assertIn('id="board"', page.text)
-        self.assertIn('id="raise-hand"', page.text)
-        self.assertIn('id="ask-question"', page.text)
-        self.assertIn('id="post-lesson"', page.text)
-        self.assertIn('id="pause-instructor"', page.text)
-        self.assertIn("/static/classroom.js", page.text)
+        page = self.client.get("/classroom", follow_redirects=False)
+        self.assertIn(page.status_code, {302, 307})
+        self.assertEqual(page.headers.get("location"), "/")
         script = self.client.get("/static/classroom.js?v=2")
         self.assertEqual(script.status_code, 200)
         self.assertIn("speechSynthesis", script.text)
@@ -314,8 +309,8 @@ class ClassroomApiTests(unittest.TestCase):
         self.assertIn("vix-lan", script.text)
         self.assertIn("V T E P", script.text)
         agents = (ROOT / "platform" / "src" / "ai_lab_platform" / "web" / "agents.html").read_text()
-        self.assertIn('id="nav-classroom"', agents)
-        self.assertIn('href="/classroom"', agents)
+        self.assertNotIn('id="nav-classroom"', agents)
+        self.assertNotIn('href="/classroom"', agents)
 
     def test_lesson_requires_auth_and_stays_on_the_local_model(self) -> None:
         denied = self.client.post("/v1/classroom/lessons", json={"topic": "photosynthesis"})

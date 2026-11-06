@@ -70,6 +70,7 @@ Do not treat this index as authorized implementation or deploy.
 | — | [FEAT-022](FEAT-022-steward.md) | Steward: standing personal agent | **Live on the mini** (desk served 2026-10-21). A wake has not been watched there yet | — |
 | — | [FEAT-023](FEAT-023-phone-studio.md) | Phone Studio on the tailnet | **Specified.** IWO-110 Draft. Not implemented | — |
 | — | [FEAT-024](FEAT-024-execution-verified-coding-model-training.md) | Execution-Verified Coding Model Training | **Delivered:** WO-00 through WO-10 Delivered; sub-platform in `coding-training/` | — |
+| — | [FEAT-025](FEAT-025-ai-laboratory-and-staff-scientist.md) | AI Laboratory & Staff Scientist | **Specified:** IWO-129 Draft. Multi-paradigm workbench and collaborative scientist peer agent | — |
 
 
 
@@ -183,6 +184,8 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-125](../work-orders/IWO-125-coding-training-documentation-and-handover.md) | Coding training operator documentation and handover | FEAT-024 | **Complete** (WO-09 Delivered) |
 | [IWO-126](../work-orders/IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | FEAT-022 | **Complete** (unit-tested) |
 | [IWO-127](../work-orders/IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Frontier model telemetry & cost estimation | FEAT-011 | **Complete** (unit-tested) |
+| [IWO-128](../work-orders/IWO-128-coding-training-assistant.md) | Coding Training Console Assistant & Chatbot Copilot | FEAT-024 | **Complete** (unit-tested) |
+| [IWO-129](../work-orders/IWO-129-ai-laboratory-and-staff-scientist.md) | AI Laboratory Workbench & Staff Scientist Peer Agent | FEAT-025 | **Draft** |
 
 ## Historical phase work orders
 

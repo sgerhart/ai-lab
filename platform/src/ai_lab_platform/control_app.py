@@ -780,12 +780,9 @@ def create_control_app(
         )
 
     @app.get("/classroom")
-    def classroom_page() -> HTMLResponse:
-        """Live lesson: plan, browser voice, and whiteboard marks."""
-        return HTMLResponse(
-            CLASSROOM_HTML.read_text(encoding="utf-8"),
-            headers={"Cache-Control": "no-store"},
-        )
+    def classroom_page() -> RedirectResponse:
+        """Classroom removed; redirect to AI Studio."""
+        return RedirectResponse(url="/", status_code=307)
 
     @app.post("/v1/classroom/lessons")
     def classroom_lesson(
