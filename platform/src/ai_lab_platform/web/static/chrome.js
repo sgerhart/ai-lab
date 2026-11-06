@@ -3,7 +3,6 @@
   const links = [
     { href: "/", label: "Studio", active: path === "/" },
     { href: "/nexus/", label: "📚 Nexus", active: /^\/nexus/.test(path) },
-    { href: "/classroom", label: "Classroom", active: /^\/classroom$/.test(path) },
     { href: "/steward", label: "Steward", active: /^\/steward$/.test(path) },
     { href: "/help", label: "Help", active: /^\/help$/.test(path) },
   ];
