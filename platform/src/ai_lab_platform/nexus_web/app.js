@@ -5,7 +5,13 @@
 
 // Portable relative path resolution: works seamlessly on local file:// or http:// on any machine
 function getFileUrl(relPath) {
-  return encodeURI(relPath);
+  if (!relPath) return '#';
+  if (relPath.startsWith('http://') || relPath.startsWith('https://')) return relPath;
+  const clean = relPath.replace(/^\/?nexus\//i, '').replace(/^\//, '');
+  if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    return encodeURI(clean);
+  }
+  return '/nexus/' + encodeURI(clean);
 }
 
 // ==========================================================================
@@ -2922,6 +2928,7 @@ function renderActiveTrack() {
           <div class="milestone-right">
             <span class="badge badge-time">⏱ ${m.time}</span>
             <span class="badge badge-type">${m.type}</span>
+            <button type="button" class="btn btn-sm btn-study-copilot" data-title="${escapeHtml(m.title)}" data-category="${escapeHtml(track.title)}" data-path="${escapeHtml(m.filePath)}" onclick="event.stopPropagation();" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>
             <a href="${getFileUrl(m.filePath)}" class="btn btn-sm" target="_blank" onclick="event.stopPropagation();" title="Open Material Directly">
               Open ↗
             </a>
@@ -3168,6 +3175,19 @@ function openMilestoneModal(milestoneId) {
   const openBtn = document.getElementById('modalOpenFileBtn');
   openBtn.href = fullUrl;
 
+  const modalStudyBtn = document.getElementById('modalStudyBtn');
+  if (modalStudyBtn) {
+    if (m.filePath) {
+      modalStudyBtn.style.display = 'inline-flex';
+      modalStudyBtn.onclick = () => {
+        closeModal();
+        openStudyMode(m.title, m.trackTitle, m.filePath);
+      };
+    } else {
+      modalStudyBtn.style.display = 'none';
+    }
+  }
+
   const copyBtn = document.getElementById('modalCopyPathBtn');
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(m.filePath);
@@ -3270,7 +3290,7 @@ async function getOrCreateStudyConversation() {
     if (typeof labAuthHeaders === 'function') {
       authHeader = labAuthHeaders();
     }
-    const res = await fetch('/v1/conversations', {
+    let res = await fetch('/v1/conversations', {
       method: 'POST',
       headers: authHeader,
       body: JSON.stringify({
@@ -3278,6 +3298,17 @@ async function getOrCreateStudyConversation() {
         title: `Study: ${studyState.bookTitle}`
       })
     });
+    if (!res.ok) {
+      // Fallback if 'study' agent policy is not yet loaded on an older server
+      res = await fetch('/v1/conversations', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify({
+          agent: 'research',
+          title: `Study: ${studyState.bookTitle}`
+        })
+      });
+    }
     if (!res.ok) throw new Error('Failed to create study session');
     const data = await res.json();
     studyState.conversationId = data.id;
@@ -3327,11 +3358,12 @@ function openStudyMode(title, category, rawPath) {
 
   // Load PDF into frame
   if (pdfFrame) {
-    pdfFrame.src = getFileUrl(pdfPath);
+    pdfFrame.src = getFileUrl(cleanRelPath);
   }
 
   if (workspace) {
     workspace.classList.add('active');
+    workspace.setAttribute('aria-hidden', 'false');
   }
 
   // Pre-initialize conversation in background
@@ -3346,7 +3378,10 @@ function openStudyMode(title, category, rawPath) {
 function closeStudyMode() {
   const workspace = document.getElementById('studyWorkspace');
   const pdfFrame = document.getElementById('studyPdfFrame');
-  if (workspace) workspace.classList.remove('active');
+  if (workspace) {
+    workspace.classList.remove('active');
+    workspace.setAttribute('aria-hidden', 'true');
+  }
   if (pdfFrame) pdfFrame.src = 'about:blank';
   studyState.active = false;
 }
@@ -3460,7 +3495,46 @@ async function sendStudyMessage(text) {
   }
 }
 
+let studyWorkspaceInitialized = false;
+
+async function loadStudyModels() {
+  const select = document.getElementById('studyModelSelect');
+  if (!select) return;
+  try {
+    let authHeader = {};
+    if (typeof labAuthHeaders === 'function') authHeader = labAuthHeaders();
+    const res = await fetch('/v1/models', { headers: authHeader });
+    if (!res.ok) return;
+    const data = await res.json();
+    const providers = data.providers || [];
+    const ollama = providers.find(p => p.id === 'ollama');
+    const installed = (ollama && ollama.models) ? ollama.models.filter(m => m !== 'fake-instruct') : [];
+
+    let optionsHtml = '<option value="ollama::auto" selected>⚡ Auto (Local M4)</option>';
+    installed.forEach(m => {
+      optionsHtml += `<option value="ollama::${escapeHtml(m)}">🤖 Local: ${escapeHtml(m)}</option>`;
+    });
+
+    const openai = providers.find(p => p.id === 'openai');
+    if (openai && openai.key_configured) {
+      optionsHtml += '<option value="openai::gpt-4o">🌟 Frontier (GPT-4o)</option>';
+      optionsHtml += '<option value="openai::gpt-4o-mini">🌟 Frontier (GPT-4o Mini)</option>';
+    }
+    const anthropic = providers.find(p => p.id === 'anthropic');
+    if (anthropic && anthropic.key_configured) {
+      optionsHtml += '<option value="anthropic::claude-3-5-sonnet-latest">🌟 Frontier (Claude 3.5)</option>';
+    }
+
+    select.innerHTML = optionsHtml;
+  } catch (e) {
+    // Keep defaults
+  }
+}
+
 function initStudyWorkspace() {
+  if (studyWorkspaceInitialized) return;
+  studyWorkspaceInitialized = true;
+
   const closeBtn = document.getElementById('studyCloseBtn');
   if (closeBtn) closeBtn.addEventListener('click', closeStudyMode);
 
@@ -3513,34 +3587,33 @@ function initStudyWorkspace() {
     }
   });
 
-  // Bind study mode to study button and covers in Library
-  const grid = document.getElementById('libraryGrid');
-  if (grid) {
-    grid.addEventListener('click', (e) => {
-      const studyBtn = e.target.closest('.btn-study-copilot');
-      if (studyBtn) {
+  // Global document click delegation for all study buttons and covers across Nexus
+  document.addEventListener('click', (e) => {
+    const studyBtn = e.target.closest('.btn-study-copilot');
+    if (studyBtn) {
+      e.preventDefault();
+      const title = studyBtn.getAttribute('data-title') || 'Reference Book';
+      const cat = studyBtn.getAttribute('data-category') || 'AI';
+      const path = studyBtn.getAttribute('data-path') || '';
+      openStudyMode(title, cat, path);
+      return;
+    }
+    const coverWrap = e.target.closest('.library-cover-wrap');
+    if (coverWrap) {
+      const card = coverWrap.closest('.library-card');
+      const sBtn = card ? card.querySelector('.btn-study-copilot') : null;
+      if (sBtn) {
         e.preventDefault();
-        const title = studyBtn.getAttribute('data-title') || 'Reference Book';
-        const cat = studyBtn.getAttribute('data-category') || 'AI';
-        const path = studyBtn.getAttribute('data-path') || '';
+        const title = sBtn.getAttribute('data-title') || 'Reference Book';
+        const cat = sBtn.getAttribute('data-category') || 'AI';
+        const path = sBtn.getAttribute('data-path') || '';
         openStudyMode(title, cat, path);
         return;
       }
-      const coverWrap = e.target.closest('.library-cover-wrap');
-      if (coverWrap) {
-        const card = coverWrap.closest('.library-card');
-        const sBtn = card ? card.querySelector('.btn-study-copilot') : null;
-        if (sBtn) {
-          e.preventDefault();
-          const title = sBtn.getAttribute('data-title') || 'Reference Book';
-          const cat = sBtn.getAttribute('data-category') || 'AI';
-          const path = sBtn.getAttribute('data-path') || '';
-          openStudyMode(title, cat, path);
-          return;
-        }
-      }
-    });
-  }
+    }
+  });
+
+  loadStudyModels();
 }
 
 
@@ -3570,7 +3643,6 @@ function initApp() {
           const v = document.getElementById('viewQuickstart');
           if (v) v.classList.add('active');
           renderQuickstart();
-    initStudyWorkspace();
         }
       });
     });

@@ -1,0 +1,15 @@
+{
+  "id": "study",
+  "isolation_tier": 0,
+  "read_only": true,
+  "allowed_tools": [
+    "nexus_search",
+    "memory_search",
+    "http_get_allowlist"
+  ],
+  "privileged_tools": [],
+  "network": ["allowlist"],
+  "citation_policy": "no-fabrication",
+  "notes": "Knowledge Nexus split-screen study copilot for technical book grounding and interactive study sessions."
+}
+

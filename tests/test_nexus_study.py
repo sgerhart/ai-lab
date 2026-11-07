@@ -122,5 +122,46 @@ class BookTitleFormatTests(unittest.TestCase):
         )
 
 
+class StudyAgentPolicyAndApiTests(unittest.TestCase):
+    def test_study_agent_policy_definition(self) -> None:
+        from ai_lab_platform.policy import load_policy
+
+        policy = load_policy("study")
+        self.assertEqual(policy.id, "study")
+        self.assertTrue(policy.read_only)
+        self.assertEqual(policy.isolation_tier, 0)
+        self.assertIn("nexus_search", policy.allowed_tools)
+        self.assertIn("memory_search", policy.allowed_tools)
+        self.assertEqual(policy.privileged_tools, ())
+        self.assertEqual(policy.citation_policy, "no-fabrication")
+
+    def test_create_study_conversation_endpoint(self) -> None:
+        from ai_lab_platform.control_app import create_control_app
+        from ai_lab_platform.store import SqliteStore
+        from langgraph.checkpoint.memory import MemorySaver
+        from starlette.testclient import TestClient
+
+        with tempfile.NamedTemporaryFile(suffix=".sqlite") as tmp:
+            store = SqliteStore(tmp.name)
+            app = create_control_app(
+                store=store,
+                checkpointer=MemorySaver(),
+                token="test-token",
+                dispatch=lambda _p: {"ok": True, "detail": "unused"},
+            )
+            client = TestClient(app)
+            headers = {"Authorization": "Bearer test-token"}
+
+            res = client.post(
+                "/v1/conversations",
+                headers=headers,
+                json={"agent": "study", "title": "Study: Foundation of LLM"},
+            )
+            self.assertEqual(res.status_code, 200, res.text)
+            data = res.json()
+            self.assertEqual(data["agent"], "study")
+            self.assertEqual(data["title"], "Study: Foundation of LLM")
+
+
 if __name__ == "__main__":
     unittest.main()

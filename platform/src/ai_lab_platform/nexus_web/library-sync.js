@@ -171,8 +171,9 @@ function bookCardHtml(item) {
   const coverUrl = primaryPath ? `/v1/nexus/cover?path=${encodeURIComponent(primaryPath)}` : "";
 
   let actionButtons = "";
-  if (pdfFmt) {
-    actionButtons += `<button type="button" class="btn-study-copilot" data-title="${esc(item.title)}" data-category="${esc(item.category)}" data-path="${esc(pdfFmt.path)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`;
+  const studyPath = (pdfFmt && pdfFmt.path) || (primaryObj && primaryObj.path) || "";
+  if (studyPath) {
+    actionButtons += `<button type="button" class="btn-study-copilot" data-title="${esc(item.title)}" data-category="${esc(item.category)}" data-path="${esc(studyPath)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`;
   }
   if (pdfFmt && epubFmt) {
     actionButtons += `<a href="${fileUrl(pdfFmt.path)}" class="btn-format btn-format-pdf" target="_blank" title="Open PDF">PDF ↗</a><a href="${fileUrl(epubFmt.path)}" class="btn-format btn-format-epub" target="_blank" title="Open EPUB">EPUB ↗</a>`;
@@ -350,9 +351,12 @@ function renderBookMatches(books) {
     const path = book.path || "";
     const where = book.chapter ? escapeMatch(book.chapter) + ". " : "";
     const open = path
-      ? `<a href="${encodeURI(path)}" target="_blank" rel="noopener">Open</a>`
+      ? `<a href="${fileUrl(path)}" target="_blank" rel="noopener">Open ↗</a>`
       : "";
-    return `<article class="book-match"><div><h3>${escapeMatch(book.title)}</h3><p>${where}${escapeMatch(book.snippet || "")}</p>${open}</div></article>`;
+    const study = path
+      ? `<button type="button" class="btn-study-copilot" data-title="${esc(book.title)}" data-category="AI" data-path="${esc(path)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`
+      : "";
+    return `<article class="book-match"><div><h3>${escapeMatch(book.title)}</h3><p>${where}${escapeMatch(book.snippet || "")}</p><div class="book-match-actions" style="display:flex;gap:0.5rem;align-items:center;margin-top:0.35rem;">${study}${open}</div></div></article>`;
   }).join("");
   host.hidden = false;
   host.innerHTML = `<p class="book-matches-label">Books that can help</p>${rows}`;

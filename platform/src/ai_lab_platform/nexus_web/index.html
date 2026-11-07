@@ -231,11 +231,14 @@
         </div>
       </div>
       <div class="modal-footer">
-        <a href="#" id="modalOpenFileBtn" class="btn btn-primary" target="_blank">
+        <button type="button" id="modalStudyBtn" class="btn btn-primary" style="display: none;">
+          🎓 Study
+        </button>
+        <a href="#" id="modalOpenFileBtn" class="btn btn-secondary" target="_blank">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
           Open Material
         </a>
-        <button id="modalToggleDoneBtn" class="btn btn-secondary">
+        <button id="modalToggleDoneBtn" class="btn btn-ghost">
           Toggle Complete
         </button>
       </div>
@@ -337,7 +340,7 @@
   </footer>
 
   <script src="/static/chrome.js?v=20261105-clean"></script>
-  <script src="app.js?v=20261030-v4"></script>
-  <script src="library-sync.js?v=20261030-v4"></script>
+  <script src="app.js?v=20261106-study"></script>
+  <script src="library-sync.js?v=20261106-study"></script>
 </body>
 </html>
