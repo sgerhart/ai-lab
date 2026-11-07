@@ -561,20 +561,51 @@
       font-size: 12px;
       line-height: 1.4;
     }
+    .cit-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
     .cit-link-btn {
-      align-self: flex-start;
-      margin-top: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       font-size: 11px;
-      color: var(--accent);
-      background: transparent;
-      border: none;
-      padding: 0;
+      font-weight: 600;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 4px;
+      padding: 4px 10px;
       cursor: pointer;
-      text-decoration: underline;
-      text-underline-offset: 3px;
+      text-decoration: none;
+      transition: all 0.15s ease;
     }
     .cit-link-btn:hover {
-      color: #7dd3fc;
+      background: rgba(56, 189, 248, 0.25);
+      border-color: #38bdf8;
+      color: #e0f2fe;
+      transform: translateY(-1px);
+    }
+    .cit-format-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      padding: 4px 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .cit-format-btn:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
     /* ─── COLUMN 3: STAFF SCIENTIST ─── */
@@ -899,6 +930,6 @@
   </div>
 
   <script src="/static/chrome.js?v=20261107-lab"></script>
-  <script src="/static/laboratory.js?v=20261107-openpdf"></script>
+  <script src="/static/laboratory.js?v=20261107-studynexus"></script>
 </body>
 </html>

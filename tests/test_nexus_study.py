@@ -241,6 +241,34 @@ class StudyAgentPolicyAndApiTests(unittest.TestCase):
                 self.assertIn("chapters", d)
                 self.assertGreaterEqual(d["total_pages"], 1)
 
+            # Test /v1/nexus/study redirects to split-screen study workspace in nexus
+            res = client.get(
+                "/v1/nexus/study?title=Essential+Math+for+Data+Science",
+                follow_redirects=False,
+            )
+            self.assertEqual(res.status_code, 307)
+            self.assertIn("/nexus/?study=1", res.headers.get("location", ""))
+            self.assertIn("essentialmathfordatascience.pdf", res.headers.get("location", ""))
+
+            # Test /v1/nexus/open redirects directly to file
+            res = client.get(
+                "/v1/nexus/open?path=04_Books_Library/Data_Science/essentialmathfordatascience.pdf",
+                follow_redirects=False,
+            )
+            self.assertEqual(res.status_code, 307)
+            self.assertEqual(
+                res.headers.get("location", ""),
+                "/nexus/04_Books_Library/Data_Science/essentialmathfordatascience.pdf",
+            )
+
+            # Test /v1/nexus/open with study=true redirects to study workspace
+            res = client.get(
+                "/v1/nexus/open?study=true&path=04_Books_Library/Data_Science/essentialmathfordatascience.pdf",
+                follow_redirects=False,
+            )
+            self.assertEqual(res.status_code, 307)
+            self.assertIn("/nexus/?study=1", res.headers.get("location", ""))
+
     def test_grounded_chat_parses_page_and_chapter(self) -> None:
         from ai_lab_platform.control_app import _grounded_chat
         from types import SimpleNamespace

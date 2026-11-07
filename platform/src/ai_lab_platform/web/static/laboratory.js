@@ -201,11 +201,14 @@
         const card = document.createElement("div");
         card.className = "citation-card";
         const encodedTitle = encodeURIComponent(cit.title);
-        const bookUrl = cit.file_path ? `/nexus/${cit.file_path}` : `/v1/nexus/open?title=${encodedTitle}`;
+        const encodedPath = encodeURIComponent(cit.file_path || "");
+        const encodedCat = encodeURIComponent(cit.category || "AI");
+        const studyUrl = `/nexus/?study=1&path=${encodedPath}&title=${encodedTitle}&cat=${encodedCat}`;
+        const rawBookUrl = cit.file_path ? `/nexus/${cit.file_path}` : `/v1/nexus/open?title=${encodedTitle}`;
         card.style.cursor = "pointer";
         card.onclick = (e) => {
-          if (e.target.tagName !== "A") {
-            window.open(bookUrl, "_blank");
+          if (e.target.tagName !== "A" && !e.target.closest("a")) {
+            window.open(studyUrl, "_blank");
           }
         };
         card.innerHTML = `
@@ -215,7 +218,10 @@
           </div>
           <div class="cit-chapter">${cit.chapter}</div>
           <div class="cit-relevance">${cit.relevance}</div>
-          <a href="${bookUrl}" target="_blank" class="cit-link-btn" title="Open and read this book directly">📖 Open Book (PDF) ↗</a>
+          <div class="cit-actions" style="display:flex;gap:8px;align-items:center;margin-top:10px;">
+            <a href="${studyUrl}" target="_blank" class="cit-link-btn" title="Open split-screen book reader & AI Study Copilot in Nexus">🎓 Study in Nexus ↗</a>
+            <a href="${rawBookUrl}" target="_blank" class="cit-format-btn" title="Open raw book file directly">PDF ↗</a>
+          </div>
         `;
         benchCitationsEl.appendChild(card);
       });
@@ -276,12 +282,18 @@
         const chipContainer = document.createElement("div");
         chipContainer.style.display = "flex";
         chipContainer.style.flexWrap = "wrap";
-        chipContainer.style.gap = "4px";
-        chipContainer.style.marginTop = "6px";
+        chipContainer.style.gap = "6px";
+        chipContainer.style.marginTop = "8px";
         data.citations.slice(0, 3).forEach((cit) => {
-          const chip = document.createElement("span");
+          const chip = document.createElement("a");
           chip.className = "msg-citation-chip";
-          chip.textContent = `📚 ${cit.title || cit.reference || "Library Citation"}`;
+          const title = cit.title || cit.reference || "Library Citation";
+          const path = cit.file_path || cit.path || "";
+          chip.href = `/nexus/?study=1&path=${encodeURIComponent(path)}&title=${encodeURIComponent(title)}&cat=AI`;
+          chip.target = "_blank";
+          chip.title = "Study in Knowledge Nexus";
+          chip.style.textDecoration = "none";
+          chip.textContent = `📚 ${title} ↗`;
           chipContainer.appendChild(chip);
         });
         typingCard.appendChild(chipContainer);

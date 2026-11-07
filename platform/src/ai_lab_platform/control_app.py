@@ -3957,13 +3957,51 @@ def create_control_app(
 
         return res
 
+    @app.get("/v1/nexus/study")
+    def nexus_study_redirect_endpoint(
+        request: Request,
+        title: str = Query(default="", max_length=200),
+        path: str = Query(default="", max_length=500),
+        cat: str = Query(default="AI", max_length=100),
+    ) -> Response:
+        """Redirect directly to the active split-screen Nexus Study Workspace for a given book."""
+        from urllib.parse import quote
+
+        resolved_path = path.strip().lstrip("/")
+        resolved_title = title.strip()
+        if not resolved_path and resolved_title:
+            from .lab_workbench import CITATION_FILE_PATHS
+
+            resolved_path = CITATION_FILE_PATHS.get(resolved_title, "")
+            if not resolved_path:
+                from .nexus_library import suggest_books
+
+                hits = suggest_books(resolved_title, limit=1)
+                if hits and hits[0].get("path"):
+                    resolved_path = hits[0]["path"]
+                    if not resolved_title:
+                        resolved_title = hits[0].get("title", resolved_title)
+                    cat = hits[0].get("category", cat)
+        target = f"/nexus/?study=1&path={quote(resolved_path)}&title={quote(resolved_title or 'Reference Book')}&cat={quote(cat)}"
+        return RedirectResponse(url=target, status_code=307)
+
     @app.get("/v1/nexus/open")
     def nexus_open_direct_endpoint(
         request: Request,
         title: str = Query(default="", max_length=200),
         path: str = Query(default="", max_length=500),
+        study: bool = Query(default=False),
+        cat: str = Query(default="AI", max_length=100),
     ) -> Response:
-        """Redirect directly to the book file on disk."""
+        """Redirect directly to the book file or study workspace."""
+        if study:
+            from urllib.parse import quote
+
+            clean = path.strip().lstrip("/")
+            return RedirectResponse(
+                url=f"/nexus/?study=1&path={quote(clean)}&title={quote(title or 'Reference Book')}&cat={quote(cat)}",
+                status_code=307,
+            )
         if path:
             clean = path.strip().lstrip("/")
             return RedirectResponse(url=f"/nexus/{clean}", status_code=307)

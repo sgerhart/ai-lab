@@ -178,7 +178,7 @@ function bookCardHtml(item) {
   let actionButtons = "";
   const studyPath = (pdfFmt && pdfFmt.path) || (primaryObj && primaryObj.path) || "";
   if (studyPath) {
-    actionButtons += `<a href="${fileUrl(studyPath)}" class="btn-study-copilot" target="_blank" rel="noopener" title="Open and study this book">🎓 Study ↗</a>`;
+    actionButtons += `<button type="button" class="btn-study-copilot" data-title="${esc(item.title)}" data-category="${esc(item.category)}" data-path="${esc(studyPath)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`;
   }
   if (pdfFmt && epubFmt) {
     actionButtons += `<a href="${fileUrl(pdfFmt.path)}" class="btn-format btn-format-pdf" target="_blank" title="Open PDF">PDF ↗</a><a href="${fileUrl(epubFmt.path)}" class="btn-format btn-format-epub" target="_blank" title="Open EPUB">EPUB ↗</a>`;
@@ -359,7 +359,7 @@ function renderBookMatches(books) {
       ? `<a href="${fileUrl(path)}" target="_blank" rel="noopener">Open ↗</a>`
       : "";
     const study = path
-      ? `<a href="${fileUrl(path)}" class="btn-study-copilot" target="_blank" rel="noopener" title="Open and study this book">🎓 Study ↗</a>`
+      ? `<button type="button" class="btn-study-copilot" data-title="${escapeMatch(book.title)}" data-category="AI" data-path="${escapeMatch(path)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`
       : "";
     return `<article class="book-match"><div><h3>${escapeMatch(book.title)}</h3><p>${where}${escapeMatch(book.snippet || "")}</p><div class="book-match-actions" style="display:flex;gap:0.5rem;align-items:center;margin-top:0.35rem;">${study}${open}</div></div></article>`;
   }).join("");
