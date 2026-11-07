@@ -156,7 +156,12 @@ function bookCardHtml(item) {
   const formats = item.formats || [];
   const pdfFmt = formats.find((fmt) => fmt.format === "PDF");
   const epubFmt = formats.find((fmt) => fmt.format === "EPUB");
-  const fileUrl = typeof getFileUrl === "function" ? getFileUrl : (path) => encodeURI(path);
+  const fileUrl = typeof getFileUrl === "function" ? getFileUrl : (path) => {
+    if (!path) return "#";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const clean = String(path).replace(/^\/?nexus\//i, "").replace(/^\//, "");
+    return "/nexus/" + clean.split("/").map(encodeURIComponent).join("/");
+  };
   const esc = typeof escapeHtml === "function" ? escapeHtml : escapeMatch;
   let formatBadge = "";
   if (pdfFmt && epubFmt) formatBadge = '<span class="badge badge-format-dual">PDF + EPUB</span>';
@@ -173,7 +178,7 @@ function bookCardHtml(item) {
   let actionButtons = "";
   const studyPath = (pdfFmt && pdfFmt.path) || (primaryObj && primaryObj.path) || "";
   if (studyPath) {
-    actionButtons += `<button type="button" class="btn-study-copilot" data-title="${esc(item.title)}" data-category="${esc(item.category)}" data-path="${esc(studyPath)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`;
+    actionButtons += `<a href="${fileUrl(studyPath)}" class="btn-study-copilot" target="_blank" rel="noopener" title="Open and study this book">🎓 Study ↗</a>`;
   }
   if (pdfFmt && epubFmt) {
     actionButtons += `<a href="${fileUrl(pdfFmt.path)}" class="btn-format btn-format-pdf" target="_blank" title="Open PDF">PDF ↗</a><a href="${fileUrl(epubFmt.path)}" class="btn-format btn-format-epub" target="_blank" title="Open EPUB">EPUB ↗</a>`;
@@ -190,7 +195,7 @@ function bookCardHtml(item) {
   return `
     <article class="library-card has-cover" data-id="${esc(item.id || '')}">
       <div class="library-card-cover-col">
-        <div class="library-cover-wrap">
+        <div class="library-cover-wrap" style="cursor:pointer;" onclick="window.open('${fileUrl(studyPath)}', '_blank');" title="Click to open book">
           ${coverUrl ? `<img class="library-cover-img" src="${coverUrl}" alt="${esc(item.title)}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" />` : ''}
           <div class="library-cover-fallback" style="${coverUrl ? 'display:none;' : 'display:flex;'}">
             <span class="library-cover-fallback-icon">📚</span>
@@ -205,7 +210,7 @@ function bookCardHtml(item) {
             <span class="library-card-category">${esc(category)}</span>
             ${formatBadge}
           </div>
-          <h3 class="library-card-title" title="${esc(item.title)}">${esc(item.title)}</h3>
+          <h3 class="library-card-title" title="${esc(item.title)}"><a href="${fileUrl(studyPath)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${esc(item.title)}</a></h3>
           <p class="library-card-desc">${esc(item.desc || "")}</p>
         </div>
         <div class="library-card-bottom">
@@ -354,7 +359,7 @@ function renderBookMatches(books) {
       ? `<a href="${fileUrl(path)}" target="_blank" rel="noopener">Open ↗</a>`
       : "";
     const study = path
-      ? `<button type="button" class="btn-study-copilot" data-title="${esc(book.title)}" data-category="AI" data-path="${esc(path)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`
+      ? `<a href="${fileUrl(path)}" class="btn-study-copilot" target="_blank" rel="noopener" title="Open and study this book">🎓 Study ↗</a>`
       : "";
     return `<article class="book-match"><div><h3>${escapeMatch(book.title)}</h3><p>${where}${escapeMatch(book.snippet || "")}</p><div class="book-match-actions" style="display:flex;gap:0.5rem;align-items:center;margin-top:0.35rem;">${study}${open}</div></div></article>`;
   }).join("");

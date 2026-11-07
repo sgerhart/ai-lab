@@ -7,11 +7,17 @@
 function getFileUrl(relPath) {
   if (!relPath) return '#';
   if (relPath.startsWith('http://') || relPath.startsWith('https://')) return relPath;
-  const clean = relPath.replace(/^\/?nexus\//i, '').replace(/^\//, '');
+  let clean = String(relPath || '').trim();
+  try {
+    clean = decodeURIComponent(clean);
+  } catch (_) {}
+  clean = clean.replace(/^[a-z]+:\/\/[^\/]+/i, '');
+  clean = clean.replace(/^\/?nexus\//i, '').replace(/^\//, '');
+  const encoded = clean.split('/').map(encodeURIComponent).join('/');
   if (typeof window !== 'undefined' && window.location.protocol === 'file:') {
-    return encodeURI(clean);
+    return encoded;
   }
-  return '/nexus/' + encodeURI(clean);
+  return '/nexus/' + encoded;
 }
 
 // ==========================================================================
@@ -2928,7 +2934,7 @@ function renderActiveTrack() {
           <div class="milestone-right">
             <span class="badge badge-time">⏱ ${m.time}</span>
             <span class="badge badge-type">${m.type}</span>
-            <button type="button" class="btn btn-sm btn-study-copilot" data-title="${escapeHtml(m.title)}" data-category="${escapeHtml(track.title)}" data-path="${escapeHtml(m.filePath)}" onclick="event.stopPropagation();" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>
+            <a href="${getFileUrl(m.filePath)}" class="btn btn-sm btn-study-copilot" target="_blank" onclick="event.stopPropagation();" title="Open and study this book">🎓 Study ↗</a>
             <a href="${getFileUrl(m.filePath)}" class="btn btn-sm" target="_blank" onclick="event.stopPropagation();" title="Open Material Directly">
               Open ↗
             </a>
@@ -3039,8 +3045,9 @@ function renderLibrary(filter = 'all', search = '') {
     const coverUrl = primaryPath ? `/v1/nexus/cover?path=${encodeURIComponent(primaryPath)}` : '';
 
     let actionButtons = '';
-    if (pdfFmt) {
-      actionButtons += `<button type="button" class="btn-study-copilot" data-title="${escapeHtml(item.title)}" data-category="${escapeHtml(item.category)}" data-path="${escapeHtml(pdfFmt.path)}" title="Open in Split-Screen AI Study Copilot">🎓 Study</button>`;
+    const studyPath = (pdfFmt && pdfFmt.path) || (primaryObj && primaryObj.path) || '';
+    if (studyPath) {
+      actionButtons += `<a href="${getFileUrl(studyPath)}" class="btn-study-copilot" target="_blank" title="Open and read this book">🎓 Study ↗</a>`;
     }
     if (pdfFmt && epubFmt) {
       actionButtons += `
@@ -3181,7 +3188,7 @@ function openMilestoneModal(milestoneId) {
       modalStudyBtn.style.display = 'inline-flex';
       modalStudyBtn.onclick = () => {
         closeModal();
-        openStudyMode(m.title, m.trackTitle, m.filePath);
+        window.open(fullUrl, '_blank');
       };
     } else {
       modalStudyBtn.style.display = 'none';
@@ -3375,102 +3382,12 @@ async function getOrCreateStudyConversation() {
   }
 }
 
-async function openStudyMode(title, category, rawPath) {
-  let cleanRelPath = decodeURIComponent(rawPath || '');
-  cleanRelPath = cleanRelPath.replace(/^[a-z]+:\/\/[^\/]+/i, '');
-  cleanRelPath = cleanRelPath.replace(/^\/?nexus\//i, '');
-  cleanRelPath = cleanRelPath.replace(/^\//, '');
-
-  studyState.active = true;
-  studyState.bookTitle = title || 'Reference Material';
-  studyState.bookCategory = category || 'AI';
-  studyState.relPath = cleanRelPath;
-  studyState.pdfPath = cleanRelPath;
-  studyState.conversationId = null;
-  studyState.currentPage = 1;
-  studyState.totalPages = 1;
-  studyState.currentChapter = '';
-  studyState.chapters = [];
-
-  const workspace = document.getElementById('studyWorkspace');
-  const titleEl = document.getElementById('studyBookTitle');
-  const badgeEl = document.getElementById('studyBadgeCategory');
-  const extLink = document.getElementById('studyExternalLink');
-  const pdfFrame = document.getElementById('studyPdfFrame');
-  const welcomeBook = document.getElementById('studyWelcomeBook');
-  const msgs = document.getElementById('studyMessages');
-  const chSelect = document.getElementById('studyChapterSelect');
-  const totalEl = document.getElementById('studyTotalPages');
-
-  if (titleEl) titleEl.textContent = title;
-  if (badgeEl) badgeEl.textContent = (category || 'AI').replace(/-/g, ' ');
-  if (extLink) extLink.href = getFileUrl(cleanRelPath);
-  if (welcomeBook) welcomeBook.textContent = title;
-  if (totalEl) totalEl.textContent = '1';
-  if (chSelect) chSelect.innerHTML = '<option value="">Loading book index...</option>';
-
-  // Reset thread to welcome message
-  if (msgs) {
-    msgs.innerHTML = `
-      <div class="study-welcome-msg" id="studyWelcomeMsg">
-        <div class="study-welcome-avatar">🎓</div>
-        <h4>Welcome to Active Study Mode</h4>
-        <p>I'm your AI study partner for <strong>${escapeHtml(title)}</strong>. Read through the document on the left, navigate chapters and pages with the reading toolbar, and ask me anything or use the study chips above.</p>
-      </div>
-    `;
+function openStudyMode(title, category, rawPath) {
+  const url = getFileUrl(rawPath);
+  if (url && url !== '#') {
+    window.open(url, '_blank');
   }
-
-  // Initial load of PDF into frame
-  if (pdfFrame) {
-    pdfFrame.src = `${getFileUrl(cleanRelPath)}#page=1`;
-  }
-
-  if (workspace) {
-    workspace.classList.add('active');
-    workspace.setAttribute('aria-hidden', 'false');
-  }
-
-  updateReadingPosition(1, false);
-
-  // Fetch book structure (chapters, total pages) asynchronously
-  try {
-    let authHeader = {};
-    if (typeof labAuthHeaders === 'function') {
-      authHeader = labAuthHeaders();
-    }
-    const res = await fetch(`/v1/nexus/book/structure?path=${encodeURIComponent(cleanRelPath)}`, {
-      headers: authHeader
-    });
-    if (res.ok) {
-      const data = await res.json();
-      studyState.totalPages = data.total_pages || 1;
-      studyState.chapters = data.chapters || [];
-      studyState.format = data.format || 'pdf';
-
-      if (chSelect) {
-        if (studyState.chapters.length > 0) {
-          chSelect.innerHTML = `
-            <option value="">Jump to Chapter (${studyState.chapters.length})...</option>
-            ${studyState.chapters.map(c => `<option value="${c.page}">Page ${c.page}: ${escapeHtml(c.title)}</option>`).join('')}
-          `;
-        } else {
-          chSelect.innerHTML = '<option value="">No chapter index detected</option>';
-        }
-      }
-      updateReadingPosition(1, false);
-    }
-  } catch (err) {
-    console.warn('Failed to load book structure:', err);
-    if (chSelect) chSelect.innerHTML = '<option value="">Chapter jump unavailable</option>';
-  }
-
-  // Pre-initialize conversation in background
-  getOrCreateStudyConversation();
-
-  setTimeout(() => {
-    const input = document.getElementById('studyInput');
-    if (input) input.focus();
-  }, 200);
+}
 }
 
 function closeStudyMode() {
@@ -3748,33 +3665,73 @@ function initStudyWorkspace() {
     }
   });
 
-  // Global document click delegation for all study buttons and covers across Nexus
+  // Global document click delegation for all study buttons, covers, and titles across Nexus
   document.addEventListener('click', (e) => {
     const studyBtn = e.target.closest('.btn-study-copilot');
     if (studyBtn) {
       e.preventDefault();
-      const title = studyBtn.getAttribute('data-title') || 'Reference Book';
-      const cat = studyBtn.getAttribute('data-category') || 'AI';
-      const path = studyBtn.getAttribute('data-path') || '';
-      openStudyMode(title, cat, path);
+      e.stopPropagation();
+      const path = studyBtn.getAttribute('data-path') || studyBtn.getAttribute('href') || '';
+      if (path && path !== '#') {
+        window.open(getFileUrl(path), '_blank');
+      }
       return;
     }
     const coverWrap = e.target.closest('.library-cover-wrap');
     if (coverWrap) {
       const card = coverWrap.closest('.library-card');
-      const sBtn = card ? card.querySelector('.btn-study-copilot') : null;
+      const sBtn = card ? card.querySelector('.btn-study-copilot, .btn-format-pdf, .btn-format-single, .btn-format-epub, a[href]') : null;
       if (sBtn) {
         e.preventDefault();
-        const title = sBtn.getAttribute('data-title') || 'Reference Book';
-        const cat = sBtn.getAttribute('data-category') || 'AI';
-        const path = sBtn.getAttribute('data-path') || '';
-        openStudyMode(title, cat, path);
+        e.stopPropagation();
+        const path = sBtn.getAttribute('data-path') || sBtn.getAttribute('href') || '';
+        if (path && path !== '#') {
+          window.open(getFileUrl(path), '_blank');
+        }
         return;
+      }
+    }
+    const titleEl = e.target.closest('.library-card-title');
+    if (titleEl) {
+      const card = titleEl.closest('.library-card');
+      const sBtn = card ? card.querySelector('.btn-study-copilot, .btn-format-pdf, .btn-format-single, .btn-format-epub, a[href]') : null;
+      if (sBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const path = sBtn.getAttribute('data-path') || sBtn.getAttribute('href') || '';
+        if (path && path !== '#') {
+          window.open(getFileUrl(path), '_blank');
+        }
       }
     }
   });
 
   loadStudyModels();
+}
+
+
+function handleUrlParams() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const searchQ = params.get('search') || params.get('q') || params.get('query') || params.get('book');
+    if (searchQ) {
+      const tabLibrary = document.getElementById('tabLibrary');
+      if (tabLibrary) {
+        tabLibrary.click();
+      }
+      const searchInput = document.getElementById('librarySearchInput');
+      if (searchInput) {
+        searchInput.value = searchQ;
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      if (params.get('open') === '1' || params.get('open') === 'true') {
+        setTimeout(() => {
+          const firstLink = document.querySelector('.library-card .btn-study-copilot, .library-card a[href]');
+          if (firstLink) firstLink.click();
+        }, 600);
+      }
+    }
+  } catch (_) {}
 }
 
 
@@ -3873,6 +3830,7 @@ function initApp() {
     updateUI();
     renderQuickstart();
     initStudyWorkspace();
+    handleUrlParams();
     console.log('Nexus App Initialized Successfully!');
   } catch (err) {
     console.error('Initialization error:', err);
