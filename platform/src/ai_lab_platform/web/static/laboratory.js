@@ -9,7 +9,10 @@
   const paradigmListEl = document.getElementById("paradigmList");
   const conceptListEl = document.getElementById("conceptList");
   const conceptSearchEl = document.getElementById("conceptSearch");
+  const catalogCountBadge = document.getElementById("catalogCountBadge");
 
+  const benchHeaderTitle = document.getElementById("benchHeaderTitle");
+  const sciFocusTag = document.getElementById("sciFocusTag");
   const benchTitleEl = document.getElementById("benchTitle");
   const benchSummaryEl = document.getElementById("benchSummary");
   const benchParadigmEl = document.getElementById("benchParadigm");
@@ -75,8 +78,12 @@
       return matchParadigm && matchQuery;
     });
 
+    if (catalogCountBadge) {
+      catalogCountBadge.textContent = `${filtered.length} Concepts`;
+    }
+
     if (filtered.length === 0) {
-      conceptListEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px;">No matching concepts</div>';
+      conceptListEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:12px;text-align:center;">No matching concepts found</div>';
       return;
     }
 
@@ -84,9 +91,11 @@
       const div = document.createElement("div");
       div.className = "concept-item" + (c.id === activeConceptId ? " active" : "");
       div.innerHTML = `
-        <div class="concept-item-title">${c.title}</div>
-        <div class="concept-item-desc">${c.summary.slice(0, 75)}...</div>
-        <div class="concept-item-badge">${c.paradigm}</div>
+        <div class="concept-item-header">
+          <span class="concept-item-title">${c.title}</span>
+          <span class="concept-item-badge">${c.paradigm}</span>
+        </div>
+        <div class="concept-item-desc">${c.summary}</div>
       `;
       div.onclick = () => selectConcept(c.id);
       conceptListEl.appendChild(div);
@@ -111,6 +120,8 @@
   }
 
   function renderWorkbench(c) {
+    if (benchHeaderTitle) benchHeaderTitle.textContent = c.title;
+    if (sciFocusTag) sciFocusTag.textContent = c.title;
     benchTitleEl.textContent = c.title;
     benchSummaryEl.textContent = c.summary;
     benchParadigmEl.textContent = c.paradigm.toUpperCase();
@@ -138,8 +149,13 @@
       });
     }
 
-    benchMathExplanationEl.textContent = c.math_explanation;
-    benchNumericalEl.innerHTML = `<strong>Numerical Intuition:</strong><br>${c.numerical_example.replace(/\n/g, "<br>")}`;
+    // Math mechanism explanation
+    benchMathExplanationEl.innerHTML = `<strong>Mechanism Intuition:</strong> ${c.math_explanation}`;
+
+    // Numerical walkthrough
+    benchNumericalEl.innerHTML = `<strong>Numerical Walkthrough:</strong><br>${c.numerical_example.replace(/\n/g, "<br>")}`;
+
+    // Code block
     benchCodeEl.textContent = c.code_snippet;
 
     // Citations
@@ -148,23 +164,36 @@
       c.nexus_citations.forEach((cit) => {
         const card = document.createElement("div");
         card.className = "citation-card";
+        const encodedTitle = encodeURIComponent(cit.title);
         card.innerHTML = `
-          <div class="cit-title">📖 ${cit.title}</div>
+          <div class="cit-top">
+            <div class="cit-title">📖 ${cit.title}</div>
+            <span class="concept-item-badge" style="background:rgba(245,158,11,0.1);color:#f59e0b;">${cit.category || 'ai-books'}</span>
+          </div>
           <div class="cit-chapter">${cit.chapter}</div>
           <div class="cit-relevance">${cit.relevance}</div>
+          <a href="/nexus/?search=${encodedTitle}" target="_blank" class="cit-link-btn">Study in Nexus ↗</a>
         `;
         benchCitationsEl.appendChild(card);
       });
     } else {
-      benchCitationsEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">No book citations cataloged for this concept yet.</div>';
+      benchCitationsEl.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px;">No book citations cataloged for this concept yet.</div>';
     }
   }
 
-  // Copy code button
+  // Copy code button with feedback
   copyCodeBtn.onclick = () => {
     navigator.clipboard.writeText(benchCodeEl.textContent);
-    copyCodeBtn.textContent = "Copied!";
-    setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000);
+    copyCodeBtn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span style="color:#10b981;">Copied!</span>
+    `;
+    setTimeout(() => {
+      copyCodeBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <span>Copy Code</span>
+      `;
+    }, 2000);
   };
 
   // 5. Staff Scientist Peer Dialogue
@@ -172,9 +201,10 @@
     const msg = (text || scientistInputEl.value || "").trim();
     if (!msg) return;
 
-    // Add user card
+    // Add user message
     appendMessage("user", "Operator", msg);
     scientistInputEl.value = "";
+    scientistInputEl.style.height = "38px";
     conversationHistory.push({ role: "user", content: msg });
 
     // Show typing placeholder
@@ -201,6 +231,10 @@
       // Add citation chips if returned
       if (data.citations && data.citations.length > 0) {
         const chipContainer = document.createElement("div");
+        chipContainer.style.display = "flex";
+        chipContainer.style.flexWrap = "wrap";
+        chipContainer.style.gap = "4px";
+        chipContainer.style.marginTop = "6px";
         data.citations.slice(0, 3).forEach((cit) => {
           const chip = document.createElement("span");
           chip.className = "msg-citation-chip";
@@ -235,15 +269,19 @@
     // Bold
     safe = safe.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
     // Code blocks
-    safe = safe.replace(/```([\s\S]*?)```/g, "<pre class='code-box' style='margin:6px 0;padding:8px;'>$1</pre>");
+    safe = safe.replace(/```([\s\S]*?)```/g, "<pre class='code-box' style='margin:6px 0;padding:8px;font-size:11px;'>$1</pre>");
     // Inline code
-    safe = safe.replace(/`([^`]+)`/g, "<code style='background:#1b2533;padding:2px 4px;border-radius:4px;'>$1</code>");
+    safe = safe.replace(/`([^`]+)`/g, "<code style='background:rgba(255,255,255,0.08);padding:2px 4px;border-radius:4px;'>$1</code>");
     // Newlines
     safe = safe.replace(/\n/g, "<br>");
     return safe;
   }
 
   scientistSendBtn.onclick = () => sendScientistMessage();
+  scientistInputEl.addEventListener("input", function () {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  });
   scientistInputEl.onkeydown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -262,4 +300,3 @@
   // Initial load
   loadCatalog();
 })();
-

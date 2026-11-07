@@ -10,88 +10,192 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <style>
     :root {
-      --bg: #090d11;
-      --card-bg: #111720;
-      --card-header: #16202c;
-      --border: #1e2c3c;
-      --border-focus: #388bfd;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-glow: rgba(88, 166, 255, 0.15);
-      --success: #3fb950;
-      --purple: #bc8cff;
-      --code-bg: #0b0f14;
+      --bg: #090d14;
+      --card-bg: #0e141f;
+      --card-header: #141c2b;
+      --card-surface: #111824;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: #38bdf8;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.15);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --purple: #a855f7;
+      --code-bg: #080c12;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    
+    html, body {
+      height: 100%;
       background: var(--bg);
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
+
+    /* Top Navigation bar is provided by chrome.js */
+
+    /* Laboratory 3-Column Shell */
     .lab-container {
       display: grid;
-      grid-template-columns: 280px 1fr 380px;
+      grid-template-columns: 290px minmax(0, 1fr) 400px;
       gap: 16px;
-      padding: 16px 20px;
+      padding: 14px 18px;
       flex: 1;
-      max-width: 1700px;
-      margin: 0 auto;
-      width: 100%;
+      height: calc(100vh - 54px);
+      box-sizing: border-box;
+      overflow: hidden;
     }
-    @media (max-width: 1200px) {
-      .lab-container { grid-template-columns: 260px 1fr; }
-      .lab-scientist { grid-column: span 2; }
+
+    @media (max-width: 1280px) {
+      .lab-container {
+        grid-template-columns: 260px minmax(0, 1fr) 360px;
+        gap: 12px;
+        padding: 10px 14px;
+      }
     }
-    @media (max-width: 800px) {
-      .lab-container { grid-template-columns: 1fr; }
-      .lab-scientist { grid-column: span 1; }
+
+    @media (max-width: 1024px) {
+      .lab-container {
+        grid-template-columns: 240px minmax(0, 1fr);
+      }
+      .lab-col-scientist { display: none; }
     }
-    
-    /* Left Panel: Navigator */
-    .lab-nav {
+
+    /* Common Card Shell for all 3 columns */
+    .lab-col {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
+      height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-height: calc(100vh - 100px);
-      overflow-y: auto;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
-    .search-box {
-      width: 100%;
-      background: #080c10;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
+
+    /* Aligned Column Header - Exact same height across all 3 columns! */
+    .col-header {
+      height: 48px;
+      min-height: 48px;
+      background: var(--card-header);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .col-header-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
       color: var(--text);
-      font-size: 13px;
-    }
-    .search-box:focus { outline: none; border-color: var(--border-focus); }
-    .paradigms-list {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .paradigm-pill {
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      padding: 6px 10px;
-      color: var(--text-muted);
-      font-size: 13px;
-      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      text-align: left;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .paradigm-pill:hover { background: #16202c; color: var(--text); }
+    .col-header-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Scrollbars */
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 3px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ─── COLUMN 1: NAVIGATOR ─── */
+    .nav-controls {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: rgba(14, 20, 31, 0.5);
+      flex-shrink: 0;
+    }
+    .search-box-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-box-icon {
+      position: absolute;
+      left: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .search-box {
+      width: 100%;
+      background: #080c12;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 10px 7px 30px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-box:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    .paradigms-pills-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      max-height: 84px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .paradigm-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .paradigm-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+    }
     .paradigm-pill.active {
       background: var(--accent-glow);
       border-color: var(--accent);
@@ -99,202 +203,346 @@
       font-weight: 600;
     }
     .concept-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      margin-top: 8px;
-      border-top: 1px solid var(--border);
-      padding-top: 10px;
+      gap: 8px;
     }
     .concept-item {
-      background: #0d131a;
+      background: var(--card-surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px 12px;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-    .concept-item:hover { border-color: var(--accent); background: #131c26; }
+    .concept-item:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: #141e2e;
+    }
     .concept-item.active {
       border-color: var(--accent);
-      background: var(--accent-glow);
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: inset 3px 0 0 var(--accent);
     }
-    .concept-item-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .concept-item-desc { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+    .concept-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .concept-item-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .concept-item-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
     .concept-item-badge {
-      display: inline-block;
       font-size: 10px;
       padding: 2px 6px;
       border-radius: 4px;
-      background: #1f2d3d;
+      background: rgba(255, 255, 255, 0.06);
       color: var(--accent);
-      margin-top: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      align-self: flex-start;
+      margin-top: 2px;
     }
 
-    /* Center Panel: Workbench */
-    .lab-workbench {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+    /* ─── COLUMN 2: WORKBENCH ─── */
+    .workbench-body {
+      flex: 1;
+      overflow-y: auto;
       padding: 20px 24px;
       display: flex;
       flex-direction: column;
       gap: 20px;
-      max-height: calc(100vh - 100px);
-      overflow-y: auto;
     }
-    .workbench-header {
+    .workbench-hero {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .hero-top-row {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 14px;
+      gap: 16px;
     }
-    .workbench-title-box h1 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .workbench-title-box p { font-size: 14px; color: var(--text-muted); line-height: 1.4; }
+    .hero-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.25;
+      letter-spacing: -0.2px;
+    }
+    .hero-summary {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
     .workbench-meta-pill {
       font-size: 11px;
       padding: 4px 10px;
-      border-radius: 12px;
+      border-radius: 999px;
       background: var(--accent-glow);
       color: var(--accent);
-      border: 1px solid rgba(88, 166, 255, 0.3);
-      font-weight: 600;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      font-weight: 700;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
+    /* Section Cards - CRITICAL: flex-shrink: 0 prevents any clipping/crushing! */
     .bench-section {
-      background: #0d131a;
+      background: var(--card-surface);
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
+      flex-shrink: 0;
+      min-height: min-content;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }
     .bench-sec-header {
       background: var(--card-header);
-      padding: 10px 14px;
+      padding: 10px 16px;
       font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       text-transform: uppercase;
       color: var(--accent);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--border);
     }
-    .bench-sec-body { padding: 14px 16px; font-size: 14px; line-height: 1.5; }
-    
-    .tensor-flow-box {
-      font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
-      font-size: 12px;
-      color: #79c0ff;
-      background: var(--code-bg);
-      padding: 12px;
-      border-radius: 6px;
-      white-space: pre-wrap;
-      line-height: 1.4;
-    }
-    .math-formula-box {
+    .bench-sec-body {
       padding: 16px;
-      background: #080c10;
+      font-size: 13px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Section 1: Architecture & Tensor Flow */
+    .tensor-flow-box {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #7dd3fc;
+      background: var(--code-bg);
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      white-space: pre-wrap;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+
+    /* Section 2: Math & Derivation */
+    .math-formula-box {
+      padding: 18px 20px;
+      background: #080c12;
+      border: 1px solid rgba(99, 102, 241, 0.2);
       border-radius: 8px;
       text-align: center;
-      margin-bottom: 14px;
       overflow-x: auto;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.06);
     }
     .math-vars-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 6px;
-      font-size: 13px;
-      margin: 12px 0;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 8px;
     }
     .math-var-row {
       display: flex;
+      align-items: flex-start;
       gap: 10px;
-      background: #111822;
-      padding: 6px 10px;
+      background: #080c12;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
       border-radius: 6px;
     }
-    .math-var-symbol { font-weight: 700; color: #ffa657; min-width: 60px; }
-    .math-var-desc { color: var(--text-muted); }
-    .numerical-box {
-      margin-top: 12px;
-      background: rgba(63, 185, 80, 0.08);
-      border-left: 3px solid var(--success);
+    .math-var-symbol {
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 700;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .math-var-desc {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .math-explanation-box {
+      background: rgba(56, 189, 248, 0.04);
+      border-left: 3px solid var(--accent);
       padding: 10px 14px;
       border-radius: 4px;
       font-size: 13px;
-      color: #d2f0db;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+    .numerical-box {
+      background: rgba(16, 185, 129, 0.06);
+      border-left: 3px solid var(--success);
+      padding: 12px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #d1fae5;
+      line-height: 1.5;
+    }
+
+    /* Section 3: Runnable Verification */
+    .code-container {
+      position: relative;
     }
     .code-box {
-      font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 12px;
       background: var(--code-bg);
-      padding: 14px;
-      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 8px;
       overflow-x: auto;
       color: #e6edf3;
       white-space: pre-wrap;
-      line-height: 1.45;
+      line-height: 1.5;
+      min-height: 140px;
     }
+    .bench-copy-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+    }
+    .bench-copy-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Section 4: Grounded Citations */
     .citations-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 10px;
     }
     .citation-card {
-      background: #101620;
+      background: #080c12;
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 14px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
+      transition: border-color 0.15s;
     }
-    .cit-title { font-weight: 600; color: #ffa657; font-size: 13px; }
-    .cit-chapter { color: var(--text); font-size: 12px; }
-    .cit-relevance { color: var(--text-muted); font-size: 12px; font-style: italic; }
+    .citation-card:hover {
+      border-color: rgba(245, 158, 11, 0.4);
+    }
+    .cit-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .cit-title {
+      font-weight: 600;
+      color: #f59e0b;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+    .cit-chapter {
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .cit-relevance {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .cit-link-btn {
+      align-self: flex-start;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--accent);
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .cit-link-btn:hover {
+      color: #7dd3fc;
+    }
 
-    /* Right Panel: Staff Scientist */
-    .lab-scientist {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100vh - 100px);
-      overflow: hidden;
-    }
-    .scientist-header {
-      background: var(--card-header);
-      padding: 14px 16px;
+    /* ─── COLUMN 3: STAFF SCIENTIST ─── */
+    .sci-context-bar {
+      padding: 8px 16px;
+      background: rgba(14, 20, 31, 0.6);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .sci-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
+      font-size: 11px;
+      color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .sci-focus-tag {
+      color: var(--accent);
+      font-weight: 600;
     }
     .sci-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 8px rgba(63, 185, 80, 0.6);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+      display: inline-block;
     }
-    .sci-subtitle { font-size: 12px; color: var(--text-muted); }
-    
+    .sci-status-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .scientist-messages {
       flex: 1;
-      padding: 14px;
+      padding: 16px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -311,14 +559,14 @@
     }
     .msg.user {
       align-self: flex-end;
-      background: #1f364d;
-      border: 1px solid #2d4f70;
+      background: #182638;
+      border: 1px solid #233750;
       color: #fff;
       max-width: 90%;
     }
     .msg.scientist {
       align-self: flex-start;
-      background: #0e1520;
+      background: #0a0f17;
       border: 1px solid var(--border);
       color: var(--text);
       max-width: 98%;
@@ -330,177 +578,237 @@
       letter-spacing: 0.5px;
       color: var(--accent);
     }
-    .msg.user .msg-author { color: #8ec8ff; }
+    .msg.user .msg-author { color: #38bdf8; }
     .msg-citation-chip {
       font-size: 11px;
       padding: 3px 8px;
       border-radius: 4px;
-      background: rgba(255, 166, 87, 0.12);
-      border: 1px solid rgba(255, 166, 87, 0.3);
-      color: #ffa657;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #f59e0b;
       margin-top: 4px;
       display: inline-block;
     }
-    
+
     .quick-prompts {
       padding: 8px 12px;
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 6px;
-      overflow-x: auto;
       border-top: 1px solid var(--border);
-      background: #0c1117;
+      background: #0a0f17;
+      flex-shrink: 0;
     }
     .quick-btn {
-      white-space: nowrap;
-      background: #141c26;
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      border-radius: 14px;
-      padding: 4px 10px;
+      border-radius: 6px;
+      padding: 6px 8px;
       font-size: 11px;
       cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.15s ease;
     }
-    .quick-btn:hover { background: #1c2736; color: var(--accent); border-color: var(--accent); }
+    .quick-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
 
     .scientist-input-box {
-      padding: 12px;
+      padding: 10px 12px;
       border-top: 1px solid var(--border);
       background: var(--card-header);
       display: flex;
       gap: 8px;
+      align-items: flex-end;
+      flex-shrink: 0;
     }
     .sci-input {
       flex: 1;
-      background: #080c10;
+      background: #080c12;
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 12px;
       color: var(--text);
-      font-size: 13px;
+      font-size: 12px;
+      font-family: inherit;
       resize: none;
-      height: 38px;
+      min-height: 38px;
+      max-height: 120px;
+      line-height: 1.4;
+      outline: none;
+      transition: border-color 0.15s;
     }
-    .sci-input:focus { outline: none; border-color: var(--border-focus); }
+    .sci-input:focus {
+      border-color: var(--border-focus);
+    }
     .sci-send-btn {
       background: var(--accent);
       color: #040d17;
       border: none;
       border-radius: 8px;
       padding: 0 14px;
+      height: 38px;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
     }
-    .sci-send-btn:hover { background: #79c0ff; }
+    .sci-send-btn:hover {
+      background: #7dd3fc;
+    }
   </style>
 </head>
 <body>
   <div class="lab-container">
-    <!-- LEFT: Paradigms & Concepts -->
-    <aside class="lab-nav" aria-label="Catalog Navigator">
-      <input type="text" class="search-box" id="conceptSearch" placeholder="Search models, math, tools...">
-      
-      <div class="paradigms-list" id="paradigmList">
-        <!-- Rendered via JS -->
+    <!-- COLUMN 1: Navigator -->
+    <aside class="lab-col lab-col-nav" aria-label="Catalog Navigator">
+      <div class="col-header">
+        <div class="col-header-title">
+          <span>🔬 Concept Navigator</span>
+        </div>
+        <span class="col-header-badge" id="catalogCountBadge">9 Concepts</span>
       </div>
 
-      <div class="concept-list" id="conceptList">
+      <div class="nav-controls">
+        <div class="search-box-wrap">
+          <span class="search-box-icon">🔍</span>
+          <input type="text" class="search-box" id="conceptSearch" placeholder="Search models, math, papers...">
+        </div>
+        
+        <div class="paradigms-pills-bar custom-scroll" id="paradigmList">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <div class="concept-list custom-scroll" id="conceptList">
         <!-- Rendered via JS -->
       </div>
     </aside>
 
-    <!-- CENTER: The Active Workbench -->
-    <main class="lab-workbench" id="workbenchArea" aria-label="Laboratory Workbench">
-      <div class="workbench-header">
-        <div class="workbench-title-box">
-          <h1 id="benchTitle">Scaled Dot-Product Self-Attention</h1>
-          <p id="benchSummary">Loading concept specifications...</p>
+    <!-- COLUMN 2: Workbench -->
+    <main class="lab-col lab-col-workbench" id="workbenchArea" aria-label="Laboratory Workbench">
+      <div class="col-header">
+        <div class="col-header-title">
+          <span id="benchHeaderTitle">Scaled Dot-Product Self-Attention</span>
         </div>
-        <div class="workbench-meta-pill" id="benchParadigm">Language & SLMs</div>
+        <span class="workbench-meta-pill" id="benchParadigm">Language</span>
       </div>
 
-      <!-- Section 1: Tensor Flow & Architecture -->
-      <section class="bench-section">
-        <div class="bench-sec-header">
-          <span>1. Architecture & Tensor Dimensions</span>
-          <span style="color:var(--text-muted); font-size:11px;">[Batch, SeqLen, HiddenDim]</span>
+      <div class="workbench-body custom-scroll">
+        <div class="workbench-hero">
+          <div class="hero-top-row">
+            <h1 class="hero-title" id="benchTitle">Scaled Dot-Product Self-Attention</h1>
+          </div>
+          <p class="hero-summary" id="benchSummary">Loading concept specifications...</p>
         </div>
-        <div class="bench-sec-body">
-          <pre class="tensor-flow-box" id="benchTensorFlow">Loading tensor flow...</pre>
-        </div>
-      </section>
 
-      <!-- Section 2: Mathematical Derivation & Numbers -->
-      <section class="bench-section">
-        <div class="bench-sec-header">
-          <span>2. First-Principles Math & Numerical Intuition</span>
-          <span style="color:var(--success); font-size:11px;">KaTeX Derivation</span>
-        </div>
-        <div class="bench-sec-body">
-          <div class="math-formula-box" id="benchFormula"></div>
-          <div class="math-vars-grid" id="benchVars"></div>
-          <p id="benchMathExplanation" style="margin: 10px 0; color: var(--text);"></p>
-          <div class="numerical-box" id="benchNumerical"></div>
-        </div>
-      </section>
+        <!-- Section 1: Architecture & Tensor Dimensions -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>1. Architecture & Tensor Dimensions</span>
+            <span class="col-header-badge" style="color:var(--text-muted); font-size:11px;">[Batch, SeqLen, HiddenDim]</span>
+          </div>
+          <div class="bench-sec-body">
+            <pre class="tensor-flow-box custom-scroll" id="benchTensorFlow">Loading tensor flow...</pre>
+          </div>
+        </section>
 
-      <!-- Section 3: Runnable Verification Snippet -->
-      <section class="bench-section">
-        <div class="bench-sec-header">
-          <span>3. Runnable Tensor Verification (PyTorch / MLX)</span>
-          <button id="copyCodeBtn" style="background:transparent;border:1px solid var(--border);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">Copy</button>
-        </div>
-        <div class="bench-sec-body">
-          <pre class="code-box" id="benchCode"></pre>
-        </div>
-      </section>
+        <!-- Section 2: Mathematical Derivation & Numbers -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>2. First-Principles Math & Numerical Intuition</span>
+            <span class="col-header-badge" style="color:var(--success); border-color:rgba(16,185,129,0.3); font-size:11px;">KaTeX Derivation</span>
+          </div>
+          <div class="bench-sec-body">
+            <div class="math-formula-box" id="benchFormula"></div>
+            <div class="math-vars-grid" id="benchVars"></div>
+            <div class="math-explanation-box" id="benchMathExplanation"></div>
+            <div class="numerical-box" id="benchNumerical"></div>
+          </div>
+        </section>
 
-      <!-- Section 4: Grounded in Your Books -->
-      <section class="bench-section">
-        <div class="bench-sec-header">
-          <span>4. Grounded in Your Books (192 Books in Nexus)</span>
-          <span style="color:#ffa657; font-size:11px;">~/.ai-lab/nexus/</span>
-        </div>
-        <div class="bench-sec-body">
-          <div class="citations-grid" id="benchCitations"></div>
-        </div>
-      </section>
+        <!-- Section 3: Runnable Verification Snippet -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>3. Runnable Tensor Verification (PyTorch / MLX)</span>
+            <button class="bench-copy-btn" id="copyCodeBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span>Copy Code</span>
+            </button>
+          </div>
+          <div class="bench-sec-body">
+            <div class="code-container">
+              <pre class="code-box custom-scroll" id="benchCode"></pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 4: Grounded in Your Books -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>4. Grounded in Your Books (192 Books in Nexus)</span>
+            <span class="col-header-badge" style="color:#f59e0b; border-color:rgba(245,158,11,0.3); font-size:11px;">~/.ai-lab/nexus/</span>
+          </div>
+          <div class="bench-sec-body">
+            <div class="citations-grid" id="benchCitations"></div>
+          </div>
+        </section>
+      </div>
     </main>
 
-    <!-- RIGHT: Staff Scientist Console -->
-    <aside class="lab-scientist" aria-label="Staff Scientist Peer Dialogue">
-      <div class="scientist-header">
-        <div class="sci-title">
-          <span class="sci-dot"></span>
-          <span>Staff Scientist · Research Partner</span>
+    <!-- COLUMN 3: Staff Scientist Console -->
+    <aside class="lab-col lab-col-scientist" aria-label="Staff Scientist Peer Dialogue">
+      <div class="col-header">
+        <div class="col-header-title">
+          <div class="sci-status-wrap">
+            <span class="sci-dot"></span>
+            <span>Staff Scientist</span>
+          </div>
         </div>
-        <div class="sci-subtitle">Grounded in 192 books in Nexus + Live Web Research</div>
+        <span class="col-header-badge" style="color:var(--success); border-color:rgba(16,185,129,0.3);">Research Partner</span>
       </div>
 
-      <div class="scientist-messages" id="scientistMessages">
+      <div class="sci-context-bar">
+        <span>Current Focus:</span>
+        <span class="sci-focus-tag" id="sciFocusTag">Scaled Dot-Product Self-Attention</span>
+      </div>
+
+      <div class="scientist-messages custom-scroll" id="scientistMessages">
         <div class="msg scientist">
           <span class="msg-author">Staff Scientist</span>
-          <span>Welcome to the bench! I'm your research partner. We can explore any architecture across Language, Vision, Diffusion, Audio, or RL. Select an item or ask any question about the math, shapes, or literature.</span>
+          <div class="msg-content">Welcome to the bench! I'm your research partner. We can explore any architecture across Language, Vision, Diffusion, Audio, or RL. Select an item on the left, or ask any question about the math, shapes, or literature.</div>
         </div>
       </div>
 
       <div class="quick-prompts">
-        <button class="quick-btn" data-prompt="Walk me through the variance proof with real numbers.">Variance Proof</button>
-        <button class="quick-btn" data-prompt="Search our 192 books in Nexus for this concept.">Search Books</button>
-        <button class="quick-btn" data-prompt="How does this architecture compare to alternatives?">Compare Architectures</button>
-        <button class="quick-btn" data-prompt="Explain the runnable tensor verification code step by step.">Explain Code</button>
+        <button class="quick-btn" data-prompt="Walk me through the variance proof with real numbers.">📐 Variance Proof</button>
+        <button class="quick-btn" data-prompt="Search our 192 books in Nexus for this concept.">📚 Search Books</button>
+        <button class="quick-btn" data-prompt="How does this architecture compare to modern alternatives?">⚖️ Compare Architectures</button>
+        <button class="quick-btn" data-prompt="Explain the runnable tensor verification code step by step.">🧪 Explain Code</button>
       </div>
 
       <div class="scientist-input-box">
         <textarea class="sci-input" id="scientistInput" placeholder="Ask your research partner about this math or model..." rows="1"></textarea>
-        <button class="sci-send-btn" id="scientistSendBtn">Send</button>
+        <button class="sci-send-btn" id="scientistSendBtn">
+          <span>Send</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
       </div>
     </aside>
   </div>
 
-  <script src="/static/chrome.js?v=20261106-lab"></script>
-  <script src="/static/laboratory.js?v=20261106-v1"></script>
+  <script src="/static/chrome.js?v=20261107-lab"></script>
+  <script src="/static/laboratory.js?v=20261107-v2"></script>
 </body>
 </html>
-
