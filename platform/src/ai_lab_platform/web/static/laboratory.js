@@ -201,6 +201,13 @@
         const card = document.createElement("div");
         card.className = "citation-card";
         const encodedTitle = encodeURIComponent(cit.title);
+        const bookUrl = cit.file_path ? `/nexus/${cit.file_path}` : `/v1/nexus/open?title=${encodedTitle}`;
+        card.style.cursor = "pointer";
+        card.onclick = (e) => {
+          if (e.target.tagName !== "A") {
+            window.open(bookUrl, "_blank");
+          }
+        };
         card.innerHTML = `
           <div class="cit-top">
             <div class="cit-title">📖 ${cit.title}</div>
@@ -208,7 +215,7 @@
           </div>
           <div class="cit-chapter">${cit.chapter}</div>
           <div class="cit-relevance">${cit.relevance}</div>
-          <a href="/nexus/?search=${encodedTitle}" target="_blank" class="cit-link-btn">Study in Nexus ↗</a>
+          <a href="${bookUrl}" target="_blank" class="cit-link-btn" title="Open and read this book directly">📖 Open Book (PDF) ↗</a>
         `;
         benchCitationsEl.appendChild(card);
       });

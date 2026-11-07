@@ -3957,6 +3957,29 @@ def create_control_app(
 
         return res
 
+    @app.get("/v1/nexus/open")
+    def nexus_open_direct_endpoint(
+        request: Request,
+        title: str = Query(default="", max_length=200),
+        path: str = Query(default="", max_length=500),
+    ) -> Response:
+        """Redirect directly to the book file on disk."""
+        if path:
+            clean = path.strip().lstrip("/")
+            return RedirectResponse(url=f"/nexus/{clean}", status_code=307)
+        if title:
+            from .lab_workbench import CITATION_FILE_PATHS
+
+            target = CITATION_FILE_PATHS.get(title)
+            if target:
+                return RedirectResponse(url=f"/nexus/{target}", status_code=307)
+            from .nexus_library import suggest_books
+
+            hits = suggest_books(title, limit=1)
+            if hits and hits[0].get("path"):
+                return RedirectResponse(url=f"/nexus/{hits[0]['path']}", status_code=307)
+        return RedirectResponse(url="/nexus/", status_code=307)
+
     @app.get("/v1/nexus/library")
     def nexus_library_endpoint(
         request: Request,

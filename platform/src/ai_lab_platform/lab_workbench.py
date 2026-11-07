@@ -17,6 +17,23 @@ class LabCitation:
     chapter: str
     category: str
     relevance: str
+    file_path: str = ""
+
+
+CITATION_FILE_PATHS: dict[str, str] = {
+    "Essential Math for Data Science": "04_Books_Library/Data_Science/essentialmathfordatascience.pdf",
+    "Mathematics for Machine Learning": "04_Books_Library/Data_Science/practicallinearalgebrafordatascience.pdf",
+    "Deep Learning": "04_Books_Library/AI_and_Machine_Learning/Deep_Learning_with_Python_Third_Edition.pdf",
+    "Practical Statistics for Data Scientists": "04_Books_Library/Data_Science/ai-assistedstatisticsfordatascientists3rdedition.pdf",
+    "Build a Large Language Model (From Scratch)": "04_Books_Library/AI_and_Machine_Learning/Build_a_Large_Language_Model_(From_Scrat.epub",
+    "LLMs in Production": "04_Books_Library/AI_and_Machine_Learning/LLMs_in_Production.pdf",
+    "AI-Powered Search": "04_Books_Library/AI_and_Machine_Learning/AI-Powered_Search.pdf",
+    "Generative AI in Action": "04_Books_Library/AI_and_Machine_Learning/Generative_AI_in_Action.pdf",
+    "Optimization Algorithms": "04_Books_Library/AI_and_Machine_Learning/Optimization_Algorithms.pdf",
+    "Transformers in Action": "04_Books_Library/AI_and_Machine_Learning/Transformers_in_Action.pdf",
+    "LLM Evaluation and Alignment, The Foundation": "04_Books_Library/AI_and_Machine_Learning/LLM_Evaluation_and_Alignment_The_Founda_v4_MEAP.pdf",
+    "Deep Learning with Python, Third Edition": "04_Books_Library/AI_and_Machine_Learning/Deep_Learning_with_Python_Third_Edition.pdf",
+}
 
 
 @dataclass(frozen=True)
@@ -38,6 +55,9 @@ class LabConcept:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        for cit in data.get("nexus_citations", []):
+            if not cit.get("file_path"):
+                cit["file_path"] = CITATION_FILE_PATHS.get(cit.get("title", ""), "")
         return data
 
 
