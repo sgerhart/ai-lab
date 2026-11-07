@@ -162,6 +162,82 @@ class StudyAgentPolicyAndApiTests(unittest.TestCase):
             self.assertEqual(data["agent"], "study")
             self.assertEqual(data["title"], "Study: Foundation of LLM")
 
+    def test_book_structure_endpoint(self) -> None:
+        from ai_lab_platform.control_app import create_control_app
+        from ai_lab_platform.store import SqliteStore
+        from langgraph.checkpoint.memory import MemorySaver
+        from starlette.testclient import TestClient
+
+        with tempfile.NamedTemporaryFile(suffix=".sqlite") as tmp:
+            store = SqliteStore(tmp.name)
+            app = create_control_app(
+                store=store,
+                checkpointer=MemorySaver(),
+                token="test-token",
+                dispatch=lambda _p: {"ok": True, "detail": "unused"},
+            )
+            client = TestClient(app)
+            headers = {"Authorization": "Bearer test-token"}
+
+            # Test missing path param
+            res = client.get("/v1/nexus/book/structure?path=", headers=headers)
+            self.assertEqual(res.status_code, 400)
+
+            # Test existing book if in nexus dir
+            nexus_root = Path.home() / ".ai-lab" / "nexus"
+            sample_pdf = next(nexus_root.rglob("*.pdf"), None) if nexus_root.is_dir() else None
+            if sample_pdf and sample_pdf.is_file():
+                rel = str(sample_pdf.relative_to(nexus_root))
+                res = client.get(f"/v1/nexus/book/structure?path={rel}", headers=headers)
+                self.assertEqual(res.status_code, 200)
+                d = res.json()
+                self.assertIn("title", d)
+                self.assertIn("total_pages", d)
+                self.assertIn("chapters", d)
+                self.assertGreaterEqual(d["total_pages"], 1)
+
+    def test_grounded_chat_parses_page_and_chapter(self) -> None:
+        from ai_lab_platform.control_app import _grounded_chat
+        from types import SimpleNamespace
+
+        app = SimpleNamespace(state=SimpleNamespace())
+        conv = SimpleNamespace(agent="study", project_id=None)
+        query = '[Study Context: Book: "Agent Quality", Path: "01_AI/Agent Quality.pdf", Page: 16, Chapter: "The Art of Agent Evaluation: Judging the Process"]\n\nPlease summarize this chapter.'
+
+        turn, system = _grounded_chat(
+            app,
+            conv,
+            query=query,
+            prompt="Please summarize this chapter.",
+            deep_research=False,
+        )
+        self.assertIn("Agent Quality", system)
+        self.assertIn("Page 16", system)
+        self.assertIn("The Art of Agent Evaluation", system)
+
+    def test_page_and_chapter_grounded_extraction(self) -> None:
+        from ai_lab_platform.nexus_study import extract_book_context, get_book_structure
+
+        nexus_root = Path.home() / ".ai-lab" / "nexus"
+        sample_pdf = next(nexus_root.rglob("*.pdf"), None) if nexus_root.is_dir() else None
+        if sample_pdf and sample_pdf.is_file():
+            rel = str(sample_pdf.relative_to(nexus_root))
+            struct = get_book_structure(rel)
+            self.assertIn("total_pages", struct)
+            self.assertGreaterEqual(struct["total_pages"], 1)
+
+            # Targeted by page
+            page_excerpt = extract_book_context(rel, "Explain concepts", page=1)
+            self.assertIn(struct["title"], page_excerpt)
+            self.assertIn("Page", page_excerpt)
+
+            # Targeted by chapter if chapters exist
+            if struct.get("chapters"):
+                ch = struct["chapters"][0]
+                ch_excerpt = extract_book_context(rel, "Summarize", chapter=ch["title"])
+                self.assertIn(struct["title"], ch_excerpt)
+                self.assertIn(ch["title"], ch_excerpt)
+
 
 if __name__ == "__main__":
     unittest.main()

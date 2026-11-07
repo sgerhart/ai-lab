@@ -534,8 +534,406 @@ def resolve_book_file(rel_path: str) -> Path | None:
     return None
 
 
+_PDF_PAGE_CACHE: dict[str, tuple[float, list[str]]] = {}
+
+
+def _parse_pdf_cmap(cmap_bytes: bytes) -> dict[str, str]:
+    """Parse a PDF /ToUnicode CMap stream into a src_hex -> unicode_str dictionary."""
+    text = cmap_bytes.decode("latin1", errors="ignore")
+    mapping: dict[str, str] = {}
+
+    for block in re.findall(r"beginbfchar\s*(.*?)\s*endbfchar", text, re.S):
+        for m in re.finditer(r"<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>", block):
+            src = m.group(1).upper()
+            dst = m.group(2)
+            try:
+                mapping[src] = bytes.fromhex(dst).decode("utf-16-be", errors="ignore")
+            except Exception:
+                pass
+
+    for block in re.findall(r"beginbfrange\s*(.*?)\s*endbfrange", text, re.S):
+        for line in block.strip().splitlines():
+            line = line.strip()
+            # Format 1: <start> <end> <destStart>
+            m1 = re.match(r"^<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>$", line)
+            if m1:
+                s = int(m1.group(1), 16)
+                e = int(m1.group(2), 16)
+                d = int(m1.group(3), 16)
+                width = len(m1.group(1))
+                fmt = f"%0{width}X"
+                d_width = len(m1.group(3))
+                for i in range(e - s + 1):
+                    try:
+                        d_hex = f"%0{d_width}X" % (d + i)
+                        mapping[fmt % (s + i)] = bytes.fromhex(d_hex).decode("utf-16-be", errors="ignore")
+                    except Exception:
+                        pass
+                continue
+
+            # Format 2: <start> <end> [ <dest1> <dest2> ... ]
+            m2 = re.match(r"^<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*\[(.*?)\]$", line)
+            if m2:
+                s = int(m2.group(1), 16)
+                e = int(m2.group(2), 16)
+                dests = re.findall(r"<([0-9a-fA-F]+)>", m2.group(3))
+                width = len(m2.group(1))
+                fmt = f"%0{width}X"
+                for i, dst in enumerate(dests):
+                    if s + i <= e:
+                        try:
+                            mapping[fmt % (s + i)] = bytes.fromhex(dst).decode("utf-16-be", errors="ignore")
+                        except Exception:
+                            pass
+
+    return mapping
+
+
+def _extract_pdf_pages_raw(data: bytes, max_pages: int = 500) -> list[str]:
+    """Parse pure PDF decompressed streams, BT/ET blocks, kerning arrays, and CMaps page-by-page."""
+    import zlib
+
+    obj_streams: dict[int, bytes] = {}
+    font_to_cmap: dict[int, dict[str, str]] = {}
+    font_to_tuid: dict[int, int] = {}
+    page_chunks: list[bytes] = []
+
+    for m in re.finditer(rb"(\d+)\s+0\s+obj([\s\S]*?)endobj", data):
+        oid = int(m.group(1))
+        chunk = m.group(0)
+        s_m = re.search(rb"stream\r?\n(.*?)endstream", chunk, re.S)
+        if s_m:
+            raw = s_m.group(1).strip(b"\r\n")
+            if b"FlateDecode" in chunk:
+                try:
+                    obj_streams[oid] = zlib.decompress(raw)
+                except Exception:
+                    try:
+                        obj_streams[oid] = zlib.decompressobj().decompress(raw)
+                    except Exception:
+                        pass
+            else:
+                obj_streams[oid] = raw
+
+        if b"/Type /Font" in chunk or b"/Type/Font" in chunk:
+            tu = re.search(rb"/ToUnicode\s+(\d+)\s+0\s+R", chunk)
+            if tu:
+                font_to_tuid[oid] = int(tu.group(1))
+
+        if re.search(rb"/Type\s*/Page\b", chunk):
+            page_chunks.append(chunk)
+
+    for f_id, tuid in font_to_tuid.items():
+        if tuid in obj_streams:
+            font_to_cmap[f_id] = _parse_pdf_cmap(obj_streams[tuid])
+
+    pages: list[str] = []
+    for p_chunk in page_chunks[:max_pages]:
+        page_fonts: dict[str, dict[str, str]] = {}
+        font_dict_m = re.search(rb"/Font\s*<<([^>>]+)>>", p_chunk)
+        if font_dict_m:
+            for fm in re.finditer(rb"/([A-Za-z0-9_]+)\s+(\d+)\s+0\s+R", font_dict_m.group(1)):
+                fname = fm.group(1).decode("ascii", errors="ignore")
+                fobj = int(fm.group(2))
+                if fobj in font_to_cmap:
+                    page_fonts[fname] = font_to_cmap[fobj]
+
+        c_single = re.search(rb"/Contents\s+(\d+)\s+0\s+R", p_chunk)
+        c_array = re.search(rb"/Contents\s*\[([^\]]+)\]", p_chunk)
+        content_ids: list[int] = []
+        if c_single:
+            content_ids.append(int(c_single.group(1)))
+        elif c_array:
+            content_ids.extend([int(x) for x in re.findall(rb"(\d+)\s+0\s+R", c_array.group(1))])
+
+        page_lines: list[str] = []
+        cur_cmap = next(iter(page_fonts.values()), {})
+        for cid in content_ids:
+            stream_data = obj_streams.get(cid, b"")
+            if not stream_data or b"BT" not in stream_data:
+                continue
+
+            for m in re.finditer(
+                rb"(/([A-Za-z0-9_]+)\s+[\d\.]+\s+Tf)|(\[([\s\S]*?)\]\s*TJ)|\(((?:\\.|[^\\)])*)\)\s*Tj|<([0-9a-fA-F\s]+)>\s*Tj",
+                stream_data,
+            ):
+                if m.group(1):
+                    fn = m.group(2).decode("ascii", errors="ignore")
+                    cur_cmap = page_fonts.get(fn, cur_cmap)
+                elif m.group(3):
+                    tj = m.group(4)
+                    parts: list[str] = []
+                    for item in re.finditer(rb"\((?:\\.|[^\\)])*\)|<([0-9a-fA-F\s]+)>|(-?\d+(?:\.\d+)?)", tj):
+                        val = item.group(0)
+                        if val.startswith(b"(") and val.endswith(b")"):
+                            s = val[1:-1].decode("latin1", errors="ignore")
+                            s = s.replace("\\n", "\n").replace("\\r", "").replace("\\t", "\t")
+                            s = s.replace("\\(", "(").replace("\\)", ")")
+                            parts.append(s)
+                        elif val.startswith(b"<") and val.endswith(b">"):
+                            h = item.group(1).decode("ascii", errors="ignore")
+                            clean = re.sub(r"\s+", "", h)
+                            for i in range(0, len(clean), 4):
+                                g = clean[i : i + 4].upper()
+                                parts.append(cur_cmap.get(g, ""))
+                        else:
+                            try:
+                                if float(val) < -120:
+                                    parts.append(" ")
+                            except ValueError:
+                                pass
+                    line = "".join(parts).strip()
+                    if line:
+                        page_lines.append(line)
+                elif m.group(5):
+                    s = m.group(5).decode("latin1", errors="ignore")
+                    s = s.replace("\\n", "\n").replace("\\r", "").replace("\\t", "\t")
+                    s = s.replace("\\(", "(").replace("\\)", ")")
+                    if s.strip():
+                        page_lines.append(s.strip())
+                elif m.group(6):
+                    clean = re.sub(r"\s+", "", m.group(6).decode("ascii", errors="ignore"))
+                    parts = [cur_cmap.get(clean[i : i + 4].upper(), "") for i in range(0, len(clean), 4)]
+                    line = "".join(parts).strip()
+                    if line:
+                        page_lines.append(line)
+
+        pages.append("\n".join(page_lines))
+    return pages
+
+
+def extract_pdf_pages(pdf_path: Path, max_pages: int = 500) -> list[str]:
+    """Extract page text list for a PDF file with in-memory mtime caching."""
+    str_path = str(pdf_path.resolve())
+    try:
+        mtime = pdf_path.stat().st_mtime
+    except (OSError, FileNotFoundError):
+        return []
+
+    cached = _PDF_PAGE_CACHE.get(str_path)
+    if cached and cached[0] == mtime:
+        return cached[1]
+
+    try:
+        with open(pdf_path, "rb") as f:
+            data = f.read(35_000_000)
+        pages = _extract_pdf_pages_raw(data, max_pages=max_pages)
+        _PDF_PAGE_CACHE[str_path] = (mtime, pages)
+        return pages
+    except Exception:
+        return []
+
+
+def _get_pdf_outline_chapters(data: bytes, total_pages: int) -> list[dict[str, Any]]:
+    """Extract chapter bookmarks from PDF /Outlines."""
+    page_id_to_num: dict[int, int] = {}
+    page_num = 1
+    for m in re.finditer(rb"(\d+)\s+0\s+obj[\s\S]*?endobj", data):
+        chunk = m.group(0)
+        if re.search(rb"/Type\s*/Page\b", chunk):
+            oid = int(m.group(1))
+            page_id_to_num[oid] = page_num
+            page_num += 1
+
+    named_to_page: dict[str, int] = {}
+    for m in re.finditer(rb"\(([^)]+)\)\s*\[\s*(\d+)\s+0\s+R", data):
+        dname = m.group(1).decode("latin1", errors="ignore")
+        p_id = int(m.group(2))
+        if p_id in page_id_to_num:
+            named_to_page[dname] = page_id_to_num[p_id]
+
+    action_to_page: dict[int, int] = {}
+    for m in re.finditer(rb"(\d+)\s+0\s+obj\s*<<\s*/D\s*(?:\(([^)]+)\)|\[\s*(\d+)\s+0\s+R)[\s\S]*?/S\s*/GoTo", data):
+        a_id = int(m.group(1))
+        if m.group(2):
+            dname = m.group(2).decode("latin1", errors="ignore")
+            if dname in named_to_page:
+                action_to_page[a_id] = named_to_page[dname]
+        elif m.group(3):
+            p_id = int(m.group(3))
+            if p_id in page_id_to_num:
+                action_to_page[a_id] = page_id_to_num[p_id]
+
+    chapters: list[dict[str, Any]] = []
+    seen: set[tuple[str, int]] = set()
+    for m in re.finditer(rb"<<[^\>]*?/Title\s*(\([^\)]+\)|<[^>]+>)[^\>]*?>>", data):
+        chunk = m.group(0)
+        t_raw = m.group(1)
+        if t_raw.startswith(b"("):
+            t = t_raw[1:-1].decode("latin1", errors="ignore")
+        else:
+            try:
+                h = t_raw[1:-1].decode("ascii", errors="ignore")
+                t = bytes.fromhex(h).decode("utf-16-be", errors="ignore")
+            except Exception:
+                t = ""
+        t = t.replace("\ufeff", "").strip()
+        if not t or len(t) < 3:
+            continue
+
+        p_num = None
+        a_m = re.search(rb"/A\s+(\d+)\s+0\s+R", chunk)
+        if a_m and int(a_m.group(1)) in action_to_page:
+            p_num = action_to_page[int(a_m.group(1))]
+
+        if not p_num:
+            dest_arr = re.search(rb"/Dest\s*\[\s*(\d+)\s+0\s+R", chunk)
+            if dest_arr and int(dest_arr.group(1)) in page_id_to_num:
+                p_num = page_id_to_num[int(dest_arr.group(1))]
+            else:
+                dest_str = re.search(rb"/Dest\s*\(([^)]+)\)", chunk)
+                if dest_str:
+                    dn = dest_str.group(1).decode("latin1", errors="ignore")
+                    p_num = named_to_page.get(dn)
+
+        if p_num and 1 <= p_num <= total_pages and (t, p_num) not in seen:
+            seen.add((t, p_num))
+            chapters.append({"title": t, "page": p_num})
+
+    chapters.sort(key=lambda x: x["page"])
+    return chapters
+
+
+def _get_pdf_heading_chapters(pages: list[str]) -> list[dict[str, Any]]:
+    """Infer chapter landmarks from PDF Table of Contents or page heading patterns."""
+    # 1. Scan early pages for "Table of contents"
+    for page in pages[:10]:
+        if re.search(r"table of content|contents\b|brief contents", page, re.I):
+            entries: list[dict[str, Any]] = []
+            seen: set[str] = set()
+            for line in page.splitlines():
+                matches = list(re.finditer(r"([A-Za-z0-9\s\.,:\x27\"-]{3,60}?)\s+(\d{1,4})(?=\s+[A-Z]|$)", line))
+                for m in matches:
+                    t = m.group(1).strip()
+                    pg = int(m.group(2))
+                    if 1 <= pg <= len(pages) and len(t) > 3 and not any(k in t.lower() for k in ("page", "table of content", "version")):
+                        if re.search(r"[a-zA-Z]", t) and t.lower() not in seen:
+                            seen.add(t.lower())
+                            entries.append({"title": t, "page": pg})
+            if len(entries) >= 2:
+                entries.sort(key=lambda x: x["page"])
+                return entries
+
+    # 2. Scan pages for major chapter headings
+    chapters: list[dict[str, Any]] = []
+    seen_titles: set[str] = set()
+    for idx, p_text in enumerate(pages):
+        page_num = idx + 1
+        lines = [l.strip() for l in p_text.splitlines() if l.strip()]
+        for line in lines[:4]:
+            m = re.match(
+                r"^(?:Chapter\s+\d+[\s\:\-]+[^\n]{3,60}|(?:\d+\.)+\s+[A-Z][^\n]{3,60}|Executive Summary|Quick Start Guide|Introduction|Conclusion|Appendix|References)",
+                line,
+                re.I,
+            )
+            if m:
+                t = m.group(0).strip()
+                if t.lower() not in seen_titles and len(t) <= 80:
+                    seen_titles.add(t.lower())
+                    chapters.append({"title": t, "page": page_num})
+                    break
+
+    if len(chapters) >= 2:
+        return chapters
+
+    # 3. Fallback: Milestone sections if book is multi-page
+    total = len(pages)
+    if total > 15:
+        step = max(5, total // 6)
+        milestones = []
+        for p in range(1, total + 1, step):
+            milestones.append({"title": f"Section (Page {p})", "page": p})
+        return milestones
+
+    return [{"title": "Start", "page": 1}]
+
+
+def _get_epub_chapters(epub_path: Path) -> tuple[int, list[dict[str, Any]]]:
+    """Parse EPUB chapters from toc.ncx or HTML files with estimated page mapping."""
+    chapters: list[dict[str, Any]] = []
+    try:
+        with zipfile.ZipFile(epub_path, "r") as z:
+            ncx_files = [f for f in z.namelist() if f.lower().endswith(".ncx")]
+            if ncx_files:
+                raw = z.read(ncx_files[0]).decode("utf-8", errors="ignore")
+                navs = re.findall(r"<navPoint[\s\S]*?<navLabel>\s*<text>(.*?)</text>\s*</navLabel>", raw)
+                if navs:
+                    cur_p = 1
+                    for n in navs:
+                        title = n.strip()
+                        if title and len(title) > 2:
+                            chapters.append({"title": title, "page": cur_p})
+                            cur_p += 8
+                    return max(cur_p, 1), chapters
+
+            html_files = [f for f in z.namelist() if f.lower().endswith((".html", ".xhtml"))]
+            cur_p = 1
+            for f in html_files:
+                stem = Path(f).stem.replace("-", " ").title()
+                if not any(k in stem.lower() for k in ("cover", "nav", "toc")):
+                    chapters.append({"title": stem, "page": cur_p})
+                    cur_p += 10
+            return max(cur_p, 1), chapters
+    except Exception:
+        return 1, [{"title": "Beginning", "page": 1}]
+
+
+def get_book_structure(rel_path: str) -> dict[str, Any]:
+    """Return document structure (title, format, total_pages, and chapter list)."""
+    book_file = resolve_book_file(rel_path)
+    if not book_file or not book_file.is_file():
+        return {}
+
+    title = format_book_title(book_file.name)
+    fmt = book_file.suffix.lower().lstrip(".")
+
+    if fmt == "pdf":
+        pages = extract_pdf_pages(book_file)
+        total_pages = len(pages) or 1
+        try:
+            with open(book_file, "rb") as f:
+                data = f.read(15_000_000)
+            chapters = _get_pdf_outline_chapters(data, total_pages)
+        except Exception:
+            chapters = []
+
+        if len(chapters) < 2:
+            chapters = _get_pdf_heading_chapters(pages)
+
+        return {
+            "title": title,
+            "rel_path": rel_path,
+            "format": "pdf",
+            "total_pages": total_pages,
+            "chapters": chapters,
+        }
+
+    if fmt == "epub":
+        total_pages, chapters = _get_epub_chapters(book_file)
+        return {
+            "title": title,
+            "rel_path": rel_path,
+            "format": "epub",
+            "total_pages": total_pages,
+            "chapters": chapters,
+        }
+
+    return {
+        "title": title,
+        "rel_path": rel_path,
+        "format": fmt,
+        "total_pages": 1,
+        "chapters": [{"title": "Document", "page": 1}],
+    }
+
+
 def _extract_table_of_contents(book_file: Path, max_chars: int = 5000) -> str:
     """Extract Table of Contents, Parts, and Chapter breakdown."""
+    struct = get_book_structure(str(book_file))
+    if struct and struct.get("chapters") and len(struct["chapters"]) >= 2:
+        lines = [f"Page {c['page']}: {c['title']}" for c in struct["chapters"]]
+        return f'[Table of Contents for "{struct.get("title", book_file.stem)}"]:\n' + "\n".join(lines)[:max_chars]
+
     epub_file = book_file.with_suffix(".epub")
     if epub_file.is_file():
         try:
@@ -559,42 +957,118 @@ def _extract_table_of_contents(book_file: Path, max_chars: int = 5000) -> str:
         except Exception:
             pass
 
-    if book_file.suffix.lower() == ".pdf" and book_file.is_file():
-        try:
-            with open(book_file, "rb") as f:
-                data = f.read(2_000_000)
-            text = pdf_text(data)
-            if text:
-                m = re.search(r"(?:brief contents|table of contents|contents)[\s\S]{100,3000}", text, re.I)
-                if m:
-                    book_name = format_book_title(book_file.name)
-                    return f'[Table of Contents / Parts Overview for "{book_name}"]:\n' + m.group(0)[:max_chars]
-        except Exception:
-            pass
-
     return ""
 
 
-def extract_book_context(rel_path: str, query: str, max_chars: int = 5000) -> str:
-    """Extract relevant chapter or paragraph excerpts for a user query from the book."""
+def extract_book_context(
+    rel_path: str,
+    query: str,
+    page: int | None = None,
+    chapter: str = "",
+    max_chars: int = 6000,
+) -> str:
+    """Extract targeted chapter or paragraph excerpts for a user query from the book."""
     book_file = resolve_book_file(rel_path)
     if not book_file:
         return ""
 
+    struct = get_book_structure(rel_path)
+    title = struct.get("title", format_book_title(book_file.name))
+    total_pages = struct.get("total_pages", 1)
+    chapters = struct.get("chapters", [])
+
+    is_pdf = book_file.suffix.lower() == ".pdf"
+    pages: list[str] = []
+    if is_pdf:
+        pages = extract_pdf_pages(book_file)
+        total_pages = len(pages) or total_pages
+
+    # 1. Target by explicit chapter
+    if chapter:
+        matched_ch: dict[str, Any] | None = None
+        matched_idx = -1
+        ch_clean = chapter.strip().lower()
+        for idx, ch in enumerate(chapters):
+            t_low = ch["title"].lower()
+            if t_low == ch_clean or t_low in ch_clean or ch_clean in t_low:
+                matched_ch = ch
+                matched_idx = idx
+                break
+
+        if matched_ch and is_pdf and pages:
+            start_p = matched_ch["page"]
+            if matched_idx + 1 < len(chapters):
+                end_p = min(total_pages, chapters[matched_idx + 1]["page"] - 1)
+            else:
+                end_p = min(total_pages, start_p + 8)
+            end_p = max(start_p, end_p)
+
+            parts: list[str] = []
+            for p_num in range(start_p, end_p + 1):
+                if 1 <= p_num <= len(pages):
+                    t = pages[p_num - 1].strip()
+                    if t:
+                        parts.append(f"--- Page {p_num} ---\n{t}")
+            joined = "\n\n".join(parts)
+            if joined:
+                return (
+                    f'[Direct Book Excerpt from "{title}" - Chapter: "{matched_ch["title"]}" (Pages {start_p}–{end_p})]:\n'
+                    f'"{joined[:max_chars]}"'
+                )
+
+    # 2. Target by explicit page
+    if page is not None and is_pdf and pages:
+        p_clamped = max(1, min(page, len(pages)))
+        end_p = min(len(pages), p_clamped + 2)
+        parts = []
+        for p_num in range(p_clamped, end_p + 1):
+            t = pages[p_num - 1].strip()
+            if t:
+                parts.append(f"--- Page {p_num} ---\n{t}")
+        joined = "\n\n".join(parts)
+        if joined:
+            ch_tag = f' - Chapter: "{chapter}"' if chapter else ""
+            return (
+                f'[Direct Book Excerpt from "{title}"{ch_tag} (Pages {p_clamped}–{end_p})]:\n'
+                f'"{joined[:max_chars]}"'
+            )
+
+    # 3. Check for specific chapter number in query (e.g. "Chapter 2")
     q_lower = query.lower()
-    # Check for structural / TOC / parts / outline queries
+    ch_num_match = re.search(r"\bchapter\s+(\d+)\b", q_lower)
+    if ch_num_match:
+        target_num = ch_num_match.group(1)
+        for idx, ch in enumerate(chapters):
+            if re.search(rf"\bchapter\s+{target_num}\b", ch["title"], re.I) or re.search(rf"^{target_num}\b", ch["title"]):
+                start_p = ch["page"]
+                end_p = chapters[idx + 1]["page"] - 1 if idx + 1 < len(chapters) else start_p + 8
+                end_p = max(start_p, min(total_pages, end_p))
+                if is_pdf and pages:
+                    parts = [
+                        f"--- Page {p} ---\n{pages[p-1].strip()}"
+                        for p in range(start_p, end_p + 1)
+                        if 1 <= p <= len(pages) and pages[p - 1].strip()
+                    ]
+                    joined = "\n\n".join(parts)
+                    if joined:
+                        return (
+                            f'[Direct Book Excerpt from "{title}" - Chapter {target_num}: "{ch["title"]}" (Pages {start_p}–{end_p})]:\n'
+                            f'"{joined[:max_chars]}"'
+                        )
+
+    # 4. Check for structural / TOC query
     is_toc_query = bool(
         re.search(
             r"\b(?:parts?|parts of the book|part titles?|table of contents|contents|brief contents|chapters?|outline|structure|how is the book organized|how is the book structured)\b",
             q_lower,
         )
     )
-    if is_toc_query and not re.search(r"\bchapter\s+\d+\b", q_lower):
+    if is_toc_query and not ch_num_match:
         toc_text = _extract_table_of_contents(book_file, max_chars=max_chars)
         if toc_text:
             return toc_text
 
-    # 1. Try Qdrant vector search first
+    # 5. Qdrant vector search
     try:
         from .nexus_rag import NexusRagStore
 
@@ -616,18 +1090,76 @@ def extract_book_context(rel_path: str, query: str, max_chars: int = 5000) -> st
     except Exception:
         pass
 
-    # 2. Check for preferred EPUB sibling for structured chapter HTML
+    # 6. Fallback: Search PDF pages directly by keyword scoring
+    if is_pdf and pages:
+        res = _search_pdf_pages(pages, title, query, max_chars=max_chars)
+        if res:
+            return res
+
+    # Sibling EPUB search fallback
     epub_file = book_file.with_suffix(".epub")
     if epub_file.is_file():
-        excerpts = _search_epub(epub_file, query, max_chars=max_chars)
-        if excerpts:
-            return excerpts
-
-    # 3. Fall back to PDF extraction if only PDF is available
-    if book_file.suffix.lower() == ".pdf" and book_file.is_file():
-        return _search_pdf(book_file, query, max_chars=max_chars)
+        ex = _search_epub(epub_file, query, max_chars=max_chars)
+        if ex:
+            return ex
 
     return ""
+
+
+def _search_pdf_pages(pages: list[str], title: str, query: str, max_chars: int = 5000) -> str:
+    """Score PDF pages for keywords in the query and return relevant excerpts."""
+    stop_words = {
+        "what", "when", "where", "which", "their", "this", "that", "with",
+        "from", "have", "does", "about", "how", "many", "the", "and", "for",
+        "are", "use", "using", "been", "can", "you", "tell", "explain",
+    }
+    q_words = set(w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", query) if w.lower() not in stop_words)
+    if not q_words:
+        first_p = next((p for p in pages if len(p.strip()) > 50), "")
+        return f'[Excerpt from "{title}"]:\n"{first_p[:max_chars]}"' if first_p else ""
+
+    scored: list[tuple[int, int, str]] = []
+    for idx, p_text in enumerate(pages):
+        page_num = idx + 1
+        blocks = re.split(r"\n{2,}|\.\s+", p_text)
+        for b in blocks:
+            b_clean = b.strip()
+            if len(b_clean) < 40:
+                continue
+            lower = b_clean.lower()
+            distinct_hits = sum(1 for w in q_words if w in lower)
+            if distinct_hits > 0:
+                total_freq = sum(lower.count(w) for w in q_words)
+                score = distinct_hits * 100 + total_freq
+                scored.append((score, page_num, b_clean))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    if scored:
+        out: list[str] = []
+        cur_len = 0
+        seen_blocks: set[str] = set()
+        for _score, page_num, text in scored[:4]:
+            if text in seen_blocks:
+                continue
+            seen_blocks.add(text)
+            snippet = f'[Excerpt from "{title}" (Page {page_num})]:\n"{text}"'
+            if cur_len + len(snippet) > max_chars:
+                break
+            out.append(snippet)
+            cur_len += len(snippet)
+        if out:
+            return "\n\n".join(out)
+
+    return ""
+
+
+def _search_pdf(pdf_path: Path, query: str, max_chars: int = 5000) -> str:
+    """Search readable text in a PDF for relevant paragraphs using cached page extraction."""
+    pages = extract_pdf_pages(pdf_path)
+    if not pages:
+        return ""
+    title = format_book_title(pdf_path.name)
+    return _search_pdf_pages(pages, title, query, max_chars=max_chars)
 
 
 def _search_epub(epub_path: Path, query: str, max_chars: int = 5000) -> str:
@@ -674,7 +1206,6 @@ def _search_epub(epub_path: Path, query: str, max_chars: int = 5000) -> str:
                     raw = z.read(name).decode("utf-8", errors="ignore")
                 except Exception:
                     continue
-                # Split by HTML block tags into coherent paragraphs
                 blocks = re.split(r"<(?:p|div|h[1-6]|section)[^>]*>", raw)
                 for b in blocks:
                     txt = re.sub(r"<[^>]+>", " ", b).strip()
@@ -684,7 +1215,6 @@ def _search_epub(epub_path: Path, query: str, max_chars: int = 5000) -> str:
                     lower = txt.lower()
                     distinct_hits = sum(1 for w in q_words if w in lower)
                     if distinct_hits >= 2 or (len(q_words) == 1 and distinct_hits == 1):
-                        # Window around match if block is very large
                         if len(txt) > 1500:
                             first_idx = min(lower.find(w) for w in q_words if w in lower)
                             start_pos = max(0, first_idx - 200)
@@ -718,38 +1248,3 @@ def _search_epub(epub_path: Path, query: str, max_chars: int = 5000) -> str:
         return ""
 
     return ""
-
-
-def _search_pdf(pdf_path: Path, query: str, max_chars: int = 5000) -> str:
-    """Search readable text in a PDF for relevant paragraphs."""
-    try:
-        with open(pdf_path, "rb") as f:
-            data = f.read(5_000_000)  # Read up to first 5MB
-        full_text = pdf_text(data)
-        if not full_text:
-            return ""
-
-        stop_words = {"what", "when", "where", "which", "their", "this", "that", "with", "from", "the", "and"}
-        q_words = set(w.lower() for w in re.findall(r"\b[a-zA-Z]{3,}\b", query) if w.lower() not in stop_words)
-        if not q_words:
-            return f'[Excerpt from {pdf_path.stem}]:\n"{full_text[:max_chars]}"'
-
-        # Split into sentence/paragraph blocks
-        paragraphs = re.split(r"\n{2,}|\.\s+", full_text)
-        scored = []
-        for p in paragraphs:
-            clean_p = p.strip()
-            if len(clean_p) < 40:
-                continue
-            lower = clean_p.lower()
-            hits = sum(1 for w in q_words if w in lower)
-            if hits > 0:
-                score = hits * 100 + sum(lower.count(w) for w in q_words)
-                scored.append((score, clean_p))
-        scored.sort(key=lambda x: x[0], reverse=True)
-        if scored:
-            out = [f'[Excerpt from "{pdf_path.stem}"]:\n"{p}"' for _s, p in scored[:3]]
-            return "\n\n".join(out)[:max_chars]
-        return f'[Excerpt from "{pdf_path.stem}"]:\n"{full_text[:max_chars]}"'
-    except Exception:
-        return ""

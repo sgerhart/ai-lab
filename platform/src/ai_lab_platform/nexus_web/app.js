@@ -3238,10 +3238,66 @@ const studyState = {
   active: false,
   bookTitle: '',
   bookCategory: '',
+  relPath: '',
   pdfPath: '',
+  format: 'pdf',
   conversationId: null,
-  sending: false
+  sending: false,
+  currentPage: 1,
+  totalPages: 1,
+  currentChapter: '',
+  chapters: []
 };
+
+function updateReadingPosition(page, triggerIframe = true) {
+  const p = Math.max(1, Math.min(studyState.totalPages || 1, parseInt(page, 10) || 1));
+  studyState.currentPage = p;
+
+  // Determine active chapter based on page landmarks
+  let activeCh = null;
+  if (studyState.chapters && studyState.chapters.length > 0) {
+    for (const c of studyState.chapters) {
+      if (c.page <= p) {
+        if (!activeCh || c.page > activeCh.page) {
+          activeCh = c;
+        }
+      }
+    }
+  }
+
+  studyState.currentChapter = activeCh ? activeCh.title : '';
+
+  const pageInput = document.getElementById('studyPageInput');
+  const prevBtn = document.getElementById('studyPrevPageBtn');
+  const nextBtn = document.getElementById('studyNextPageBtn');
+  const chSelect = document.getElementById('studyChapterSelect');
+  const posTag = document.getElementById('studyPositionTag');
+  const totalEl = document.getElementById('studyTotalPages');
+
+  if (pageInput) pageInput.value = p;
+  if (totalEl) totalEl.textContent = studyState.totalPages;
+  if (prevBtn) prevBtn.disabled = (p <= 1);
+  if (nextBtn) nextBtn.disabled = (p >= studyState.totalPages);
+  if (chSelect && activeCh) {
+    chSelect.value = String(activeCh.page);
+  } else if (chSelect) {
+    chSelect.value = '';
+  }
+
+  if (posTag) {
+    const chDisplay = studyState.currentChapter ? ` · ${studyState.currentChapter}` : '';
+    posTag.textContent = `📍 Page ${p}${chDisplay}`;
+    posTag.title = `Currently viewing Page ${p} of ${studyState.totalPages}${chDisplay}`;
+  }
+
+  if (triggerIframe) {
+    const pdfFrame = document.getElementById('studyPdfFrame');
+    if (pdfFrame && studyState.relPath) {
+      const baseUrl = getFileUrl(studyState.relPath).split('#')[0];
+      pdfFrame.src = `${baseUrl}#page=${p}`;
+    }
+  }
+}
 
 function formatStudyMarkdown(text) {
   if (!text) return '';
@@ -3319,7 +3375,7 @@ async function getOrCreateStudyConversation() {
   }
 }
 
-function openStudyMode(title, category, rawPath) {
+async function openStudyMode(title, category, rawPath) {
   let cleanRelPath = decodeURIComponent(rawPath || '');
   cleanRelPath = cleanRelPath.replace(/^[a-z]+:\/\/[^\/]+/i, '');
   cleanRelPath = cleanRelPath.replace(/^\/?nexus\//i, '');
@@ -3331,6 +3387,10 @@ function openStudyMode(title, category, rawPath) {
   studyState.relPath = cleanRelPath;
   studyState.pdfPath = cleanRelPath;
   studyState.conversationId = null;
+  studyState.currentPage = 1;
+  studyState.totalPages = 1;
+  studyState.currentChapter = '';
+  studyState.chapters = [];
 
   const workspace = document.getElementById('studyWorkspace');
   const titleEl = document.getElementById('studyBookTitle');
@@ -3339,11 +3399,15 @@ function openStudyMode(title, category, rawPath) {
   const pdfFrame = document.getElementById('studyPdfFrame');
   const welcomeBook = document.getElementById('studyWelcomeBook');
   const msgs = document.getElementById('studyMessages');
+  const chSelect = document.getElementById('studyChapterSelect');
+  const totalEl = document.getElementById('studyTotalPages');
 
   if (titleEl) titleEl.textContent = title;
   if (badgeEl) badgeEl.textContent = (category || 'AI').replace(/-/g, ' ');
   if (extLink) extLink.href = getFileUrl(cleanRelPath);
   if (welcomeBook) welcomeBook.textContent = title;
+  if (totalEl) totalEl.textContent = '1';
+  if (chSelect) chSelect.innerHTML = '<option value="">Loading book index...</option>';
 
   // Reset thread to welcome message
   if (msgs) {
@@ -3351,19 +3415,53 @@ function openStudyMode(title, category, rawPath) {
       <div class="study-welcome-msg" id="studyWelcomeMsg">
         <div class="study-welcome-avatar">🎓</div>
         <h4>Welcome to Active Study Mode</h4>
-        <p>I'm your AI study partner for <strong>${escapeHtml(title)}</strong>. Read through the document on the left, and use the quick buttons above or ask me anything below.</p>
+        <p>I'm your AI study partner for <strong>${escapeHtml(title)}</strong>. Read through the document on the left, navigate chapters and pages with the reading toolbar, and ask me anything or use the study chips above.</p>
       </div>
     `;
   }
 
-  // Load PDF into frame
+  // Initial load of PDF into frame
   if (pdfFrame) {
-    pdfFrame.src = getFileUrl(cleanRelPath);
+    pdfFrame.src = `${getFileUrl(cleanRelPath)}#page=1`;
   }
 
   if (workspace) {
     workspace.classList.add('active');
     workspace.setAttribute('aria-hidden', 'false');
+  }
+
+  updateReadingPosition(1, false);
+
+  // Fetch book structure (chapters, total pages) asynchronously
+  try {
+    let authHeader = {};
+    if (typeof labAuthHeaders === 'function') {
+      authHeader = labAuthHeaders();
+    }
+    const res = await fetch(`/v1/nexus/book/structure?path=${encodeURIComponent(cleanRelPath)}`, {
+      headers: authHeader
+    });
+    if (res.ok) {
+      const data = await res.json();
+      studyState.totalPages = data.total_pages || 1;
+      studyState.chapters = data.chapters || [];
+      studyState.format = data.format || 'pdf';
+
+      if (chSelect) {
+        if (studyState.chapters.length > 0) {
+          chSelect.innerHTML = `
+            <option value="">Jump to Chapter (${studyState.chapters.length})...</option>
+            ${studyState.chapters.map(c => `<option value="${c.page}">Page ${c.page}: ${escapeHtml(c.title)}</option>`).join('')}
+          `;
+        } else {
+          chSelect.innerHTML = '<option value="">No chapter index detected</option>';
+        }
+      }
+      updateReadingPosition(1, false);
+    }
+  } catch (err) {
+    console.warn('Failed to load book structure:', err);
+    if (chSelect) chSelect.innerHTML = '<option value="">Chapter jump unavailable</option>';
   }
 
   // Pre-initialize conversation in background
@@ -3425,8 +3523,8 @@ async function sendStudyMessage(text) {
     const convId = await getOrCreateStudyConversation();
     if (!convId) throw new Error('Could not establish study conversation');
 
-    // Contextualized study prompt including book name and file path for Qdrant RAG extraction
-    const promptPayload = `[Study Context: Book: "${studyState.bookTitle}", Path: "${studyState.relPath}"]\n\n${cleanText}`;
+    // Contextualized study prompt including book name, file path, current page, and chapter
+    const promptPayload = `[Study Context: Book: "${studyState.bookTitle}", Path: "${studyState.relPath}", Page: ${studyState.currentPage}, Chapter: "${studyState.currentChapter || ''}"]\n\n${cleanText}`;
 
     let authHeader = { 'Content-Type': 'application/json' };
     if (typeof labAuthHeaders === 'function') {
@@ -3555,10 +3653,73 @@ function initStudyWorkspace() {
     });
   }
 
-  // Quick Chips
+  // Reading Position Toolbar Controls
+  const chSelect = document.getElementById('studyChapterSelect');
+  if (chSelect) {
+    chSelect.addEventListener('change', (e) => {
+      const targetPage = parseInt(e.target.value, 10);
+      if (targetPage) updateReadingPosition(targetPage, true);
+    });
+  }
+
+  const prevBtn = document.getElementById('studyPrevPageBtn');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      updateReadingPosition(studyState.currentPage - 1, true);
+    });
+  }
+
+  const nextBtn = document.getElementById('studyNextPageBtn');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      updateReadingPosition(studyState.currentPage + 1, true);
+    });
+  }
+
+  const goBtn = document.getElementById('studyGoPageBtn');
+  const pageInput = document.getElementById('studyPageInput');
+  if (goBtn && pageInput) {
+    goBtn.addEventListener('click', () => {
+      const p = parseInt(pageInput.value, 10);
+      if (p) updateReadingPosition(p, true);
+    });
+    pageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const p = parseInt(pageInput.value, 10);
+        if (p) updateReadingPosition(p, true);
+      }
+    });
+  }
+
+  // Quick Chips with dynamic reading position awareness
   document.querySelectorAll('.study-chip').forEach(chip => {
     chip.addEventListener('click', () => {
-      const prompt = chip.getAttribute('data-prompt');
+      let prompt = chip.getAttribute('data-prompt') || '';
+      const chName = studyState.currentChapter;
+      const pg = studyState.currentPage;
+
+      if (chip.textContent.includes('Summarize')) {
+        prompt = chName
+          ? `Please provide a comprehensive summary of Chapter "${chName}" (Page ${pg}). Outline the central thesis, core mechanisms, key definitions, and actionable takeaways.`
+          : `Please provide a comprehensive summary of the material starting at Page ${pg}. Outline the central thesis, core mechanisms, key definitions, and actionable takeaways.`;
+      } else if (chip.textContent.includes('Explain')) {
+        prompt = chName
+          ? `Explain the key technical architecture, core algorithms, and formulas discussed in "${chName}" (Page ${pg}) in plain English with intuitive analogies.`
+          : `Explain the key technical architecture, core algorithms, and formulas discussed around Page ${pg} in plain English with intuitive analogies.`;
+      } else if (chip.textContent.includes('Code')) {
+        prompt = chName
+          ? `Provide a production-ready, clean Python code implementation demonstrating the main concept from "${chName}" (Page ${pg}) with type annotations and docstrings.`
+          : `Provide a production-ready, clean Python code implementation demonstrating the main concept from Page ${pg} with type annotations and docstrings.`;
+      } else if (chip.textContent.includes('Quiz')) {
+        prompt = chName
+          ? `Test my knowledge! Give me 3 challenging multiple-choice questions on "${chName}" (Page ${pg}). Do not reveal the answers until I respond.`
+          : `Test my knowledge! Give me 3 challenging multiple-choice questions on Page ${pg}. Do not reveal the answers until I respond.`;
+      } else if (chip.textContent.includes('Flashcards')) {
+        prompt = chName
+          ? `Create 5 high-yield flashcards with front (concept) and back (concise explanation) for spaced repetition recall on "${chName}" (Page ${pg}).`
+          : `Create 5 high-yield flashcards with front (concept) and back (concise explanation) for spaced repetition recall on Page ${pg}.`;
+      }
+
       if (prompt) sendStudyMessage(prompt);
     });
   });

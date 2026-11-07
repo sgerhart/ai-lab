@@ -180,7 +180,7 @@ done < <(find "$ROOT" -type f \( -name '*.gguf' -o -name '*.safetensors' -o -nam
 
 SCAN_FILE="$(mktemp)"
 set +e
-grep -R --exclude-dir=.git --exclude-dir=.cursor --exclude-dir=.venv --exclude-dir=__pycache__ -nE \
+grep -R --exclude-dir=.git --exclude-dir=.cursor --exclude-dir=.venv --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=__pycache__ -nE \
   'BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|gho_[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9_-]{20,}|sk-proj-[A-Za-z0-9_-]{20,}' \
   "$ROOT" >"$SCAN_FILE" 2>/dev/null
 set -e

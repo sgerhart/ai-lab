@@ -273,6 +273,21 @@ def _grounded_chat(
         if m_book:
             book_title = m_book.group(1).strip()
 
+        page_num: int | None = None
+        m_page = re.search(r"Page:\s*(\d+)", query, re.I)
+        if m_page:
+            try:
+                page_num = int(m_page.group(1))
+            except ValueError:
+                pass
+
+        chapter_title = ""
+        m_ch = re.search(r'Chapter:\s*"([^"]+)"', query, re.I)
+        if not m_ch:
+            m_ch = re.search(r"Chapter:\s*'([^']+)'", query, re.I)
+        if m_ch:
+            chapter_title = m_ch.group(1).strip()
+
         # Clean query (strip study context wrapper for search)
         clean_q = re.sub(r"\[(?:Study Context|Context):[^\]]+\]", "", query, flags=re.I).strip()
         if not clean_q:
@@ -280,7 +295,12 @@ def _grounded_chat(
 
         excerpts = ""
         if rel_path:
-            excerpts = extract_book_context(rel_path, clean_q)
+            excerpts = extract_book_context(
+                rel_path,
+                clean_q,
+                page=page_num,
+                chapter=chapter_title,
+            )
 
         augmented_prompt = prompt
         if excerpts:
@@ -294,10 +314,18 @@ def _grounded_chat(
             )
 
         turn = GroundedTurn(prompt=augmented_prompt)
+        pos_info = ""
+        if chapter_title and page_num:
+            pos_info = f" Steven is currently reading Chapter: '{chapter_title}' (Page {page_num})."
+        elif chapter_title:
+            pos_info = f" Steven is currently reading Chapter: '{chapter_title}'."
+        elif page_num:
+            pos_info = f" Steven is currently reading at Page {page_num}."
+
         system = (
-            f"You are Steven Gerhart's AI Study Assistant in Knowledge Nexus for {book_title or 'this book'}. "
+            f"You are Steven Gerhart's AI Study Assistant in Knowledge Nexus for {book_title or 'this book'}.{pos_info} "
             "Help Steven thoroughly master the technical material. "
-            "When book excerpts are provided, ground your answer directly and accurately in the book's text and cite the chapter and section."
+            "When book excerpts are provided, ground your answer directly and accurately in the book's text and cite specific chapters, sections, and page numbers."
         )
         return turn, system
 
@@ -3900,6 +3928,23 @@ def create_control_app(
             "conversation_id": conversation_id,
             "runs": [r.to_dict() for r in runs],
         }
+
+    @app.get("/v1/nexus/book/structure")
+    def nexus_book_structure_endpoint(
+        request: Request,
+        path: str = Query(default="", max_length=500),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Book structure, chapters, and total pages for reading position awareness."""
+        _gate(request, authorization)
+        from .nexus_study import get_book_structure
+
+        if not path.strip():
+            raise HTTPException(status_code=400, detail="path parameter required")
+        res = get_book_structure(path.strip())
+        if not res:
+            raise HTTPException(status_code=404, detail="book not found")
+        return res
 
     @app.get("/v1/nexus/library")
     def nexus_library_endpoint(

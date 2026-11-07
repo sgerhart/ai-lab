@@ -280,6 +280,29 @@
     <div class="study-workspace-body">
       <!-- Left Pane: PDF Document Viewer -->
       <div class="study-doc-pane" id="studyDocPane">
+        <div class="study-nav-bar" id="studyNavBar">
+          <div class="study-nav-left">
+            <div class="study-chapter-select-wrap">
+              <span class="study-nav-icon">📖</span>
+              <select id="studyChapterSelect" class="study-chapter-select" title="Jump to Chapter">
+                <option value="">Jump to Chapter...</option>
+              </select>
+            </div>
+          </div>
+          <div class="study-nav-center">
+            <button id="studyPrevPageBtn" class="study-page-btn" title="Previous Page">◀</button>
+            <div class="study-page-indicator">
+              <span>Page</span>
+              <input type="number" id="studyPageInput" class="study-page-input" min="1" value="1" />
+              <span class="study-page-total">of <span id="studyTotalPages">1</span></span>
+            </div>
+            <button id="studyNextPageBtn" class="study-page-btn" title="Next Page">▶</button>
+            <button id="studyGoPageBtn" class="study-page-go-btn" title="Jump to Page">Go</button>
+          </div>
+          <div class="study-nav-right">
+            <span class="study-position-tag" id="studyPositionTag">📍 Page 1</span>
+          </div>
+        </div>
         <iframe id="studyPdfFrame" class="study-pdf-frame" src="about:blank" title="PDF Document Viewer"></iframe>
       </div>
 
