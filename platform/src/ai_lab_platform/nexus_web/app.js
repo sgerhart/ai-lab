@@ -3241,6 +3241,7 @@ function closeModal() {
 // ==========================================================================
 // Phase 2: Active Study Mode Controller (PDF Viewer + AI Study Assistant)
 // ==========================================================================
+const bookStructureCache = new Map();
 const studyState = {
   active: false,
   bookTitle: '',
@@ -3439,36 +3440,51 @@ async function openStudyMode(title, category, rawPath) {
 
   updateReadingPosition(1, false);
 
-  // Fetch book structure (chapters, total pages) asynchronously
-  try {
-    let authHeader = {};
-    if (typeof labAuthHeaders === 'function') {
-      authHeader = labAuthHeaders();
-    }
-    const res = await fetch(`/v1/nexus/book/structure?path=${encodeURIComponent(cleanRelPath)}`, {
-      headers: authHeader
-    });
-    if (res.ok) {
-      const data = await res.json();
-      studyState.totalPages = data.total_pages || 1;
-      studyState.chapters = data.chapters || [];
-      studyState.format = data.format || 'pdf';
+  function applyBookStructure(data) {
+    if (!data) return;
+    studyState.totalPages = data.total_pages || 1;
+    studyState.chapters = data.chapters || [];
+    studyState.format = data.format || 'pdf';
 
-      if (chSelect) {
-        if (studyState.chapters.length > 0) {
-          chSelect.innerHTML = `
-            <option value="">Jump to Chapter (${studyState.chapters.length})...</option>
-            ${studyState.chapters.map(c => `<option value="${c.page}">Page ${c.page}: ${escapeHtml(c.title)}</option>`).join('')}
-          `;
-        } else {
-          chSelect.innerHTML = '<option value="">No chapter index detected</option>';
-        }
+    if (chSelect) {
+      if (studyState.chapters.length > 0) {
+        chSelect.innerHTML = `
+          <option value="">Jump to Chapter (${studyState.chapters.length})...</option>
+          ${studyState.chapters.map(c => `<option value="${c.page}">Page ${c.page}: ${escapeHtml(c.title)}</option>`).join('')}
+        `;
+      } else {
+        chSelect.innerHTML = '<option value="">No chapter index detected</option>';
       }
-      updateReadingPosition(1, false);
     }
-  } catch (err) {
-    console.warn('Failed to load book structure:', err);
-    if (chSelect) chSelect.innerHTML = '<option value="">Chapter jump unavailable</option>';
+    updateReadingPosition(studyState.currentPage || 1, false);
+  }
+
+  if (bookStructureCache.has(cleanRelPath)) {
+    applyBookStructure(bookStructureCache.get(cleanRelPath));
+  } else {
+    // Fetch book structure (chapters, total pages) asynchronously without blocking UI
+    try {
+      let authHeader = {};
+      if (typeof labAuthHeaders === 'function') {
+        authHeader = labAuthHeaders();
+      }
+      fetch(`/v1/nexus/book/structure?path=${encodeURIComponent(cleanRelPath)}`, {
+        headers: authHeader
+      })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data && studyState.relPath === cleanRelPath) {
+            bookStructureCache.set(cleanRelPath, data);
+            applyBookStructure(data);
+          }
+        })
+        .catch(err => {
+          console.warn('Failed to load book structure:', err);
+          if (chSelect) chSelect.innerHTML = '<option value="">Chapter jump unavailable</option>';
+        });
+    } catch (err) {
+      console.warn('Failed to dispatch book structure fetch:', err);
+    }
   }
 
   // Pre-initialize conversation in background

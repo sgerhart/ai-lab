@@ -3947,14 +3947,6 @@ def create_control_app(
         if not res:
             raise HTTPException(status_code=404, detail="book not found")
 
-        # Asynchronously ensure vector embeddings exist in Qdrant for study RAG
-        try:
-            import threading
-            from .nexus_rag import ensure_book_indexed
-            threading.Thread(target=ensure_book_indexed, args=(clean_path,), daemon=True).start()
-        except Exception:
-            pass
-
         return res
 
     @app.get("/v1/nexus/study")

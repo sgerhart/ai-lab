@@ -535,6 +535,7 @@ def resolve_book_file(rel_path: str) -> Path | None:
 
 
 _PDF_PAGE_CACHE: dict[str, tuple[float, list[str]]] = {}
+_BOOK_STRUCTURE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
 
 
 def _parse_pdf_cmap(cmap_bytes: bytes) -> dict[str, str]:
@@ -590,13 +591,19 @@ def _parse_pdf_cmap(cmap_bytes: bytes) -> dict[str, str]:
 
 
 def _unpack_pdf_obj_stms(data: bytes) -> dict[int, bytes]:
-    """Unpack object streams (/Type /ObjStm) in PDF 1.5+ files into individual objects."""
+    """Unpack object streams (/Type /ObjStm) in PDF 1.5+ files into individual objects using linear search."""
     import zlib
 
     unpacked: dict[int, bytes] = {}
-    for m in re.finditer(rb"(\d+)\s+0\s+obj([\s\S]*?/Type\s*/ObjStm[\s\S]*?)stream\r?\n([\s\S]*?)endstream", data):
-        header = m.group(2)
-        stream = m.group(3).strip(b"\r\n")
+    for chunk in data.split(b"endstream"):
+        if b"/Type/ObjStm" not in chunk and b"/Type /ObjStm" not in chunk:
+            continue
+        parts = chunk.split(b"stream\r\n", 1)
+        if len(parts) < 2:
+            parts = chunk.split(b"stream\n", 1)
+        if len(parts) < 2:
+            continue
+        header, stream = parts[0], parts[1].strip(b"\r\n")
         n_m = re.search(rb"/N\s+(\d+)", header)
         f_m = re.search(rb"/First\s+(\d+)", header)
         if not n_m or not f_m:
@@ -767,15 +774,19 @@ def extract_pdf_pages(pdf_path: Path, max_pages: int = 500) -> list[str]:
 
 
 def _get_pdf_outline_chapters(data: bytes, total_pages: int) -> list[dict[str, Any]]:
-    """Extract chapter bookmarks from PDF /Outlines."""
+    """Extract chapter bookmarks from PDF /Outlines using fast linear scanning."""
     page_id_to_num: dict[int, int] = {}
+    dest_to_page: dict[int, int] = {}
     page_num = 1
-    for m in re.finditer(rb"(\d+)\s+0\s+obj[\s\S]*?endobj", data):
-        chunk = m.group(0)
-        if re.search(rb"/Type\s*/Page\b", chunk):
-            oid = int(m.group(1))
-            page_id_to_num[oid] = page_num
-            page_num += 1
+
+    # Linear pass over objects
+    for chunk in data.split(b"endobj"):
+        if b"/Type" in chunk and b"/Page" in chunk and (b"/Page " in chunk or b"/Page\n" in chunk or b"/Page\r" in chunk or b"/Page/" in chunk or b"/Page>>" in chunk):
+            m = re.search(rb"(\d+)\s+0\s+obj", chunk)
+            if m:
+                oid = int(m.group(1))
+                page_id_to_num[oid] = page_num
+                page_num += 1
 
     unpacked: dict[int, bytes] | None = None
     if not page_id_to_num:
@@ -785,6 +796,16 @@ def _get_pdf_outline_chapters(data: bytes, total_pages: int) -> list[dict[str, A
                 page_id_to_num[oid] = page_num
                 page_num += 1
 
+    # Map indirect destinations [page_obj 0 R /XYZ ...]
+    for chunk in data.split(b"endobj"):
+        if b"/XYZ" in chunk or b"/Fit" in chunk:
+            dm = re.search(rb"(\d+)\s+0\s+obj\s*\[\s*(\d+)\s+0\s+R", chunk)
+            if dm:
+                d_id = int(dm.group(1))
+                target_p_id = int(dm.group(2))
+                if target_p_id in page_id_to_num:
+                    dest_to_page[d_id] = page_id_to_num[target_p_id]
+
     named_to_page: dict[str, int] = {}
     for m in re.finditer(rb"\(([^)]+)\)\s*\[\s*(\d+)\s+0\s+R", data):
         dname = m.group(1).decode("latin1", errors="ignore")
@@ -793,16 +814,19 @@ def _get_pdf_outline_chapters(data: bytes, total_pages: int) -> list[dict[str, A
             named_to_page[dname] = page_id_to_num[p_id]
 
     action_to_page: dict[int, int] = {}
-    for m in re.finditer(rb"(\d+)\s+0\s+obj\s*<<\s*/D\s*(?:\(([^)]+)\)|\[\s*(\d+)\s+0\s+R)[\s\S]*?/S\s*/GoTo", data):
-        a_id = int(m.group(1))
-        if m.group(2):
-            dname = m.group(2).decode("latin1", errors="ignore")
-            if dname in named_to_page:
-                action_to_page[a_id] = named_to_page[dname]
-        elif m.group(3):
-            p_id = int(m.group(3))
-            if p_id in page_id_to_num:
-                action_to_page[a_id] = page_id_to_num[p_id]
+    for chunk in data.split(b"endobj"):
+        if b"/S" in chunk and b"/GoTo" in chunk:
+            m = re.search(rb"(\d+)\s+0\s+obj\s*<<\s*/D\s*(?:\(([^)]+)\)|\[\s*(\d+)\s+0\s+R)", chunk)
+            if m:
+                a_id = int(m.group(1))
+                if m.group(2):
+                    dname = m.group(2).decode("latin1", errors="ignore")
+                    if dname in named_to_page:
+                        action_to_page[a_id] = named_to_page[dname]
+                elif m.group(3):
+                    p_id = int(m.group(3))
+                    if p_id in page_id_to_num:
+                        action_to_page[a_id] = page_id_to_num[p_id]
 
     chapters: list[dict[str, Any]] = []
     seen: set[tuple[str, int]] = set()
@@ -831,6 +855,11 @@ def _get_pdf_outline_chapters(data: bytes, total_pages: int) -> list[dict[str, A
             a_m = re.search(rb"/A\s+(\d+)\s+0\s+R", chunk)
             if a_m and int(a_m.group(1)) in action_to_page:
                 p_num = action_to_page[int(a_m.group(1))]
+
+            if not p_num:
+                dm = re.search(rb"/D\s+(\d+)\s+0\s+R", chunk)
+                if dm and int(dm.group(1)) in dest_to_page:
+                    p_num = dest_to_page[int(dm.group(1))]
 
             if not p_num:
                 dest_arr = re.search(rb"/Dest\s*\[\s*(\d+)\s+0\s+R", chunk)
@@ -940,8 +969,25 @@ def get_book_structure(rel_path: str) -> dict[str, Any]:
     if not book_file or not book_file.is_file():
         return {}
 
+    str_path = str(book_file.resolve())
+    try:
+        mtime = book_file.stat().st_mtime
+    except (OSError, FileNotFoundError):
+        return {}
+
+    cached = _BOOK_STRUCTURE_CACHE.get(str_path)
+    if cached and cached[0] == mtime:
+        return cached[1]
+
     title = format_book_title(book_file.name)
     fmt = book_file.suffix.lower().lstrip(".")
+
+    # If sibling EPUB exists, extract rich chapter index in milliseconds
+    epub_file = book_file.with_suffix(".epub")
+    epub_chapters: list[dict[str, Any]] = []
+    epub_total = 1
+    if epub_file.is_file():
+        epub_total, epub_chapters = _get_epub_chapters(epub_file)
 
     if fmt == "pdf":
         total_pages = 1
@@ -958,29 +1004,26 @@ def get_book_structure(rel_path: str) -> dict[str, Any]:
         except Exception:
             chapters = []
 
-        # Fallback to sibling EPUB if PDF yielded placeholder/sparse chapters
-        if len(chapters) < 2 or (len(chapters) == 1 and chapters[0].get("title") == "Start"):
-            epub_file = book_file.with_suffix(".epub")
-            if epub_file.is_file():
-                ep_total, ep_chapters = _get_epub_chapters(epub_file)
-                if len(ep_chapters) >= 2:
-                    chapters = ep_chapters
-                    if total_pages <= 1:
-                        total_pages = ep_total
+        # If PDF outline didn't yield chapters, use sibling EPUB chapters if available
+        if len(chapters) < 2 and len(epub_chapters) >= 2:
+            chapters = epub_chapters
+            if total_pages <= 1:
+                total_pages = epub_total
 
-        # Only if still fewer than 2 chapters, do deeper page-by-page text extraction
-        if len(chapters) < 2:
-            pages = extract_pdf_pages(book_file)
-            total_pages = len(pages) or total_pages
-            chapters = _get_pdf_heading_chapters(pages)
+        # Fallback to milestone page markers if multi-page but no outline
+        if len(chapters) < 2 and total_pages > 15:
+            step = max(5, total_pages // 6)
+            chapters = [{"title": f"Section (Page {p})", "page": p} for p in range(1, total_pages + 1, step)]
 
-        return {
+        res = {
             "title": title,
             "rel_path": rel_path,
             "format": "pdf",
             "total_pages": total_pages,
             "chapters": chapters,
         }
+        _BOOK_STRUCTURE_CACHE[str_path] = (mtime, res)
+        return res
 
     if fmt == "epub":
         total_pages, chapters = _get_epub_chapters(book_file)
