@@ -345,6 +345,19 @@
     }
 
     /* Pedagogical Intuition & Visual Geometry */
+    .beginner-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      margin-bottom: 8px;
+    }
     .intuition-card {
       background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(14, 165, 233, 0.04) 100%);
       border: 1px solid rgba(99, 102, 241, 0.25);
@@ -864,15 +877,15 @@
       <div class="scientist-messages custom-scroll" id="scientistMessages">
         <div class="msg scientist">
           <span class="msg-author">Staff Scientist</span>
-          <div class="msg-content">Welcome to the bench! I'm your research partner. We can explore any architecture across Language, Vision, Diffusion, Audio, or RL. Select an item on the left, or ask any question about the math, shapes, or literature.</div>
+          <div class="msg-content">Welcome to the bench! I'm your research partner and teacher. Whether you're brand new to mathematics or diving deep into AI architectures, I'm here to explain concepts step by step with everyday analogies and zero jargon. Select any topic on the left or tap a quick button below to start!</div>
         </div>
       </div>
 
       <div class="quick-prompts">
-        <button class="quick-btn" data-prompt="Explain this concept using an intuitive everyday analogy.">💡 Everyday Analogy</button>
-        <button class="quick-btn" data-prompt="Quiz me on this concept with 3 multiple-choice questions to test my understanding.">🎯 Quiz Me</button>
-        <button class="quick-btn" data-prompt="Walk me through the mathematical proof or derivation step by step with real numbers.">📐 Step-by-Step Proof</button>
-        <button class="quick-btn" data-prompt="Explain exactly how modern AI models like ChatGPT and PyTorch use this math.">🤖 How AI Uses This</button>
+        <button class="quick-btn" data-prompt="Explain this concept like I know absolutely nothing about math or AI (ELI5).">🐣 Explain Like I'm 5</button>
+        <button class="quick-btn" data-prompt="Give me an intuitive everyday analogy that makes this concept stick.">🗺️ Everyday Analogy</button>
+        <button class="quick-btn" data-prompt="Give me a friendly 1-question multiple-choice quiz to test if I understand this.">🎯 Quiz Me</button>
+        <button class="quick-btn" data-prompt="Explain in plain English why modern AI models like ChatGPT cannot work without this.">🤖 Why AI Needs This</button>
       </div>
 
       <div class="scientist-input-box">
@@ -886,6 +899,6 @@
   </div>
 
   <script src="/static/chrome.js?v=20261107-lab"></script>
-  <script src="/static/laboratory.js?v=20261107-visual"></script>
+  <script src="/static/laboratory.js?v=20261107-eli5"></script>
 </body>
 </html>

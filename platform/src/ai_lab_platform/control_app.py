@@ -857,13 +857,11 @@ def create_control_app(
     ) -> dict[str, Any]:
         """Collaborative dialogue turn with the Staff Scientist."""
         _gate(request, authorization)
-        from .scientist_agent import scientist_chat
+        from .scientist_agent import scientist_chat, scientist_complete
 
         complete_fn = None
         if hasattr(app.state, "model_router") and app.state.model_router is not None:
-            from .classroom import router_complete
-
-            complete_fn = lambda prompt: router_complete(app.state.model_router, prompt)
+            complete_fn = lambda prompt: scientist_complete(app.state.model_router, prompt)
 
         return scientist_chat(
             body.message,

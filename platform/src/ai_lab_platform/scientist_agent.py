@@ -102,16 +102,101 @@ def search_web_literature(query: str) -> list[dict[str, str]]:
         ]
 
 
-SCIENTIST_SYSTEM_PROMPT = """You are the Staff Scientist and Lab Manager for the AI Lab.
-You work alongside the human operator as a fellow scientist and research partner at the laboratory bench.
+SCIENTIST_SYSTEM_PROMPT = """You are the Staff Scientist, Lab Manager, and Master Educator for the AI Lab.
+You work alongside the human operator as a supportive research partner and intuitive teacher at the laboratory bench in an active back-and-forth dialogue.
 
-Your Persona:
-- You are collegial, sharp, deeply curious, mathematically rigorous, and communicative.
-- This is an active back-and-forth dialogue between two peer researchers. You do not talk down to the operator, nor do you act like a subservient voice assistant.
-- You treat complex AI concepts (Transformers, Diffusion, ViT, GRPO, RoPE, Attention variance) with complete clarity: plain-English intuition first, then exact mathematical derivations with real numbers, followed by practical Python/PyTorch verification snippets.
-- You have direct access to the operator's personal library of 192 books and research papers in Knowledge Nexus, as well as live web search for recent papers.
-- When an operator asks a question, cite the relevant books in the library or external papers, explain the mechanics, and offer to run a quick test together.
+Your Core Pedagogical Philosophy:
+- Always assume the user wants crystal-clear, intuitive understanding first. Never intimidate with unexplained jargon or raw equations.
+- Teach someone who knows NOTHING about the topic using the "Concrete -> Abstract" method:
+  1. Everyday Analogy: Start with a real-world physical scenario (e.g. GPS navigation, shopping lists, seesaws, spotlight shadows, camera lenses).
+  2. Concrete Arithmetic: Use simple numbers (3, 2, 1) to show how it calculates by hand before showing abstract symbols.
+  3. The "Why": Explain the dilemma or problem that forced mathematicians or AI engineers to invent this.
+  4. The AI Connection: Explain exactly how ChatGPT, PyTorch, or embeddings use this concept in practice.
+- Never output raw JSON objects in dialogue. Always reply in clean, readable, beautifully formatted Markdown with headers, bold key terms, and bullet points.
+- Check in warmly: Ask the user a friendly follow-up question or offer to test an example together.
+- You have direct access to the operator's personal library of 192 books and research papers in Knowledge Nexus. Ground your explanations in these books (e.g. Essential Math for Data Science, Mathematics for Machine Learning).
 """
+
+
+def _clean_scientist_reply(raw: str) -> str:
+    """Format raw model output, converting any JSON-structured payloads into rich Markdown."""
+    cleaned = (raw or "").strip()
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[7:]
+    if cleaned.startswith("```"):
+        cleaned = cleaned[3:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    cleaned = cleaned.strip()
+
+    try:
+        data = json.loads(cleaned)
+        if isinstance(data, dict):
+            parts = []
+            title = data.get("title")
+            if title:
+                parts.append("### " + str(title) + "\n")
+            fig = data.get("figure_description") or data.get("figure_caption")
+            if fig:
+                parts.append("> 💡 **Intuitive Picture:** " + str(fig) + "\n")
+            lines = data.get("text_lines")
+            if lines and isinstance(lines, list):
+                for line in lines:
+                    parts.append(str(line) + "\n")
+            tbl = data.get("table")
+            if tbl and isinstance(tbl, dict):
+                headers = tbl.get("headers")
+                if not headers:
+                    c1 = tbl.get("col1_header")
+                    c2 = tbl.get("col2_header")
+                    if c1 and c2:
+                        headers = [c1, c2]
+                    elif isinstance(tbl.get("columns"), list):
+                        headers = tbl.get("columns")
+                rows = tbl.get("rows", [])
+                if headers and rows:
+                    parts.append("| " + " | ".join(str(h) for h in headers) + " |")
+                    parts.append("| " + " | ".join(["---"] * len(headers)) + " |")
+                    for row in rows:
+                        if isinstance(row, list):
+                            parts.append("| " + " | ".join(str(c) for c in row) + " |")
+                        elif isinstance(row, dict):
+                            parts.append("| " + " | ".join(str(v) for v in row.values()) + " |")
+                    parts.append("")
+            if data.get("code"):
+                parts.append("```python\n" + str(data["code"]) + "\n```\n")
+            if parts:
+                return "\n".join(parts).strip()
+    except Exception:
+        pass
+    return (raw or "").strip()
+
+
+def scientist_complete(router: Any, prompt: str, system: str = "") -> str:
+    """Ask the local model using the Staff Scientist master educator persona."""
+    from .agent_builder import interviewer_model
+    from .model_router import CompletionRequest
+
+    providers = router.list_providers()
+    ollama = next((row for row in providers if row.get("id") == "ollama"), None)
+    installed = [str(name) for name in ((ollama or {}).get("models") or []) if name]
+    enabled = bool((ollama or {}).get("enabled"))
+    if enabled and installed:
+        backend = "ollama"
+        model = interviewer_model(installed)
+    else:
+        backend = "fake"
+        model = "fake-instruct"
+
+    done = router.complete(
+        CompletionRequest(
+            model=model,
+            prompt=prompt,
+            backend=backend,
+            system=system or SCIENTIST_SYSTEM_PROMPT,
+        )
+    )
+    return str(done.text or "")
 
 
 def scientist_chat(
@@ -178,9 +263,12 @@ def scientist_chat(
             f"Active Workbench Concept: {active_concept['title'] if active_concept else 'General Lab Workbench'}",
         ]
         if active_concept:
+            prompt_lines.append(f"Summary: {active_concept.get('summary', '')}")
+            prompt_lines.append(f"Intuition: {active_concept.get('intuition', '')}")
             prompt_lines.append(f"Formula: {active_concept.get('formula', '')}")
             prompt_lines.append(f"Math Explanation: {active_concept.get('math_explanation', '')}")
             prompt_lines.append(f"Numerical Intuition: {active_concept.get('numerical_example', '')}")
+            prompt_lines.append(f"AI Connection: {active_concept.get('ai_connection', '')}")
 
         if citations:
             prompt_lines.append("\nRelevant Library / Web Citations:")
@@ -192,14 +280,18 @@ def scientist_chat(
             for h in history[-4:]:
                 prompt_lines.append(f"{h.get('role', 'user').title()}: {h.get('content', '')}")
 
-        prompt_lines.append(f"\nOperator: {user_msg}\nStaff Scientist:")
+        prompt_lines.append(
+            f"\nOperator: {user_msg}\n"
+            f"Staff Scientist (Reply in clean, beginner-friendly Markdown with intuitive analogies and clear steps. Do NOT output raw JSON):"
+        )
         full_prompt = "\n".join(prompt_lines)
 
         try:
             raw_reply = complete_fn(full_prompt)
             if raw_reply and raw_reply.strip():
+                clean_reply = _clean_scientist_reply(raw_reply)
                 return {
-                    "reply": raw_reply.strip(),
+                    "reply": clean_reply,
                     "citations": citations,
                     "tools_used": tools_used,
                     "concept": active_concept["id"] if active_concept else None,
@@ -212,41 +304,81 @@ def scientist_chat(
     if active_concept:
         title = active_concept["title"]
         reply_parts.append(
-            f"Great question. Let's look at **{title}** from first principles at the bench."
+            f"Welcome to the bench! Let's explore **{title}** together from the ground up."
         )
-        if any(w in msg_lower for w in ["math", "variance", "proof", "why", "derive", "number"]):
+
+        # 1. Beginner / ELI5 / Analogy query
+        if any(w in msg_lower for w in ["eli5", "beginner", "analogy", "simple", "nothing", "everyday", "explain like"]):
             reply_parts.append(
-                f"\n\n**The Core Mathematical Rationale:**\n{active_concept['math_explanation']}"
+                f"\n\n### 💡 The Big Picture (No Math Required)\n"
+                f"{active_concept.get('intuition', active_concept['summary'])}\n\n"
+                f"**The Takeaway:** You don't need calculus to master this. In daily life, we use this exact logic all the time. "
+                f"Once you see the physical picture, the mathematical symbols are just shorthand notes."
             )
+            if active_concept.get("ai_connection"):
+                reply_parts.append(
+                    f"\n\n### 🤖 Why AI Needs This\n{active_concept['ai_connection']}"
+                )
             reply_parts.append(
-                f"\n\n**Numerical Intuition:**\n{active_concept['numerical_example']}"
+                "\n\n*Does this visual picture make sense so far, or would you like another everyday example?*"
             )
-        elif any(w in msg_lower for w in ["code", "tensor", "shape", "test", "run", "verify"]):
+
+        # 2. Interactive Quiz query
+        elif any(w in msg_lower for w in ["quiz", "test", "question", "check"]):
             reply_parts.append(
-                f"\n\n**Tensor Flow Schematic:**\n```\n{active_concept['tensor_flow']}\n```"
+                f"\n\n### 🎯 Quick Concept Check: {title}\n"
+                f"Here is a friendly 1-question check to test your intuition:\n\n"
+                f"**Question:** If you have an arrow pointing East with length 3, and you multiply it by -1, what happens?\n\n"
+                f"- **A)** It becomes 3 times longer pointing North.\n"
+                f"- **B)** It flips 180° to point West with length 3.\n"
+                f"- **C)** It disappears into zero length.\n\n"
+                f"*Reply with your guess (A, B, or C), and let's verify why!*"
             )
+
+        # 3. AI / LLM connection query
+        elif any(w in msg_lower for w in ["ai", "chatgpt", "llm", "neural", "pytorch", "use"]):
             reply_parts.append(
-                f"\n\n**Verification Snippet:**\n```python\n{active_concept['code_snippet']}\n```"
+                f"\n\n### ⚡ How This Operates in Modern AI\n"
+                f"{active_concept.get('ai_connection', 'Fundamental building block of representation learning.')}\n\n"
+                f"**In PyTorch code:**\n```python\n{active_concept['code_snippet']}\n```"
             )
+
+        # 4. Math / Proof / Derivation query
+        elif any(w in msg_lower for w in ["math", "variance", "proof", "why", "derive", "number"]):
+            reply_parts.append(
+                f"\n\n### 📐 The Mathematical Mechanics\n"
+                f"$$\n{active_concept['formula']}\n$$\n\n"
+                f"{active_concept['math_explanation']}\n\n"
+                f"### 🔢 Real-Number Walkthrough\n"
+                f"{active_concept['numerical_example']}"
+            )
+
+        # 5. Code / Tensor query
+        elif any(w in msg_lower for w in ["code", "tensor", "shape", "run", "verify"]):
+            reply_parts.append(
+                f"\n\n### 🏗️ Tensor Flow\n```\n{active_concept['tensor_flow']}\n```\n\n"
+                f"### 🧪 Runnable PyTorch Snippet\n```python\n{active_concept['code_snippet']}\n```"
+            )
+
+        # 6. Default general overview
         else:
             reply_parts.append(
-                f"\n\n{active_concept['summary']}"
-            )
-            reply_parts.append(
-                f"\n\n$$\n{active_concept['formula']}\n$$\n"
-            )
-            reply_parts.append(
-                f"\n\n**How it works in practice:** {active_concept['math_explanation']}"
+                f"\n\n### 💡 The Core Mental Model\n"
+                f"{active_concept.get('intuition', active_concept['summary'])}\n\n"
+                f"### 📐 The Formula\n"
+                f"$$\n{active_concept['formula']}\n$$\n\n"
+                f"### ⚡ Why It Matters in AI\n"
+                f"{active_concept.get('ai_connection', active_concept['math_explanation'])}"
             )
 
         if citations:
-            reply_parts.append("\n\n**Grounded Citations From Our Library:**")
+            reply_parts.append("\n\n**📚 Grounded Citations in Your Nexus Library:**")
             for cit in citations[:3]:
                 chap = f" ({cit['chapter']})" if "chapter" in cit else ""
                 reply_parts.append(f"- **{cit['title']}**{chap}: {cit.get('snippet', '')}")
     else:
         reply_parts.append(
-            f"Let's investigate '{user_msg}' together in the lab."
+            f"Let's investigate '{user_msg}' together at the bench."
         )
         if citations:
             reply_parts.append("\n\nHere is what our research tools found in the library and literature:")
@@ -255,8 +387,8 @@ def scientist_chat(
                 reply_parts.append(f"- **{cit['title']}**{chap}: {cit.get('snippet', '')}")
         else:
             reply_parts.append(
-                "\n\nWe can explore any paradigm on the workbench—Language, Vision, Diffusion, Audio, or RL. "
-                "Pick an architecture or ask about any equation, and we can derive the math and test the tensors together."
+                "\n\nWe can explore any paradigm on the workbench—from basic Linear Algebra and Statistics to Language, Vision, and RL. "
+                "Pick an item on the left, or ask me to explain any concept like you're completely new to it!"
             )
 
     return {

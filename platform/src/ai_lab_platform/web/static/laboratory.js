@@ -143,6 +143,20 @@
       }
     }
 
+    // Proactively guide in Staff Scientist panel if dialogue is fresh or concept switched
+    if (scientistMessagesEl && conversationHistory.length === 0) {
+      scientistMessagesEl.innerHTML = `
+        <div class="msg scientist">
+          <span class="msg-author">STAFF SCIENTIST</span>
+          <div class="msg-content">
+            👋 Welcome to the bench! We're exploring <strong>${c.title}</strong>.<br><br>
+            If you know nothing about this topic or find the equations intimidating, don't worry! I'm here to explain everything step by step with everyday analogies and zero jargon.<br><br>
+            Tap a quick button below (like <strong>🐣 Explain Like I'm 5</strong> or <strong>🗺️ Everyday Analogy</strong>), or ask me anything!
+          </div>
+        </div>
+      `;
+    }
+
     // 2. KaTeX Formula
     if (window.katex && c.formula) {
       try {
@@ -284,16 +298,85 @@
 
   function formatMarkdown(text) {
     if (!text) return "";
-    let safe = text
+    let raw = text.trim();
+    // Auto-unpack JSON if model emitted structured object
+    if (raw.startsWith("{") && raw.endsWith("}")) {
+      try {
+        const d = JSON.parse(raw);
+        if (d && typeof d === "object") {
+          let out = [];
+          if (d.title) out.push(`### ${d.title}`);
+          if (d.figure_description || d.figure_caption) {
+            out.push(`> 💡 **Visual Analogy:** ${d.figure_description || d.figure_caption}`);
+          }
+          if (Array.isArray(d.text_lines)) {
+            d.text_lines.forEach((l) => out.push(l));
+          }
+          if (out.length > 0) raw = out.join("\n\n");
+        }
+      } catch (_) {}
+    }
+
+    let safe = raw
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
+
+    // Headers
+    safe = safe.replace(/###\s+(.*?)(?=\n|$)/g, "<h4 style='margin:10px 0 4px;color:#38bdf8;font-size:13px;font-weight:700;'>$1</h4>");
+    // Blockquotes
+    safe = safe.replace(/&gt;\s+(.*?)(?=\n|$)/g, "<blockquote style='border-left:3px solid #818cf8;padding:4px 10px;margin:6px 0;background:rgba(99,102,241,0.08);border-radius:0 6px 6px 0;color:#cbd5e1;font-size:12.5px;'>$1</blockquote>");
     // Bold
-    safe = safe.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    safe = safe.replace(/\*\*(.*?)\*\*/g, "<strong style='color:#f1f5f9;'>$1</strong>");
+    // Italics
+    safe = safe.replace(/\*([^*]+)\*/g, "<em>$1</em>");
     // Code blocks
-    safe = safe.replace(/```([\s\S]*?)```/g, "<pre class='code-box' style='margin:6px 0;padding:8px;font-size:11px;'>$1</pre>");
+    safe = safe.replace(/```python([\s\S]*?)```/g, "<pre class='code-box' style='margin:8px 0;padding:8px 12px;font-size:11px;background:#06090e;border:1px solid #1e293b;border-radius:6px;overflow-x:auto;'>$1</pre>");
+    safe = safe.replace(/```([\s\S]*?)```/g, "<pre class='code-box' style='margin:8px 0;padding:8px 12px;font-size:11px;background:#06090e;border:1px solid #1e293b;border-radius:6px;overflow-x:auto;'>$1</pre>");
     // Inline code
-    safe = safe.replace(/`([^`]+)`/g, "<code style='background:rgba(255,255,255,0.08);padding:2px 4px;border-radius:4px;'>$1</code>");
+    safe = safe.replace(/`([^`]+)`/g, "<code style='background:rgba(255,255,255,0.08);color:#6ee7b7;padding:2px 5px;border-radius:4px;font-size:11px;font-family:monospace;'>$1</code>");
+    // Lists
+    safe = safe.replace(/^- (.*?)(?=\n|$)/gm, "<div style='padding-left:12px;margin:2px 0;'>• $1</div>");
+
+    // Markdown Tables
+    if (safe.includes("|")) {
+      const lines = safe.split("\n");
+      let inTable = false;
+      let tableHtml = "";
+      let newLines = [];
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("|") && line.endsWith("|")) {
+          const cells = line.slice(1, -1).split("|").map((c) => c.trim());
+          if (!inTable) {
+            inTable = true;
+            tableHtml = "<table style='width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;background:rgba(255,255,255,0.02);border:1px solid #1e293b;border-radius:6px;overflow:hidden;'><thead><tr>";
+            cells.forEach((c) => tableHtml += `<th style='background:#0f172a;padding:6px 10px;text-align:left;border-bottom:1px solid #334155;color:#38bdf8;font-size:11px;'>${c}</th>`);
+            tableHtml += "</tr></thead><tbody>";
+          } else if (line.includes("---")) {
+            // separator, skip
+          } else {
+            tableHtml += "<tr>";
+            cells.forEach((c) => tableHtml += `<td style='padding:6px 10px;border-bottom:1px solid #1e293b;color:#cbd5e1;'>${c}</td>`);
+            tableHtml += "</tr>";
+          }
+        } else {
+          if (inTable) {
+            tableHtml += "</tbody></table>";
+            newLines.push(tableHtml);
+            inTable = false;
+            tableHtml = "";
+          }
+          newLines.push(line);
+        }
+      }
+      if (inTable) {
+        tableHtml += "</tbody></table>";
+        newLines.push(tableHtml);
+      }
+      safe = newLines.join("\n");
+    }
+
     // Newlines
     safe = safe.replace(/\n/g, "<br>");
     return safe;

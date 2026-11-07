@@ -241,11 +241,16 @@ _CONCEPTS_LIST: list[LabConcept] = [
         paradigm="foundations",
         summary="The fundamental primitives of mathematics: scalars as magnitudes, vectors as directional arrows in 2D space, addition, scaling, and length.",
         intuition=(
-            "<strong>The Dilemma:</strong> Why did humans invent vectors? A single number (a scalar) can tell you your speed (e.g. 500 mph) or temperature (72°F), "
-            "but it cannot navigate an airplane. If a 50 mph crosswind strikes the plane, a scalar cannot tell you whether you reach your runway or crash into a mountain. "
-            "You need both <em>magnitude (how much)</em> AND <em>direction (where to)</em>.<br><br>"
-            "<strong>The Everyday Analogy:</strong> Think of a vector as an instruction for a journey on graph paper: 'Walk 3 steps East, then 2 steps North'. "
-            "Vector addition is simply chaining journeys: walk journey 1, then immediately start journey 2 from where you landed (the tip-to-tail rule)."
+            "<div class='beginner-pill'>🌱 FOR COMPLETE BEGINNERS</div><br>"
+            "If you have never taken a single math or linear algebra class, here is all you need to know:<br><br>"
+            "• <strong>Scalar:</strong> A single number that measures <em>how much</em> of something there is, but has <strong>no direction</strong>. "
+            "Examples: your car speedometer reading 60 mph, the thermometer reading 72°F, or your bank account balance ($500).<br>"
+            "• <strong>Vector:</strong> A step or journey that has both <strong>how far</strong> AND <strong>which direction</strong>. "
+            "Example: Walking 3 blocks East and 2 blocks North. On a piece of paper, we draw this as an arrow from where you started.<br>"
+            "• <strong>Adding Vectors:</strong> If you take one walk (3 blocks East, 2 blocks North) and then immediately take a second walk (1 block East, 2 blocks North), "
+            "where do you end up? 4 blocks East and 4 blocks North! That is the entire concept of vector addition: chaining journeys together tip-to-tail.<br><br>"
+            "<strong>The AI Secret:</strong> In AI models like ChatGPT, words are represented as vectors. The computer doesn't read letters; "
+            "it places words on a concept map. If two words are similar, their arrows point in nearly the exact same direction."
         ),
         svg_diagram=_SVG_VECTORS_2D,
         ai_connection=(
@@ -330,16 +335,15 @@ _CONCEPTS_LIST: list[LabConcept] = [
         paradigm="foundations",
         summary="A matrix is not just a table of numbers: it is a machine that transforms space. How basis vectors i-hat and j-hat determine where every point lands.",
         intuition=(
-            "<strong>The Dilemma:</strong> In school, a matrix is often presented as a lifeless spreadsheet grid of numbers. "
-            "Why do we multiply rows by columns? What is the physical meaning of matrix multiplication?<br><br>"
-            "<strong>The Everyday Analogy (The Rubber Sheet):</strong> Imagine drawing a grid on a flat sheet of rubber. "
-            "A matrix is a machine that stretches, squashes, or rotates that rubber sheet. Every straight grid line stays straight, "
-            "and the origin (0, 0) never moves.<br><br>"
-            "<strong>The Secret of the Columns:</strong> To know where <em>every single point</em> in the entire infinite plane lands, "
-            "you only need to track where two tiny unit arrows land:<br>"
-            "• î = [1, 0] (one step right along X)<br>"
-            "• ĵ = [0, 1] (one step up along Y)<br>"
-            "<strong>Column 1 of the matrix is where î lands. Column 2 is where ĵ lands!</strong>"
+            "<div class='beginner-pill'>🌱 FOR COMPLETE BEGINNERS</div><br>"
+            "What is a matrix if you know nothing about math?<br><br>"
+            "• <strong>The Photo Filter Metaphor:</strong> Imagine opening a photo on your smartphone and applying a filter that tilts, stretches, or rotates the image. "
+            "Every pixel shifts to a new position, but straight lines remain straight.<br>"
+            "• <strong>A Matrix is that Filter:</strong> A matrix is simply a machine that warps an entire plane of points all at once.<br>"
+            "• <strong>How do you describe the filter?</strong> You only need to know where two tiny test arrows land: the arrow pointing 1 step right (î), and the arrow pointing 1 step up (ĵ). "
+            "The first column of numbers in the matrix tells you where the first arrow landed; the second column tells you where the second arrow landed.<br><br>"
+            "<strong>The AI Secret:</strong> When ChatGPT processes your sentence, it passes your words through dozens of these 'filters' in a row. "
+            "Each filter rearranges the concepts until the answer to your prompt becomes obvious."
         ),
         svg_diagram=_SVG_MATRIX_TRANSFORMATION,
         ai_connection=(
@@ -433,14 +437,17 @@ _CONCEPTS_LIST: list[LabConcept] = [
         paradigm="foundations",
         summary="Why multiplying two vectors and summing pairwise products measures directional alignment, how projection works, and how artificial neurons fire.",
         intuition=(
-            "<strong>The Dilemma:</strong> If we have two vectors, what does multiplying them together actually mean? "
-            "Unlike simple numbers where 3 × 4 = 12, vectors point in directions. How do we determine if two concepts agree, disagree, "
-            "or have completely nothing in common?<br><br>"
-            "<strong>The Everyday Analogy (The Spotlight & Shadow):</strong> Imagine vector b is the floor, and vector a is a stick "
-            "leaning out of the origin. If you shine a spotlight directly overhead, the stick casts a <strong>shadow</strong> onto the floor. "
-            "The length of that shadow is ||a|| · cos(θ). The dot product is simply: <em>(Length of the Shadow) × (Length of the Floor)</em>.<br><br>"
-            "<strong>The Perpendicular Test:</strong> If two arrows are perpendicular (90°), the stick casts <strong>ZERO shadow</strong>—the "
-            "dot product is exactly 0. They share zero common direction!"
+            "<div class='beginner-pill'>🌱 FOR COMPLETE BEGINNERS</div><br>"
+            "How do we multiply two directional arrows? Think of an <strong>Agreement Meter</strong>:<br><br>"
+            "• <strong>The Netflix Analogy:</strong> Imagine Netflix has two sliders: [Sci-Fi, Romance].<br>"
+            "  - Your taste arrow is: [+5 Sci-Fi, -3 Romance] (Love Sci-Fi, dislike Romance).<br>"
+            "  - The movie arrow is: [+5 Sci-Fi, -2 Romance] (Heavy Sci-Fi, almost no Romance).<br>"
+            "• <strong>How to calculate agreement:</strong> Multiply matching categories and add them up:<br>"
+            "  <code>(5 × 5) + (-3 × -2) = 25 + 6 = +31</code> (Massive match! High recommendation score).<br>"
+            "• <strong>What if they are perpendicular (90°)?</strong> If a movie is [0 Sci-Fi, +10 Documentary], the Sci-Fi match is <code>5 × 0 = 0</code>. "
+            "They share zero common direction ➔ <strong>agreement score is 0</strong>.<br><br>"
+            "<strong>The AI Secret:</strong> Every single artificial neuron in a neural network is just an agreement meter. "
+            "It checks how closely the input matches its favorite pattern using this exact dot product."
         ),
         svg_diagram=_SVG_DOT_PRODUCT,
         ai_connection=(
@@ -535,12 +542,18 @@ _CONCEPTS_LIST: list[LabConcept] = [
         paradigm="foundations",
         summary="The statistical foundation of machine learning: expected values, spread, the Gaussian bell curve, and how activations are standardized.",
         intuition=(
-            "<strong>The Dilemma:</strong> In real-world data and machine learning, numbers are noisy and scattered. "
-            "How do you summarize thousands of token activations or weights with just two numbers that tell you the whole story?<br><br>"
-            "<strong>The Everyday Analogy (The Seesaw & The Spread):</strong><br>"
-            "• <strong>Mean (μ):</strong> The center of mass. If your data points were weights placed along a seesaw, the mean is the exact fulcrum point where the seesaw balances.<br>"
-            "• <strong>Standard Deviation (σ):</strong> The scatter radius. It tells you how far typical points stray from that center balance point.<br><br>"
-            "In a standard Gaussian bell curve, <strong>68% of all data</strong> naturally falls within 1 step (±1σ) of the center, and <strong>95%</strong> falls within 2 steps (±2σ)."
+            "<div class='beginner-pill'>🌱 FOR COMPLETE BEGINNERS</div><br>"
+            "If you have never studied statistics, think of this as measuring a group of friends:<br><br>"
+            "• <strong>The Average (Mean, μ):</strong> If 5 friends have $10, $12, $10, $8, and $10 in their pockets, the average is $10. "
+            "It is the exact balance point: if everyone shared equally, everyone would have $10.<br>"
+            "• <strong>The Spread (Standard Deviation, σ):</strong> How much do people differ from that average? "
+            "If everyone has exactly $10, the spread is 0. If one friend has $0 and another has $50, the spread is huge! "
+            "Standard deviation tells you the typical distance a person strays from the group average.<br>"
+            "• <strong>The Bell Curve:</strong> In nature and in AI, numbers naturally cluster in the center: "
+            "<strong>68% of everyone</strong> is within 1 step (±1σ) of average, and <strong>95%</strong> is within 2 steps.<br><br>"
+            "<strong>The AI Secret:</strong> Deep neural networks fail if numbers grow out of control. "
+            "AI models use a tool called <code>LayerNorm</code> that continuously calculates the average and spread of activations, "
+            "re-centering them back to Mean=0 and Spread=1 so signals flow smoothly without exploding or vanishing."
         ),
         svg_diagram=_SVG_NORMAL_DISTRIBUTION,
         ai_connection=(
