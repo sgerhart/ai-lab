@@ -39,18 +39,392 @@ class LabConcept:
 
 
 PARADIGMS: list[dict[str, str]] = [
-    {"id": "all", "label": "All Paradigms", "icon": "🔬"},
-    {"id": "language", "label": "Language & SLMs", "icon": "📝"},
-    {"id": "vision", "label": "Vision & Conv/ViT", "icon": "👁️"},
-    {"id": "diffusion", "label": "Diffusion & Generative", "icon": "✨"},
-    {"id": "audio", "label": "Audio & Speech", "icon": "🎙️"},
-    {"id": "multimodal", "label": "Multimodal Systems", "icon": "🌐"},
-    {"id": "rl", "label": "Reinforcement Learning & Reasoning", "icon": "🎯"},
-    {"id": "foundations", "label": "Mathematical Foundations", "icon": "📐"},
+    {"id": "all", "label": "All Topics", "icon": "🔬"},
+    {"id": "foundations", "label": "1. Math & Statistics", "icon": "📐"},
+    {"id": "language", "label": "2. Language & LLMs", "icon": "📝"},
+    {"id": "rl", "label": "3. RL & Reasoning", "icon": "🎯"},
+    {"id": "vision", "label": "4. Vision & ViT", "icon": "👁️"},
+    {"id": "diffusion", "label": "5. Diffusion & GenAI", "icon": "✨"},
+    {"id": "multimodal", "label": "6. Multimodal Systems", "icon": "🌐"},
+    {"id": "audio", "label": "7. Audio & Speech", "icon": "🎙️"},
 ]
 
 _CONCEPTS_LIST: list[LabConcept] = [
-    # ─── Language & SLMs ──────────────────────────────────────────────────────────
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TIER 1: MATHEMATICAL & STATISTICAL FOUNDATIONS
+    # ══════════════════════════════════════════════════════════════════════════════
+    LabConcept(
+        id="vector-geometry-cosine",
+        title="Vector Spaces, Dot Products & Cosine Distance",
+        paradigm="foundations",
+        summary="High-dimensional coordinate geometry for token representations, semantic search, and attention routing.",
+        tensor_flow=(
+            "Inputs:\n"
+            "  u: [Batch, HiddenDim] (e.g. Query Embedding [1, 4096])\n"
+            "  v: [NumDocs, HiddenDim] (e.g. Document Chunks in Qdrant [1000, 4096])\n"
+            "Operations:\n"
+            "  Inner Product = u @ v.T: [Batch, NumDocs]\n"
+            "  Norms: ||u||_2 = sqrt(sum(u^2, dim=-1)), ||v||_2 = sqrt(sum(v^2, dim=-1))\n"
+            "  Cosine Similarity = Inner Product / (||u|| * ||v||): [Batch, NumDocs]\n"
+            "Output:\n"
+            "  Ranking Scores in range [-1.0, +1.0]"
+        ),
+        formula=r"\mathrm{CosineSim}(u, v) = \frac{u \cdot v}{\|u\|_2 \|v\|_2} = \frac{\sum_{i=1}^D u_i v_i}{\sqrt{\sum_{i=1}^D u_i^2} \sqrt{\sum_{i=1}^D v_i^2}} = \cos(\theta)",
+        variables={
+            "u, v": "Embedding vectors in high-dimensional continuous space (e.g. D = 4,096)",
+            "u · v": "Dot product measuring directional projection and alignment",
+            "||u||_2": "Euclidean L2 norm measuring absolute vector length (magnitude)",
+            "θ": "Geometric angle between the two concept vectors",
+            "cos(θ)": "Normalized similarity score: +1.0 (identical), 0.0 (orthogonal), -1.0 (opposite)",
+        },
+        math_explanation=(
+            "In high-dimensional space, the dot product u · v measures how much vector u projects along vector v. "
+            "However, raw dot products are biased by vector magnitude: longer text or frequent tokens naturally yield larger vectors. "
+            "Cosine similarity normalizes both vectors to unit length (||u|| = 1), isolating pure semantic direction. "
+            "In 4,096 dimensions, two completely random independent vectors are almost guaranteed to be orthogonal (cos θ ≈ 0) "
+            "because the volume of a high-dimensional hypersphere is concentrated near its equator."
+        ),
+        numerical_example=(
+            "Suppose D = 3. Let doctor u = [1.0, 2.0, 3.0], nurse v = [1.2, 1.8, 2.9], and apple w = [3.0, 0.1, -1.0].\n"
+            "1. Dot Product: u · v = (1.0×1.2) + (2.0×1.8) + (3.0×2.9) = 1.2 + 3.6 + 8.7 = 13.5.\n"
+            "2. Norms: ||u|| = sqrt(1+4+9) = 3.741; ||v|| = sqrt(1.44+3.24+8.41) = 3.618.\n"
+            "3. Cosine Sim (Doctor <-> Nurse): 13.5 / (3.741 × 3.618) = 13.5 / 13.535 = 0.9974 (θ ≈ 4.1°, nearly identical).\n"
+            "4. Contrast with Apple: u · w = (1×3) + (2×0.1) + (3×-1) = 0.2. ||w|| = 3.163.\n"
+            "   Cosine Sim (Doctor <-> Apple): 0.2 / (3.741 × 3.163) = 0.0169 (θ ≈ 89.0°, completely orthogonal)."
+        ),
+        code_snippet=(
+            "import torch\n"
+            "import torch.nn.functional as F\n\n"
+            "# 3 semantic embedding vectors:\n"
+            "doctor = torch.tensor([[1.0, 2.0, 3.0]])\n"
+            "nurse  = torch.tensor([[1.2, 1.8, 2.9]])\n"
+            "apple  = torch.tensor([[3.0, 0.1, -1.0]])\n\n"
+            "sim_nurse = F.cosine_similarity(doctor, nurse)\n"
+            "sim_apple = F.cosine_similarity(doctor, apple)\n\n"
+            "print(f'Cosine Similarity (Doctor <-> Nurse): {sim_nurse.item():.4f}')  # ~0.9974\n"
+            "print(f'Cosine Similarity (Doctor <-> Apple): {sim_apple.item():.4f}')  # ~0.0169\n"
+            "assert sim_nurse.item() > 0.99, 'Semantically related vectors must align'"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 1: Linear Algebra — Vectors, Dot Products, and Coordinate Systems",
+                category="Data_Science",
+                relevance="First-principles geometric proofs of dot products, unit sphere normalization, and high-dimensional orthogonality.",
+            ),
+            LabCitation(
+                title="AI-Powered Search",
+                chapter="Chapter 3: Dense Vectors and Semantic Retrieval",
+                category="AI_and_Machine_Learning",
+                relevance="Explains how Qdrant and HNSW vector indices utilize cosine similarity for sub-millisecond retrieval.",
+            ),
+        ],
+    ),
+
+    LabConcept(
+        id="matrix-svd-lora",
+        title="Singular Value Decomposition (SVD) & Low-Rank Adaptation (LoRA)",
+        paradigm="foundations",
+        summary="Factoring high-dimensional weight transformations into low-rank representations, enabling 99% VRAM reduction during fine-tuning.",
+        tensor_flow=(
+            "Full Base Matrix:\n"
+            "  W_0: [d_out, d_in] (Frozen, e.g. [4096, 4096] = 16.7M params)\n"
+            "LoRA Factorization:\n"
+            "  Input x: [Batch, SeqLen, d_in]\n"
+            "  Down-Projection: h_low = x @ A.T  where A: [r, d_in] (e.g. r=16 -> 65.5K params)\n"
+            "  Up-Projection:   delta_h = h_low @ B.T where B: [d_out, r] (e.g. r=16 -> 65.5K params)\n"
+            "Forward Combination:\n"
+            "  Output = (x @ W_0.T) + (alpha / r) * delta_h: [Batch, SeqLen, d_out]"
+        ),
+        formula=r"W = U \Sigma V^T = \sum_{i=1}^{\min(m, n)} \sigma_i u_i v_i^T, \quad W_{\text{new}} = W_0 + \Delta W = W_0 + \frac{\alpha}{r} (B \cdot A)",
+        variables={
+            "W_0": "Original pre-trained weight matrix (frozen in memory during fine-tuning)",
+            "ΔW": "Learned parameter update matrix decomposed as B · A",
+            "A": "Down-projection adapter matrix initialized with Gaussian noise ~ N(0, σ²)",
+            "B": "Up-projection adapter matrix initialized with zeros (ensuring ΔW = 0 at step 0)",
+            "r": "Intrinsic low-rank bottleneck dimension (typically r = 8, 16, or 32)",
+            "α": "Constant scaling hyperparameter (typically α = 2r or α = 16)",
+        },
+        math_explanation=(
+            "The Eckart-Young-Mirsky theorem proves that any matrix can be optimal-approximated by keeping only its top r singular values. "
+            "Aghajanyan et al. (2020) demonstrated that when fine-tuning massive pre-trained language models on specific tasks, "
+            "the parameter updates ΔW have an extremely low 'intrinsic dimension'. "
+            "Although W_0 operates in 4,096 dimensions, the new task-specific knowledge occupies a subspace of rank r ≤ 16. "
+            "By training two small matrices B and A instead of the full dense matrix, we preserve representation expressivity "
+            "while reducing optimizer memory footprint by orders of magnitude."
+        ),
+        numerical_example=(
+            "Consider a single projection layer in a 7B model where d_in = d_out = 4,096.\n"
+            "1. Full Fine-Tuning: 4,096 × 4,096 = 16,777,216 parameters (67.1 MB in FP32 weights + 134.2 MB AdamW states = 201.3 MB per matrix).\n"
+            "2. LoRA with rank r = 16:\n"
+            "   - Matrix A: 16 × 4,096 = 65,536 parameters.\n"
+            "   - Matrix B: 4,096 × 16 = 65,536 parameters.\n"
+            "   - Total LoRA parameters: 131,072 parameters (0.52 MB weights + 1.05 MB AdamW states = 1.57 MB total).\n"
+            "3. Memory Reduction: 201.3 MB -> 1.57 MB (99.22% memory savings). Across 32 transformer layers, this drops training VRAM from 64 GB down to 8 GB!"
+        ),
+        code_snippet=(
+            "import torch\n"
+            "import torch.nn as nn\n\n"
+            "class LoRALinear(nn.Module):\n"
+            "    def __init__(self, in_features, out_features, r=16, alpha=32):\n"
+            "        super().__init__()\n"
+            "        self.w0 = nn.Linear(in_features, out_features, bias=False)\n"
+            "        self.w0.weight.requires_grad = False  # Freeze base weights\n"
+            "        self.r = r\n"
+            "        self.scale = alpha / r\n"
+            "        self.lora_A = nn.Parameter(torch.randn(r, in_features) * 0.01)\n"
+            "        self.lora_B = nn.Parameter(torch.zeros(out_features, r))\n\n"
+            "    def forward(self, x):\n"
+            "        base_out = self.w0(x)\n"
+            "        lora_out = (x @ self.lora_A.T @ self.lora_B.T) * self.scale\n"
+            "        return base_out + lora_out\n\n"
+            "layer = LoRALinear(4096, 4096, r=16)\n"
+            "x = torch.randn(2, 8, 4096)\n"
+            "out = layer(x)\n"
+            "print('LoRA output shape:', out.shape)  # [2, 8, 4096]\n"
+            "trainable = sum(p.numel() for p in layer.parameters() if p.requires_grad)\n"
+            "print(f'Trainable parameters: {trainable:,} (vs 16,777,216 base)')"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 3: Singular Value Decomposition and Matrix Approximations",
+                category="Data_Science",
+                relevance="Mathematical proof of low-rank matrix decomposition and singular value spectra.",
+            ),
+            LabCitation(
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 6: Fine-Tuning for Instructions — Parameter-Efficient LoRA",
+                category="AI_and_Machine_Learning",
+                relevance="Step-by-step PyTorch implementation of LoRA adapter injection and scaling factor derivations.",
+            ),
+        ],
+    ),
+
+    LabConcept(
+        id="gradient-descent-autograd",
+        title="Multivariate Gradients & The Autograd Chain Rule",
+        paradigm="foundations",
+        summary="Calculus of multivariable optimization, reverse-mode automatic differentiation, and loss surfaces.",
+        tensor_flow=(
+            "Forward Graph:\n"
+            "  x: Input [B, D_in]\n"
+            "  h = x @ W_1 + b_1: [B, D_h]\n"
+            "  a = ReLU(h): [B, D_h]\n"
+            "  y_hat = a @ W_2 + b_2: [B, D_out]\n"
+            "  Loss = 0.5 * mean((y_hat - y)^2): Scalar\n"
+            "Backward Sweep (Reverse Autograd):\n"
+            "  dL/dy_hat: [B, D_out]\n"
+            "  dL/dW_2 = a.T @ (dL/dy_hat): [D_h, D_out]\n"
+            "  dL/dh = (dL/dy_hat @ W_2.T) * (h > 0): [B, D_h]\n"
+            "  dL/dW_1 = x.T @ (dL/dh): [D_in, D_h]"
+        ),
+        formula=r"\nabla_W \mathcal{L} = \left[ \frac{\partial \mathcal{L}}{\partial W_1}, \frac{\partial \mathcal{L}}{\partial W_2}, \dots, \frac{\partial \mathcal{L}}{\partial W_P} \right]^T, \quad W_{t+1} = W_t - \eta \cdot \nabla_W \mathcal{L}",
+        variables={
+            "L": "Scalar loss value quantifying total prediction discrepancy",
+            "∇_W L": "Gradient vector pointing in the direction of steepest loss ascent",
+            "η": "Learning rate (step size multiplier)",
+            "∂L/∂W_ij": "Partial derivative indicating how an infinitesimal change in weight W_ij affects L",
+            "J": "Jacobian matrix of intermediate vector-valued partial derivatives",
+        },
+        math_explanation=(
+            "Training a neural network is an unconstrained non-convex optimization problem across millions of dimensions. "
+            "The gradient vector ∇L contains the local slope along every coordinate axis. "
+            "To compute gradients across dozens of nested layers, the Multivariable Chain Rule states that the derivative "
+            "of composite function f(g(x)) is f'(g(x)) · g'(x). "
+            "Reverse-mode automatic differentiation (autograd) stores the forward computational graph in memory and traverses it backwards, "
+            "computing all parameter gradients in a single pass with computational complexity proportional to one forward pass."
+        ),
+        numerical_example=(
+            "Consider a single scalar neuron: y_hat = w · x. Let x = 2.0, target y = 10.0, and current weight w = 3.0.\n"
+            "1. Forward Pass: y_hat = 3.0 × 2.0 = 6.0.\n"
+            "2. Squared Error Loss: L = 0.5 × (y_hat - y)^2 = 0.5 × (6.0 - 10.0)^2 = 0.5 × (-4.0)^2 = 8.0.\n"
+            "3. Backward Pass (Chain Rule):\n"
+            "   dL/dy_hat = (y_hat - y) = 6.0 - 10.0 = -4.0.\n"
+            "   dy_hat/dw = x = 2.0.\n"
+            "   dL/dw = (dL/dy_hat) × (dy_hat/dw) = -4.0 × 2.0 = -8.0.\n"
+            "4. Gradient Step (η = 0.1):\n"
+            "   w_new = w - η × (dL/dw) = 3.0 - (0.1 × -8.0) = 3.0 + 0.8 = 3.8.\n"
+            "5. Verification: New prediction y_hat = 3.8 × 2.0 = 7.6. New loss = 0.5 × (7.6 - 10)^2 = 2.88 (Loss dropped from 8.0 to 2.88!)."
+        ),
+        code_snippet=(
+            "import torch\n\n"
+            "# Track gradients explicitly on parameter w:\n"
+            "w = torch.tensor([3.0], requires_grad=True)\n"
+            "x = torch.tensor([2.0])\n"
+            "y = torch.tensor([10.0])\n\n"
+            "# Forward pass\n"
+            "y_hat = w * x\n"
+            "loss = 0.5 * (y_hat - y) ** 2\n\n"
+            "# Backward pass (Autograd)\n"
+            "loss.backward()\n\n"
+            "print(f'Computed gradient dL/dw: {w.grad.item():.4f}')  # Exactly -8.0000\n"
+            "with torch.no_grad():\n"
+            "    w -= 0.1 * w.grad\n"
+            "print(f'Updated weight w: {w.item():.4f}')               # Exactly 3.8000"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Optimization Algorithms",
+                chapter="Chapter 4: First-Order Methods — Gradient Descent and Line Search",
+                category="AI_and_Machine_Learning",
+                relevance="Mathematical derivations of gradient descent convergence rates and condition numbers.",
+            ),
+            LabCitation(
+                title="Deep Learning with Python, Third Edition",
+                chapter="Chapter 2: The Mathematical Building Blocks of Neural Networks — Gradient-Based Optimization",
+                category="AI_and_Machine_Learning",
+                relevance="Visual intuition for computational graphs, backpropagation, and tensor gradient accumulation.",
+            ),
+        ],
+    ),
+
+    LabConcept(
+        id="cross-entropy-kl-divergence",
+        title="Shannon Entropy, Cross-Entropy Loss & KL Divergence",
+        paradigm="foundations",
+        summary="Information theory fundamentals: quantifying uncertainty, pretraining next-token prediction, and bounding policy drift in RLHF.",
+        tensor_flow=(
+            "Inputs:\n"
+            "  Logits z: [Batch, SeqLen, VocabSize] (e.g. Vocab = 128,000)\n"
+            "  Target Token IDs: [Batch, SeqLen] (Ground truth integer indices)\n"
+            "Operations:\n"
+            "  Probabilities P = Softmax(z, dim=-1): [Batch, SeqLen, VocabSize]\n"
+            "  NLL Loss = -log(P[target]): Scalar (Negative Log-Likelihood)\n"
+            "  KL Divergence Penalty (in DPO/RLHF) = sum(P * log(P / P_ref)): Scalar"
+        ),
+        formula=r"\mathcal{L}_{\mathrm{CE}} = -\sum_{k=1}^V y_k \ln(\hat{y}_k) = -\ln(\hat{y}_{\mathrm{target}}), \quad D_{\mathrm{KL}}(P \parallel Q) = \sum_{x} P(x) \ln\left(\frac{P(x)}{Q(x)}\right)",
+        variables={
+            "V": "Vocabulary size (e.g. 128,256 tokens in Llama 3)",
+            "y": "True ground-truth distribution (one-hot vector: 1 at target token, 0 elsewhere)",
+            "y_hat": "Model output probability distribution produced by Softmax(z)",
+            "D_KL": "Kullback-Leibler divergence measuring informational distance between distributions",
+            "P, Q": "True distribution P vs predicted/approximate distribution Q",
+        },
+        math_explanation=(
+            "Claude Shannon defined the information content of an event as its surprise: I(x) = -log2 P(x). "
+            "Rare events convey high information; predictable events convey near-zero information. "
+            "Cross-Entropy measures the average number of bits required to identify a token from a distribution Q when the true distribution is P. "
+            "In language modeling, minimizing Cross-Entropy is mathematically identical to Maximum Likelihood Estimation (MLE): "
+            "it forces the model to assign maximal probability mass to actual human tokens. "
+            "KL Divergence measures the relative entropy or statistical drift between the policy model and the original pre-trained reference model, "
+            "preventing alignment fine-tuning from causing catastrophic forgetting."
+        ),
+        numerical_example=(
+            "Suppose the prompt is 'The capital of France is' and target is 'Paris'. Vocab size V = 3 for simplicity.\n"
+            "Model logits: z_Paris = 4.0, z_London = 2.0, z_Rome = 1.0.\n"
+            "1. Exponentials: exp(4.0) = 54.598, exp(2.0) = 7.389, exp(1.0) = 2.718. Sum = 64.705.\n"
+            "2. Softmax Probabilities:\n"
+            "   P(Paris) = 54.598 / 64.705 = 0.8438 (84.38%)\n"
+            "   P(London) = 7.389 / 64.705 = 0.1142 (11.42%)\n"
+            "   P(Rome) = 2.718 / 64.705 = 0.0420 (4.20%)\n"
+            "3. Cross-Entropy Loss: L = -ln(P(Paris)) = -ln(0.8438) = 0.1699.\n"
+            "4. Contrast with an untrained model predicting P(Paris) = 0.001 (0.1%):\n"
+            "   Loss = -ln(0.001) = 6.9077. The gradient magnitude is 40× larger, strongly pushing parameters toward Paris."
+        ),
+        code_snippet=(
+            "import torch\n"
+            "import torch.nn as nn\n"
+            "import torch.nn.functional as F\n\n"
+            "# 1 batch, 1 token, vocab of 3 candidates:\n"
+            "logits = torch.tensor([[4.0, 2.0, 1.0]])\n"
+            "target = torch.tensor([0])  # Index 0 is 'Paris'\n\n"
+            "# PyTorch combines LogSoftmax + NLLLoss into CrossEntropyLoss:\n"
+            "criterion = nn.CrossEntropyLoss()\n"
+            "loss = criterion(logits, target)\n"
+            "probs = F.softmax(logits, dim=-1)\n\n"
+            "print(f'Token Probabilities: {probs[0].tolist()}')  # [0.8438, 0.1142, 0.0420]\n"
+            "print(f'Cross-Entropy Loss:  {loss.item():.4f}')       # Exactly 0.1699"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 5: Pretraining Unlabeled Data — Calculating Training and Validation Loss",
+                category="AI_and_Machine_Learning",
+                relevance="Detailed walkthrough of Cross-Entropy loss computation across batch sequences and perplexity metrics.",
+            ),
+            LabCitation(
+                title="LLM Evaluation and Alignment, The Foundation",
+                chapter="Chapter 4: Preference Optimization and KL Divergence Constraints",
+                category="AI_and_Machine_Learning",
+                relevance="Formulates KL divergence penalty terms used in DPO and PPO to prevent model collapse.",
+            ),
+        ],
+    ),
+
+    LabConcept(
+        id="attention-variance-proof",
+        title="Proof: Attention Dot-Product Variance Scales with Dimension",
+        paradigm="foundations",
+        summary="Mathematical derivation showing why unscaled attention variance equals d_k and requires the 1/sqrt(d_k) factor to prevent gradient saturation.",
+        tensor_flow=(
+            "Statistical Variables:\n"
+            "  q_i ~ N(0, 1) (Query components, i = 1 ... d_k)\n"
+            "  k_i ~ N(0, 1) (Key components, i = 1 ... d_k)\n"
+            "Unscaled Dot Product:\n"
+            "  Z = sum_{i=1}^{d_k} q_i * k_i\n"
+            "  E[Z] = 0, Var(Z) = d_k (Variance grows linearly with dimension!)\n"
+            "Scaled Dot Product:\n"
+            "  Z_scaled = Z / sqrt(d_k)\n"
+            "  Var(Z_scaled) = Var(Z) / d_k = d_k / d_k = 1.0 (Unit Variance Restored)"
+        ),
+        formula=r"\mathrm{Var}\left(\sum_{i=1}^{d_k} q_i k_i\right) = \sum_{i=1}^{d_k} \mathrm{Var}(q_i k_i) = d_k \sigma_q^2 \sigma_k^2 = d_k \implies \mathrm{Var}\left(\frac{q \cdot k}{\sqrt{d_k}}\right) = \frac{d_k}{(\sqrt{d_k})^2} = 1.0",
+        variables={
+            "q_i, k_i": "Independent zero-mean, unit-variance Gaussian random variables from query and key heads",
+            "d_k": "Head projection dimension (typically d_k = 64 or 128)",
+            "Var(Z)": "Variance of the unscaled dot product across embedding channels",
+            "sqrt(d_k)": "Canonical Vaswani scaling denominator stabilizing the softmax gradient",
+        },
+        math_explanation=(
+            "Let q and k be two random vectors with independent components having zero mean and unit variance. "
+            "For each product term z_i = q_i · k_i: E[z_i] = E[q_i] · E[k_i] = 0. "
+            "The variance of each term is Var(z_i) = E[z_i^2] - (E[z_i])^2 = E[q_i^2] · E[k_i^2] = 1 · 1 = 1. "
+            "Because components are independent, the variance of their sum is the sum of variances: "
+            "Var(∑_{i=1}^{d_k} z_i) = ∑_{i=1}^{d_k} Var(z_i) = d_k · 1 = d_k. "
+            "For d_k = 128, the standard deviation is sqrt(128) ≈ 11.3. Dot products naturally produce values like +25 and -25. "
+            "In Softmax, exp(25) / (exp(25) + exp(-25)) = 0.9999999999999... The softmax saturates, "
+            "its derivative s_i(1 - s_i) becomes 0, and backpropagation stalls. "
+            "Scaling by 1/sqrt(d_k) divides the standard deviation by sqrt(d_k), forcing the variance to exactly 1.0."
+        ),
+        numerical_example=(
+            "Empirical verification with d_k = 64 across 100,000 random query/key pairs:\n"
+            "- Theoretical unscaled variance: 64.0 (StdDev = 8.0).\n"
+            "- If dot product = +16, exp(16) = 8,886,110. Softmax assigns ~1.000, killing the gradient.\n"
+            "- Scaling by 1/sqrt(64) = 1/8: The scaled dot product is 16/8 = 2.0.\n"
+            "- exp(2.0) = 7.389. Softmax produces well-distributed probabilities (e.g. 0.70 vs 0.30) with rich gradients."
+        ),
+        code_snippet=(
+            "import torch\n\n"
+            "d_k = 64\n"
+            "samples = 100_000\n"
+            "q = torch.randn(samples, d_k)\n"
+            "k = torch.randn(samples, d_k)\n\n"
+            "unscaled_dot = (q * k).sum(dim=-1)\n"
+            "scaled_dot = unscaled_dot / (d_k ** 0.5)\n\n"
+            "print(f'Theoretical unscaled variance: {d_k:.1f}')\n"
+            "print(f'Empirical unscaled variance:   {unscaled_dot.var().item():.3f}')  # ~64.0\n"
+            "print(f'Empirical scaled variance:     {scaled_dot.var().item():.3f}')    # ~1.000\n"
+            "assert abs(scaled_dot.var().item() - 1.0) < 0.05, 'Scaled variance must equal 1.0'"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 4: Probability and Statistics — Expectation and Variance of Sums",
+                category="Data_Science",
+                relevance="Formal proof that variance of a sum of independent random variables equals the sum of variances.",
+            ),
+            LabCitation(
+                title="Transformers in Action",
+                chapter="Chapter 2: Inside the Transformer — Scaled Dot-Product Attention Mechanics",
+                category="AI_and_Machine_Learning",
+                relevance="Walkthrough of the Vaswani et al. proof and softmax gradient degradation analysis.",
+            ),
+        ],
+    ),
+
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TIER 2: LANGUAGE & TRANSFORMER ARCHITECTURES
+    # ══════════════════════════════════════════════════════════════════════════════
     LabConcept(
         id="self-attention",
         title="Scaled Dot-Product Self-Attention",
@@ -108,567 +482,469 @@ _CONCEPTS_LIST: list[LabConcept] = [
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 2.4: Scaled Dot-Product and Multi-Head Attention",
-                category="ai-books",
-                relevance="Covers geometric interpretation of similarity and variance proofs.",
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 3: Coding Attention Mechanisms — Self-Attention Step by Step",
+                category="AI_and_Machine_Learning",
+                relevance="Hands-on Python walkthrough of Query, Key, Value matrix projections and causal attention masks.",
             ),
             LabCitation(
-                title="Pretraining LLM",
-                chapter="Chapter 3: Attention Mechanics and Causal Masking",
-                category="ai-books",
+                title="Transformers in Action",
+                chapter="Chapter 2: Inside the Transformer — Scaled Dot-Product Attention Mechanics",
+                category="AI_and_Machine_Learning",
                 relevance="Details causal mask implementation and GPU memory footprints.",
-            ),
-            LabCitation(
-                title="Inference Optimization Matters",
-                chapter="Chapter 2: KV Cache and Memory Bandwidth Limits",
-                category="ai-books",
-                relevance="Analyzes memory bandwidth consumption of Attention during autoregressive decoding.",
             ),
         ],
     ),
+
+    LabConcept(
+        id="multi-head-attention",
+        title="Multi-Head Attention (MHA) & KV-Cache Mechanics",
+        paradigm="language",
+        summary="Splitting embeddings into parallel representation subspaces and caching Key-Value tensors for O(1) autoregressive generation.",
+        tensor_flow=(
+            "Multi-Head Split:\n"
+            "  Input X: [Batch, SeqLen, HiddenDim] (e.g. [1, 1024, 4096])\n"
+            "  Projections Q, K, V split across H heads: [Batch, H, SeqLen, d_k] (e.g. H=32, d_k=128)\n"
+            "KV Cache (Inference):\n"
+            "  Past Tokens Cache: K_past, V_past: [Batch, H, PastLen, d_k]\n"
+            "  Concatenate new token: K_cat = [K_past, K_new], V_cat = [V_past, V_new]\n"
+            "Multi-Head Concat:\n"
+            "  Output = Concat(head_1, ..., head_H) @ W_out: [Batch, SeqLen, HiddenDim]"
+        ),
+        formula=r"\mathrm{MHA}(Q, K, V) = \mathrm{Concat}(\mathrm{head}_1, \dots, \mathrm{head}_h) W^O, \quad \mathrm{head}_i = \mathrm{Attention}(Q W_i^Q, K W_i^K, V W_i^V)",
+        variables={
+            "h": "Number of parallel attention heads (e.g. 32 heads in Llama 3 8B)",
+            "d_k": "Dimension per head: d_k = HiddenDim / h (e.g. 4096 / 32 = 128)",
+            "W_i^Q, W_i^K, W_i^V": "Projection matrices for head i",
+            "W^O": "Output projection matrix recombining all head representations back to HiddenDim",
+            "K_past, V_past": "In-memory KV cache tensors stored in unified memory / GPU VRAM",
+        },
+        math_explanation=(
+            "Single-head attention forces the model to average over all semantic relationships into one distribution. "
+            "Multi-head attention projects Queries, Keys, and Values into h different subspaces, allowing one head to track syntactic agreement (verbs to subjects), "
+            "another head to track long-range coreference ('he' -> 'Alexander'), and another to track punctuation. "
+            "During inference, text is generated autoregressively one token at a time. Without caching, computing the next token requires recomputing "
+            "attention across all N past tokens (O(N^2) complexity). Caching past Keys and Values in VRAM reduces per-step compute to O(N)."
+        ),
+        numerical_example=(
+            "KV Cache Memory Footprint calculation for Llama 3 8B (32 layers, 32 KV heads, d_k = 128, FP16 = 2 bytes per float):\n"
+            "Per token memory = 2 (K and V) × 32 layers × 32 heads × 128 dimension × 2 bytes = 524,288 bytes = 0.5 MB / token.\n"
+            "- For 2,048 tokens of context: 2,048 × 0.5 MB = 1.0 GB of KV cache VRAM.\n"
+            "- For 128,000 tokens of context: 128,000 × 0.5 MB = 64 GB of VRAM just for the KV cache!\n"
+            "This explains why modern models use Grouped-Query Attention (GQA) to share KV heads across queries."
+        ),
+        code_snippet=(
+            "import torch\n"
+            "import torch.nn as nn\n\n"
+            "class SimpleMultiHeadAttention(nn.Module):\n"
+            "    def __init__(self, d_model=512, n_heads=8):\n"
+            "        super().__init__()\n"
+            "        self.d_k = d_model // n_heads\n"
+            "        self.n_heads = n_heads\n"
+            "        self.q_proj = nn.Linear(d_model, d_model)\n"
+            "        self.k_proj = nn.Linear(d_model, d_model)\n"
+            "        self.v_proj = nn.Linear(d_model, d_model)\n"
+            "        self.out_proj = nn.Linear(d_model, d_model)\n\n"
+            "    def forward(self, x):\n"
+            "        B, S, D = x.shape\n"
+            "        q = self.q_proj(x).view(B, S, self.n_heads, self.d_k).transpose(1, 2)\n"
+            "        k = self.k_proj(x).view(B, S, self.n_heads, self.d_k).transpose(1, 2)\n"
+            "        v = self.v_proj(x).view(B, S, self.n_heads, self.d_k).transpose(1, 2)\n"
+            "        scores = (q @ k.transpose(-2, -1)) / (self.d_k ** 0.5)\n"
+            "        attn = torch.softmax(scores, dim=-1)\n"
+            "        out = (attn @ v).transpose(1, 2).contiguous().view(B, S, D)\n"
+            "        return self.out_proj(out)\n\n"
+            "mha = SimpleMultiHeadAttention(512, 8)\n"
+            "x = torch.randn(1, 16, 512)\n"
+            "print('MHA Output shape:', mha(x).shape)  # [1, 16, 512]"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 3: Coding Attention Mechanisms — Multi-Head Attention",
+                category="AI_and_Machine_Learning",
+                relevance="Hands-on breakdown of splitting tensors into multi-head views and efficient batch matrix multiplications.",
+            ),
+            LabCitation(
+                title="LLMs in Production",
+                chapter="Chapter 4: Inference Latency and KV Cache Optimization",
+                category="AI_and_Machine_Learning",
+                relevance="Memory bandwidth limits, KV cache sizing, and vLLM PagedAttention architecture.",
+            ),
+        ],
+    ),
+
     LabConcept(
         id="rope",
         title="Rotary Position Embeddings (RoPE)",
         paradigm="language",
-        summary="Encodes token positions by multiplying 2D slices of query and key vectors by complex 2D rotation matrices.",
+        summary="Encodes token positions by multiplying 2D slices of query and key vectors by rotation matrices, enabling natural length extrapolation.",
         tensor_flow=(
-            "Input: Q, K vectors of shape [Batch, SeqLen, NumHeads, HeadDim]\n"
-            "Pairing: Divide HeadDim into d/2 2D chunks (x_1, x_2), (x_3, x_4)...\n"
+            "Inputs:\n"
+            "  x_m: Query or Key slice at position m: [x_1, x_2] in R^2\n"
+            "Rotation Matrix:\n"
+            "  R_m = [[cos(m*theta), -sin(m*theta)], [sin(m*theta), cos(m*theta)]]\n"
             "Rotation:\n"
-            "  For token at position m and frequency theta_i = base^(-2i/d):\n"
-            "  [q'_1, q'_2]^T = [[cos(m*theta), -sin(m*theta)], [sin(m*theta), cos(m*theta)]] @ [q_1, q_2]^T\n"
-            "Output: Rotated Q_m and K_n where Q_m^T K_n depends strictly on (m - n)."
+            "  x_rotated = R_m @ x_m: [x_1*cos - x_2*sin, x_1*sin + x_2*cos]\n"
+            "Inner Product Property:\n"
+            "  <R_m * q, R_n * k> = <q, R_{n-m} * k> (Depends ONLY on relative distance n - m!)"
         ),
-        formula=r"\mathbf{R}_{\Theta, m}^d \mathbf{x} = \begin{pmatrix} x_1 \cos m\theta_1 - x_2 \sin m\theta_1 \\ x_1 \sin m\theta_1 + x_2 \cos m\theta_1 \\ \vdots \end{pmatrix}",
+        formula=r"R_{\Theta, m}^d = \mathrm{diag}\left(R_{\theta_1, m}, R_{\theta_2, m}, \dots, R_{\theta_{d/2}, m}\right), \quad R_{\theta_i, m} = \begin{pmatrix} \cos(m\theta_i) & -\sin(m\theta_i) \\ \sin(m\theta_i) & \cos(m\theta_i) \end{pmatrix}",
         variables={
-            "m": "Absolute token sequence position index (0, 1, 2...)",
-            "theta_i": "Base angular frequency theta_i = 10000^(-2(i-1)/d)",
-            "R": "Orthogonal block-diagonal rotation matrix",
-            "m - n": "Relative distance between Query at position m and Key at position n",
+            "m, n": "Absolute token positions in the sequence (0, 1, 2, ...)",
+            "theta_i": "Base frequency for feature dimension i: theta_i = 10000^(-2(i-1)/d)",
+            "R_{m-n}": "Relative rotation matrix encoding the distance between token m and token n",
         },
         math_explanation=(
-            "Instead of adding an arbitrary position embedding vector to the token embedding (which distorts content), "
-            "RoPE rotates the vectors in the complex plane. Because rotation preserves inner product lengths, "
-            "the inner product between rotated vectors <R_m q, R_n k> simplifies to a function strictly of (m - n). "
-            "This gives relative position awareness while maintaining absolute position indexing."
+            "Traditional absolute positional embeddings add a learned vector to the token embedding (x + p_m). "
+            "However, self-attention cares about RELATIVE distance ('how far is the verb from the noun?'), not absolute page index. "
+            "RoPE rotates adjacent pairs of coordinates in the query and key vectors by an angle proportional to position m. "
+            "Because rotating vector q by m·θ and vector k by n·θ causes their inner product to depend strictly on cos((m - n)θ), "
+            "the model naturally generalizes to sequences longer than those seen during pre-training."
         ),
         numerical_example=(
-            "For position m = 5, n = 3, distance is 5 - 3 = 2.\n"
-            "For position m = 105, n = 103, distance is 105 - 103 = 2.\n"
-            "The dot product <R_5 q, R_3 k> equals <R_105 q, R_103 k>. The model senses the exact same syntactic "
-            "relationship regardless of where the two words appear in a 128k context window."
+            "Let theta = 0.1 rad. Token A at position m = 2 rotates by 0.2 rad. Token B at position n = 5 rotates by 0.5 rad.\n"
+            "Their attention dot product directly evaluates cos(0.5 - 0.2) = cos(0.3) = 0.955.\n"
+            "If both tokens shift to positions m = 102 and n = 105, the angle difference is still (10.5 - 10.2) = 0.3 rad!\n"
+            "The attention score is identical: cos(0.3) = 0.955. Absolute position vanishes; relative distance is preserved."
         ),
         code_snippet=(
             "import torch\n\n"
-            "def apply_rotary_emb(x, cos, sin):\n"
-            "    # x: [Batch, SeqLen, Heads, Dim]\n"
-            "    # Split dim into even and odd\n"
+            "def apply_rotary_emb(x, pos, theta_base=10000.0):\n"
             "    d = x.shape[-1]\n"
-            "    x1, x2 = x[..., :d//2], x[..., d//2:]\n"
-            "    # Rotate 2D pairs: [-x2, x1]\n"
-            "    rx = torch.cat((-x2, x1), dim=-1)\n"
-            "    return (x * cos) + (rx * sin)\n\n"
-            "# Verification with 4 tokens, dim 64:\n"
-            "dim = 64\n"
-            "pos = torch.arange(4).unsqueeze(-1)\n"
-            "freqs = 1.0 / (10000.0 ** (torch.arange(0, dim, 2).float() / dim))\n"
-            "angles = pos * freqs\n"
-            "cos = torch.cat((angles.cos(), angles.cos()), dim=-1)\n"
-            "sin = torch.cat((angles.sin(), angles.sin()), dim=-1)\n"
-            "q = torch.randn(1, 4, 1, dim)\n"
-            "q_rot = apply_rotary_emb(q, cos.unsqueeze(1), sin.unsqueeze(1))\n"
-            "print('Rotated shape:', q_rot.shape)  # [1, 4, 1, 64]"
+            "    freqs = 1.0 / (theta_base ** (torch.arange(0, d, 2).float() / d))\n"
+            "    angles = pos * freqs\n"
+            "    cos = torch.cos(angles)\n"
+            "    sin = torch.sin(angles)\n"
+            "    x1, x2 = x[..., 0::2], x[..., 1::2]\n"
+            "    return torch.cat([x1 * cos - x2 * sin, x1 * sin + x2 * cos], dim=-1)\n\n"
+            "q = torch.randn(1, 64)\n"
+            "q_pos1 = apply_rotary_emb(q, pos=1)\n"
+            "print('Rotated Query vector norm:', q_pos1.norm().item())  # Norm is preserved!"
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 3.2: Positional Encodings: From Absolute to Rotary",
-                category="ai-books",
-                relevance="Detailed derivation of complex inner-product preservation.",
-            ),
-            LabCitation(
-                title="Pretraining LLM",
-                chapter="Chapter 4: Modern Transformer Architectures (Llama, Mistral, Qwen)",
-                category="ai-books",
-                relevance="Explains RoPE implementation in Llama 3 and Qwen architectures.",
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 3: Positional Embeddings — Absolute vs. Relative Rotary Encodings",
+                category="AI_and_Machine_Learning",
+                relevance="Derivation of 2D rotation matrices and complex number representations in modern LLMs.",
             ),
         ],
     ),
+
     LabConcept(
         id="swiglu",
         title="SwiGLU Feed-Forward Networks & RMSNorm",
         paradigm="language",
-        summary="Modern non-linear projection block pairing Swish-gated linear units with Root Mean Square Layer Normalization.",
+        summary="Gated non-linear expansion layers paired with scale-invariant root-mean-square normalization.",
         tensor_flow=(
-            "Input: X: [Batch, SeqLen, HiddenDim]\n"
-            "Pre-Norm: X_norm = RMSNorm(X): [Batch, SeqLen, HiddenDim]\n"
-            "Dual Projections:\n"
-            "  Gate = X_norm @ W_gate: [Batch, SeqLen, IntermediateDim]\n"
-            "  Up   = X_norm @ W_up:   [Batch, SeqLen, IntermediateDim]\n"
-            "Gated Activation:\n"
-            "  Act = (Gate * Sigmoid(Gate)) * Up = SiLU(Gate) * Up\n"
-            "Down Projection:\n"
-            "  Output = X + Act @ W_down: [Batch, SeqLen, HiddenDim]"
+            "RMSNorm Stage:\n"
+            "  rms = sqrt(mean(x^2, dim=-1) + eps): Scalar per token\n"
+            "  x_norm = (x / rms) * gamma: [Batch, SeqLen, HiddenDim]\n"
+            "SwiGLU FFN Stage:\n"
+            "  Gate = x_norm @ W_gate: [Batch, SeqLen, IntermediateDim]\n"
+            "  Up   = x_norm @ W_up:   [Batch, SeqLen, IntermediateDim]\n"
+            "  Swish = Gate * Sigmoid(Gate): [Batch, SeqLen, IntermediateDim]\n"
+            "  Fused = Swish * Up:           [Batch, SeqLen, IntermediateDim]\n"
+            "  Down  = Fused @ W_down:       [Batch, SeqLen, HiddenDim]"
         ),
-        formula=r"\mathrm{SwiGLU}(x) = \left( x W_{\text{gate}} \otimes \mathrm{SiLU}(x W_{\text{gate}}) \right) W_{\text{down}}, \quad \mathrm{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2 + \epsilon}} \odot \gamma",
+        formula=r"\mathrm{SwiGLU}(x) = \left(\mathrm{Swish}(x W_{\text{gate}}) \otimes x W_{\text{up}}\right) W_{\text{down}}, \quad \mathrm{RMSNorm}(x) = \frac{x}{\sqrt{\frac{1}{d}\sum_{i=1}^d x_i^2 + \epsilon}} \odot \gamma",
         variables={
-            "W_gate, W_up": "Weight matrices expanding hidden dimension to 8/3 d (IntermediateDim)",
-            "W_down": "Weight matrix projecting back down to HiddenDim",
-            "SiLU": "Swish activation: f(z) = z * sigmoid(z)",
-            "gamma": "Learnable gain vector in RMSNorm",
-            "epsilon": "Small constant (e.g. 1e-6) preventing division by zero",
+            "W_gate": "Gate projection matrix expanding hidden dim to intermediate dim (usually (8/3) * d)",
+            "W_up": "Value projection matrix operating in parallel with gate",
+            "W_down": "Down projection matrix returning representation back to HiddenDim",
+            "gamma": "Learned per-channel scale parameter in RMSNorm",
+            "eps": "Small numerical epsilon (1e-6) preventing division by zero",
         },
         math_explanation=(
-            "Standard LayerNorm centers activations by subtracting mean mu and dividing by standard deviation sigma. "
-            "Empirical research (Zhang et al.) proved that the mean-centering step is unnecessary: scaling by the root "
-            "mean square alone provides identical training stability while saving memory bandwidth. "
-            "SwiGLU replaces single-pass ReLU/GELU with a bilinear gate, allowing the network to control information flow dynamically."
+            "Standard ReLU networks zero out all negative activations, permanently killing gradient flow through those neurons. "
+            "SwiGLU (Shazeer, 2020) replaces standard activation with a Gated Linear Unit where one projection acts as a continuous, "
+            "differentiable gate controlling how much information from the second projection passes through. "
+            "Paired with RMSNorm—which skips LayerNorm's costly mean-centering step and normalizes purely by root-mean-square—this "
+            "architecture stabilizes gradient variances and accelerates convergence by 15–20%."
         ),
         numerical_example=(
-            "In a 4096-dim model, standard LayerNorm calculates mean over 4096 values, subtracts it, then computes variance.\n"
-            "RMSNorm directly squares each value, takes average, and takes square root. This eliminates one full reduction pass.\n"
-            "In SwiGLU, if Gate produces -5.0 (inactive concept), SiLU(-5) = -5 * 0.0067 = -0.033, shutting off that feature's Up projection completely."
+            "Suppose gate value g = -2.0. In ReLU, max(0, -2.0) = 0 (complete signal blackout, 0 gradient).\n"
+            "In Swish: Sigmoid(-2.0) = 0.1192. Swish(-2.0) = -2.0 × 0.1192 = -0.2384.\n"
+            "The signal is suppressed, but its slope is non-zero (d/dg Swish(-2.0) = -0.098)!\n"
+            "If the optimizer needs to resurrect this feature, the gradient can travel backwards through the gate."
         ),
         code_snippet=(
             "import torch\n"
-            "import torch.nn as nn\n\n"
-            "class RMSNorm(nn.Module):\n"
-            "    def __init__(self, dim, eps=1e-6):\n"
-            "        super().__init__()\n"
-            "        self.eps = eps\n"
-            "        self.weight = nn.Parameter(torch.ones(dim))\n"
-            "    def forward(self, x):\n"
-            "        norm = x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)\n"
-            "        return norm * self.weight\n\n"
+            "import torch.nn as nn\n"
+            "import torch.nn.functional as F\n\n"
             "class SwiGLU(nn.Module):\n"
-            "    def __init__(self, dim, hidden_dim):\n"
+            "    def __init__(self, d_in, d_ff):\n"
             "        super().__init__()\n"
-            "        self.w_gate = nn.Linear(dim, hidden_dim, bias=False)\n"
-            "        self.w_up = nn.Linear(dim, hidden_dim, bias=False)\n"
-            "        self.w_down = nn.Linear(hidden_dim, dim, bias=False)\n"
+            "        self.w_gate = nn.Linear(d_in, d_ff, bias=False)\n"
+            "        self.w_up = nn.Linear(d_in, d_ff, bias=False)\n"
+            "        self.w_down = nn.Linear(d_ff, d_in, bias=False)\n\n"
             "    def forward(self, x):\n"
-            "        gate = torch.nn.functional.silu(self.w_gate(x))\n"
-            "        return self.w_down(gate * self.w_up(x))\n\n"
-            "x = torch.randn(1, 4, 128)\n"
-            "mlp = SwiGLU(128, 256)\n"
-            "print('SwiGLU output shape:', mlp(x).shape)  # [1, 4, 128]"
+            "        return self.w_down(F.silu(self.w_gate(x)) * self.w_up(x))\n\n"
+            "ffn = SwiGLU(4096, 11008)\n"
+            "x = torch.randn(1, 4, 4096)\n"
+            "print('SwiGLU Output shape:', ffn(x).shape)  # [1, 4, 4096]"
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 2.5: Feed-Forward Networks and Modern Activations",
-                category="ai-books",
-                relevance="Explains why GLU variants outperform standard activations.",
-            ),
-            LabCitation(
-                title="Inference Optimization Matters",
-                chapter="Chapter 3: Kernel Fusion for RMSNorm and SwiGLU",
-                category="ai-books",
-                relevance="Shows memory savings from fusing RMSNorm with linear projections.",
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 4: Implementing a Pretrained Model — Gated Linear Units and RMSNorm",
+                category="AI_and_Machine_Learning",
+                relevance="Details modern Llama-style FFN implementations and layer normalization comparisons.",
             ),
         ],
     ),
+
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TIER 3: TRAINING, ALIGNMENT & REINFORCEMENT LEARNING
+    # ══════════════════════════════════════════════════════════════════════════════
     LabConcept(
         id="sft-loss-masking",
-        title="SFT Instruction Tuning & Loss Masking",
+        title="Supervised Fine-Tuning (SFT) & Prompt Loss Masking",
         paradigm="language",
-        summary="Transforms raw autoregressive autocomplete models into instruction followers by calculating cross-entropy loss exclusively on assistant response tokens.",
+        summary="Instruction tuning methodology that zeros out loss gradients on user prompts, ensuring model capacity is focused purely on assistant responses.",
         tensor_flow=(
-            "Training Sequence Tokens:\n"
-            "  [<sys> You are an AI </sys>, <user> Explain RoPE </user>, <assistant> RoPE rotates... </assistant>]\n"
-            "Token IDs:\n"
-            "  Input IDs: [101, 2045, 982, 102, 345, 678, 103, 890, 112, 104]\n"
-            "Loss Mask Labels:\n"
-            "  Labels:    [-100, -100, -100, -100, -100, -100, -100, 890, 112, 104]\n"
-            "PyTorch CrossEntropyLoss ignores any index equal to -100.\n"
-            "Gradients backpropagate ONLY from the assistant's answer."
+            "Dialogue Sequence:\n"
+            "  Tokens: [<|user|>, 'What', 'is', '2+2?', '<|assistant|>, '4', '<|eos|>']\n"
+            "  Labels: [ -100,      -100,   -100,  -100,      -100,         '4',  <|eos|> ]\n"
+            "Forward Loss:\n"
+            "  Logits: [Batch, SeqLen, VocabSize]\n"
+            "  Target Loss: CrossEntropyLoss(logits, labels, ignore_index=-100)\n"
+            "Outcome:\n"
+            "  Gradients calculate ONLY across assistant answer tokens ('4', <|eos|>)"
         ),
-        formula=r"\mathcal{L}_{\mathrm{SFT}}(\theta) = -\frac{1}{|\mathcal{Y}|} \sum_{t \in \mathcal{Y}} \log P_\theta(y_t \mid x, y_{<t})",
+        formula=r"\mathcal{L}_{\mathrm{SFT}} = -\frac{1}{\sum_{t} m_t} \sum_{t=1}^T m_t \ln P(x_t \mid x_{<t}), \quad m_t = \begin{cases} 1 & \text{if token } t \in \text{Assistant Completion} \\ 0 & \text{if token } t \in \text{User Prompt} \end{cases}",
         variables={
-            "x": "User prompt and system instructions tokens (masked out: label = -100)",
-            "y": "Target assistant completion tokens (loss calculated: label = token_id)",
-            "P_theta": "Model predicted probability distribution over the vocabulary",
-            "-100": "PyTorch default ignore_index in CrossEntropyLoss",
+            "m_t": "Binary loss mask (0 for prompt tokens, 1 for completion tokens)",
+            "ignore_index": "Special sentinel value (-100 in PyTorch) skipped during cross-entropy reduction",
+            "x_{<t}": "Causal context history available to the model at step t",
         },
         math_explanation=(
-            "If pre-training cross-entropy is calculated over all tokens, the model is penalized if it fails to predict "
-            "the user's typos or stylistic phrasing in the prompt. In Supervised Fine-Tuning (SFT), we condition on the prompt "
-            "as a fixed prefix and backpropagate loss solely on the assistant's response tokens. "
-            "Setting prompt label positions to -100 instructs the loss function to skip them entirely."
+            "During pretraining, loss is computed across all tokens because the goal is general text prediction. "
+            "During instruction fine-tuning, calculating loss on the user prompt forces the model to memorize user questions. "
+            "Setting label tokens in the prompt to -100 (loss masking) directs 100% of the backpropagation gradients into the assistant's answer. "
+            "This teaches the model how to respond without degrading its ability to understand diverse user queries."
         ),
         numerical_example=(
-            "Sequence has 10 tokens: 7 prompt tokens + 3 assistant response tokens.\n"
-            "Without masking: Loss is average of 10 cross-entropies. 70% of gradient signal is wasted learning to autocomplete user prompts.\n"
-            "With loss masking: Only the 3 assistant tokens contribute to loss. 100% of gradient updates shape the quality, tone, and correctness of the answer."
-        ),
-        code_snippet=(
-            "import torch\n"
-            "import torch.nn.functional as F\n\n"
-            "def compute_sft_loss(logits, labels):\n"
-            "    # logits: [Batch, SeqLen, VocabSize]\n"
-            "    # labels: [Batch, SeqLen] with -100 on prompt tokens\n"
-            "    shift_logits = logits[..., :-1, :].contiguous()\n"
-            "    shift_labels = labels[..., 1:].contiguous()\n"
-            "    return F.cross_entropy(\n"
-            "        shift_logits.view(-1, shift_logits.size(-1)),\n"
-            "        shift_labels.view(-1),\n"
-            "        ignore_index=-100,\n"
-            "    )\n\n"
-            "# Demonstration:\n"
-            "vocab_size = 1000\n"
-            "logits = torch.randn(1, 5, vocab_size, requires_grad=True)\n"
-            "labels = torch.tensor([[-100, -100, -100, 42, 88]])\n"
-            "loss = compute_sft_loss(logits, labels)\n"
-            "loss.backward()\n"
-            "print('SFT loss value:', loss.item())\n"
-            "print('Gradients computed successfully on masked targets.')"
-        ),
-        nexus_citations=[
-            LabCitation(
-                title="Pretraining LLM",
-                chapter="Chapter 8: From Base Model to Instruction Follower (SFT)",
-                category="ai-books",
-                relevance="Covers prompt templates, chat format markers, and loss masking.",
-            ),
-            LabCitation(
-                title="Agent Quality",
-                chapter="Section 2: SFT Data Curation and Formatting",
-                category="ai-books",
-                relevance="Best practices for multi-turn conversational loss masks.",
-            ),
-        ],
-    ),
-    LabConcept(
-        id="lora",
-        title="LoRA: Low-Rank Adaptation",
-        paradigm="language",
-        summary="Freezes full-rank pre-trained weight matrices and parameterizes updates as low-rank matrix products W_0 + (alpha/r) * B @ A.",
-        tensor_flow=(
-            "Pretrained Weight W_0: [d, k] (FROZEN)\n"
-            "Adapter Matrices:\n"
-            "  A: [r, k] initialized with Gaussian ~ N(0, sigma^2)\n"
-            "  B: [d, r] initialized to 0 (so delta W starts at exactly 0)\n"
-            "Forward Pass:\n"
-            "  h = W_0 @ x + (alpha / r) * (B @ (A @ x))\n"
-            "Parameter Reduction:\n"
-            "  Original parameters: d * k\n"
-            "  LoRA parameters: r * (d + k)\n"
-            "  Ratio: for d=4096, k=4096, r=16 -> 131,072 params vs 16,777,216 (99.2% reduction!)"
-        ),
-        formula=r"W = W_0 + \Delta W = W_0 + \frac{\alpha}{r} B A, \quad B \in \mathbb{R}^{d \times r}, \; A \in \mathbb{R}^{r \times k}",
-        variables={
-            "W_0": "Frozen pre-trained linear weight matrix [d, k]",
-            "B": "Trainable low-rank projection matrix [d, r], initialized to zero",
-            "A": "Trainable low-rank reduction matrix [r, k], initialized with normal distribution",
-            "r": "Rank hyperparameter (typically 8, 16, 32, or 64)",
-            "alpha": "Constant scaling multiplier ensuring stable gradients when varying r",
-        },
-        math_explanation=(
-            "Weight matrices in large models have a low 'intrinsic dimension' when adapting to specific tasks. "
-            "Instead of updating all d*k weights (which requires massive GPU memory for optimizer states like Adam), "
-            "we constrain the update matrix Delta W to have rank r << min(d, k). "
-            "Initializing B to 0 guarantees that at step 0, Delta W = 0, so the pre-trained behavior is unaltered."
-        ),
-        numerical_example=(
-            "In LLaMA-3 8B, projecting down/gate/up matrices has d = 4096, k = 14336.\n"
-            "Full fine-tuning requires 4096 * 14336 = 58,720,256 float32 values per layer. Adam requires 8x that in optimizer states (~470MB per layer).\n"
-            "With rank r = 16: LoRA needs 16 * (4096 + 14336) = 294,912 parameters. Adam state drops from 470MB to 2.3MB!"
+            "Consider a prompt of 50 tokens and an answer of 10 tokens (total sequence = 60 tokens).\n"
+            "- Without masking: 50 / 60 = 83.3% of the gradient updates penalize prompt wording, causing overfitting.\n"
+            "- With loss masking (m_t = 0 for prompt): 100% of the gradient updates optimize the 10 answer tokens.\n"
+            "Validation loss drops 3× faster and the model follows instructions reliably."
         ),
         code_snippet=(
             "import torch\n"
             "import torch.nn as nn\n\n"
-            "class LoRALinear(nn.Module):\n"
-            "    def __init__(self, in_features, out_features, rank=16, alpha=32):\n"
-            "        super().__init__()\n"
-            "        self.base = nn.Linear(in_features, out_features, bias=False)\n"
-            "        self.base.weight.requires_grad = False  # Freeze\n"
-            "        self.rank = rank\n"
-            "        self.scaling = alpha / rank\n"
-            "        self.lora_A = nn.Parameter(torch.randn(rank, in_features) * 0.01)\n"
-            "        self.lora_B = nn.Parameter(torch.zeros(out_features, rank))\n"
-            "    def forward(self, x):\n"
-            "        base_out = self.base(x)\n"
-            "        lora_out = (x @ self.lora_A.T @ self.lora_B.T) * self.scaling\n"
-            "        return base_out + lora_out\n\n"
-            "layer = LoRALinear(4096, 4096, rank=16)\n"
-            "x = torch.randn(1, 8, 4096)\n"
-            "print('LoRA forward pass output:', layer(x).shape)  # [1, 8, 4096]"
+            "# 1 dialogue sequence of 6 tokens: [Prompt: 3 tokens, Answer: 3 tokens]\n"
+            "logits = torch.randn(1, 6, 100, requires_grad=True)\n"
+            "# Mask prompt tokens with -100:\n"
+            "labels = torch.tensor([[-100, -100, -100, 42, 85, 12]])\n\n"
+            "loss_fn = nn.CrossEntropyLoss(ignore_index=-100)\n"
+            "loss = loss_fn(logits.view(-1, 100), labels.view(-1))\n"
+            "loss.backward()\n\n"
+            "print('Loss calculated:', loss.item())\n"
+            "print('Prompt token 0 gradient norm:', logits.grad[0, 0].norm().item())  # Exactly 0.0!\n"
+            "print('Answer token 3 gradient norm:', logits.grad[0, 3].norm().item())  # Non-zero gradient"
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 5.3: Parameter-Efficient Fine-Tuning (PEFT and LoRA)",
-                category="ai-books",
-                relevance="Matrix rank reduction theory and intrinsic dimension empirical studies.",
-            ),
-            LabCitation(
-                title="Inference Optimization Matters",
-                chapter="Chapter 5: Dynamic Adapter Swapping in Serving Engines",
-                category="ai-books",
-                relevance="How multiple task-specific LoRA adapters run simultaneously on one base model.",
+                title="Build a Large Language Model (From Scratch)",
+                chapter="Chapter 6: Fine-Tuning for Instructions — Formatting Instruction Datasets and Masking",
+                category="AI_and_Machine_Learning",
+                relevance="Hands-on dataset collator implementation applying -100 masks to prompt tokens.",
             ),
         ],
     ),
-    # ─── Vision & Conv/ViT ────────────────────────────────────────────────────────
+
+    LabConcept(
+        id="grpo-reasoning",
+        title="Group Relative Policy Optimization (GRPO)",
+        paradigm="rl",
+        summary="Reinforcement learning for mathematical and coding reasoning without a separate critic/value model, powering DeepSeek-R1.",
+        tensor_flow=(
+            "Group Sampling:\n"
+            "  Prompt q -> Generate G candidate solutions {o_1, o_2, ..., o_G} (e.g. G = 8)\n"
+            "Rule-Based Verifiers:\n"
+            "  Evaluate each solution: r_i = CompilerPass(o_i) + MathExact(o_i)\n"
+            "Advantage Normalization:\n"
+            "  mean_r = mean(r), std_r = std(r)\n"
+            "  Advantage A_i = (r_i - mean_r) / (std_r + eps)\n"
+            "Policy Update:\n"
+            "  Scale token log-probs by A_i with PPO-style clipping & KL penalty"
+        ),
+        formula=r"\mathcal{J}_{\mathrm{GRPO}}(\theta) = \mathbb{E}\left[\frac{1}{G}\sum_{i=1}^G \min\left( \frac{\pi_\theta(o_i \mid q)}{\pi_{\mathrm{old}}(o_i \mid q)} A_i, \; \mathrm{clip}\left(\frac{\pi_\theta}{\pi_{\mathrm{old}}}, 1-\epsilon, 1+\epsilon\right) A_i \right) - \beta D_{\mathrm{KL}}(\pi_\theta \parallel \pi_{\mathrm{ref}})\right]",
+        variables={
+            "G": "Group size (number of completions sampled per prompt, typically 8 to 16)",
+            "o_i": "Candidate solution i containing Chain-of-Thought reasoning + final answer",
+            "r_i": "Deterministic reward score from rule verifier (e.g. 1.0 for passing unit tests, 0.0 for failing)",
+            "A_i": "Statistical advantage normalizing how much solution i outperformed the group average",
+            "β": "KL penalty coefficient preventing excessive policy drift from reference model",
+        },
+        math_explanation=(
+            "Traditional PPO requires training a separate Value Network (critic) that matches the size of the policy model, "
+            "doubling GPU memory requirements and introducing noisy value estimates. "
+            "GRPO (Shao et al., DeepSeek 2024) completely removes the critic. Instead, it generates G outputs for each prompt "
+            "and uses the group's empirical mean and standard deviation to compute the baseline. "
+            "Completions that pass the test suite receive positive advantage; completions that fail receive negative advantage. "
+            "This directly trains models to self-correct and reason through long Chain-of-Thought paths."
+        ),
+        numerical_example=(
+            "For a math problem, sample G = 4 answers with rule rewards r = [1.0, 0.0, 1.0, 0.0] (2 correct, 2 wrong).\n"
+            "1. Group Mean: (1 + 0 + 1 + 0) / 4 = 0.5.\n"
+            "2. Group StdDev: sqrt(((0.5)^2 + (-0.5)^2 + (0.5)^2 + (-0.5)^2) / 4) = 0.5.\n"
+            "3. Advantages A_i = (r_i - 0.5) / 0.5:\n"
+            "   - Answers 1 & 3 (Correct): A = (1.0 - 0.5) / 0.5 = +1.0 (Tokens reinforced!)\n"
+            "   - Answers 2 & 4 (Wrong):   A = (0.0 - 0.5) / 0.5 = -1.0 (Tokens penalized!)\n"
+            "Memory saved: Zero critic weights, allowing full 64 GB Mac Studio memory to serve generation."
+        ),
+        code_snippet=(
+            "import torch\n\n"
+            "def compute_grpo_advantages(rewards):\n"
+            "    # rewards: tensor of shape [G] (e.g. 4 outputs)\n"
+            "    mean = rewards.mean()\n"
+            "    std = rewards.std() + 1e-8\n"
+            "    return (rewards - mean) / std\n\n"
+            "rewards = torch.tensor([1.0, 0.0, 1.0, 0.0])\n"
+            "advantages = compute_grpo_advantages(rewards)\n"
+            "print('Rewards:   ', rewards.tolist())\n"
+            "print('Advantages:', [round(a, 3) for a in advantages.tolist()])"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="LLM Evaluation and Alignment, The Foundation",
+                chapter="Chapter 5: Reinforcement Learning from Verifiable Rewards — GRPO and PPO",
+                category="AI_and_Machine_Learning",
+                relevance="Mathematical breakdown of reward normalization, policy gradient clipping, and rule-based verifiers.",
+            ),
+        ],
+    ),
+
+    # ══════════════════════════════════════════════════════════════════════════════
+    # TIER 4: MULTIMODAL & GENERATIVE SYSTEMS
+    # ══════════════════════════════════════════════════════════════════════════════
     LabConcept(
         id="vision-transformer-vit",
         title="Vision Transformers (ViT) & Patch Projection",
         paradigm="vision",
-        summary="Treats an image as a sequence of 16x16 flattened visual tokens, allowing standard self-attention architectures to process 2D images.",
+        summary="Splits 2D images into flat non-overlapping patches, linearly projects them into token embeddings, and processes images as pure sequence transformers.",
         tensor_flow=(
-            "Input Image: X: [Batch, Channels, Height, Width]  (e.g. [1, 3, 224, 224])\n"
-            "Patch Slicing (P = 16):\n"
-            "  NumPatches N = (H/P) * (W/P) = (224/16) * (224/16) = 14 * 14 = 196 patches\n"
-            "  Patch dimension: P * P * C = 16 * 16 * 3 = 768\n"
-            "Linear Projection: [Batch, 196, 768] @ W_patch -> [Batch, 196, HiddenDim]\n"
-            "Add [CLS] Token & Position Embeddings -> [Batch, 197, HiddenDim]\n"
-            "Process with standard Transformer Encoder blocks!"
+            "Image Input:\n"
+            "  I: [Batch, Channels, Height, Width] (e.g. [1, 3, 224, 224])\n"
+            "Patch Flattening:\n"
+            "  Patch size P = 16 -> Number of patches N = (224/16) * (224/16) = 14 * 14 = 196\n"
+            "  Flattened patch shape: [196, 3 * 16 * 16] = [196, 768]\n"
+            "Linear Projection:\n"
+            "  x_patches = Patches @ W_embed: [Batch, 196, HiddenDim]\n"
+            "Token Sequence:\n"
+            "  Prepend [CLS] token + add 1D learned position embeddings: [Batch, 197, HiddenDim]\n"
+            "Transformer Processing:\n"
+            "  Pass through standard self-attention encoder blocks"
         ),
-        formula=r"\mathbf{z}_0 = [\mathbf{x}_{\mathrm{class}}; \mathbf{x}_p^1 \mathbf{E}; \dots; \mathbf{x}_p^N \mathbf{E}] + \mathbf{E}_{\mathrm{pos}}, \quad \mathbf{E} \in \mathbb{R}^{(P^2 C) \times D}",
+        formula=r"z_0 = \left[ x_{\text{class}}; \; x_p^1 E; \; x_p^2 E; \dots; x_p^N E \right] + E_{\text{pos}}, \quad E \in \mathbb{R}^{(P^2 C) \times D}",
         variables={
-            "P": "Patch size (typically 16x16 or 14x14 pixels)",
-            "N": "Number of patches = (Height * Width) / P^2",
-            "E": "Trainable 2D convolution or linear projection matrix mapping raw pixels to hidden dim D",
-            "x_class": "Learnable [CLS] classification token prepended to the sequence",
-            "E_pos": "Learnable 1D position embeddings capturing spatial patch coordinates",
+            "P": "Spatial resolution of each square image patch (typically 14 or 16 pixels)",
+            "N": "Number of patches in the sequence: N = (H · W) / P^2",
+            "E": "Learnable patch embedding projection matrix mapping raw pixels to hidden dim D",
+            "x_class": "Learnable classification token ([CLS]) aggregating global spatial context",
+            "E_pos": "Learnable 1D position embeddings preserving 2D spatial arrangement",
         },
         math_explanation=(
-            "Convolutional networks encode strong inductive biases (translation equivariance and local spatial locality) "
-            "directly into their kernels. Vision Transformers discard this hardcoded prior: by slicing images into flat patches "
-            "and applying self-attention, the model learns global cross-patch relationships directly from data. "
-            "On massive datasets, ViT substantially outperforms ResNets because it is not constrained to local receptive fields."
+            "Convolutional networks (CNNs) encode hardcoded inductive biases: translation invariance and local receptive fields. "
+            "Vision Transformers (Dosovitskiy et al., 2020) prove that with sufficient data, self-attention can learn visual relationships "
+            "from scratch without hand-crafted convolutions. "
+            "By slicing images into 16x16 pixel grids and treating each patch as a 'word token', standard LLM transformer architectures "
+            "can process multimodal image data directly."
         ),
         numerical_example=(
-            "A 224x224 RGB image has 224*224*3 = 150,528 raw values.\n"
-            "Dividing into 16x16 patches gives 196 patches of 768 numbers each.\n"
-            "Passing 196 tokens through a 12-layer Transformer is identical in complexity to processing a 196-word sentence. "
-            "Global attention allows patch #1 (top-left corner) to directly attend to patch #196 (bottom-right corner) in layer 1!"
+            "For a standard 224×224 RGB image with patch size P = 16:\n"
+            "- Height patches = 224 / 16 = 14; Width patches = 224 / 16 = 14.\n"
+            "- Total sequence length N = 14 × 14 = 196 image tokens.\n"
+            "- Each patch contains 16 × 16 × 3 = 768 raw pixel values.\n"
+            "- Linear projection W_embed projects 768 pixels into 768 hidden dimensions.\n"
+            "- Adding 1 [CLS] token yields a sequence of 197 tokens—identical to a short text prompt!"
         ),
         code_snippet=(
             "import torch\n"
             "import torch.nn as nn\n\n"
             "class PatchEmbedding(nn.Module):\n"
-            "    def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768):\n"
+            "    def __init__(self, in_channels=3, patch_size=16, embed_dim=768):\n"
             "        super().__init__()\n"
-            "        # A convolution with kernel=patch_size and stride=patch_size slices patches\n"
-            "        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)\n"
-            "        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))\n"
-            "        self.pos_embed = nn.Parameter(torch.randn(1, (img_size // patch_size)**2 + 1, embed_dim))\n"
+            "        # Conv2d with stride=patch_size cleanly slices and projects patches in one pass:\n"
+            "        self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)\n\n"
             "    def forward(self, x):\n"
-            "        B = x.shape[0]\n"
-            "        x = self.proj(x).flatten(2).transpose(1, 2)  # [B, NumPatches, EmbedDim]\n"
-            "        cls_tokens = self.cls_token.expand(B, -1, -1)\n"
-            "        x = torch.cat((cls_tokens, x), dim=1) + self.pos_embed\n"
-            "        return x\n\n"
+            "        # x: [B, 3, 224, 224] -> [B, 768, 14, 14] -> [B, 196, 768]\n"
+            "        return self.proj(x).flatten(2).transpose(1, 2)\n\n"
+            "patch_layer = PatchEmbedding()\n"
             "img = torch.randn(1, 3, 224, 224)\n"
-            "embedder = PatchEmbedding()\n"
-            "tokens = embedder(img)\n"
-            "print('ViT token sequence shape:', tokens.shape)  # [1, 197, 768]"
+            "tokens = patch_layer(img)\n"
+            "print('Patch Tokens shape:', tokens.shape)  # [1, 196, 768]"
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 6.1: Vision Transformers and Multi-Modal Encoding",
-                category="ai-books",
-                relevance="Details patch projection mathematics and inductive bias comparisons.",
+                title="Deep Learning with Python, Third Edition",
+                chapter="Chapter 9: Advanced Computer Vision — Vision Transformers and Attention",
+                category="AI_and_Machine_Learning",
+                relevance="Comprehensive comparison of Convolutional kernels vs. ViT global self-attention receptive fields.",
             ),
         ],
     ),
-    # ─── Diffusion & Generative ───────────────────────────────────────────────────
+
     LabConcept(
         id="ddpm-noise-scheduling",
         title="Denoising Diffusion Probabilistic Models (DDPM)",
         paradigm="diffusion",
-        summary="Iteratively destroys data into isotropic Gaussian noise via a forward Markov chain, and trains a neural network to invert the process.",
+        summary="Generative modeling via gradual Gaussian noise corruption and learned reverse-time vector field denoising.",
         tensor_flow=(
-            "Forward Process (Noising):\n"
-            "  x_0 (clean image) -> Add Gaussian noise epsilon ~ N(0, I) over T steps\n"
-            "  Closed-form shortcut: x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon\n"
-            "Reverse Process (Denoising):\n"
-            "  Input: noisy x_t + time embedding t\n"
-            "  UNet / DiT predicts the noise: epsilon_theta(x_t, t)\n"
-            "  Step backwards: x_{t-1} = (1 / sqrt(alpha_t)) * (x_t - (beta_t / sqrt(1 - alpha_bar_t)) * epsilon_theta) + sigma_t * z"
+            "Forward Diffusion Process (Noising):\n"
+            "  x_0: Clean Image -> Sample timestep t ~ Uniform(1, T)\n"
+            "  Sample noise epsilon ~ N(0, I)\n"
+            "  x_t = sqrt(alpha_bar_t) * x_0 + sqrt(1 - alpha_bar_t) * epsilon\n"
+            "Reverse Denoising Step:\n"
+            "  Model predicts noise: epsilon_pred = UNet(x_t, t)\n"
+            "  Loss = MSE(epsilon_pred, epsilon)\n"
+            "  Denoise: x_{t-1} = (1 / sqrt(alpha_t)) * (x_t - (beta_t / sqrt(1 - alpha_bar_t)) * epsilon_pred)"
         ),
-        formula=r"q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\left(\mathbf{x}_t; \sqrt{\bar{\alpha}_t} \mathbf{x}_0, (1 - \bar{\alpha}_t) \mathbf{I}\right), \quad \mathcal{L}_{\mathrm{simple}}(\theta) = \mathbb{E}_{t, \mathbf{x}_0, \epsilon} \left[ \|\epsilon - \epsilon_\theta(\mathbf{x}_t, t)\|^2 \right]",
+        formula=r"q(x_t \mid x_0) = \mathcal{N}\left(x_t; \; \sqrt{\bar{\alpha}_t} x_0, \; (1 - \bar{\alpha}_t) \mathbf{I}\right), \quad \mathcal{L}_{\text{simple}} = \mathbb{E}_{t, x_0, \epsilon}\left[ \left\| \epsilon - \epsilon_\theta(x_t, t) \right\|^2 \right]",
         variables={
-            "x_0": "Original clean training sample (image, audio, or latent)",
-            "x_t": "Noisy sample at diffusion timestep t (from t = 1 to T = 1000)",
-            "alpha_t": "Variance schedule factor alpha_t = 1 - beta_t",
-            "alpha_bar_t": "Cumulative product of alphas: prod_{s=1}^t alpha_s",
-            "epsilon_theta": "Neural network trained to predict the added noise vector epsilon",
+            "x_0": "Clean original training data sample (e.g. image)",
+            "x_t": "Noisy latent sample at diffusion timestep t",
+            "beta_t": "Variance schedule value at step t (typically 1e-4 to 0.02)",
+            "alpha_bar_t": "Cumulative noise coefficient: product of (1 - beta_s) from s=1 to t",
+            "epsilon_theta": "Neural network trained to predict the noise added to sample x_0",
         },
         math_explanation=(
-            "Rather than training a generative model to jump from pure noise to a finished image in one giant leap (which causes mode collapse in GANs), "
-            "diffusion breaks generation down into hundreds of tiny, tractable denoising micro-steps. "
-            "By mathematically reparameterizing the Gaussian marginals, any noisy intermediate state x_t can be sampled directly at step t "
-            "without having to simulate steps 1 through t-1 sequentially during training."
+            "Instead of directly generating images in one forward shot (like GANs), diffusion models decompose generation into hundreds of tiny steps. "
+            "The forward process gradually destroys structure by adding Gaussian noise according to a schedule beta_t. "
+            "By the property of Gaussians, we can jump directly to any timestep t in closed form using alpha_bar_t without stepping through 1...t-1. "
+            "The neural network is trained with simple Mean Squared Error to predict the exact noise epsilon injected at step t. "
+            "At inference time, starting from pure Gaussian static, the model iteratively subtracts predicted noise to generate pristine images."
         ),
         numerical_example=(
-            "Let alpha_bar_500 = 0.5. At step t = 500:\n"
-            "sqrt(0.5) = 0.707, and sqrt(1 - 0.5) = 0.707.\n"
-            "The noisy image x_500 is exactly 70.7% clean image + 70.7% pure Gaussian noise.\n"
-            "The neural network looks at this static pattern, estimates the 70.7% noise component, and subtracts it."
+            "Suppose alpha_bar_t = 0.04 at timestep t = 800 (very noisy step):\n"
+            "- sqrt(alpha_bar_t) = sqrt(0.04) = 0.2 (only 20% of original signal remains).\n"
+            "- sqrt(1 - alpha_bar_t) = sqrt(0.96) = 0.9798 (98% of the tensor is pure Gaussian noise).\n"
+            "- The network looks at x_t and predicts the noise epsilon. Training minimizes ||epsilon - epsilon_pred||^2."
         ),
         code_snippet=(
             "import torch\n\n"
-            "def forward_diffusion_sample(x_0, t, betas):\n"
-            "    # betas: [T]\n"
+            "def forward_diffusion_sample(x_0, t, n_steps=1000):\n"
+            "    # Linear beta schedule\n"
+            "    betas = torch.linspace(1e-4, 0.02, n_steps)\n"
             "    alphas = 1.0 - betas\n"
-            "    alphas_bar = torch.cumprod(alphas, dim=0)\n"
-            "    sqrt_alphas_bar = torch.sqrt(alphas_bar[t])\n"
-            "    sqrt_one_minus_alphas_bar = torch.sqrt(1.0 - alphas_bar[t])\n"
+            "    alphas_bar = torch.cumprod(alphas, dim=0)\n\n"
+            "    sqrt_alpha_bar = alphas_bar[t] ** 0.5\n"
+            "    sqrt_one_minus_alpha_bar = (1.0 - alphas_bar[t]) ** 0.5\n"
             "    noise = torch.randn_like(x_0)\n"
-            "    x_t = sqrt_alphas_bar * x_0 + sqrt_one_minus_alphas_bar * noise\n"
-            "    return x_t, noise\n\n"
-            "betas = torch.linspace(1e-4, 0.02, 1000)\n"
-            "clean_x = torch.ones(1, 3, 32, 32)\n"
-            "noisy_x, true_noise = forward_diffusion_sample(clean_x, 500, betas)\n"
-            "print('Noisy sample generated. Mean:', noisy_x.mean().item())"
+            "    return sqrt_alpha_bar * x_0 + sqrt_one_minus_alpha_bar * noise, noise\n\n"
+            "img = torch.ones(1, 3, 64, 64)\n"
+            "noisy_img, noise = forward_diffusion_sample(img, t=500)\n"
+            "print('Noisy image sample shape:', noisy_img.shape)  # [1, 3, 64, 64]"
         ),
         nexus_citations=[
             LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 7.2: Diffusion Models and Continuous Denoising",
-                category="ai-books",
-                relevance="Score-based generative modeling and stochastic differential equations.",
-            ),
-        ],
-    ),
-    # ─── Reinforcement Learning & Reasoning ───────────────────────────────────────
-    LabConcept(
-        id="grpo-reasoning",
-        title="Group Relative Policy Optimization (GRPO)",
-        paradigm="rl",
-        summary="DeepSeek-R1 style reasoning alignment: samples a group of candidate outputs for each prompt and normalizes rewards within the group without requiring a critic network.",
-        tensor_flow=(
-            "For each prompt q:\n"
-            "  Sample a group of G outputs: {o_1, o_2, ..., o_G} ~ pi_old(o | q)\n"
-            "Reward Evaluation:\n"
-            "  Score each output using rule-based verifiers: r_i = [Math Correctness, Code Unit Tests]\n"
-            "Advantage Normalization:\n"
-            "  Mean = mean(r), Std = std(r)\n"
-            "  A_i = (r_i - Mean) / (Std + 1e-8)\n"
-            "Optimization:\n"
-            "  PPO-clipped objective on A_i with KL penalty against pi_ref\n"
-            "Zero critic neural network memory needed!"
-        ),
-        formula=r"\mathcal{J}_{\mathrm{GRPO}}(\theta) = \mathbb{E} \left[ \frac{1}{G} \sum_{i=1}^G \left( \min\left( \frac{\pi_\theta(o_i \mid q)}{\pi_{\mathrm{old}}(o_i \mid q)} A_i, \; \mathrm{clip}\left(\frac{\pi_\theta(o_i \mid q)}{\pi_{\mathrm{old}}(o_i \mid q)}, 1-\epsilon, 1+\epsilon\right) A_i \right) - \beta D_{\mathrm{KL}}(\pi_\theta \parallel \pi_{\mathrm{ref}}) \right) \right]",
-        variables={
-            "G": "Group size of sampled candidate completions (typically 4 to 8)",
-            "A_i": "Group-relative advantage: A_i = (r_i - mean(r)) / std(r)",
-            "pi_theta": "Current policy model undergoing training",
-            "pi_ref": "Frozen pre-trained reference model preventing reward hacking / mode collapse",
-            "beta": "KL penalty coefficient enforcing proximity to reference model",
-        },
-        math_explanation=(
-            "Standard PPO requires training two gigantic neural networks concurrently: the Actor (policy) and the Critic (value function). "
-            "The Critic model consumes equal GPU memory to the Actor and often suffers from unstable value estimation. "
-            "GRPO discards the Critic entirely: by generating a group of G responses for the same question, the baseline value is simply "
-            "the empirical average reward of the group. Outputs that scored higher than average get positive advantage, while below-average outputs get penalized."
-        ),
-        numerical_example=(
-            "Prompt: Solve 17 * 14.\n"
-            "Generate G = 4 reasoning outputs with scores:\n"
-            "  Output 1: answered 238 (Correct, r = +1.0)\n"
-            "  Output 2: answered 238 (Correct, r = +1.0)\n"
-            "  Output 3: answered 218 (Wrong, r = 0.0)\n"
-            "  Output 4: answered 248 (Wrong, r = 0.0)\n"
-            "Group Mean = 0.5, Std = 0.5.\n"
-            "Advantage for 1 & 2: (1.0 - 0.5) / 0.5 = +1.0 (reinforced!).\n"
-            "Advantage for 3 & 4: (0.0 - 0.5) / 0.5 = -1.0 (penalized!)."
-        ),
-        code_snippet=(
-            "import torch\n\n"
-            "def compute_grpo_advantages(rewards, eps=1e-8):\n"
-            "    # rewards: [BatchSize, GroupSize]\n"
-            "    mean = rewards.mean(dim=-1, keepdim=True)\n"
-            "    std = rewards.std(dim=-1, keepdim=True)\n"
-            "    advantages = (rewards - mean) / (std + eps)\n"
-            "    return advantages\n\n"
-            "# Example:\n"
-            "rewards = torch.tensor([[1.0, 1.0, 0.0, 0.0]])\n"
-            "adv = compute_grpo_advantages(rewards)\n"
-            "print('Computed group-relative advantages:', adv.tolist())\n"
-            "# [[1.0, 1.0, -1.0, -1.0]]"
-        ),
-        nexus_citations=[
-            LabCitation(
-                title="Pretraining LLM",
-                chapter="Chapter 9: Reinforcement Learning and Reasoning Models (R1 / GRPO)",
-                category="ai-books",
-                relevance="Direct derivation of GRPO advantage formulation and rule-based rewards.",
-            ),
-            LabCitation(
-                title="Agent Quality",
-                chapter="Section 4: Verifiable Execution Rewards in Self-Correction Loops",
-                category="ai-books",
-                relevance="Designing test suites and syntax validators for rule-based reward generation.",
-            ),
-        ],
-    ),
-    # ─── Mathematical Foundations ─────────────────────────────────────────────────
-    LabConcept(
-        id="attention-variance-proof",
-        title="Proof: Attention Dot-Product Variance Scales with Dimension",
-        paradigm="foundations",
-        summary="Step-by-step statistical derivation proving why unscaled dot products explode with variance d_k, causing softmax saturation.",
-        tensor_flow=(
-            "Let q, k in R^{d_k} be random vectors whose components are independent random variables:\n"
-            "  E[q_i] = 0, Var(q_i) = 1\n"
-            "  E[k_i] = 0, Var(k_i) = 1\n"
-            "Inner product S = sum_{i=1}^{d_k} (q_i * k_i)\n"
-            "Mean:\n"
-            "  E[S] = sum E[q_i * k_i] = sum E[q_i] * E[k_i] = 0\n"
-            "Variance:\n"
-            "  Var(q_i * k_i) = E[(q_i * k_i)^2] - (E[q_i * k_i])^2\n"
-            "                 = E[q_i^2] * E[k_i^2] - 0 = (1) * (1) = 1\n"
-            "Sum of d_k independent terms:\n"
-            "  Var(S) = sum_{i=1}^{d_k} Var(q_i * k_i) = d_k * 1 = d_k!\n"
-            "Standard deviation:\n"
-            "  StdDev(S) = sqrt(d_k)\n"
-            "Therefore, dividing S by sqrt(d_k) normalizes Var(S / sqrt(d_k)) = 1."
-        ),
-        formula=r"\mathrm{Var}\left( \sum_{i=1}^{d_k} q_i k_i \right) = \sum_{i=1}^{d_k} \mathrm{Var}(q_i k_i) = d_k \implies \mathrm{Var}\left( \frac{1}{\sqrt{d_k}} \sum_{i=1}^{d_k} q_i k_i \right) = \frac{d_k}{(\sqrt{d_k})^2} = 1",
-        variables={
-            "q_i, k_i": "Scalar components of Query and Key vectors at feature index i",
-            "d_k": "Head dimension (e.g. 64 or 128)",
-            "Var(X)": "Statistical variance measure of dispersion from the mean",
-            "1/sqrt(d_k)": "Exact scaling factor restoring unit variance prior to softmax",
-        },
-        math_explanation=(
-            "When random variables are summed, their variances add linearly. "
-            "A 128-dimensional dot product has 128 times the variance of a 1-dimensional product. "
-            "The softmax function contains exp(z). When inputs have standard deviation sqrt(128) approx 11.3, "
-            "a value at +2 standard deviations equals +22.6, while a value at -1 standard deviation is -11.3. "
-            "exp(22.6) = 6.5 * 10^9, whereas exp(-11.3) = 1.2 * 10^-5. Softmax produces a one-hot distribution [1.0, 0, 0...], "
-            "where the derivative softmax'(z) = s_i * (1 - s_i) becomes 1.0 * (1 - 1.0) = 0. Gradients vanish completely."
-        ),
-        numerical_example=(
-            "Empirical verification:\n"
-            "1,000,000 random dot products with d_k = 64.\n"
-            "Unscaled: Sample variance = 64.08, StdDev = 8.00.\n"
-            "Scaled by 1/8: Sample variance = 1.001, StdDev = 1.00.\n"
-            "The division by sqrt(d_k) is mathematically exact and optimal."
-        ),
-        code_snippet=(
-            "import torch\n\n"
-            "d_k = 64\n"
-            "samples = 100_000\n"
-            "q = torch.randn(samples, d_k)\n"
-            "k = torch.randn(samples, d_k)\n"
-            "unscaled_dot = (q * k).sum(dim=-1)\n"
-            "scaled_dot = unscaled_dot / (d_k ** 0.5)\n\n"
-            "print('Theoretical unscaled variance: 64.0')\n"
-            "print(f'Empirical unscaled variance:   {unscaled_dot.var().item():.3f}')\n"
-            "print(f'Empirical scaled variance:     {scaled_dot.var().item():.3f}')"
-        ),
-        nexus_citations=[
-            LabCitation(
-                title="Foundation of LLM",
-                chapter="Section 2.4: Mathematical Derivation of Scaled Attention",
-                category="ai-books",
-                relevance="Formal proof of dot-product variance and softmax gradient saturation.",
+                title="Generative AI in Action",
+                chapter="Chapter 6: Diffusion Models — Mathematics of Forward and Reverse SDEs",
+                category="AI_and_Machine_Learning",
+                relevance="Step-by-step mathematical derivation of Gaussian transition kernels and noise schedules.",
             ),
         ],
     ),
@@ -725,4 +1001,3 @@ def search_concepts(query: str) -> list[dict[str, Any]]:
                 }
             )
     return matches
-

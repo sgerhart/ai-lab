@@ -3,7 +3,7 @@
   let paradigms = [];
   let concepts = [];
   let activeParadigm = "all";
-  let activeConceptId = "self-attention";
+  let activeConceptId = "vector-geometry-cosine";
   let conversationHistory = [];
 
   const paradigmListEl = document.getElementById("paradigmList");
