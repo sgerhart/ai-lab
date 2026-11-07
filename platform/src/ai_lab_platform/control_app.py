@@ -315,17 +315,20 @@ def _grounded_chat(
 
         turn = GroundedTurn(prompt=augmented_prompt)
         pos_info = ""
-        if chapter_title and page_num:
+        is_placeholder_ch = not chapter_title or chapter_title.strip().lower() in ("start", "beginning", "document", "cover", "title")
+        if not is_placeholder_ch and page_num:
             pos_info = f" Steven is currently reading Chapter: '{chapter_title}' (Page {page_num})."
-        elif chapter_title:
+        elif not is_placeholder_ch:
             pos_info = f" Steven is currently reading Chapter: '{chapter_title}'."
-        elif page_num:
+        elif page_num and page_num > 1:
             pos_info = f" Steven is currently reading at Page {page_num}."
 
         system = (
             f"You are Steven Gerhart's AI Study Assistant in Knowledge Nexus for {book_title or 'this book'}.{pos_info} "
             "Help Steven thoroughly master the technical material. "
-            "When book excerpts are provided, ground your answer directly and accurately in the book's text and cite specific chapters, sections, and page numbers."
+            "You have full access to the book excerpts provided in the prompt context. "
+            "When book excerpts are provided, ground your answer directly and accurately in the book's text and cite specific chapters, sections, and page numbers. "
+            "Never claim you lack access to a chapter when excerpts from that chapter are provided in the prompt."
         )
         return turn, system
 
@@ -3939,11 +3942,21 @@ def create_control_app(
         _gate(request, authorization)
         from .nexus_study import get_book_structure
 
-        if not path.strip():
+        clean_path = path.strip()
+        if not clean_path:
             raise HTTPException(status_code=400, detail="path parameter required")
-        res = get_book_structure(path.strip())
+        res = get_book_structure(clean_path)
         if not res:
             raise HTTPException(status_code=404, detail="book not found")
+
+        # Asynchronously ensure vector embeddings exist in Qdrant for study RAG
+        try:
+            import threading
+            from .nexus_rag import ensure_book_indexed
+            threading.Thread(target=ensure_book_indexed, args=(clean_path,), daemon=True).start()
+        except Exception:
+            pass
+
         return res
 
     @app.get("/v1/nexus/library")

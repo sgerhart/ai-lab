@@ -226,6 +226,38 @@ def chunk_pdf(pdf_path: Path, rel_path: str, title: str) -> list[NexusBookChunk]
     return chunks
 
 
+def _discover_qdrant_env() -> tuple[str, str]:
+    """Discover Qdrant URL and API key from environment or local config files."""
+    url = os.environ.get("QDRANT_URL", "").strip()
+    api_key = os.environ.get("QDRANT_API_KEY", "").strip()
+
+    if not url or not api_key:
+        candidate_files = [
+            Path.home() / ".ai-lab" / "start-control-plane.sh",
+            Path.home() / ".ai-lab" / "compose.local.env",
+            Path(__file__).resolve().parents[3] / "infrastructure" / "compose.local.env",
+        ]
+        for fpath in candidate_files:
+            if not fpath.is_file():
+                continue
+            try:
+                content = fpath.read_text(encoding="utf-8", errors="ignore")
+                if not url:
+                    m_url = re.search(r'(?:export\s+)?QDRANT_URL=["\']?([^"\'\s\n]+)', content)
+                    if m_url:
+                        url = m_url.group(1).strip()
+                if not api_key:
+                    m_key = re.search(r'(?:export\s+)?QDRANT_API_KEY=["\']?([^"\'\s\n]+)', content)
+                    if m_key:
+                        api_key = m_key.group(1).strip()
+            except Exception:
+                pass
+            if url and api_key:
+                break
+
+    return url or "http://127.0.0.1:6333", api_key
+
+
 class NexusRagStore:
     """Qdrant client for Knowledge Nexus library books collection."""
 
@@ -237,8 +269,9 @@ class NexusRagStore:
         collection: str = COLLECTION_NAME,
         timeout: float = 8.0,
     ) -> None:
-        self.url = (url or os.environ.get("QDRANT_URL", "http://127.0.0.1:6333")).rstrip("/")
-        self.api_key = api_key or os.environ.get("QDRANT_API_KEY", "")
+        d_url, d_key = _discover_qdrant_env()
+        self.url = (url or d_url).rstrip("/")
+        self.api_key = api_key if api_key is not None else d_key
         self.collection = collection
         self.timeout = timeout
         self._ensured = False
@@ -405,6 +438,34 @@ def index_book(rel_path: str, store: NexusRagStore | None = None) -> int:
         return 0
 
     return s.upsert_chunks(chunks)
+
+
+def ensure_book_indexed(rel_path: str, store: NexusRagStore | None = None) -> int:
+    """Ensure a book is indexed in Qdrant; if not already present, index it."""
+    s = store or NexusRagStore()
+    clean_rel = rel_path.strip('"\'').lstrip("/\\")
+
+    try:
+        if s.ensure_collection(recreate_if_mismatched=False):
+            body = {
+                "filter": {
+                    "must": [
+                        {
+                            "key": "rel_path",
+                            "match": {"value": clean_rel},
+                        }
+                    ]
+                },
+                "limit": 1,
+            }
+            res = s._request("POST", f"/collections/{s.collection}/points/scroll", body)
+            points = res.get("result", {}).get("points", [])
+            if points:
+                return len(points)
+    except Exception:
+        pass
+
+    return index_book(rel_path, store=s)
 
 
 def index_served_documents(store: NexusRagStore | None = None) -> dict[str, int]:

@@ -32,6 +32,28 @@ class NexusStudyTests(unittest.TestCase):
             self.assertIn("Code reviews improve software quality", res)
             self.assertIn("Chapter 1", res)
 
+    def test_search_epub_ch_naming_variants(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            epub_path = Path(tmp) / "Defensive_Security.epub"
+            with zipfile.ZipFile(epub_path, "w") as z:
+                z.writestr(
+                    "OEBPS/toc.ncx",
+                    """<?xml version="1.0" encoding="UTF-8"?>
+                    <ncx version="2005-1">
+                      <navMap>
+                        <navPoint id="np1"><navLabel><text>18. Vulnerability Management</text></navLabel><content src="ch18.html#vulnerability_management"/></navPoint>
+                      </navMap>
+                    </ncx>""",
+                )
+                z.writestr(
+                    "OEBPS/ch18.html",
+                    "<html><body><h1>Chapter 18. Vulnerability Management</h1><p>A vulnerability management program allows you to assess, log, and remediate vulnerabilities within your environment.</p></body></html>",
+                )
+
+            res = _search_epub(epub_path, "Can you summarize Chapter 18 for me?")
+            self.assertIn("vulnerability management program allows you to assess", res)
+            self.assertIn("Chapter 18", res)
+
     def test_search_epub_by_keywords(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             epub_path = Path(tmp) / "Test_Book.epub"
@@ -69,6 +91,29 @@ class NexusStudyTests(unittest.TestCase):
             self.assertIn("Part 1 Code review foundations", res)
             self.assertIn("Part 2 Elevated code review essentials", res)
             self.assertIn("1 The significance of code reviews", res)
+
+    def test_extract_book_context_prioritizes_query_chapter_over_placeholder_state(self) -> None:
+        from unittest.mock import patch
+        from ai_lab_platform.nexus_study import extract_book_context
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            pdf_path = tmp_path / "Handbook.pdf"
+            epub_path = tmp_path / "Handbook.epub"
+
+            # Create dummy pdf file and sibling epub
+            pdf_path.write_bytes(b"%PDF-1.5 dummy")
+            with zipfile.ZipFile(epub_path, "w") as z:
+                z.writestr(
+                    "OEBPS/ch18.html",
+                    "<html><body><h1>Chapter 18. Vulnerability Management</h1><p>A vulnerability management program is essential.</p></body></html>",
+                )
+
+            with patch("ai_lab_platform.nexus_study.resolve_book_file", return_value=pdf_path):
+                # When user is on page 1 with placeholder chapter 'Start'
+                res = extract_book_context("dummy/Handbook.pdf", "Can you summarize Chapter 18 for me?", page=1, chapter="Start")
+                self.assertIn("Chapter 18", res)
+                self.assertIn("vulnerability management program is essential", res)
 
 
 class BookTitleFormatTests(unittest.TestCase):
