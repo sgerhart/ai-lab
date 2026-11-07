@@ -54,10 +54,338 @@ _CONCEPTS_LIST: list[LabConcept] = [
     # TIER 1: MATHEMATICAL & STATISTICAL FOUNDATIONS
     # ══════════════════════════════════════════════════════════════════════════════
     LabConcept(
-        id="vector-geometry-cosine",
-        title="Vector Spaces, Dot Products & Cosine Distance",
+        id="linear-algebra-scalars-vectors",
+        title="Linear Algebra 101: Scalars, Vectors & 2D Geometry",
         paradigm="foundations",
-        summary="High-dimensional coordinate geometry for token representations, semantic search, and attention routing.",
+        summary="The fundamental primitives of mathematics: scalars as magnitudes, vectors as directional arrows in 2D space, addition, scaling, and length.",
+        tensor_flow=(
+            "Scalars (Single Real Numbers):\n"
+            "  c ∈ ℝ (e.g. c = 2.5, a magnitude without direction)\n"
+            "2D Vectors (Arrows in a Cartesian Plane):\n"
+            "  v = [x, y] (e.g. [3, 2] = 3 steps right along X, 2 steps up along Y)\n"
+            "Elementary Geometric Operations:\n"
+            "  1. Vector Addition (Tip-to-Tail): [x1, y1] + [x2, y2] = [x1+x2, y1+y2]\n"
+            "  2. Scalar Multiplication: c · [x, y] = [c·x, c·y] (Stretch / shrink / flip)\n"
+            "  3. Length (Pythagorean Theorem): ||v||_2 = sqrt(x^2 + y^2)\n"
+            "  4. Unit Vector (Direction Only): v_hat = v / ||v||_2 (Length = 1.0)"
+        ),
+        formula=r"\mathbf{v} = \begin{bmatrix} x \\ y \end{bmatrix}, \quad \|\mathbf{v}\|_2 = \sqrt{x^2 + y^2}, \quad \hat{\mathbf{v}} = \frac{\mathbf{v}}{\|\mathbf{v}\|_2}",
+        variables={
+            "c": "A scalar: a single number representing magnitude (speed, temperature, loss value)",
+            "v": "A vector: an ordered list of numbers with both magnitude and direction",
+            "x, y": "Coordinates indicating horizontal and vertical displacement from the origin (0, 0)",
+            "||v||_2": "Euclidean length (L2 norm) calculated using the classic Pythagorean theorem (a^2 + b^2 = c^2)",
+            "v_hat": "Normalized unit vector of length exactly 1.0, preserving pure direction",
+        },
+        math_explanation=(
+            "A scalar is just a single number (e.g., speed = 60 mph, temperature = 72°F). It has magnitude, but no direction. "
+            "A vector is an ordered list of numbers with both magnitude and direction (e.g., velocity = 60 mph heading North-East). "
+            "In 2D space, a vector [x, y] represents an arrow starting at the origin (0, 0) and pointing to coordinate (x, y). "
+            "Vector addition is geometric: you place the tail of the second arrow at the tip of the first arrow (the tip-to-tail rule). "
+            "Scalar multiplication scales the arrow's length: multiplying by 2 doubles its length; multiplying by -1 flips its direction 180°. "
+            "Every advanced concept in AI—from 4096-dimensional word embeddings to deep transformer weights—is constructed by combining these two basic operations: scaling and adding."
+        ),
+        numerical_example=(
+            "Let arrow v1 = [3, 2] (3 steps right, 2 steps up) and arrow v2 = [1, 4] (1 step right, 4 steps up).\n"
+            "1. Vector Addition: v1 + v2 = [3+1, 2+4] = [4, 6]. The combined journey ends at coordinate (4, 6).\n"
+            "2. Scalar Multiplication: 2 × v1 = [2×3, 2×2] = [6, 4]. The arrow is now twice as long in the same direction.\n"
+            "3. Direction Reversal: -1 × v1 = [-3, -2]. The arrow flips 180° into the negative quadrant.\n"
+            "4. Length (Magnitude): ||v1|| = sqrt(3^2 + 2^2) = sqrt(9 + 4) = sqrt(13) ≈ 3.6055 units long.\n"
+            "5. Unit Vector: v1_hat = [3 / 3.6055, 2 / 3.6055] ≈ [0.8321, 0.5547].\n"
+            "   Verification: sqrt(0.8321^2 + 0.5547^2) = sqrt(0.6923 + 0.3077) = 1.0000."
+        ),
+        code_snippet=(
+            "import torch\n\n"
+            "# 1. Define two 2D vectors (arrows in space):\n"
+            "v1 = torch.tensor([3.0, 2.0])\n"
+            "v2 = torch.tensor([1.0, 4.0])\n\n"
+            "# 2. Vector addition (tip-to-tail combined displacement):\n"
+            "v_sum = v1 + v2  # tensor([4., 6.])\n"
+            "print(f'v1 + v2 = {v_sum.tolist()}')\n\n"
+            "# 3. Scalar multiplication (stretching by 2x):\n"
+            "v_scaled = 2.0 * v1  # tensor([6., 4.])\n"
+            "print(f'2 * v1 = {v_scaled.tolist()}')\n\n"
+            "# 4. Vector length (L2 norm via Pythagorean theorem):\n"
+            "length_v1 = torch.linalg.norm(v1)\n"
+            "print(f'Length of v1: {length_v1.item():.4f}')  # ~3.6055\n\n"
+            "# 5. Normalize to unit vector (length 1.0):\n"
+            "v1_hat = v1 / length_v1\n"
+            "print(f'Unit vector v1_hat: {v1_hat.tolist()}')\n"
+            "assert abs(torch.linalg.norm(v1_hat).item() - 1.0) < 1e-6"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 1: Linear Algebra — Vectors, Dot Products, and Coordinate Systems",
+                category="Data_Science",
+                relevance="First-principles tutorial on Cartesian coordinates, vector arithmetic, and geometric intuition.",
+            ),
+            LabCitation(
+                title="Mathematics for Machine Learning",
+                chapter="Chapter 2: Linear Algebra — Vector Spaces and Linear Independence",
+                category="AI_and_Machine_Learning",
+                relevance="Rigorous definitions of vector addition, scalar closure, and coordinate representations.",
+            ),
+        ],
+    ),
+    LabConcept(
+        id="matrix-transformations-101",
+        title="Linear Algebra 102: Matrices as Space Transformations",
+        paradigm="foundations",
+        summary="A matrix is not just a table of numbers: it is a machine that transforms space. How basis vectors i-hat and j-hat determine where every point lands.",
+        tensor_flow=(
+            "Standard Basis Vectors in 2D:\n"
+            "  i_hat = [1, 0] (unit step right along X-axis)\n"
+            "  j_hat = [0, 1] (unit step up along Y-axis)\n"
+            "Any Vector as Linear Combination:\n"
+            "  x = [x1, x2] = x1 * i_hat + x2 * j_hat\n"
+            "Matrix Transformation A:\n"
+            "  A = [ [a, b],\n"
+            "        [c, d] ]\n"
+            "  Column 1 [a, c] tells you where i_hat lands!\n"
+            "  Column 2 [b, d] tells you where j_hat lands!\n"
+            "Matrix-Vector Product A @ x:\n"
+            "  A @ x = x1 * [a, c] + x2 * [b, d] = [a*x1 + b*x2, c*x1 + d*x2]\n"
+            "Neural Network Linear Layer:\n"
+            "  y = W @ x + b (W transforms space, b shifts the origin)"
+        ),
+        formula=r"A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}, \quad A \begin{bmatrix} x \\ y \end{bmatrix} = x \begin{bmatrix} a \\ c \end{bmatrix} + y \begin{bmatrix} b \\ d \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}",
+        variables={
+            "i_hat, j_hat": "Standard unit basis vectors along the X and Y axes",
+            "A": "A 2x2 matrix representing a linear transformation of the 2D plane",
+            "Column 1 [a, c]^T": "The new landing coordinate of i-hat after the transformation",
+            "Column 2 [b, d]^T": "The new landing coordinate of j-hat after the transformation",
+            "x = [x, y]^T": "Any arbitrary input vector in the coordinate plane",
+            "A @ x": "The output coordinate after applying the transformation",
+            "y = Wx + b": "The fundamental linear layer of all neural networks",
+        },
+        math_explanation=(
+            "Do not think of a matrix as just a spreadsheet of numbers. Geometrically, a matrix is a transformation that warps space. "
+            "Because the transformation is linear, grid lines remain straight and parallel, and the origin (0, 0) never moves. "
+            "To know where every single point in the infinite plane moves, you only need to track where two tiny unit vectors land: "
+            "i-hat = [1, 0] (one step right) and j-hat = [0, 1] (one step up). "
+            "The first column of matrix A is literally where i-hat lands. The second column is where j-hat lands. "
+            "When you multiply A times [x, y], you take x copies of the transformed i-hat plus y copies of the transformed j-hat. "
+            "In deep learning, every linear layer y = Wx + b is doing this exact geometric operation: rotating, stretching, and shearing the input data into a new space where categories are easily separated."
+        ),
+        numerical_example=(
+            "Let's construct a transformation that rotates 2D space 90 degrees counter-clockwise.\n"
+            "1. Where does i-hat [1, 0] land? Rotating 90° CCW points it straight up: [0, 1]. This is Column 1.\n"
+            "2. Where does j-hat [0, 1] land? Rotating 90° CCW points it to the left: [-1, 0]. This is Column 2.\n"
+            "3. Assemble the rotation matrix: R = [[0, -1], [1, 0]].\n"
+            "4. Now transform an arbitrary vector x = [3, 2] (3 units right, 2 units up):\n"
+            "   R @ x = 3 × [0, 1] + 2 × [-1, 0] = [0, 3] + [-2, 0] = [-2, 3].\n"
+            "5. Verification: If you take graph paper and rotate point (3, 2) 90° counter-clockwise, it lands precisely at (-2, 3)!\n"
+            "   Matrix multiplication successfully predicted the exact geometric motion."
+        ),
+        code_snippet=(
+            "import torch\n"
+            "import torch.nn as nn\n\n"
+            "# 1. Define a 90-degree counter-clockwise rotation matrix:\n"
+            "# Col 1 = where [1, 0] lands -> [0, 1]\n"
+            "# Col 2 = where [0, 1] lands -> [-1, 0]\n"
+            "R = torch.tensor([[0.0, -1.0],\n"
+            "                  [1.0,  0.0]])\n\n"
+            "# 2. Transform the vector x = [3, 2]:\n"
+            "x = torch.tensor([3.0, 2.0])\n"
+            "x_rotated = R @ x  # tensor([-2., 3.])\n"
+            "print(f'Point (3, 2) rotated 90° CCW: {x_rotated.tolist()}')\n\n"
+            "# 3. In PyTorch, an nn.Linear layer is this exact matrix transformation:\n"
+            "linear = nn.Linear(in_features=2, out_features=2, bias=False)\n"
+            "linear.weight.data = R\n"
+            "output = linear(x)\n"
+            "print(f'nn.Linear output: {output.tolist()}')\n"
+            "assert torch.allclose(output, torch.tensor([-2.0, 3.0]))"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 1: Linear Algebra — Matrix Transformations and Basis Vectors",
+                category="Data_Science",
+                relevance="Detailed geometric illustrations of basis vectors and spatial coordinate changes.",
+            ),
+            LabCitation(
+                title="Deep Learning",
+                chapter="Chapter 2: Linear Algebra — Matrices, Linear Transformations, and Inverses",
+                category="AI_and_Machine_Learning",
+                relevance="Foundational textbook explanation of how neural network layers parameterize linear maps.",
+            ),
+        ],
+    ),
+    LabConcept(
+        id="dot-product-101",
+        title="Linear Algebra 103: The Dot Product & Geometric Projections",
+        paradigm="foundations",
+        summary="Why multiplying two vectors and summing pairwise products measures directional alignment, how projection works, and how artificial neurons fire.",
+        tensor_flow=(
+            "Input Vectors in 2D Space:\n"
+            "  a = [a1, a2]\n"
+            "  b = [b1, b2]\n"
+            "Algebraic Definition:\n"
+            "  a · b = (a1 * b1) + (a2 * b2)\n"
+            "Geometric Definition:\n"
+            "  a · b = ||a||_2 * ||b||_2 * cos(θ)\n"
+            "Geometric Projection:\n"
+            "  Length of shadow of 'a' onto line of 'b' = ||a|| * cos(θ)\n"
+            "Three Core Geometric Cases:\n"
+            "  θ = 0°   --> cos(θ) = +1.0 (Parallel, max alignment)\n"
+            "  θ = 90°  --> cos(θ) =  0.0 (Perpendicular / Orthogonal, zero correlation)\n"
+            "  θ = 180° --> cos(θ) = -1.0 (Opposite, maximum disagreement)\n"
+            "The Artificial Neuron:\n"
+            "  Activation = σ(w · x + b)"
+        ),
+        formula=r"\mathbf{a} \cdot \mathbf{b} = a_1 b_1 + a_2 b_2 = \|\mathbf{a}\|_2 \|\mathbf{b}\|_2 \cos(\theta), \quad \cos(\theta) = \frac{\mathbf{a} \cdot \mathbf{b}}{\|\mathbf{a}\|_2 \|\mathbf{b}\|_2}",
+        variables={
+            "a, b": "Two vectors in the same coordinate space",
+            "a · b": "The scalar dot product (inner product)",
+            "||a||_2, ||b||_2": "Euclidean lengths (magnitudes) of the two vectors",
+            "θ": "Angle between the two vectors (0° to 180°)",
+            "cos(θ)": "Directional similarity score ranging from -1.0 to +1.0",
+            "w · x + b": "Artificial neuron: weight vector w dotted with input feature vector x",
+        },
+        math_explanation=(
+            "Why do we multiply matching coordinates and add them together? "
+            "Geometrically, the dot product projects one arrow onto another. Imagine a light shining directly perpendicular to vector b: "
+            "the shadow of vector a falling along vector b has length ||a|| cos(θ). "
+            "Multiplying this shadow length by the length of vector b gives the dot product: a · b = ||a|| ||b|| cos(θ). "
+            "This reveals three crucial geometric insights: "
+            "1. When two vectors point in the exact same direction (θ = 0°), cos(0°) = 1, giving the maximum possible positive value. "
+            "2. When two vectors are perpendicular (θ = 90°), vector a casts NO shadow onto vector b at all! The dot product is exactly 0. In AI, this means the two features share zero correlation. "
+            "3. When they point in opposite directions (θ = 180°), the dot product is negative. "
+            "In an artificial neuron, the inputs x are dotted with weights w: if input features align with the weights, the neuron fires strongly; if they are orthogonal, the neuron ignores them."
+        ),
+        numerical_example=(
+            "Let vector a = [3.0, 0.0] (length 3, lies along the horizontal X-axis) and vector b = [2.0, 2.0] (length sqrt(2^2 + 2^2) = sqrt(8) ≈ 2.828, at a 45° angle).\n"
+            "1. Algebraic Dot Product: a · b = (3.0 × 2.0) + (0.0 × 2.0) = 6.0 + 0.0 = 6.0.\n"
+            "2. Geometric Lengths: ||a|| = 3.0, ||b|| = 2.8284.\n"
+            "3. Cosine of Angle: cos(θ) = (a · b) / (||a|| × ||b||) = 6.0 / (3.0 × 2.8284) = 6.0 / 8.4853 = 0.7071.\n"
+            "4. Recover Angle: arccos(0.7071) = 45.0°! The algebraic calculation matches the geometric angle perfectly.\n"
+            "5. Orthogonal Test: Let c = [0.0, 4.0] (points straight up at 90° to a):\n"
+            "   a · c = (3.0 × 0.0) + (0.0 × 4.0) = 0.0. cos(θ) = 0 / 12 = 0.0 (θ = 90°). Exactly zero shadow, completely independent."
+        ),
+        code_snippet=(
+            "import math\n"
+            "import torch\n\n"
+            "# 1. Define vectors a along X-axis, b at 45°, and c perpendicular at 90°:\n"
+            "a = torch.tensor([3.0, 0.0])\n"
+            "b = torch.tensor([2.0, 2.0])\n"
+            "c = torch.tensor([0.0, 4.0])\n\n"
+            "# 2. Compute dot products:\n"
+            "dot_ab = torch.dot(a, b)  # (3*2) + (0*2) = 6.0\n"
+            "dot_ac = torch.dot(a, c)  # (3*0) + (0*4) = 0.0 (Orthogonal!)\n\n"
+            "print(f'Dot product a · b: {dot_ab.item():.1f}')\n"
+            "print(f'Dot product a · c (orthogonal): {dot_ac.item():.1f}')\n\n"
+            "# 3. Calculate angle between a and b:\n"
+            "cos_theta = dot_ab / (torch.linalg.norm(a) * torch.linalg.norm(b))\n"
+            "angle_deg = math.degrees(math.acos(cos_theta.item()))\n"
+            "print(f'Angle between a and b: {angle_deg:.1f}°')  # 45.0°\n"
+            "assert abs(angle_deg - 45.0) < 1e-4\n"
+            "assert dot_ac.item() == 0.0"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 1: The Dot Product and Orthogonality",
+                category="Data_Science",
+                relevance="First-principles geometric proofs of dot products, shadows, and angle cosine formulas.",
+            ),
+            LabCitation(
+                title="Mathematics for Machine Learning",
+                chapter="Chapter 3: Analytic Geometry — Norms, Angles, and Inner Products",
+                category="AI_and_Machine_Learning",
+                relevance="Rigorous inner product definitions and geometric interpretations for machine learning.",
+            ),
+        ],
+    ),
+    LabConcept(
+        id="statistics-101",
+        title="Statistics 101: Mean, Variance, Std Deviation & Normal Distribution",
+        paradigm="foundations",
+        summary="The statistical foundation of machine learning: expected values, spread, the Gaussian bell curve, and how activations are standardized.",
+        tensor_flow=(
+            "Sample Dataset of N Observations:\n"
+            "  x = [x1, x2, ..., xN]\n"
+            "Mean (Expected Value / Center of Mass):\n"
+            "  μ = (1/N) * sum(x_i)\n"
+            "Deviations from Center:\n"
+            "  (x_i - μ)  [Note: sum of raw deviations is always 0!]\n"
+            "Variance (Mean Squared Deviation):\n"
+            "  σ^2 = (1/N) * sum((x_i - μ)^2)\n"
+            "Standard Deviation (Spread in original units):\n"
+            "  σ = sqrt(σ^2)\n"
+            "Standard Normal Distribution N(0, 1):\n"
+            "  68.2% of samples fall within μ ± 1σ\n"
+            "  95.4% of samples fall within μ ± 2σ\n"
+            "Standardization (Z-Score / LayerNorm):\n"
+            "  z = (x - μ) / σ  --> Centers data at Mean=0, Variance=1"
+        ),
+        formula=r"\mu = \frac{1}{N}\sum_{i=1}^N x_i, \quad \sigma^2 = \frac{1}{N}\sum_{i=1}^N (x_i - \mu)^2, \quad \sigma = \sqrt{\sigma^2}, \quad z_i = \frac{x_i - \mu}{\sigma}",
+        variables={
+            "N": "Number of observations or data points in the sample",
+            "x_i": "An individual data point or neural network activation value",
+            "μ (Mu)": "Mean (expected value): the arithmetic average and center of gravity",
+            "σ^2 (Sigma Squared)": "Variance: the average squared distance from the mean",
+            "σ (Sigma)": "Standard deviation: the spread of data expressed in the original units",
+            "z_i": "Standardized Z-score: how many standard deviations a point is from the mean",
+            "N(0, 1)": "Standard Gaussian (Normal) distribution with zero mean and unit variance",
+        },
+        math_explanation=(
+            "Before jumping into entropy or KL divergence, we must understand how numbers scatter. "
+            "The Mean (μ) tells you where the center of the distribution sits. "
+            "The Variance (σ²) measures how widely the data is scattered around that center. We square the differences (x - μ)² so that negative and positive deviations don't cancel each other out, and to penalize large outliers. "
+            "Because variance is in squared units (e.g. 'squared dollars' or 'squared tokens'), we take the square root to get the Standard Deviation (σ), which returns the spread to the original units. "
+            "The Normal (Gaussian) distribution emerges naturally whenever many independent random factors combine (the Central Limit Theorem). "
+            "In deep learning, every weight initialization scheme (like Xavier or Kaiming He initialization) carefully tunes σ so that signals neither explode to infinity nor vanish to zero as they pass through 50 transformer layers."
+        ),
+        numerical_example=(
+            "Consider a tiny batch of 4 token activations: x = [2.0, 4.0, 4.0, 6.0].\n"
+            "1. Mean: μ = (2.0 + 4.0 + 4.0 + 6.0) / 4 = 16.0 / 4 = 4.0.\n"
+            "2. Deviations from Mean (x - μ): [2 - 4, 4 - 4, 4 - 4, 6 - 4] = [-2.0, 0.0, 0.0, +2.0]. (Notice their sum is 0!)\n"
+            "3. Squared Deviations: [(-2)^2, 0^2, 0^2, 2^2] = [4.0, 0.0, 0.0, 4.0].\n"
+            "4. Variance (σ²): Sum = 8.0. Average = 8.0 / 4 = 2.0.\n"
+            "5. Standard Deviation (σ): sqrt(2.0) ≈ 1.4142.\n"
+            "6. Standardization (Z-score normalization like in LayerNorm):\n"
+            "   z = (x - μ) / σ = [-2/1.4142, 0, 0, 2/1.4142] = [-1.4142, 0.0, 0.0, +1.4142].\n"
+            "   The normalized activations now have Mean = 0.0 and Variance = 1.0!"
+        ),
+        code_snippet=(
+            "import torch\n\n"
+            "# 1. A batch of 4 activations:\n"
+            "x = torch.tensor([2.0, 4.0, 4.0, 6.0])\n\n"
+            "# 2. Calculate mean and variance:\n"
+            "mu = torch.mean(x)\n"
+            "var = torch.var(x, unbiased=False)  # Population variance (divide by N)\n"
+            "std = torch.std(x, unbiased=False)\n\n"
+            "print(f'Mean (μ): {mu.item():.2f}')       # 4.00\n"
+            "print(f'Variance (σ²): {var.item():.2f}')  # 2.00\n"
+            "print(f'Std Dev (σ): {std.item():.4f}')   # 1.4142\n\n"
+            "# 3. Standardize (Z-score normalization):\n"
+            "z = (x - mu) / std\n"
+            "print(f'Standardized z-scores: {z.tolist()}')\n"
+            "print(f'New Mean: {torch.mean(z).item():.2f}, New Std: {torch.std(z, unbiased=False).item():.2f}')\n"
+            "assert abs(torch.mean(z).item()) < 1e-6\n"
+            "assert abs(torch.std(z, unbiased=False).item() - 1.0) < 1e-6"
+        ),
+        nexus_citations=[
+            LabCitation(
+                title="Essential Math for Data Science",
+                chapter="Chapter 2: Probability and Statistics",
+                category="Data_Science",
+                relevance="Complete treatment of descriptive statistics, normal distributions, and variance.",
+            ),
+            LabCitation(
+                title="Practical Statistics for Data Scientists",
+                chapter="Chapter 1: Exploratory Data Analysis — Estimates of Location and Variability",
+                category="Data_Science",
+                relevance="Hands-on guide to mean, standard deviation, and data distributions.",
+            ),
+        ],
+    ),
+    LabConcept(
+        id="vector-geometry-cosine",
+        title="Vector Spaces & Cosine Distance in AI (From 2D to High Dimensions)",
+        paradigm="foundations",
+        summary="Scaling vector geometry from 2D coordinates to 4096-dimensional embeddings, semantic document search in Qdrant, and attention routing.",
         tensor_flow=(
             "Inputs:\n"
             "  u: [Batch, HiddenDim] (e.g. Query Embedding [1, 4096])\n"

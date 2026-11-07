@@ -3,7 +3,7 @@
   let paradigms = [];
   let concepts = [];
   let activeParadigm = "all";
-  let activeConceptId = "vector-geometry-cosine";
+  let activeConceptId = "linear-algebra-scalars-vectors";
   let conversationHistory = [];
 
   const paradigmListEl = document.getElementById("paradigmList");
