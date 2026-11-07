@@ -185,7 +185,7 @@ Do not treat this index as authorized implementation or deploy.
 | [IWO-126](../work-orders/IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | FEAT-022 | **Complete** (unit-tested) |
 | [IWO-127](../work-orders/IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Frontier model telemetry & cost estimation | FEAT-011 | **Complete** (unit-tested) |
 | [IWO-128](../work-orders/IWO-128-coding-training-assistant.md) | Coding Training Console Assistant & Chatbot Copilot | FEAT-024 | **Complete** (unit-tested) |
-| [IWO-129](../work-orders/IWO-129-ai-laboratory-and-staff-scientist.md) | AI Laboratory Workbench & Staff Scientist Peer Agent | FEAT-025 | **Draft** |
+| [IWO-129](../work-orders/IWO-129-ai-laboratory-and-staff-scientist.md) | AI Laboratory Workbench & Staff Scientist Peer Agent | FEAT-025 | **Complete** (unit-tested; awaiting deploy) |
 
 ## Historical phase work orders
 

@@ -115,6 +115,7 @@ AGENTS_HTML = Path(__file__).resolve().parent / "web" / "agents.html"
 LAB_HTML = Path(__file__).resolve().parent / "web" / "lab.html"
 SECRETS_HTML = Path(__file__).resolve().parent / "web" / "secrets.html"
 HELP_HTML = Path(__file__).resolve().parent / "web" / "help.html"
+LABORATORY_HTML = Path(__file__).resolve().parent / "web" / "laboratory.html"
 CLASSROOM_HTML = Path(__file__).resolve().parent / "web" / "classroom.html"
 STEWARD_HTML = Path(__file__).resolve().parent / "web" / "steward.html"
 WEB_DIR = Path(__file__).resolve().parent / "web"
@@ -406,6 +407,12 @@ class ClassroomPostIn(BaseModel):
     lesson: dict[str, Any] = Field(default_factory=dict)
     discussion: list[Any] = Field(default_factory=list)
     image_png: str = ""
+
+
+class ScientistChatIn(BaseModel):
+    message: str = ""
+    concept_id: str | None = None
+    history: list[dict[str, str]] = Field(default_factory=list)
 
 
 class PresentationReviseIn(BaseModel):
@@ -777,6 +784,61 @@ def create_control_app(
         return HTMLResponse(
             STEWARD_HTML.read_text(encoding="utf-8"),
             headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/laboratory")
+    def laboratory_page() -> HTMLResponse:
+        """AI Laboratory workbench and Staff Scientist peer console."""
+        return HTMLResponse(
+            LABORATORY_HTML.read_text(encoding="utf-8"),
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/v1/lab/catalog")
+    def lab_catalog(
+        paradigm: str | None = None,
+    ) -> dict[str, Any]:
+        """Return paradigms and concepts in the laboratory catalog."""
+        from .lab_workbench import list_concepts, list_paradigms
+
+        return {
+            "paradigms": list_paradigms(),
+            "concepts": list_concepts(paradigm),
+        }
+
+    @app.get("/v1/lab/concept/{concept_id}")
+    def lab_concept_detail(
+        concept_id: str,
+    ) -> dict[str, Any]:
+        """Return full workbench payload for a concept."""
+        from .lab_workbench import get_concept
+
+        concept = get_concept(concept_id)
+        if not concept:
+            raise HTTPException(status_code=404, detail=f"Concept not found: {concept_id}")
+        return concept
+
+    @app.post("/v1/lab/scientist/chat")
+    def lab_scientist_chat(
+        request: Request,
+        body: ScientistChatIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Collaborative dialogue turn with the Staff Scientist."""
+        _gate(request, authorization)
+        from .scientist_agent import scientist_chat
+
+        complete_fn = None
+        if hasattr(app.state, "model_router") and app.state.model_router is not None:
+            from .classroom import router_complete
+
+            complete_fn = lambda prompt: router_complete(app.state.model_router, prompt)
+
+        return scientist_chat(
+            body.message,
+            concept_id=body.concept_id,
+            history=body.history,
+            complete_fn=complete_fn,
         )
 
     @app.get("/classroom")

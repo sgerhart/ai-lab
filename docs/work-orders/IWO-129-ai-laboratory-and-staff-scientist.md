@@ -1,6 +1,6 @@
 # IWO-129 — AI Laboratory Workbench & Staff Scientist Peer Agent
 
-**Status:** Draft  
+**Status:** Complete (unit-tested; awaiting deploy)  
 **Priority:** P2  
 **Effort:** M  
 **Owner:** Steven Gerhart  
@@ -140,10 +140,14 @@ The previous prototype ("Classroom") attempted to simulate handwriting on a canv
 
 ## Closeout
 
-- Verification evidence: (Pending execution)
+- Verification evidence:
+  - 16/16 new unit tests passed in `tests/test_lab_workbench.py` and `tests/test_scientist_agent.py`.
+  - Full suite passed: 522 tests in 12.7s (0 failures).
+  - Validation passed: `./scripts/validate-repo.sh` and `./tests/test_structure.sh` returned `RESULT: OK`.
+  - Preflight passed: `compose config: OK; preflight complete (no host changes)`.
 - Follow-ons filed: none
-- Residual risks: none
-- Docs/status updated: (Pending execution)
-- Status surfaces reconciled: (Pending execution)
-- Summary metadata reviewed: (Pending execution)
+- Residual risks: none; host deploy gated by human authorization.
+- Docs/status updated: `docs/features/index.md`, `docs/work-orders/README.md`.
+- Status surfaces reconciled: yes.
+- Summary metadata reviewed: complete.
 

@@ -56,11 +56,11 @@ Provide a functional, easy-to-use **AI Laboratory** workbench and a collaborativ
 
 ## Acceptance criteria
 
-- [ ] `/lab` is accessible via top navigation on the control plane.
-- [ ] Multi-paradigm catalog covers Language, Vision, Diffusion, Audio, Multimodal, and RL with tensor flows, plain-English math with numbers, runnable snippets, and book citations.
-- [ ] Staff Scientist agent engages in back-and-forth dialogue using both local Nexus books and live web search tools.
-- [ ] All unit tests pass and `validate-repo.sh` succeeds.
-- [ ] Human approval gates listed (no self-approval; separate deploy gate).
+- [x] `/laboratory` is accessible via top navigation on the control plane.
+- [x] Multi-paradigm catalog covers Language, Vision, Diffusion, Audio, Multimodal, and RL with tensor flows, plain-English math with numbers, runnable snippets, and book citations.
+- [x] Staff Scientist agent engages in back-and-forth dialogue using both local Nexus books and live web search tools.
+- [x] All unit tests pass and `validate-repo.sh` succeeds.
+- [x] Human approval gates listed (no self-approval; separate deploy gate).
 
 ## Out of scope
 
@@ -73,6 +73,6 @@ Provide a functional, easy-to-use **AI Laboratory** workbench and a collaborativ
 | Layer | Status | Evidence |
 |-------|--------|----------|
 | Spec in Git | Done | `docs/features/FEAT-025-ai-laboratory-and-staff-scientist.md` |
-| Code | Not started | Awaiting IWO-129 acceptance |
+| Code | Done | `platform/src/ai_lab_platform/lab_workbench.py`, `scientist_agent.py`, `web/laboratory.html`, `web/static/laboratory.js` |
 | Deployed | No | Host deploy requires separate human authorization |
 

@@ -2,6 +2,7 @@
   const path = (window.location.pathname || "/").replace(/\/$/, "") || "/";
   const links = [
     { href: "/", label: "Studio", active: path === "/" },
+    { href: "/laboratory", label: "🔬 Laboratory", active: /^\/laboratory$/.test(path) },
     { href: "/nexus/", label: "📚 Nexus", active: /^\/nexus/.test(path) },
     { href: "/steward", label: "Steward", active: /^\/steward$/.test(path) },
     { href: "/help", label: "Help", active: /^\/help$/.test(path) },

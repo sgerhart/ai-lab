@@ -135,7 +135,7 @@ order template. Agent front door: [`AGENT_PROCESS.md`](../../AGENT_PROCESS.md).
 | [IWO-126](IWO-126-steward-nexus-study-grounding.md) | Steward Nexus Study Deep Grounding | Complete (unit-tested) |
 | [IWO-127](IWO-127-frontier-model-telemetry-and-cost-estimation.md) | Frontier Model Token Usage Telemetry & Cost Estimation | Complete (unit-tested) |
 | [IWO-128](IWO-128-coding-training-assistant.md) | Coding Training Console Assistant & Chatbot Copilot | Complete (unit-tested) |
-| [IWO-129](IWO-129-ai-laboratory-and-staff-scientist.md) | AI Laboratory Workbench & Staff Scientist Peer Agent | Draft |
+| [IWO-129](IWO-129-ai-laboratory-and-staff-scientist.md) | AI Laboratory Workbench & Staff Scientist Peer Agent | Complete (unit-tested; awaiting deploy) |
 
 Forward-looking capabilities: [`../features/index.md`](../features/index.md).  
 Protocol adoption: [`../work-order-protocol/`](../work-order-protocol/README.md).  
