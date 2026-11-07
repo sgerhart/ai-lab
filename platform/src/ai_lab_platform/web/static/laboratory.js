@@ -16,11 +16,14 @@
   const benchTitleEl = document.getElementById("benchTitle");
   const benchSummaryEl = document.getElementById("benchSummary");
   const benchParadigmEl = document.getElementById("benchParadigm");
+  const benchIntuitionEl = document.getElementById("benchIntuition");
+  const benchSvgDiagramEl = document.getElementById("benchSvgDiagram");
   const benchTensorFlowEl = document.getElementById("benchTensorFlow");
   const benchFormulaEl = document.getElementById("benchFormula");
   const benchVarsEl = document.getElementById("benchVars");
   const benchMathExplanationEl = document.getElementById("benchMathExplanation");
   const benchNumericalEl = document.getElementById("benchNumerical");
+  const benchAiConnectionEl = document.getElementById("benchAiConnection");
   const benchCodeEl = document.getElementById("benchCode");
   const benchCitationsEl = document.getElementById("benchCitations");
   const copyCodeBtn = document.getElementById("copyCodeBtn");
@@ -125,9 +128,22 @@
     benchTitleEl.textContent = c.title;
     benchSummaryEl.textContent = c.summary;
     benchParadigmEl.textContent = c.paradigm.toUpperCase();
-    benchTensorFlowEl.textContent = c.tensor_flow;
 
-    // KaTeX Formula
+    // 1. Intuition Narrative & Visual SVG Diagram
+    if (benchIntuitionEl) {
+      benchIntuitionEl.innerHTML = c.intuition || `<strong>Core Intuition:</strong> ${c.summary}`;
+    }
+    if (benchSvgDiagramEl) {
+      if (c.svg_diagram) {
+        benchSvgDiagramEl.innerHTML = c.svg_diagram;
+        benchSvgDiagramEl.style.display = "flex";
+      } else {
+        benchSvgDiagramEl.innerHTML = "";
+        benchSvgDiagramEl.style.display = "none";
+      }
+    }
+
+    // 2. KaTeX Formula
     if (window.katex && c.formula) {
       try {
         window.katex.render(c.formula, benchFormulaEl, { displayMode: true, throwOnError: false });
@@ -152,11 +168,17 @@
     // Math mechanism explanation
     benchMathExplanationEl.innerHTML = `<strong>Mechanism Intuition:</strong> ${c.math_explanation}`;
 
-    // Numerical walkthrough
+    // 3. Numerical walkthrough
     benchNumericalEl.innerHTML = `<strong>Numerical Walkthrough:</strong><br>${c.numerical_example.replace(/\n/g, "<br>")}`;
 
-    // Code block
+    // 4. How This Powers AI & Code
+    if (benchAiConnectionEl) {
+      benchAiConnectionEl.innerHTML = c.ai_connection || `<strong>AI Application:</strong> Fundamental mathematical primitive powering tensor transformations and modern machine learning models.`;
+    }
     benchCodeEl.textContent = c.code_snippet;
+
+    // 5. Tensor flow dimensions
+    benchTensorFlowEl.textContent = c.tensor_flow;
 
     // Citations
     benchCitationsEl.innerHTML = "";

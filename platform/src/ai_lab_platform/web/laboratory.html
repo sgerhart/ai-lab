@@ -344,6 +344,60 @@
       gap: 12px;
     }
 
+    /* Pedagogical Intuition & Visual Geometry */
+    .intuition-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(14, 165, 233, 0.04) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+    .intuition-card strong {
+      color: #818cf8;
+    }
+    .intuition-card em {
+      color: #38bdf8;
+      font-style: normal;
+      font-weight: 600;
+    }
+    .svg-diagram-card {
+      background: #080c14;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .svg-diagram-card svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .ai-connection-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.04) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    .ai-connection-card strong {
+      color: #34d399;
+    }
+    .ai-connection-card code {
+      font-family: "JetBrains Mono", monospace;
+      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.15);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
     /* Section 1: Architecture & Tensor Flow */
     .tensor-flow-box {
       font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -713,51 +767,74 @@
           <p class="hero-summary" id="benchSummary">Loading concept specifications...</p>
         </div>
 
-        <!-- Section 1: Architecture & Tensor Dimensions -->
+        <!-- Section 1: Core Intuition & Visual Geometry -->
         <section class="bench-section">
           <div class="bench-sec-header">
-            <span>1. Architecture & Tensor Dimensions</span>
-            <span class="col-header-badge" style="color:var(--text-muted); font-size:11px;">[Batch, SeqLen, HiddenDim]</span>
+            <span>1. Core Intuition &amp; Visual Geometry</span>
+            <span class="col-header-badge" style="color:var(--accent); border-color:rgba(56,189,248,0.3); font-size:11px;">Mental Model</span>
           </div>
           <div class="bench-sec-body">
-            <pre class="tensor-flow-box custom-scroll" id="benchTensorFlow">Loading tensor flow...</pre>
+            <div class="intuition-card" id="benchIntuition"></div>
+            <div class="svg-diagram-card" id="benchSvgDiagram"></div>
           </div>
         </section>
 
-        <!-- Section 2: Mathematical Derivation & Numbers -->
+        <!-- Section 2: Mathematical Derivation & Variables -->
         <section class="bench-section">
           <div class="bench-sec-header">
-            <span>2. First-Principles Math & Numerical Intuition</span>
-            <span class="col-header-badge" style="color:var(--success); border-color:rgba(16,185,129,0.3); font-size:11px;">KaTeX Derivation</span>
+            <span>2. The Math Decoded (Symbol-by-Symbol)</span>
+            <span class="col-header-badge" style="color:var(--success); border-color:rgba(16,185,129,0.3); font-size:11px;">KaTeX &amp; Symbols</span>
           </div>
           <div class="bench-sec-body">
             <div class="math-formula-box" id="benchFormula"></div>
             <div class="math-vars-grid" id="benchVars"></div>
             <div class="math-explanation-box" id="benchMathExplanation"></div>
+          </div>
+        </section>
+
+        <!-- Section 3: Step-by-Step Worked Example -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>3. Step-by-Step Worked Example</span>
+            <span class="col-header-badge" style="color:#eab308; border-color:rgba(234,179,8,0.3); font-size:11px;">Real Numbers</span>
+          </div>
+          <div class="bench-sec-body">
             <div class="numerical-box" id="benchNumerical"></div>
           </div>
         </section>
 
-        <!-- Section 3: Runnable Verification Snippet -->
+        <!-- Section 4: How This Powers AI & Runnable Code -->
         <section class="bench-section">
           <div class="bench-sec-header">
-            <span>3. Runnable Tensor Verification (PyTorch / MLX)</span>
+            <span>4. How This Powers Modern AI &amp; Verification</span>
             <button class="bench-copy-btn" id="copyCodeBtn">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
               <span>Copy Code</span>
             </button>
           </div>
           <div class="bench-sec-body">
+            <div class="ai-connection-card" id="benchAiConnection"></div>
             <div class="code-container">
               <pre class="code-box custom-scroll" id="benchCode"></pre>
             </div>
           </div>
         </section>
 
-        <!-- Section 4: Grounded in Your Books -->
+        <!-- Section 5: Architecture & Tensor Mechanics -->
         <section class="bench-section">
           <div class="bench-sec-header">
-            <span>4. Grounded in Your Books (192 Books in Nexus)</span>
+            <span>5. Architecture &amp; Tensor Dimensions</span>
+            <span class="col-header-badge" style="color:var(--text-muted); font-size:11px;">[Shapes &amp; Flow]</span>
+          </div>
+          <div class="bench-sec-body">
+            <pre class="tensor-flow-box custom-scroll" id="benchTensorFlow">Loading tensor flow...</pre>
+          </div>
+        </section>
+
+        <!-- Section 6: Grounded in Your Books -->
+        <section class="bench-section">
+          <div class="bench-sec-header">
+            <span>6. Grounded in Your Books (192 Books in Nexus)</span>
             <span class="col-header-badge" style="color:#f59e0b; border-color:rgba(245,158,11,0.3); font-size:11px;">~/.ai-lab/nexus/</span>
           </div>
           <div class="bench-sec-body">
@@ -792,10 +869,10 @@
       </div>
 
       <div class="quick-prompts">
-        <button class="quick-btn" data-prompt="Walk me through the variance proof with real numbers.">📐 Variance Proof</button>
-        <button class="quick-btn" data-prompt="Search our 192 books in Nexus for this concept.">📚 Search Books</button>
-        <button class="quick-btn" data-prompt="How does this architecture compare to modern alternatives?">⚖️ Compare Architectures</button>
-        <button class="quick-btn" data-prompt="Explain the runnable tensor verification code step by step.">🧪 Explain Code</button>
+        <button class="quick-btn" data-prompt="Explain this concept using an intuitive everyday analogy.">💡 Everyday Analogy</button>
+        <button class="quick-btn" data-prompt="Quiz me on this concept with 3 multiple-choice questions to test my understanding.">🎯 Quiz Me</button>
+        <button class="quick-btn" data-prompt="Walk me through the mathematical proof or derivation step by step with real numbers.">📐 Step-by-Step Proof</button>
+        <button class="quick-btn" data-prompt="Explain exactly how modern AI models like ChatGPT and PyTorch use this math.">🤖 How AI Uses This</button>
       </div>
 
       <div class="scientist-input-box">
@@ -809,6 +886,6 @@
   </div>
 
   <script src="/static/chrome.js?v=20261107-lab"></script>
-  <script src="/static/laboratory.js?v=20261107-linprog"></script>
+  <script src="/static/laboratory.js?v=20261107-visual"></script>
 </body>
 </html>

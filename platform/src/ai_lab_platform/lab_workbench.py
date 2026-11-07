@@ -32,11 +32,193 @@ class LabConcept:
     numerical_example: str
     code_snippet: str
     nexus_citations: list[LabCitation] = field(default_factory=list)
+    intuition: str = ""
+    svg_diagram: str = ""
+    ai_connection: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         return data
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# VISUAL SVG DIAGRAM ASSETS (First-Principles Visual Geometry)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_SVG_VECTORS_2D = """<svg viewBox="0 0 560 300" width="100%" height="260" xmlns="http://www.w3.org/2000/svg" style="background:#080c14; border-radius:8px;">
+  <defs>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrow-emerald" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#10b981"/>
+    </marker>
+  </defs>
+  <!-- Grid -->
+  <g stroke="#1e293b" stroke-width="1" stroke-dasharray="2 3">
+    <line x1="80" y1="240" x2="520" y2="240"/><line x1="80" y1="190" x2="520" y2="190"/>
+    <line x1="80" y1="140" x2="520" y2="140"/><line x1="80" y1="90" x2="520" y2="90"/><line x1="80" y1="40" x2="520" y2="40"/>
+    <line x1="80" y1="30" x2="80" y2="260"/><line x1="150" y1="30" x2="150" y2="260"/>
+    <line x1="220" y1="30" x2="220" y2="260"/><line x1="290" y1="30" x2="290" y2="260"/>
+    <line x1="360" y1="30" x2="360" y2="260"/><line x1="430" y1="30" x2="430" y2="260"/><line x1="500" y1="30" x2="500" y2="260"/>
+  </g>
+  <!-- Axes: origin (150, 240) -->
+  <line x1="80" y1="240" x2="520" y2="240" stroke="#64748b" stroke-width="2"/>
+  <line x1="150" y1="260" x2="150" y2="30" stroke="#64748b" stroke-width="2"/>
+  <text x="515" y="255" fill="#94a3b8" font-size="12" font-family="sans-serif">X</text>
+  <text x="135" y="40" fill="#94a3b8" font-size="12" font-family="sans-serif">Y</text>
+  <text x="138" y="254" fill="#64748b" font-size="11" font-family="sans-serif">0</text>
+  <text x="215" y="254" fill="#64748b" font-size="11" font-family="sans-serif">1</text>
+  <text x="285" y="254" fill="#64748b" font-size="11" font-family="sans-serif">2</text>
+  <text x="355" y="254" fill="#64748b" font-size="11" font-family="sans-serif">3</text>
+  <text x="425" y="254" fill="#64748b" font-size="11" font-family="sans-serif">4</text>
+  <text x="130" y="194" fill="#64748b" font-size="11" font-family="sans-serif">1</text>
+  <text x="130" y="144" fill="#64748b" font-size="11" font-family="sans-serif">2</text>
+  <text x="130" y="94" fill="#64748b" font-size="11" font-family="sans-serif">3</text>
+  <text x="130" y="44" fill="#64748b" font-size="11" font-family="sans-serif">4</text>
+  <!-- Vector v1 = [3, 2] -> target (360, 140) -->
+  <line x1="150" y1="240" x2="360" y2="240" stroke="#0284c7" stroke-width="2" stroke-dasharray="4 3"/>
+  <line x1="360" y1="240" x2="360" y2="140" stroke="#0284c7" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="245" y="233" fill="#38bdf8" font-size="11" font-family="monospace">Δx = 3</text>
+  <text x="368" y="195" fill="#38bdf8" font-size="11" font-family="monospace">Δy = 2</text>
+  <line x1="150" y1="240" x2="354" y2="143" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#arrow-cyan)"/>
+  <text x="215" y="175" fill="#38bdf8" font-weight="bold" font-size="13" font-family="sans-serif">v₁ = [3, 2]</text>
+  <text x="205" y="155" fill="#7dd3fc" font-size="11" font-family="monospace">||v₁|| = √(3²+2²) ≈ 3.61</text>
+  <!-- Vector v2 = [1, 2] tip-to-tail from (360, 140) to (430, 40) -->
+  <line x1="360" y1="140" x2="425" y2="45" stroke="#f59e0b" stroke-width="3" stroke-dasharray="3 3" marker-end="url(#arrow-amber)"/>
+  <text x="405" y="105" fill="#f59e0b" font-size="11" font-family="sans-serif">v₂ = [1, 2]</text>
+  <!-- Sum v1 + v2 = [4, 4] from (150, 240) to (430, 40) -->
+  <line x1="150" y1="240" x2="424" y2="44" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow-emerald)"/>
+  <text x="250" y="115" fill="#10b981" font-weight="bold" font-size="12" font-family="sans-serif">Tip-to-Tail Sum v₁ + v₂ = [4, 4]</text>
+</svg>"""
+
+_SVG_MATRIX_TRANSFORMATION = """<svg viewBox="0 0 560 250" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" style="background:#080c14; border-radius:8px;">
+  <defs>
+    <marker id="arr-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arr-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+  <!-- Box 1: Original Space -->
+  <rect x="20" y="15" width="220" height="220" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="35" y="38" fill="#94a3b8" font-weight="bold" font-size="12" font-family="sans-serif">1. Original Standard Basis</text>
+  <line x1="40" y1="180" x2="210" y2="180" stroke="#475569" stroke-width="1.5"/>
+  <line x1="80" y1="210" x2="80" y2="50" stroke="#475569" stroke-width="1.5"/>
+  <line x1="80" y1="180" x2="134" y2="180" stroke="#38bdf8" stroke-width="3" marker-end="url(#arr-c)"/>
+  <text x="100" y="198" fill="#38bdf8" font-size="11" font-family="monospace">î = [1, 0]</text>
+  <line x1="80" y1="180" x2="80" y2="126" stroke="#f59e0b" stroke-width="3" marker-end="url(#arr-a)"/>
+  <text x="45" y="145" fill="#f59e0b" font-size="11" font-family="monospace">ĵ = [0, 1]</text>
+  <!-- Center Operator -->
+  <g transform="translate(255, 95)">
+    <text x="0" y="0" fill="#a855f7" font-weight="bold" font-size="12" font-family="sans-serif">Matrix A (90° CCW)</text>
+    <text x="5" y="18" fill="#c084fc" font-size="11" font-family="monospace">[[ 0, -1],</text>
+    <text x="10" y="32" fill="#c084fc" font-size="11" font-family="monospace"> [ 1,  0]]</text>
+    <path d="M 15 48 L 40 48 L 34 42 M 40 48 L 34 54" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+  </g>
+  <!-- Box 2: Transformed Space -->
+  <rect x="320" y="15" width="220" height="220" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="335" y="38" fill="#94a3b8" font-weight="bold" font-size="12" font-family="sans-serif">2. Transformed Space (Columns)</text>
+  <line x1="340" y1="160" x2="520" y2="160" stroke="#475569" stroke-width="1.5"/>
+  <line x1="430" y1="210" x2="430" y2="50" stroke="#475569" stroke-width="1.5"/>
+  <line x1="430" y1="160" x2="430" y2="106" stroke="#38bdf8" stroke-width="3" marker-end="url(#arr-c)"/>
+  <text x="438" y="125" fill="#38bdf8" font-size="11" font-family="monospace">Col 1: [0, 1]</text>
+  <line x1="430" y1="160" x2="376" y2="160" stroke="#f59e0b" stroke-width="3" marker-end="url(#arr-a)"/>
+  <text x="350" y="180" fill="#f59e0b" font-size="11" font-family="monospace">Col 2: [-1, 0]</text>
+</svg>"""
+
+_SVG_DOT_PRODUCT = """<svg viewBox="0 0 560 250" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" style="background:#080c14; border-radius:8px;">
+  <defs>
+    <marker id="dp-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="dp-a" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="dp-r" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+  <!-- Axes: origin at (80, 180) -->
+  <line x1="50" y1="180" x2="510" y2="180" stroke="#475569" stroke-width="1.5"/>
+  <line x1="80" y1="210" x2="80" y2="30" stroke="#475569" stroke-width="1.5"/>
+  <!-- Vector b along X axis -->
+  <line x1="80" y1="180" x2="374" y2="180" stroke="#f59e0b" stroke-width="3.5" marker-end="url(#dp-a)"/>
+  <text x="320" y="205" fill="#f59e0b" font-weight="bold" font-size="13" font-family="sans-serif">Vector b (The Baseline)</text>
+  <!-- Vector a at 45 deg -->
+  <line x1="80" y1="180" x2="246" y2="54" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#dp-c)"/>
+  <text x="120" y="95" fill="#38bdf8" font-weight="bold" font-size="13" font-family="sans-serif">Vector a</text>
+  <!-- Angle arc -->
+  <path d="M 130 180 A 50 50 0 0 0 120 142" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="135" y="155" fill="#e2e8f0" font-size="12" font-family="sans-serif">θ = 45°</text>
+  <!-- Spotlight drop -->
+  <line x1="250" y1="50" x2="250" y2="180" stroke="#facc15" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="256" y="105" fill="#facc15" font-size="11" font-family="sans-serif">Spotlight Drop ⊥</text>
+  <!-- Shadow bracket -->
+  <rect x="80" y="182" width="170" height="8" fill="rgba(56, 189, 248, 0.4)" stroke="#38bdf8" stroke-width="1"/>
+  <text x="95" y="210" fill="#38bdf8" font-weight="bold" font-size="11" font-family="monospace">Shadow = ||a|| · cos(θ)</text>
+  <!-- Orthogonal vector c -->
+  <line x1="80" y1="180" x2="80" y2="56" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="3 3" marker-end="url(#dp-r)"/>
+  <text x="88" y="65" fill="#ef4444" font-size="11" font-family="sans-serif">Vector c (90° Orthogonal)</text>
+  <text x="88" y="80" fill="#f87171" font-size="10" font-family="monospace">Shadow = 0 ➔ a · c = 0</text>
+</svg>"""
+
+_SVG_NORMAL_DISTRIBUTION = """<svg viewBox="0 0 560 250" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" style="background:#080c14; border-radius:8px;">
+  <!-- Shaded 1-sigma area -->
+  <path d="M 210 200 L 210 125 Q 245 70 280 50 Q 315 70 350 125 L 350 200 Z" fill="rgba(56, 189, 248, 0.25)"/>
+  <!-- Shaded 2-sigma wings -->
+  <path d="M 140 200 L 140 180 Q 175 155 210 125 L 210 200 Z" fill="rgba(99, 102, 241, 0.15)"/>
+  <path d="M 350 200 L 350 125 Q 385 155 420 180 L 420 200 Z" fill="rgba(99, 102, 241, 0.15)"/>
+  <!-- Bell Curve -->
+  <path d="M 60 200 Q 120 200 160 175 Q 220 120 280 50 Q 340 120 400 175 Q 440 200 500 200" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <!-- Center Mean line -->
+  <line x1="280" y1="200" x2="280" y2="45" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4 3"/>
+  <text x="274" y="35" fill="#f59e0b" font-weight="bold" font-size="14" font-family="sans-serif">μ (Mean)</text>
+  <!-- Baseline -->
+  <line x1="50" y1="200" x2="510" y2="200" stroke="#64748b" stroke-width="2"/>
+  <text x="275" y="220" fill="#f59e0b" font-weight="bold" font-size="11" font-family="monospace">0 (μ)</text>
+  <text x="340" y="220" fill="#38bdf8" font-size="11" font-family="monospace">+1σ</text>
+  <text x="410" y="220" fill="#818cf8" font-size="11" font-family="monospace">+2σ</text>
+  <text x="200" y="220" fill="#38bdf8" font-size="11" font-family="monospace">-1σ</text>
+  <text x="130" y="220" fill="#818cf8" font-size="11" font-family="monospace">-2σ</text>
+  <!-- Annotations -->
+  <text x="245" y="140" fill="#e0f2fe" font-weight="bold" font-size="13" font-family="sans-serif">68.2% (±1σ)</text>
+  <text x="245" y="160" fill="#94a3b8" font-size="11" font-family="sans-serif">Typical Spread</text>
+  <text x="380" y="165" fill="#c7d2fe" font-size="10" font-family="sans-serif">95.4% (±2σ)</text>
+</svg>"""
+
+_SVG_COSINE_HIGH_DIM = """<svg viewBox="0 0 560 250" width="100%" height="230" xmlns="http://www.w3.org/2000/svg" style="background:#080c14; border-radius:8px;">
+  <defs>
+    <marker id="cos-c" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="cos-m" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ec4899"/>
+    </marker>
+  </defs>
+  <!-- Hypersphere boundary arc -->
+  <path d="M 80 200 A 180 180 0 0 1 260 20" fill="none" stroke="#334155" stroke-width="2" stroke-dasharray="4 4"/>
+  <text x="170" y="35" fill="#64748b" font-size="11" font-family="sans-serif">Unit Hypersphere (||u|| = 1.0)</text>
+  <!-- Origin at (80, 200) -->
+  <line x1="50" y1="200" x2="510" y2="200" stroke="#475569" stroke-width="1.5"/>
+  <line x1="80" y1="220" x2="80" y2="30" stroke="#475569" stroke-width="1.5"/>
+  <!-- Query Vector u -->
+  <line x1="80" y1="200" x2="230" y2="90" stroke="#38bdf8" stroke-width="3.5" marker-end="url(#cos-c)"/>
+  <text x="140" y="125" fill="#38bdf8" font-weight="bold" font-size="13" font-family="sans-serif">Query Vector u</text>
+  <!-- Document Vector v -->
+  <line x1="80" y1="200" x2="245" y2="120" stroke="#ec4899" stroke-width="3" marker-end="url(#cos-m)"/>
+  <text x="255" y="125" fill="#ec4899" font-weight="bold" font-size="12" font-family="sans-serif">Doc Match v (θ ≈ 15°)</text>
+  <!-- Angle arc -->
+  <path d="M 140 180 A 70 70 0 0 0 135 155" fill="none" stroke="#facc15" stroke-width="2"/>
+  <text x="145" y="168" fill="#facc15" font-weight="bold" font-size="12" font-family="sans-serif">cos(θ) = 0.98</text>
+  <!-- Orthogonal Irrelevant Doc -->
+  <line x1="80" y1="200" x2="80" y2="40" stroke="#64748b" stroke-width="2" stroke-dasharray="3 3"/>
+  <text x="90" y="55" fill="#94a3b8" font-size="11" font-family="sans-serif">Unrelated Doc (90° Orthogonal ➔ cos(θ) = 0.0)</text>
+</svg>"""
 
 PARADIGMS: list[dict[str, str]] = [
     {"id": "all", "label": "All Topics", "icon": "🔬"},
@@ -58,6 +240,20 @@ _CONCEPTS_LIST: list[LabConcept] = [
         title="Linear Algebra 101: Scalars, Vectors & 2D Geometry",
         paradigm="foundations",
         summary="The fundamental primitives of mathematics: scalars as magnitudes, vectors as directional arrows in 2D space, addition, scaling, and length.",
+        intuition=(
+            "<strong>The Dilemma:</strong> Why did humans invent vectors? A single number (a scalar) can tell you your speed (e.g. 500 mph) or temperature (72°F), "
+            "but it cannot navigate an airplane. If a 50 mph crosswind strikes the plane, a scalar cannot tell you whether you reach your runway or crash into a mountain. "
+            "You need both <em>magnitude (how much)</em> AND <em>direction (where to)</em>.<br><br>"
+            "<strong>The Everyday Analogy:</strong> Think of a vector as an instruction for a journey on graph paper: 'Walk 3 steps East, then 2 steps North'. "
+            "Vector addition is simply chaining journeys: walk journey 1, then immediately start journey 2 from where you landed (the tip-to-tail rule)."
+        ),
+        svg_diagram=_SVG_VECTORS_2D,
+        ai_connection=(
+            "<strong>How This Powers Modern AI:</strong> In Large Language Models (LLMs), words and concepts are stored as continuous vectors. "
+            "Instead of 2 coordinates (X, Y), models like LLaMA and DeepSeek use 4,096 coordinates. The classic embedding result: "
+            "<code>Vector('king') - Vector('man') + Vector('woman') ≈ Vector('queen')</code> is literally just vector addition and subtraction! "
+            "Mastering 2D vector coordinates gives you the exact mental model for how transformers navigate semantic concept space."
+        ),
         tensor_flow=(
             "Scalars (Single Real Numbers):\n"
             "  c ∈ ℝ (e.g. c = 2.5, a magnitude without direction)\n"
@@ -133,6 +329,25 @@ _CONCEPTS_LIST: list[LabConcept] = [
         title="Linear Algebra 102: Matrices as Space Transformations",
         paradigm="foundations",
         summary="A matrix is not just a table of numbers: it is a machine that transforms space. How basis vectors i-hat and j-hat determine where every point lands.",
+        intuition=(
+            "<strong>The Dilemma:</strong> In school, a matrix is often presented as a lifeless spreadsheet grid of numbers. "
+            "Why do we multiply rows by columns? What is the physical meaning of matrix multiplication?<br><br>"
+            "<strong>The Everyday Analogy (The Rubber Sheet):</strong> Imagine drawing a grid on a flat sheet of rubber. "
+            "A matrix is a machine that stretches, squashes, or rotates that rubber sheet. Every straight grid line stays straight, "
+            "and the origin (0, 0) never moves.<br><br>"
+            "<strong>The Secret of the Columns:</strong> To know where <em>every single point</em> in the entire infinite plane lands, "
+            "you only need to track where two tiny unit arrows land:<br>"
+            "• î = [1, 0] (one step right along X)<br>"
+            "• ĵ = [0, 1] (one step up along Y)<br>"
+            "<strong>Column 1 of the matrix is where î lands. Column 2 is where ĵ lands!</strong>"
+        ),
+        svg_diagram=_SVG_MATRIX_TRANSFORMATION,
+        ai_connection=(
+            "<strong>How This Powers Modern AI:</strong> Every neural network linear layer (<code>torch.nn.Linear</code>) "
+            "is literally this exact rubber-sheet transformation: <code>y = Wx + b</code>. The weight matrix W rotates and stretches "
+            "the input data space so that complicated concepts (like fraudulent vs legitimate transactions, or sentiment) "
+            "become cleanly separable by a simple decision boundary."
+        ),
         tensor_flow=(
             "Standard Basis Vectors in 2D:\n"
             "  i_hat = [1, 0] (unit step right along X-axis)\n"
@@ -217,6 +432,23 @@ _CONCEPTS_LIST: list[LabConcept] = [
         title="Linear Algebra 103: The Dot Product & Geometric Projections",
         paradigm="foundations",
         summary="Why multiplying two vectors and summing pairwise products measures directional alignment, how projection works, and how artificial neurons fire.",
+        intuition=(
+            "<strong>The Dilemma:</strong> If we have two vectors, what does multiplying them together actually mean? "
+            "Unlike simple numbers where 3 × 4 = 12, vectors point in directions. How do we determine if two concepts agree, disagree, "
+            "or have completely nothing in common?<br><br>"
+            "<strong>The Everyday Analogy (The Spotlight & Shadow):</strong> Imagine vector b is the floor, and vector a is a stick "
+            "leaning out of the origin. If you shine a spotlight directly overhead, the stick casts a <strong>shadow</strong> onto the floor. "
+            "The length of that shadow is ||a|| · cos(θ). The dot product is simply: <em>(Length of the Shadow) × (Length of the Floor)</em>.<br><br>"
+            "<strong>The Perpendicular Test:</strong> If two arrows are perpendicular (90°), the stick casts <strong>ZERO shadow</strong>—the "
+            "dot product is exactly 0. They share zero common direction!"
+        ),
+        svg_diagram=_SVG_DOT_PRODUCT,
+        ai_connection=(
+            "<strong>How This Powers Modern AI:</strong> The artificial neuron is built entirely on the dot product: "
+            "<code>Activation = σ(w · x + b)</code>. The neuron has learned a preference vector w. When your input features x align "
+            "with w, the shadow is huge and the neuron fires. In attention mechanisms, ChatGPT uses dot products to measure the "
+            "relevance of every token to every other token."
+        ),
         tensor_flow=(
             "Input Vectors in 2D Space:\n"
             "  a = [a1, a2]\n"
@@ -302,6 +534,21 @@ _CONCEPTS_LIST: list[LabConcept] = [
         title="Statistics 101: Mean, Variance, Std Deviation & Normal Distribution",
         paradigm="foundations",
         summary="The statistical foundation of machine learning: expected values, spread, the Gaussian bell curve, and how activations are standardized.",
+        intuition=(
+            "<strong>The Dilemma:</strong> In real-world data and machine learning, numbers are noisy and scattered. "
+            "How do you summarize thousands of token activations or weights with just two numbers that tell you the whole story?<br><br>"
+            "<strong>The Everyday Analogy (The Seesaw & The Spread):</strong><br>"
+            "• <strong>Mean (μ):</strong> The center of mass. If your data points were weights placed along a seesaw, the mean is the exact fulcrum point where the seesaw balances.<br>"
+            "• <strong>Standard Deviation (σ):</strong> The scatter radius. It tells you how far typical points stray from that center balance point.<br><br>"
+            "In a standard Gaussian bell curve, <strong>68% of all data</strong> naturally falls within 1 step (±1σ) of the center, and <strong>95%</strong> falls within 2 steps (±2σ)."
+        ),
+        svg_diagram=_SVG_NORMAL_DISTRIBUTION,
+        ai_connection=(
+            "<strong>How This Powers Modern AI:</strong> Deep neural networks fail if numbers grow too large (exploding gradients) "
+            "or shrink to zero (vanishing gradients). <code>LayerNorm</code> and <code>RMSNorm</code> in LLMs compute the mean and variance "
+            "at every transformer layer and standardize them: <code>z = (x - μ) / σ</code>, resetting the activations back to Mean=0 and Variance=1 "
+            "so signals pass smoothly through 50+ deep layers without breaking."
+        ),
         tensor_flow=(
             "Sample Dataset of N Observations:\n"
             "  x = [x1, x2, ..., xN]\n"
@@ -386,6 +633,19 @@ _CONCEPTS_LIST: list[LabConcept] = [
         title="Vector Spaces & Cosine Distance in AI (From 2D to High Dimensions)",
         paradigm="foundations",
         summary="Scaling vector geometry from 2D coordinates to 4096-dimensional embeddings, semantic document search in Qdrant, and attention routing.",
+        intuition=(
+            "<strong>The Dilemma:</strong> In 2D, we can easily graph arrows. But in real-world AI, an article or sentence has dozens of nuanced topics. "
+            "How do we compare two complex documents without being fooled by word count or article length?<br><br>"
+            "<strong>The Solution (Angle over Magnitude):</strong> If Article A is a short 200-word summary about astrophysics and Article B is a 20,000-word "
+            "textbook on astrophysics, Article B's raw vector will be 100 times longer! But if we measure the <em>angle</em> (cosine) between them, "
+            "the angle is nearly zero (cos θ ≈ 1.0). Cosine similarity measures pure topical direction, completely ignoring document length."
+        ),
+        svg_diagram=_SVG_COSINE_HIGH_DIM,
+        ai_connection=(
+            "<strong>How This Powers Modern AI:</strong> Vector databases like Qdrant index millions of chunk embeddings using HNSW graphs "
+            "organized by cosine similarity. When you query Nexus or ChatGPT with a question, the system converts your query into a vector "
+            "and finds documents whose arrows point in the closest direction."
+        ),
         tensor_flow=(
             "Inputs:\n"
             "  u: [Batch, HiddenDim] (e.g. Query Embedding [1, 4096])\n"
