@@ -1463,12 +1463,14 @@
     @media (max-width: 720px) {
       #prefs-antares .antares-fields { grid-template-columns: 1fr; }
     }
-    .dc-tabs { display: flex; gap: 6px; margin: 0 0 16px; }
+    .dc-tabs { display: flex; gap: 8px; margin: 0 0 16px; flex-wrap: wrap; }
     .dc-tab {
-      border: 1px solid var(--line); background: transparent; color: var(--ink);
-      border-radius: 999px; padding: 6px 12px; font: inherit; cursor: pointer;
+      border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--muted);
+      border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
     }
-    .dc-tab.active { background: rgba(255,255,255,.1); font-weight: 600; }
+    .dc-tab:hover { background: rgba(255,255,255,.06); color: var(--ink); }
+    .dc-tab.active { background: rgba(56,189,248,.15); border-color: rgba(56,189,248,.5); color: #38bdf8; font-weight: 600; }
     .dc-h { margin: 0 0 10px; font-size: 16px; }
     .dc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .dc-table th, .dc-table td {
@@ -2194,20 +2196,7 @@
           </div>
         </div>
 
-        <div class="prefs-grid" style="margin-bottom: 24px;">
-          <button type="button" class="prefs-card config-badge" id="badge-defenseclaw">
-            <span class="prefs-pill off" id="dc-pill">no report</span>
-            <h2>DefenseClaw</h2>
-            <p id="dc-lead">Agents, the config in use, and what the findings actually are.</p>
-          </button>
-          <button type="button" class="prefs-card config-badge" id="badge-antares">
-            <span class="prefs-pill">Studio</span>
-            <h2>Antares</h2>
-            <p>Localize a finding. This does not change the repo.</p>
-          </button>
-        </div>
-
-        <div class="posture-metrics-grid" id="sec-metrics-grid" style="margin-bottom: 24px;">
+        <div class="posture-metrics-grid" id="sec-metrics-grid" style="margin-bottom: 20px;">
           <div class="posture-card">
             <div class="posture-card-label">Security Providers</div>
             <div class="posture-card-val" id="sec-metric-providers">…</div>
@@ -2231,11 +2220,13 @@
         </div>
 
         <div class="dc-tabs" id="sec-nav-tabs" style="margin-bottom: 20px;">
-          <button type="button" class="dc-tab active" data-sec-tab="overview">Overview & Providers</button>
-          <button type="button" class="dc-tab" data-sec-tab="events">Findings & Evidence Log</button>
-          <button type="button" class="dc-tab" data-sec-tab="vise">Cybersecurity Vise</button>
-          <button type="button" class="dc-tab" data-sec-tab="mcp">Governed MCP</button>
-          <button type="button" class="dc-tab" data-sec-tab="policies">System Policies</button>
+          <button type="button" class="dc-tab active" data-sec-tab="overview">🛡️ Overview</button>
+          <button type="button" class="dc-tab" data-sec-tab="vise">⚡ Cybersecurity Vise</button>
+          <button type="button" class="dc-tab" data-sec-tab="antares">🔍 Antares Code Review</button>
+          <button type="button" class="dc-tab" data-sec-tab="defenseclaw">💻 DefenseClaw Endpoint</button>
+          <button type="button" class="dc-tab" data-sec-tab="events">📜 Telemetry &amp; Evidence</button>
+          <button type="button" class="dc-tab" data-sec-tab="mcp">🔒 Governed MCP</button>
+          <button type="button" class="dc-tab" data-sec-tab="policies">📋 System Policies</button>
         </div>
 
         <div class="sec-tab-panel" id="sec-tab-overview">
@@ -2365,6 +2356,87 @@
           <div id="sec-vise-detail-slot" style="margin-top: 24px;" hidden></div>
         </div>
 
+        <div class="sec-tab-panel" id="sec-tab-antares" hidden>
+          <div class="sec-header-row" style="margin-bottom: 14px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <h2 class="dc-h" style="margin: 0;">Antares 1B — Vulnerability Localization &amp; Code Review</h2>
+                <span class="prefs-pill on">Studio Hosted</span>
+              </div>
+              <p class="dc-note" style="margin: 4px 0 0;">Specialized code-security model hosted on the Mac Studio (ADR 0043). Identifies CWE weakness classes without mutating repository state.</p>
+            </div>
+            <div class="badge-row" style="margin: 0; display:flex; gap:8px;">
+              <span class="prefs-pill off" id="antares-jobs">jobs…</span>
+              <span class="prefs-pill off" id="antares-completions">completions…</span>
+            </div>
+          </div>
+
+          <details class="antares-start" id="antares-start" open style="margin-bottom: 20px;">
+            <summary>Start a Security Review</summary>
+            <p class="dc-note">A blank weakness class lets Antares evaluate up to 50 CWE classes. A finding is a localized lead, not proof.</p>
+            <div class="form-grid antares-fields" style="margin-top: 12px;">
+              <div class="span">
+                <label for="antares-url">GitHub URL</label>
+                <input id="antares-url" type="text" placeholder="https://github.com/owner/repository" autocomplete="off">
+              </div>
+              <div>
+                <label for="antares-cwe">Weakness class</label>
+                <input id="antares-cwe" type="text" placeholder="Blank lets Antares choose" autocomplete="off">
+                <p class="dc-note" id="antares-cwe-help">CWE stands for Common Weakness Enumeration. Leave blank for auto-selection.</p>
+              </div>
+              <div>
+                <label for="antares-profile">Profile</label>
+                <input id="antares-profile" type="text" value="lab-antares-1b" autocomplete="off">
+              </div>
+              <div class="span">
+                <label for="antares-repo">Snapshot already on the Studio, under ~/.ai-lab/antares/</label>
+                <input id="antares-repo" type="text" placeholder="leave blank to use the URL, or fixture-cwe78 when both are empty" autocomplete="off">
+              </div>
+            </div>
+            <div class="form-actions" style="margin-top: 14px;">
+              <button type="button" class="btn primary" id="antares-run">Start localize</button>
+            </div>
+            <p class="prefs-msg" id="antares-err"></p>
+            <p class="prefs-meta" id="antares-meta"></p>
+          </details>
+
+          <h3 class="dc-h" style="margin: 20px 0 10px;">Recent Reviews</h3>
+          <div id="antares-runs"></div>
+          <div id="antares-detail" hidden style="margin-top: 20px;">
+            <div class="antares-toolbar">
+              <p class="prefs-meta" id="antares-detail-meta"></p>
+              <p class="dc-note" id="antares-report">The detailed review has not finished.</p>
+              <div class="dc-tabs" id="antares-filters" hidden>
+                <button type="button" class="dc-tab active" id="antares-filter-all" data-antares-filter="all">All</button>
+                <button type="button" class="dc-tab" id="antares-filter-confirmed" data-antares-filter="confirmed">Confirmed</button>
+                <button type="button" class="dc-tab" id="antares-filter-uncertain" data-antares-filter="uncertain">Uncertain</button>
+                <button type="button" class="dc-tab" id="antares-filter-rejected" data-antares-filter="rejected">Rejected</button>
+              </div>
+              <div class="form-actions" id="antares-handoff-actions" hidden>
+                <button type="button" class="btn" id="antares-handoff">Review drafts</button>
+                <button type="button" class="btn" id="antares-push">Push drafts to the repository</button>
+              </div>
+              <p class="prefs-msg" id="antares-handoff-err"></p>
+              <div id="antares-handoff-out"></div>
+            </div>
+            <div id="antares-findings" class="antares-scroll"></div>
+          </div>
+        </div>
+
+        <div class="sec-tab-panel" id="sec-tab-defenseclaw" hidden>
+          <div class="sec-header-row" style="margin-bottom: 14px;">
+            <div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <h2 class="dc-h" style="margin: 0;">DefenseClaw — Workstation Endpoint Security</h2>
+                <span class="prefs-pill off" id="dc-pill">no report</span>
+              </div>
+              <p class="dc-note" id="dc-detail-lead" style="margin: 4px 0 0;">Waiting for a report from the Air.</p>
+              <span id="dc-lead" style="display:none;"></span>
+            </div>
+          </div>
+          <div id="dc-detail"></div>
+        </div>
+
         <div class="sec-tab-panel" id="sec-tab-mcp" hidden>
           <h2 class="dc-h">Governed MCP Registry</h2>
           <p class="dc-note">Enforces <code>deny-unlisted</code> policy at the tool boundary. Capabilities require explicit permission class classification.</p>
@@ -2372,7 +2444,7 @@
         </div>
 
         <div class="sec-tab-panel" id="sec-tab-policies" hidden>
-          <h2 class="dc-h">System Security Policies & Architectural Invariants</h2>
+          <h2 class="dc-h">System Security Policies &amp; Architectural Invariants</h2>
           <p class="dc-note">Non-negotiable architectural boundaries and least-privilege enforcement rules across the AI Lab platform.</p>
           <div class="sec-policies-grid" id="sec-policies-slot"></div>
         </div>
@@ -2402,65 +2474,7 @@
             <button type="button" class="btn primary" id="sec-vise-brief-close">Close</button>
           </div>
         </dialog>
-      </div>
 
-      <div class="prefs-pane" id="prefs-antares">
-        <button type="button" class="prefs-back" id="back-security-antares">← Security</button>
-        <h1>Antares</h1>
-        <p class="prefs-lead">A review names files, then a detailed pass records a line and a verdict. The repository stays unchanged until you push drafts.</p>
-        <div class="badge-row" style="margin: 0 0 12px">
-          <span class="prefs-pill off" id="antares-jobs">jobs…</span>
-          <span class="prefs-pill off" id="antares-completions">completions…</span>
-        </div>
-        <details class="antares-start" id="antares-start" open>
-          <summary>Start a review</summary>
-          <p class="dc-note">A blank weakness class lets Antares pick up to 50 classes. CWE stands for Common Weakness Enumeration. A finding is a lead, not proof.</p>
-          <div class="form-grid antares-fields">
-            <div class="span">
-              <label for="antares-url">GitHub URL</label>
-              <input id="antares-url" type="text" placeholder="https://github.com/owner/repository" autocomplete="off">
-            </div>
-            <div>
-              <label for="antares-cwe">Weakness class</label>
-              <input id="antares-cwe" type="text" placeholder="Blank lets Antares choose" autocomplete="off">
-              <p class="dc-note" id="antares-cwe-help">CWE stands for Common Weakness Enumeration. Leave this blank and Antares chooses the classes.</p>
-            </div>
-            <div>
-              <label for="antares-profile">Profile</label>
-              <input id="antares-profile" type="text" value="lab-antares-1b" autocomplete="off">
-            </div>
-            <div class="span">
-              <label for="antares-repo">Snapshot already on the Studio, under ~/.ai-lab/antares/</label>
-              <input id="antares-repo" type="text" placeholder="leave blank to use the URL, or fixture-cwe78 when both are empty" autocomplete="off">
-            </div>
-          </div>
-          <div class="form-actions">
-            <button type="button" class="btn primary" id="antares-run">Start localize</button>
-          </div>
-          <p class="prefs-msg" id="antares-err"></p>
-          <p class="prefs-meta" id="antares-meta"></p>
-        </details>
-        <h2 class="dc-h">Recent runs</h2>
-        <div id="antares-runs"></div>
-        <div id="antares-detail" hidden>
-          <div class="antares-toolbar">
-            <p class="prefs-meta" id="antares-detail-meta"></p>
-            <p class="dc-note" id="antares-report">The detailed review has not finished.</p>
-            <div class="dc-tabs" id="antares-filters" hidden>
-              <button type="button" class="dc-tab active" id="antares-filter-all" data-antares-filter="all">All</button>
-              <button type="button" class="dc-tab" id="antares-filter-confirmed" data-antares-filter="confirmed">Confirmed</button>
-              <button type="button" class="dc-tab" id="antares-filter-uncertain" data-antares-filter="uncertain">Uncertain</button>
-              <button type="button" class="dc-tab" id="antares-filter-rejected" data-antares-filter="rejected">Rejected</button>
-            </div>
-            <div class="form-actions" id="antares-handoff-actions" hidden>
-              <button type="button" class="btn" id="antares-handoff">Review drafts</button>
-              <button type="button" class="btn" id="antares-push">Push drafts to the repository</button>
-            </div>
-            <p class="prefs-msg" id="antares-handoff-err"></p>
-            <div id="antares-handoff-out"></div>
-          </div>
-          <div id="antares-findings" class="antares-scroll"></div>
-        </div>
         <dialog id="cwe-popup" aria-labelledby="cwe-popup-name">
           <p class="dc-note" id="cwe-popup-stands">CWE stands for Common Weakness Enumeration.</p>
           <p class="prefs-meta" id="cwe-popup-id"></p>
@@ -2472,12 +2486,10 @@
         </dialog>
       </div>
 
-      <div class="prefs-pane" id="prefs-defenseclaw">
-        <button type="button" class="prefs-back" id="back-security">← Security</button>
-        <h1>DefenseClaw</h1>
-        <p class="prefs-lead" id="dc-detail-lead">Waiting for a report from the Air.</p>
-        <div id="dc-detail"></div>
-      </div>
+      <div class="prefs-pane" id="prefs-antares" hidden style="display:none;"><button type="button" id="back-security-antares" style="display:none;"></button></div>
+      <div class="prefs-pane" id="prefs-defenseclaw" hidden style="display:none;"><button type="button" id="back-security" style="display:none;"></button></div>
+      <button type="button" id="badge-defenseclaw" style="display:none;"></button>
+      <button type="button" id="badge-antares" style="display:none;"></button>
 
       <div class="prefs-pane" id="prefs-configure">
         <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
@@ -2858,10 +2870,14 @@
       if (section === "security") {
         loadSecurityOverview().catch((e) => showErr(e));
       } else if (section === "defenseclaw") {
-        loadDefenseClaw().catch((e) => showErr(e));
+        openPrefs("security");
+        switchSecurityTab("defenseclaw");
+        return;
+      } else if (section === "antares") {
+        openPrefs("security");
+        switchSecurityTab("antares");
+        return;
       }
-      if (section === "antares") loadAntares().catch((e) => showErr(e));
-      else stopAntaresPoll();
       if (section === "status") {
         refreshPrefsStatus().catch((e) => showErr(e));
         startPrefsStatusPoll();
@@ -3334,28 +3350,28 @@
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "btn";
-          btn.textContent = "DefenseClaw →";
-          btn.onclick = () => openPrefs("defenseclaw");
+          btn.textContent = "Open DefenseClaw →";
+          btn.onclick = () => switchSecurityTab("defenseclaw");
           footer.appendChild(btn);
         } else if (p.url_target === "antares") {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "btn";
-          btn.textContent = "Antares Localize →";
-          btn.onclick = () => openPrefs("antares");
+          btn.textContent = "Open Antares →";
+          btn.onclick = () => switchSecurityTab("antares");
           footer.appendChild(btn);
         } else if (p.url_target === "vise") {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "btn";
-          btn.textContent = "Vise Jobs →";
+          btn.textContent = "Open Vise Jobs →";
           btn.onclick = () => switchSecurityTab("vise");
           footer.appendChild(btn);
         } else if (p.url_target === "mcp") {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "btn";
-          btn.textContent = "MCP Registry →";
+          btn.textContent = "Open MCP Registry →";
           btn.onclick = () => switchSecurityTab("mcp");
           footer.appendChild(btn);
         }
@@ -4035,11 +4051,18 @@
       document.querySelectorAll("#sec-nav-tabs .dc-tab").forEach((tab) => {
         tab.classList.toggle("active", tab.getAttribute("data-sec-tab") === tabName);
       });
-      const panels = ["overview", "events", "vise", "mcp", "policies"];
+      const panels = ["overview", "vise", "antares", "defenseclaw", "events", "mcp", "policies"];
       panels.forEach((p) => {
         const el = $("sec-tab-" + p);
         if (el) el.hidden = (p !== tabName);
       });
+      if (tabName === "defenseclaw") {
+        loadDefenseClaw().catch((e) => showErr(e));
+      } else if (tabName === "antares") {
+        loadAntares().catch((e) => showErr(e));
+      } else {
+        stopAntaresPoll();
+      }
     }
 
     function openEvidenceDialog(evidence) {
@@ -5665,8 +5688,8 @@
     document.querySelectorAll("[data-back='chat']").forEach((b) => {
       b.onclick = () => setView("chat");
     });
-    $("badge-ai").onclick = () => openPrefs("keys");
-    $("badge-defenseclaw").onclick = () => openPrefs("defenseclaw");
+    if ($("badge-ai")) $("badge-ai").onclick = () => openPrefs("keys");
+    if ($("badge-defenseclaw")) $("badge-defenseclaw").onclick = () => openPrefs("defenseclaw");
     if ($("sec-refresh-btn")) $("sec-refresh-btn").onclick = () => loadSecurityOverview().catch((e) => showErr(e));
     if ($("sec-view-permissions-btn")) $("sec-view-permissions-btn").onclick = () => {
       closePrefs();
@@ -6097,10 +6120,10 @@
         btn.disabled = false;
       }
     };
-    $("badge-antares").onclick = () => openPrefs("antares");
-    $("back-security").onclick = () => openPrefs("security");
-    $("back-security-antares").onclick = () => openPrefs("security");
-    $("back-configure-keys").onclick = () => openPrefs("configure");
+    if ($("badge-antares")) $("badge-antares").onclick = () => openPrefs("antares");
+    if ($("back-security")) $("back-security").onclick = () => openPrefs("security");
+    if ($("back-security-antares")) $("back-security-antares").onclick = () => openPrefs("security");
+    if ($("back-configure-keys")) $("back-configure-keys").onclick = () => openPrefs("configure");
     document.querySelectorAll("[data-prefs]").forEach((el) => {
       el.addEventListener("click", (ev) => {
         ev.preventDefault();

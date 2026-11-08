@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,18 +8,25 @@
   <link rel="icon" href="/static/ai-lab-orb.jpg" type="image/jpeg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
   <link rel="stylesheet" href="/static/steward.css?v=5">
   <style>
-    html { color-scheme: dark; }
-    html, body {
+    html {
+      color-scheme: dark;
+    }
+
+    html,
+    body {
       margin: 0;
       min-height: 100%;
       background: var(--bg);
       color: var(--ink);
       font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+
     body {
       background-image:
         radial-gradient(1000px 500px at 10% -5%, rgba(56, 189, 248, 0.1), transparent 60%),
@@ -26,12 +34,21 @@
         radial-gradient(800px 800px at 50% 100%, rgba(16, 185, 129, 0.04), transparent 60%);
       background-attachment: fixed;
     }
+
     .visually-hidden {
-      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   </style>
 </head>
+
 <body>
   <main class="desk">
     <header class="presence">
@@ -39,9 +56,11 @@
       <div>
         <p class="eyebrow">Steward · Chief of Staff &amp; Autonomous Companion</p>
         <h1 id="presence">Quiet</h1>
-        <p class="lead" id="presence-detail">Nothing is in its care. Talk with Steward or hand off a responsibility below.</p>
+        <p class="lead" id="presence-detail">Nothing is in its care. Talk with Steward or hand off a responsibility
+          below.</p>
         <div class="presence-stats" id="presence-stats">
-          <span class="stat-badge"><span class="stat-dot"></span> <span id="stat-active-count">0</span> Active Watches</span>
+          <span class="stat-badge"><span class="stat-dot"></span> <span id="stat-active-count">0</span> Active
+            Watches</span>
           <span class="stat-badge">🛡️ Read-Only Ceiling</span>
           <span class="stat-badge">⚡ Studio Ollama Powered</span>
         </div>
@@ -50,10 +69,12 @@
 
     <!-- Executive Tab Switcher -->
     <nav class="steward-tabs" role="tablist" aria-label="Steward Desk Modes">
-      <button type="button" class="steward-tab active" data-tab="chat" role="tab" aria-selected="true" id="steward-tab-chat">
+      <button type="button" class="steward-tab active" data-tab="chat" role="tab" aria-selected="true"
+        id="steward-tab-chat">
         <span class="tab-icon">💬</span> Chief of Staff
       </button>
-      <button type="button" class="steward-tab" data-tab="watches" role="tab" aria-selected="false" id="steward-tab-watches">
+      <button type="button" class="steward-tab" data-tab="watches" role="tab" aria-selected="false"
+        id="steward-tab-watches">
         <span class="tab-icon">🛡️</span> Standing Watches <span class="tab-count" id="steward-tab-count">0</span>
       </button>
       <button type="button" class="steward-tab" data-tab="feed" role="tab" aria-selected="false" id="steward-tab-feed">
@@ -70,31 +91,36 @@
               <img src="/static/ai-lab-orb.jpg" alt="Steward" class="steward-hero-img">
             </div>
             <h2>Steward Companion Desk</h2>
-            <p class="hero-desc">Your personal autonomous agent is on watch. Talk through ideas, explore memory vault, trigger background investigations, or hand off standing responsibilities.</p>
-            
+            <p class="hero-desc">Your personal autonomous agent is on watch. Talk through ideas, explore memory vault,
+              trigger background investigations, or hand off standing responsibilities.</p>
+
             <div class="steward-prompt-grid">
-              <button type="button" class="steward-prompt-card" data-prompt="Give me a morning briefing of lab health, open tasks, and overnight updates.">
+              <button type="button" class="steward-prompt-card"
+                data-prompt="Give me a morning briefing of lab health, open tasks, and overnight updates.">
                 <div class="prompt-icon">🌅</div>
                 <div class="prompt-text">
                   <strong>Morning Briefing</strong>
                   <span>Scan memory, health, and recent reports</span>
                 </div>
               </button>
-              <button type="button" class="steward-prompt-card" data-prompt="Watch arXiv and the web for recent LLM reasoning breakthroughs every morning.">
+              <button type="button" class="steward-prompt-card"
+                data-prompt="Watch arXiv and the web for recent LLM reasoning breakthroughs every morning.">
                 <div class="prompt-icon">🔬</div>
                 <div class="prompt-text">
                   <strong>Assign Research Watch</strong>
                   <span>Sentinel for recent AI papers and breakthroughs</span>
                 </div>
               </button>
-              <button type="button" class="steward-prompt-card" data-prompt="Search personal memory vault for our recent notes and plans.">
+              <button type="button" class="steward-prompt-card"
+                data-prompt="Search personal memory vault for our recent notes and plans.">
                 <div class="prompt-icon">🧠</div>
                 <div class="prompt-text">
                   <strong>Search Memory Vault</strong>
                   <span>Inspect notes, decisions, and second brain</span>
                 </div>
               </button>
-              <button type="button" class="steward-prompt-card" data-prompt="What active watches are running and what did you observe in your latest wake?">
+              <button type="button" class="steward-prompt-card"
+                data-prompt="What active watches are running and what did you observe in your latest wake?">
                 <div class="prompt-icon">⚡</div>
                 <div class="prompt-text">
                   <strong>System Pulse &amp; Wakes</strong>
@@ -113,21 +139,28 @@
 
         <!-- Floating Glass Composer -->
         <div class="steward-composer-bar">
-          <button type="button" class="steward-icon-btn" id="steward-new-chat-btn" title="Start new conversation" aria-label="New chat">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          <button type="button" class="steward-icon-btn" id="steward-new-chat-btn" title="Start new conversation"
+            aria-label="New chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
           </button>
           <div class="steward-composer-input-wrap">
-            <textarea id="steward-chat-input" rows="1" placeholder="Message Steward or assign a responsibility..." autocomplete="off"></textarea>
+            <textarea id="steward-chat-input" rows="1" placeholder="Message Steward or assign a responsibility..."
+              autocomplete="off"></textarea>
           </div>
           <button type="button" class="steward-send-btn" id="steward-send-btn" title="Send message" aria-label="Send">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
           </button>
         </div>
       </div>
     </section>
 
     <!-- Tab 2: Standing Watches (Executive Card Deck) -->
-    <section class="steward-view" id="steward-view-watches" role="tabpanel" aria-labelledby="steward-tab-watches" hidden>
+    <section class="steward-view" id="steward-view-watches" role="tabpanel" aria-labelledby="steward-tab-watches"
+      hidden>
       <!-- 1-Click Quick Templates Section -->
       <div class="steward-templates-section">
         <div class="section-tag">QUICK WATCH TEMPLATES</div>
@@ -178,7 +211,7 @@
           ＋ New Watch
         </button>
       </div>
-      
+
       <div class="stack" id="goals">
         <p class="empty">The first responsibility will sit here. Choose a quick template above or create one below.</p>
       </div>
@@ -191,10 +224,12 @@
         </div>
 
         <label class="visually-hidden" for="goal-title">What it should look after</label>
-        <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off" placeholder="Responsibility title (e.g. Monitor overnight CI and lab health)">
-        
+        <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off"
+          placeholder="Responsibility title (e.g. Monitor overnight CI and lab health)">
+
         <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
-        <textarea id="goal-intent" name="intent" maxlength="4000" rows="2" placeholder="Specific instructions or conditions to flag during background wake..."></textarea>
+        <textarea id="goal-intent" name="intent" maxlength="4000" rows="2"
+          placeholder="Specific instructions or conditions to flag during background wake..."></textarea>
 
         <div class="rhythm-wrapper">
           <span class="field-label">WAKE RHYTHM</span>
@@ -220,7 +255,8 @@
         <div class="sources">
           <span class="field-label">PERMITTED TOOLS (READ-ONLY)</span>
           <ul class="chips" id="see-tools"></ul>
-          <p class="ceiling-hint">🛡️ Read-Only Ceiling: Background wakes cannot modify files or send messages without human approval.</p>
+          <p class="ceiling-hint">🛡️ Read-Only Ceiling: Background wakes cannot modify files or send messages without
+            human approval.</p>
         </div>
 
         <div class="compose-bar">
@@ -235,7 +271,8 @@
       <div class="feed-header">
         <div>
           <h2>Intelligence Feed</h2>
-          <p class="feed-sub">Autonomous findings and executive summaries brought back by Steward's background wakes.</p>
+          <p class="feed-sub">Autonomous findings and executive summaries brought back by Steward's background wakes.
+          </p>
         </div>
         <button type="button" class="text-btn" id="btn-refresh-feed">↻ Refresh</button>
       </div>
@@ -247,4 +284,5 @@
   <script src="/static/chrome.js?v=20261105-clean"></script>
   <script src="/static/steward.js?v=5"></script>
 </body>
+
 </html>
