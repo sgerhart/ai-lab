@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
-  <link rel="stylesheet" href="/static/studio.css?v=8">
+  <link rel="stylesheet" href="/static/studio.css?v=9">
   <link rel="stylesheet" href="/static/steward.css?v=5">
   <style>
     :root {
@@ -1419,7 +1419,7 @@
     .prefs-main { overflow-y: auto; padding: 28px 36px 56px; }
     .prefs-pane { display: none; max-width: 760px; }
     .prefs-pane.active { display: block; }
-    #prefs-status.prefs-pane, #prefs-defenseclaw.prefs-pane, #prefs-antares.prefs-pane { max-width: 980px; }
+    #prefs-status.prefs-pane, #prefs-defenseclaw.prefs-pane, #prefs-antares.prefs-pane, #prefs-security.prefs-pane { max-width: none; width: 100%; box-sizing: border-box; }
     #prefs-antares .antares-fields { max-width: none; grid-template-columns: 1fr 1fr; }
     #prefs-antares .antares-fields .span { grid-column: 1 / -1; }
     .antares-start { margin: 0 0 16px; }
@@ -2184,19 +2184,19 @@
       </div>
 
       <div class="prefs-pane" id="prefs-security">
-        <button type="button" class="prefs-back" data-back="chat">← Back to Chat</button>
-        <div class="sec-header-row">
-          <div>
-            <h1>Security Center</h1>
-            <p class="prefs-lead">Unified operator console for security providers, telemetry findings & evidence, agent isolation posture, governed MCP, and hypervisor quarantine.</p>
+        <div class="sec-header-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <button type="button" class="prefs-back" data-back="chat" style="margin: 0; padding: 6px 12px; font-size: 13px;">← Back</button>
+            <h1 style="margin: 0; font-size: 22px;">Security Center</h1>
+            <span class="prefs-meta" style="color: var(--muted); font-size: 12.5px;">Operator console · Providers, telemetry, agent isolation &amp; quarantine</span>
           </div>
-          <div class="sec-header-actions">
-            <button type="button" class="btn" id="sec-refresh-btn">↻ Refresh Telemetry</button>
-            <button type="button" class="btn" id="sec-view-permissions-btn">🛡️ Fleet Permissions Board</button>
+          <div class="sec-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn" id="sec-refresh-btn" style="padding: 6px 12px; font-size: 12.5px;">↻ Refresh</button>
+            <button type="button" class="btn" id="sec-view-permissions-btn" style="padding: 6px 12px; font-size: 12.5px;">🛡️ Fleet Permissions Board</button>
           </div>
         </div>
 
-        <div class="posture-metrics-grid" id="sec-metrics-grid" style="margin-bottom: 20px;">
+        <div class="posture-metrics-grid" id="sec-metrics-grid" style="margin-bottom: 14px;">
           <div class="posture-card">
             <div class="posture-card-label">Security Providers</div>
             <div class="posture-card-val" id="sec-metric-providers">…</div>
@@ -2219,7 +2219,7 @@
           </div>
         </div>
 
-        <div class="dc-tabs" id="sec-nav-tabs" style="margin-bottom: 20px;">
+        <div class="dc-tabs" id="sec-nav-tabs" style="margin-bottom: 16px;">
           <button type="button" class="dc-tab active" data-sec-tab="overview">🛡️ Overview</button>
           <button type="button" class="dc-tab" data-sec-tab="vise">⚡ Cybersecurity Vise</button>
           <button type="button" class="dc-tab" data-sec-tab="antares">🔍 Antares Code Review</button>
