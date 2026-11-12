@@ -10,7 +10,7 @@ from typing import Any, Callable
 
 from .source_fetch import factual_query, fetch_page, search_pages, urls_in_text
 
-_EXCERPT = 1_200
+_EXCERPT = 3_000
 
 
 class WebLookupError(ValueError):
@@ -32,19 +32,30 @@ def web_search(
         return "web_search does not open a URL from the question. Ask in words."
     if not factual_query(text):
         return "web_search hits=0\nAsk a factual question."
-    hits = search_pages(text, opener=opener, resolve=resolve, limit=1)
+    hits = search_pages(text, opener=opener, resolve=resolve, limit=4)
     if not hits:
         return f"web_search hits=0 query={text[:80]}"
-    hit = hits[0]
-    page = fetch_page(
-        hit["url"],
-        title=hit.get("title") or "",
-        opener=opener,
-        resolve=resolve,
-        public=True,
-        use_cache=opener is None,
-    )
-    lines = [f"web_search hits=1 query={text[:80]}", f"url: {page.url or hit['url']}"]
+    best_page = None
+    best_hit = None
+    for hit in hits:
+        page = fetch_page(
+            hit["url"],
+            title=hit.get("title") or "",
+            opener=opener,
+            resolve=resolve,
+            public=True,
+            use_cache=opener is None,
+        )
+        if best_page is None:
+            best_page = page
+            best_hit = hit
+        if not page.error and len(page.text.strip()) > 120:
+            best_page = page
+            best_hit = hit
+            break
+    hit = best_hit or hits[0]
+    page = best_page
+    lines = [f"web_search hits={len(hits)} query={text[:80]}", f"url: {page.url or hit['url']}"]
     if page.title or hit.get("title"):
         lines.append(f"title: {page.title or hit.get('title')}")
     if page.document_date:

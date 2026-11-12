@@ -24,7 +24,7 @@ from urllib.request import OpenerDirector, Request, HTTPSHandler, HTTPHandler
 
 _DATA = Path(__file__).resolve().parent / "data" / "fetch_allowlist.json"
 _CATALOG = Path(__file__).resolve().parent / "data" / "source_catalog.json"
-USER_AGENT = "ai-lab-harness/0.2 (local documentation fetch)"
+USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 MAX_BYTES = 500_000
 TEXT_CAP = 200_000
 TIMEOUT_S = 8
@@ -133,7 +133,14 @@ _GREETING_RE = re.compile(
     r"^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|good morning|good night)[.!]?$",
     re.I,
 )
-_SEARCH_HOSTS = {"en.wikipedia.org", "html.duckduckgo.com", "duckduckgo.com"}
+_SEARCH_HOSTS = {"en.wikipedia.org", "html.duckduckgo.com", "duckduckgo.com", "lite.duckduckgo.com"}
+_RECENCY_WORDS = frozenset(
+    {
+        "latest", "recent", "news", "current", "breakthrough", "breakthroughs",
+        "today", "2024", "2025", "2026", "trending", "newest", "modern",
+        "working on", "innovation", "innovations", "cool",
+    }
+)
 _UDDG_RE = re.compile(r"[?&]uddg=([^&\"']+)", re.I)
 
 
@@ -589,13 +596,28 @@ def _unwrap_ddg(href: str) -> str:
 
 
 def _ddg_hits(query: str, *, opener: Any, resolve: Callable[[str], list[str]] | None) -> list[dict[str, str]]:
-    url = "https://html.duckduckgo.com/html/?q=" + quote_plus(query[:240])
+    url = "https://lite.duckduckgo.com/lite/?q=" + quote_plus(query[:240])
     raw = _fetch_raw(url, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
+    if not raw:
+        url_html = "https://html.duckduckgo.com/html/?q=" + quote_plus(query[:240])
+        raw = _fetch_raw(url_html, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
     hits: list[dict[str, str]] = []
-    for match in re.finditer(r'class="result__a"[^>]*href="([^"]+)"', raw or "", re.I):
+    # Match lite DuckDuckGo result links: <a rel="nofollow" href="..." class='result-link'>Title</a>
+    for match in re.finditer(
+        r'<a[^>]+href=["\']([^"\']+)["\'][^>]*class=["\']result-link["\'][^>]*>(.*?)</a>',
+        raw or "",
+        re.I | re.DOTALL,
+    ):
         link = _unwrap_ddg(match.group(1))
+        title = re.sub(r"<[^<]+?>", "", match.group(2)).strip()
         if link.startswith("https://"):
-            hits.append({"url": link, "title": ""})
+            hits.append({"url": link, "title": title})
+    if not hits:
+        # Fallback to HTML DuckDuckGo result links: class="result__a" href="..."
+        for match in re.finditer(r'class="result__a"[^>]*href="([^"]+)"', raw or "", re.I):
+            link = _unwrap_ddg(match.group(1))
+            if link.startswith("https://"):
+                hits.append({"url": link, "title": ""})
     return hits
 
 
@@ -623,12 +645,17 @@ def search_pages(
     if not factual_query(text):
         return []
     cleaned = _clean_search_query(text)
+    lower = text.lower()
+    is_recent = any(w in lower for w in _RECENCY_WORDS)
     found: list[dict[str, str]] = []
     seen: set[str] = set()
-    hits = _wikipedia_hits(text, opener=opener, resolve=resolve, limit=wiki_limit)
-    if cleaned != text and len(hits) < limit:
-        hits.extend(_wikipedia_hits(cleaned, opener=opener, resolve=resolve, limit=wiki_limit))
-    hits.extend(_ddg_hits(cleaned if cleaned != text else text, opener=opener, resolve=resolve))
+
+    ddg = _ddg_hits(cleaned if cleaned != text else text, opener=opener, resolve=resolve)
+    wiki = _wikipedia_hits(text, opener=opener, resolve=resolve, limit=wiki_limit)
+    if cleaned != text and len(wiki) < limit:
+        wiki.extend(_wikipedia_hits(cleaned, opener=opener, resolve=resolve, limit=wiki_limit))
+
+    hits = (ddg + wiki) if is_recent else (wiki + ddg)
     for row in hits:
         try:
             url = validate_https_url(row["url"], public=True)

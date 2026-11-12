@@ -87,6 +87,20 @@ class ParseModelTurnTests(unittest.TestCase):
             {"type": "final", "text": "ports look fine"},
         )
 
+    def test_multiline_final_is_preserved(self) -> None:
+        text = (
+            "FINAL Paragraph one with context.\n\n"
+            "Key highlights:\n"
+            "1. Agentic AI breakthroughs\n"
+            "2. Quantum computing error correction\n\n"
+            "Would you like more details?"
+        )
+        turn = parse_model_turn(text)
+        self.assertEqual(turn["type"], "final")
+        self.assertIn("Paragraph one", turn["text"])
+        self.assertIn("Agentic AI", turn["text"])
+        self.assertIn("Would you like more details?", turn["text"])
+
     def test_tool_without_args_braces(self) -> None:
         self.assertEqual(
             parse_model_turn("TOOL health_read"),

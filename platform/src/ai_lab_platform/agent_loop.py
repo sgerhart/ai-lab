@@ -29,8 +29,8 @@ from .work_order import utcnow
 _TOOL_START_RE = re.compile(r"(?m)^TOOL\s+([a-zA-Z0-9_\-.:/]+)")
 _TOOL_RE = re.compile(r"^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$", re.DOTALL)
 _TOOL_LINE_RE = re.compile(r"(?m)^TOOL\s+(\S+)(?:\s+(\{.*\}))?\s*$")
-_FINAL_RE = re.compile(r"^FINAL(?::)?\s*(.*)$", re.DOTALL)
-_FINAL_LINE_RE = re.compile(r"(?m)^FINAL(?::)?\s*(.*)$")
+_FINAL_RE = re.compile(r"(?ms)^FINAL(?::)?\s*(.*)$")
+_FINAL_LINE_RE = re.compile(r"(?ms)^FINAL(?::)?\s*(.*)$")
 _JSON_TOOL_RE = re.compile(
     r'\{\s*"type"\s*:\s*"tool"\s*,\s*"name"\s*:\s*"([^"]+)"\s*,\s*"args"\s*:\s*(\{.*?\})\s*\}',
     re.DOTALL,
@@ -367,13 +367,21 @@ def parse_model_turn(text: str) -> dict[str, Any]:
         tname = tool_call["name"]
         if tname in _WRITE_TOOLS or tname.endswith("_write") or tname.endswith("_create"):
             return tool_call
-        return {"type": "final", "text": m_final.group(1).strip()}
+        final_text = m_final.group(1).strip()
+        m_tool_after = _TOOL_START_RE.search(final_text)
+        if m_tool_after:
+            final_text = final_text[:m_tool_after.start()].strip()
+        return {"type": "final", "text": final_text}
 
     if tool_call:
         return tool_call
 
     if m_final:
-        return {"type": "final", "text": m_final.group(1).strip()}
+        final_text = m_final.group(1).strip()
+        m_tool_after = _TOOL_START_RE.search(final_text)
+        if m_tool_after:
+            final_text = final_text[:m_tool_after.start()].strip()
+        return {"type": "final", "text": final_text}
 
     m_exact_final = _FINAL_RE.match(candidate)
     if m_exact_final:
@@ -448,12 +456,12 @@ def step_agent_run(
     elif wake_tools is not None:
         follow = (
             "Call only the read tools listed for this wake, and only with different arguments. "
-            "Otherwise emit a single FINAL line."
+            "Otherwise emit FINAL with your response."
         )
     elif policy.id == "personal":
         follow = (
             "vault tools, files tools, web_search, research, schedule tools, and report tools may be called again with different arguments. "
-            "Otherwise emit a single FINAL line."
+            "Otherwise emit FINAL with your response."
         )
     else:
         follow = "Only emit TOOL if you need a different tool than you already used."
@@ -471,11 +479,11 @@ def step_agent_run(
         elif is_report_req and not has_report:
             instruction = "You have research observations. You MUST call report_write(name, title, body_markdown) to author the report now. Do not emit FINAL without writing the report."
         else:
-            instruction = "You already have tool results. Emit a single FINAL line summarizing them. " + follow
+            instruction = "You already have tool results. Synthesize a comprehensive and helpful answer. Start your final response with FINAL:\n" + follow
 
         prompt = (
             prompt
-            + "\n\nObservations from tools (use these; do not invent):\n"
+            + "\n\nObservations from tools (ground your answer in these where relevant, and synthesize with your technical knowledge):\n"
             + "\n---\n".join(obs[-5:])
             + "\n\n"
             + instruction
