@@ -782,6 +782,16 @@ def create_control_app(
             pg_context.__exit__(None, None, None)
 
     app = FastAPI(title="ai-lab control plane", version="0.5.0", lifespan=lifespan)
+
+    @app.middleware("http")
+    async def add_no_cache_to_api(request: Request, call_next: Any) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/v1/"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
+
     app.state.store = store
     app.state.graph = graph
     app.state.checkpointer = checkpointer
@@ -1871,9 +1881,13 @@ def create_control_app(
     @app.get("/v1/conversations")
     def list_conversations(
         request: Request,
+        response: Response,
         authorization: str | None = Header(default=None),
         limit: int = 50,
     ) -> dict[str, Any]:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         _gate(request, authorization)
         if not hasattr(store, "list_conversations"):
             raise HTTPException(status_code=501, detail="conversation list unavailable")

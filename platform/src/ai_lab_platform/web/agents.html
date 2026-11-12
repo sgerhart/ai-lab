@@ -256,12 +256,13 @@
       height: 1px; background: rgba(255, 255, 255, 0.08); margin: 3px 0;
     }
     .conv-more-btn {
-      opacity: 0; border: 0; background: transparent; color: var(--muted); cursor: pointer;
+      opacity: 0.45; border: 0; background: transparent; color: var(--muted); cursor: pointer;
       font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 6px;
       flex-shrink: 0; transition: all 0.15s ease;
     }
     .conv-item:hover .conv-more-btn, .conv-more-btn.active {
       opacity: 1;
+      color: var(--ink);
     }
     .conv-more-btn:hover {
       color: var(--ink); background: rgba(255, 255, 255, 0.12);
@@ -3308,7 +3309,11 @@
     }
     function showErr(e) { $("error").textContent = e ? String(e) : ""; }
     async function api(path, opts = {}) {
-      const res = await fetch(path, { ...opts, headers: { ...headers(!(opts.body instanceof FormData)), ...(opts.headers || {}) } });
+      const res = await fetch(path, {
+        cache: "no-store",
+        ...opts,
+        headers: { ...headers(!(opts.body instanceof FormData)), ...(opts.headers || {}) },
+      });
       const text = await res.text();
       let body; try { body = JSON.parse(text); } catch { body = { raw: text }; }
       if (!res.ok) {
@@ -4922,12 +4927,16 @@
       }
     });
 
-    async function loadConversations() {
+    async function loadConversations(retry = true) {
       try {
         const data = await api("/v1/conversations?limit=100");
-        state.conversations = data.conversations || [];
+        state.conversations = Array.isArray(data.conversations) ? data.conversations : [];
       } catch (err) {
         console.error("Failed to load conversations:", err);
+        if (retry) {
+          setTimeout(() => loadConversations(false), 500);
+          return;
+        }
       }
       const open = (state.conversations || []).find((c) => c.id === state.conversationId);
       state.conversationAgent = open ? (open.agent || "") : (state.conversationId ? state.conversationAgent : "");
@@ -4980,13 +4989,11 @@
             renderConversationsList();
           };
         } else if (isArchivedTab) {
-          empty.innerHTML = `<span style="opacity:0.7;">No archived chats</span><span style="font-size:11px;opacity:0.5;">Use the ••• menu to archive chats</span>`;
+          empty.innerHTML = `<span style="opacity:0.6;font-size:12px;">No archived chats</span><span style="font-size:11px;opacity:0.4;">Use the ••• menu to archive chats</span>`;
           box.appendChild(empty);
         } else {
-          empty.innerHTML = `<span style="opacity:0.7;">No active chats</span><button type="button" class="btn" style="padding:4px 10px;font-size:11px;margin-top:4px;" id="conv-empty-new">+ Start chat</button>`;
+          empty.innerHTML = `<span style="opacity:0.6;font-size:12px;">No active conversations</span>`;
           box.appendChild(empty);
-          const newBtn = $("conv-empty-new");
-          if (newBtn) newBtn.onclick = () => newConversation().catch(showErr);
         }
         return;
       }
@@ -6398,11 +6405,17 @@
       }
     }
     async function fetchProjects() {
-      const data = await api("/v1/projects");
-      state.projects = data.projects || [];
-      renderSideProjects();
-      renderConversationsList();
-      return state.projects;
+      try {
+        const data = await api("/v1/projects");
+        state.projects = data.projects || [];
+        renderSideProjects();
+        if (state.conversations && state.conversations.length) {
+          renderConversationsList();
+        }
+      } catch (e) {
+        console.error("Failed to fetch projects:", e);
+      }
+      return state.projects || [];
     }
     async function loadProjects() {
       showProjectHome();
@@ -7763,39 +7776,46 @@
         loadConversations: loadConversations,
       });
     }
+    let bootInProgress = false;
     async function boot() {
-      attachGoalCardListeners();
-      initConvControls();
-      await Promise.allSettled([
-        loadConversations(),
-        loadProviders(),
-        fetchProjects(),
-        loadDefinitions(),
-        loadArtifacts(),
-      ]);
-      if ($("toggle-artifacts")) $("toggle-artifacts").onclick = () => openArtifactsExplorer();
-      if ($("close-artifacts")) $("close-artifacts").onclick = () => toggleArtifactsRail(false);
-      if ($("refresh-artifacts")) $("refresh-artifacts").onclick = () => loadArtifacts();
-      if ($("btn-refresh-artifacts")) $("btn-refresh-artifacts").onclick = () => loadArtifacts(true);
-      if ($("artifact-modal-done")) $("artifact-modal-done").onclick = closeArtifactViewer;
-      if ($("artifact-modal-x")) $("artifact-modal-x").onclick = closeArtifactViewer;
-      if ($("artifact-modal-backdrop")) $("artifact-modal-backdrop").onclick = closeArtifactViewer;
-      if (!state.conversationId) {
-        renderMessages([]);
-      }
-      autosize();
-      const open = new URLSearchParams(location.search).get("open");
-      if (open === "antares") {
-        history.replaceState(null, "", "/");
-        openPrefs("antares");
-      } else if (open === "steward") {
-        history.replaceState(null, "", "/");
-        setView("steward");
-      } else {
-        setView("chat");
-      }
-      if (window.innerWidth <= 720 && typeof toggleSidebar === "function") {
-        toggleSidebar(true);
+      if (bootInProgress) return;
+      bootInProgress = true;
+      try {
+        attachGoalCardListeners();
+        initConvControls();
+        await loadConversations();
+        await Promise.allSettled([
+          loadProviders(),
+          fetchProjects(),
+          loadDefinitions(),
+          loadArtifacts(),
+        ]);
+        if ($("toggle-artifacts")) $("toggle-artifacts").onclick = () => openArtifactsExplorer();
+        if ($("close-artifacts")) $("close-artifacts").onclick = () => toggleArtifactsRail(false);
+        if ($("refresh-artifacts")) $("refresh-artifacts").onclick = () => loadArtifacts();
+        if ($("btn-refresh-artifacts")) $("btn-refresh-artifacts").onclick = () => loadArtifacts(true);
+        if ($("artifact-modal-done")) $("artifact-modal-done").onclick = closeArtifactViewer;
+        if ($("artifact-modal-x")) $("artifact-modal-x").onclick = closeArtifactViewer;
+        if ($("artifact-modal-backdrop")) $("artifact-modal-backdrop").onclick = closeArtifactViewer;
+        if (!state.conversationId) {
+          renderMessages([]);
+        }
+        autosize();
+        const open = new URLSearchParams(location.search).get("open");
+        if (open === "antares") {
+          history.replaceState(null, "", "/");
+          openPrefs("antares");
+        } else if (open === "steward") {
+          history.replaceState(null, "", "/");
+          setView("steward");
+        } else {
+          setView("chat");
+        }
+        if (window.innerWidth <= 720 && typeof toggleSidebar === "function") {
+          toggleSidebar(true);
+        }
+      } finally {
+        bootInProgress = false;
       }
     }
     document.addEventListener("ai-lab-auth-ready", () => {
