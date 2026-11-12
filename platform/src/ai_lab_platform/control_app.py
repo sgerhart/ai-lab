@@ -463,7 +463,10 @@ class ConversationIn(BaseModel):
 
 
 class ConversationPatch(BaseModel):
-    project_id: str = ""
+    project_id: str | None = None
+    title: str | None = None
+    archived: bool | None = None
+    pinned: bool | None = None
 
 
 class ProjectIn(BaseModel):
@@ -1937,17 +1940,24 @@ def create_control_app(
         body: ConversationPatch,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
-        """Move a chat into a project, or clear that link."""
+        """Update a conversation: project assignment, title, archived, or pinned state."""
         _gate(request, authorization)
         conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
         if conversation is None:
             raise HTTPException(status_code=404, detail="not found")
-        project_id = (body.project_id or "").strip()
-        if project_id and (
-            not hasattr(store, "get_project") or store.get_project(project_id) is None  # type: ignore[attr-defined]
-        ):
-            raise HTTPException(status_code=400, detail="unknown project")
-        conversation.project_id = project_id
+        if body.project_id is not None:
+            project_id = (body.project_id or "").strip()
+            if project_id and (
+                not hasattr(store, "get_project") or store.get_project(project_id) is None  # type: ignore[attr-defined]
+            ):
+                raise HTTPException(status_code=400, detail="unknown project")
+            conversation.project_id = project_id
+        if body.title is not None:
+            conversation.title = (body.title or "").strip()
+        if body.archived is not None:
+            conversation.archived = bool(body.archived)
+        if body.pinned is not None:
+            conversation.pinned = bool(body.pinned)
         store.put_conversation(conversation)  # type: ignore[attr-defined]
         return conversation.to_dict()
 

@@ -84,6 +84,19 @@ class ConversationStoreTests(unittest.TestCase):
         self.assertEqual(store.list(), [])
         self.assertEqual(len(store.list_messages(conv.id)), 1)
 
+    def test_conversation_archived_and_pinned_persistence(self) -> None:
+        store = _store()
+        conv = Conversation.new(agent="lab-operations", title="test")
+        self.assertFalse(conv.archived)
+        self.assertFalse(conv.pinned)
+        conv.archived = True
+        conv.pinned = True
+        store.put_conversation(conv)
+        loaded = store.get_conversation(conv.id)
+        assert loaded is not None
+        self.assertTrue(loaded.archived)
+        self.assertTrue(loaded.pinned)
+
 
 @unittest.skipIf(IMPORT_ERROR is not None, f"fastapi/langgraph missing: {IMPORT_ERROR}")
 class ConversationApiTests(unittest.TestCase):
@@ -164,6 +177,33 @@ class ConversationApiTests(unittest.TestCase):
             },
         )
         self.assertEqual(denied.status_code, 400)
+
+    def test_patch_conversation_attributes(self) -> None:
+        created = self.client.post(
+            "/v1/conversations",
+            headers=self.headers,
+            json={"agent": "lab-operations", "title": "initial"},
+        )
+        self.assertEqual(created.status_code, 200)
+        conv_id = created.json()["id"]
+
+        patch_resp = self.client.patch(
+            f"/v1/conversations/{conv_id}",
+            headers=self.headers,
+            json={"title": "renamed", "pinned": True, "archived": True},
+        )
+        self.assertEqual(patch_resp.status_code, 200)
+        data = patch_resp.json()
+        self.assertEqual(data["title"], "renamed")
+        self.assertTrue(data["pinned"])
+        self.assertTrue(data["archived"])
+
+        get_resp = self.client.get(f"/v1/conversations/{conv_id}", headers=self.headers)
+        self.assertEqual(get_resp.status_code, 200)
+        got = get_resp.json()
+        self.assertEqual(got["title"], "renamed")
+        self.assertTrue(got["pinned"])
+        self.assertTrue(got["archived"])
 
 
 if __name__ == "__main__":

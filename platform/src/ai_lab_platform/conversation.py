@@ -81,6 +81,8 @@ class Conversation:
     agent: str
     title: str = ""
     project_id: str = ""
+    archived: bool = False
+    pinned: bool = False
     created_at: str = field(default_factory=utcnow)
     updated_at: str = field(default_factory=utcnow)
 

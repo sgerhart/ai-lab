@@ -230,6 +230,101 @@
     }
     .conv-item:hover .del { opacity: 1; }
     .conv-item .del:hover { color: var(--down); background: rgba(255,107,122,.12); }
+    .conv-dropdown {
+      position: fixed; z-index: 1000;
+      min-width: 180px; background: #181d24; border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px; padding: 6px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      display: flex; flex-direction: column; gap: 2px;
+      backdrop-filter: blur(12px);
+    }
+    .conv-menu-item {
+      display: flex; align-items: center; gap: 9px; padding: 7px 10px;
+      border: 0; background: transparent; color: var(--ink); font-size: 12px; font-weight: 500;
+      text-align: left; cursor: pointer; border-radius: 6px; width: 100%;
+      transition: background 0.12s ease;
+    }
+    .conv-menu-item:hover {
+      background: rgba(255, 255, 255, 0.08); color: #fff;
+    }
+    .conv-menu-item.danger {
+      color: #ff6b7a;
+    }
+    .conv-menu-item.danger:hover {
+      background: rgba(255, 107, 122, 0.18); color: #ff8591;
+    }
+    .conv-menu-divider {
+      height: 1px; background: rgba(255, 255, 255, 0.08); margin: 3px 0;
+    }
+    .conv-more-btn {
+      opacity: 0; border: 0; background: transparent; color: var(--muted); cursor: pointer;
+      font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 6px;
+      flex-shrink: 0; transition: all 0.15s ease;
+    }
+    .conv-item:hover .conv-more-btn, .conv-more-btn.active {
+      opacity: 1;
+    }
+    .conv-more-btn:hover {
+      color: var(--ink); background: rgba(255, 255, 255, 0.12);
+    }
+    .conv-tabs {
+      display: flex; gap: 2px; background: rgba(255, 255, 255, 0.04);
+      padding: 2px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .conv-tab-btn {
+      border: 0; background: transparent; color: var(--muted); font-size: 11px;
+      padding: 3px 8px; border-radius: 4px; cursor: pointer; transition: all 0.12s ease;
+    }
+    .conv-tab-btn:hover { color: var(--ink); }
+    .conv-tab-btn.active {
+      background: rgba(255, 255, 255, 0.12); color: #fff; font-weight: 600;
+    }
+    .conv-search-input {
+      width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;
+      color: var(--ink); font-size: 12px; padding: 6px 10px; margin: 4px 0 6px;
+      outline: none; transition: border-color 0.15s ease;
+    }
+    .conv-search-input:focus {
+      border-color: rgba(56, 189, 248, 0.45); background: rgba(0, 0, 0, 0.5);
+    }
+    .conv-project-pill {
+      display: inline-flex; align-items: center; gap: 3px; font-size: 10px;
+      color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 1px 5px;
+      border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.25);
+      max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .conv-empty-state {
+      padding: 14px 10px; color: var(--muted); font-size: 12px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .conv-project-modal {
+      position: fixed; inset: 0; z-index: 2000;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .conv-project-modal[hidden] { display: none !important; }
+    .conv-project-backdrop {
+      position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+    .conv-project-card {
+      position: relative; z-index: 1; width: 90%; max-width: 400px;
+      background: #181d24; border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .conv-project-opt {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 12px; background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;
+      color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: all 0.15s ease; text-align: left; width: 100%; box-sizing: border-box;
+    }
+    .conv-project-opt:hover {
+      background: rgba(56, 189, 248, 0.12); border-color: rgba(56, 189, 248, 0.4);
+      color: #fff;
+    }
+    .conv-project-opt.current {
+      border-color: #38bdf8; background: rgba(56, 189, 248, 0.16); color: #38bdf8;
+    }
     .side-foot {
       flex-shrink: 0;
       border-top: 1px solid var(--line); padding: 12px 14px;
@@ -1860,7 +1955,18 @@
         </section>
         <hr class="side-rule">
         <section class="side-section" aria-label="Chats">
-          <div class="side-label"><svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H8l-5 3V12a8 8 0 1 1 18 0z"/></svg>Chats</div>
+          <div class="side-label" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <svg class="nav-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-8 8H8l-5 3V12a8 8 0 1 1 18 0z"/></svg>Chats
+            </div>
+            <div class="conv-tabs" id="conv-tabs">
+              <button type="button" class="conv-tab-btn active" id="tab-chats-active" title="Active chats">Active</button>
+              <button type="button" class="conv-tab-btn" id="tab-chats-archived" title="Archived chats">Archived</button>
+            </div>
+          </div>
+          <div style="padding: 0 4px 6px;">
+            <input type="text" id="conv-search" class="conv-search-input" placeholder="Filter chats..." autocomplete="off">
+          </div>
           <div class="side-scrollbox" id="conv-list"></div>
         </section>
         <details class="side-tools-details" id="side-tools-details">
@@ -2952,6 +3058,18 @@
     </div>
   </div>
 
+  <div class="conv-project-modal" id="conv-project-modal" hidden>
+    <div class="conv-project-backdrop" id="conv-project-backdrop"></div>
+    <div class="conv-project-card" role="dialog" aria-modal="true" aria-labelledby="conv-project-modal-title">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 id="conv-project-modal-title" style="margin:0;font-size:15px;font-weight:600;color:var(--ink);">Move Chat to Project</h3>
+        <button type="button" class="icon-btn" id="conv-project-modal-x" title="Close">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.4;">Select a workspace project to group this conversation, or remove it from all projects.</p>
+      <div id="conv-project-options" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;padding-right:2px;"></div>
+    </div>
+  </div>
+
   <script src="/static/studio.js?v=11"></script>
   <script src="/static/steward.js?v=5"></script>
   <script>
@@ -2973,6 +3091,8 @@
       runs: [],
       mcp: null,
       conversations: [],
+      convTab: "active",
+      convSearch: "",
       projects: [],
       projectId: "",
     };
@@ -4776,30 +4896,122 @@
       return dateStr ? `Conversation (${dateStr})` : "New conversation";
     }
 
+    let activeConvMenu = null;
+    let currentProjectConv = null;
+
+    function closeConvMenu() {
+      if (activeConvMenu) {
+        if (activeConvMenu.btn) activeConvMenu.btn.classList.remove("active");
+        if (activeConvMenu.menu && activeConvMenu.menu.parentNode) {
+          activeConvMenu.menu.parentNode.removeChild(activeConvMenu.menu);
+        }
+        activeConvMenu = null;
+      }
+    }
+
+    document.addEventListener("click", (e) => {
+      if (activeConvMenu && !activeConvMenu.menu.contains(e.target)) {
+        closeConvMenu();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeConvMenu();
+        closeProjectModal();
+      }
+    });
+
     async function loadConversations() {
-      const data = await api("/v1/conversations?limit=40");
-      const list = data.conversations || [];
-      state.conversations = list;
-      const open = list.find((c) => c.id === state.conversationId);
+      try {
+        const data = await api("/v1/conversations?limit=100");
+        state.conversations = data.conversations || [];
+      } catch (err) {
+        console.error("Failed to load conversations:", err);
+      }
+      const open = (state.conversations || []).find((c) => c.id === state.conversationId);
       state.conversationAgent = open ? (open.agent || "") : (state.conversationId ? state.conversationAgent : "");
+      renderConversationsList();
+      syncComposer();
+    }
+
+    function renderConversationsList() {
       const box = $("conv-list");
+      if (!box) return;
       box.innerHTML = "";
+
+      const all = state.conversations || [];
+      const isArchivedTab = state.convTab === "archived";
+
+      // Filter by Active vs Archived
+      let list = all.filter((c) => isArchivedTab ? !!c.archived : !c.archived);
+
+      // Filter by Search Query
+      const q = (state.convSearch || "").trim().toLowerCase();
+      if (q) {
+        list = list.filter((c) => {
+          const t = chatTitle(c).toLowerCase();
+          const proj = state.projects ? (state.projects.find((p) => p.id === c.project_id)?.name || "").toLowerCase() : "";
+          return t.includes(q) || proj.includes(q);
+        });
+      }
+
+      // Sort: pinned first, then most recently updated/created
+      list.sort((a, b) => {
+        if (!!a.pinned !== !!b.pinned) {
+          return a.pinned ? -1 : 1;
+        }
+        const tA = new Date(a.updated_at || a.created_at || 0).getTime();
+        const tB = new Date(b.updated_at || b.created_at || 0).getTime();
+        return tB - tA;
+      });
+
+      if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "conv-empty-state";
+        if (q) {
+          empty.innerHTML = `<span>No chats matching "<strong>${escapeHtml(q)}</strong>"</span><button type="button" class="btn" style="padding:2px 8px;font-size:11px;margin-top:4px;" id="conv-search-clear">Clear filter</button>`;
+          box.appendChild(empty);
+          const clr = $("conv-search-clear");
+          if (clr) clr.onclick = () => {
+            const inp = $("conv-search");
+            if (inp) inp.value = "";
+            state.convSearch = "";
+            renderConversationsList();
+          };
+        } else if (isArchivedTab) {
+          empty.innerHTML = `<span style="opacity:0.7;">No archived chats</span><span style="font-size:11px;opacity:0.5;">Use the ••• menu to archive chats</span>`;
+          box.appendChild(empty);
+        } else {
+          empty.innerHTML = `<span style="opacity:0.7;">No active chats</span><button type="button" class="btn" style="padding:4px 10px;font-size:11px;margin-top:4px;" id="conv-empty-new">+ Start chat</button>`;
+          box.appendChild(empty);
+          const newBtn = $("conv-empty-new");
+          if (newBtn) newBtn.onclick = () => newConversation().catch(showErr);
+        }
+        return;
+      }
+
       for (const c of list) {
         const row = document.createElement("div");
         row.className = "conv-item" + (c.id === state.conversationId && state.view === "chat" ? " active" : "");
-        row.style.cssText = "display:flex;align-items:center;padding:8px 10px;gap:8px;";
+        row.style.cssText = "display:flex;align-items:center;padding:7px 10px;gap:8px;position:relative;";
+
         const title = chatTitle(c);
         const timeAgo = formatIsoTimeAgo(c.updated_at || c.created_at);
+        const project = state.projects ? state.projects.find((p) => p.id === c.project_id) : null;
 
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "t";
         btn.style.cssText = "flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;padding:0;display:flex;align-items:flex-start;gap:8px;";
-        
+
         const badge = document.createElement("span");
         badge.className = "conv-badge";
         badge.style.cssText = "font-size:14px;line-height:1.2;margin-top:1px;flex-shrink:0;";
-        if (c.agent === "personal") {
+        if (c.pinned) {
+          badge.textContent = "📌";
+          badge.title = "Pinned chat";
+        } else if (c.agent === "personal") {
           badge.textContent = "🤖";
           badge.title = "Autonomous Agent";
         } else if (c.agent === "lab-operations") {
@@ -4820,8 +5032,17 @@
 
         const subSpan = document.createElement("div");
         subSpan.style.cssText = "font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:4px;";
+
+        let subHtml = "";
+        if (project) {
+          subHtml += `<span class="conv-project-pill" title="Project: ${escapeHtml(project.name)}">📁 ${escapeHtml(project.name)}</span>`;
+        }
         const agentName = c.agent === "personal" ? "Agent" : (c.agent === "lab-operations" ? "Ops" : "Chat");
-        subSpan.innerHTML = `<span>${agentName}</span>${timeAgo ? `<span style="opacity:0.6;">·</span><span>${timeAgo}</span>` : ""}`;
+        subHtml += `<span>${agentName}</span>`;
+        if (timeAgo) {
+          subHtml += `<span style="opacity:0.6;">·</span><span>${timeAgo}</span>`;
+        }
+        subSpan.innerHTML = subHtml;
 
         col.appendChild(titleSpan);
         col.appendChild(subSpan);
@@ -4829,18 +5050,279 @@
         btn.appendChild(badge);
         btn.appendChild(col);
         btn.onclick = () => selectConversation(c.id);
-        const del = document.createElement("button");
-        del.type = "button";
-        del.className = "del";
-        del.title = "Delete chat";
-        del.textContent = "×";
-        del.onclick = (ev) => { ev.stopPropagation(); deleteConversation(c.id); };
+
+        const moreBtn = document.createElement("button");
+        moreBtn.type = "button";
+        moreBtn.className = "conv-more-btn";
+        moreBtn.setAttribute("aria-label", "Chat options");
+        moreBtn.title = "Chat options";
+        moreBtn.textContent = "•••";
+        moreBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          openConvMenu(ev, c);
+        };
+
         row.appendChild(btn);
-        row.appendChild(del);
+        row.appendChild(moreBtn);
         box.appendChild(row);
       }
-      syncComposer();
     }
+
+    function openConvMenu(ev, c) {
+      closeConvMenu();
+      const trigger = ev.currentTarget;
+      trigger.classList.add("active");
+
+      const rect = trigger.getBoundingClientRect();
+      const menu = document.createElement("div");
+      menu.className = "conv-dropdown";
+
+      const menuWidth = 190;
+      const menuHeight = 220;
+      let top = rect.bottom + 4;
+      let left = rect.right - menuWidth;
+      if (top + menuHeight > window.innerHeight) {
+        top = Math.max(10, rect.top - menuHeight - 4);
+      }
+      if (left < 10) left = 10;
+      menu.style.top = `${top}px`;
+      menu.style.left = `${left}px`;
+
+      const isArchived = !!c.archived;
+      const isPinned = !!c.pinned;
+      const project = state.projects ? state.projects.find((p) => p.id === c.project_id) : null;
+
+      menu.innerHTML = `
+        <button type="button" class="conv-menu-item" data-action="rename">
+          <span>✏️</span><span>Rename</span>
+        </button>
+        <button type="button" class="conv-menu-item" data-action="pin">
+          <span>${isPinned ? "📍" : "📌"}</span><span>${isPinned ? "Unpin chat" : "Pin to top"}</span>
+        </button>
+        <button type="button" class="conv-menu-item" data-action="project">
+          <span>📁</span><span>${project ? "Change project…" : "Move to project…"}</span>
+        </button>
+        <button type="button" class="conv-menu-item" data-action="archive">
+          <span>${isArchived ? "📤" : "📦"}</span><span>${isArchived ? "Unarchive chat" : "Archive chat"}</span>
+        </button>
+        <button type="button" class="conv-menu-item" data-action="export">
+          <span>⬇️</span><span>Export Markdown</span>
+        </button>
+        <div class="conv-menu-divider"></div>
+        <button type="button" class="conv-menu-item danger" data-action="delete">
+          <span>🗑️</span><span>Delete chat</span>
+        </button>
+      `;
+
+      menu.querySelectorAll(".conv-menu-item").forEach((item) => {
+        item.onclick = async (e) => {
+          e.stopPropagation();
+          const act = item.getAttribute("data-action");
+          closeConvMenu();
+          if (act === "rename") {
+            renameConversation(c);
+          } else if (act === "pin") {
+            togglePinConversation(c);
+          } else if (act === "project") {
+            openProjectModal(c);
+          } else if (act === "archive") {
+            toggleArchiveConversation(c);
+          } else if (act === "export") {
+            exportConversationMarkdown(c);
+          } else if (act === "delete") {
+            deleteConversation(c.id);
+          }
+        };
+      });
+
+      document.body.appendChild(menu);
+      activeConvMenu = { menu, btn: trigger };
+    }
+
+    async function renameConversation(c) {
+      const current = chatTitle(c);
+      const next = prompt("Enter conversation title:", current);
+      if (next === null) return;
+      const trimmed = next.trim();
+      if (!trimmed || trimmed === current) return;
+      try {
+        await api(`/v1/conversations/${c.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ title: trimmed }),
+        });
+        c.title = trimmed;
+        renderConversationsList();
+        showErr("");
+      } catch (e) { showErr(e); }
+    }
+
+    async function togglePinConversation(c) {
+      const next = !c.pinned;
+      try {
+        await api(`/v1/conversations/${c.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ pinned: next }),
+        });
+        c.pinned = next;
+        renderConversationsList();
+        showErr("");
+      } catch (e) { showErr(e); }
+    }
+
+    async function toggleArchiveConversation(c) {
+      const next = !c.archived;
+      try {
+        await api(`/v1/conversations/${c.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ archived: next }),
+        });
+        c.archived = next;
+        renderConversationsList();
+        showErr("");
+      } catch (e) { showErr(e); }
+    }
+
+    function openProjectModal(c) {
+      currentProjectConv = c;
+      const modal = $("conv-project-modal");
+      const list = $("conv-project-options");
+      if (!modal || !list) return;
+      list.innerHTML = "";
+
+      const noneBtn = document.createElement("button");
+      noneBtn.type = "button";
+      noneBtn.className = "conv-project-opt" + (!c.project_id ? " current" : "");
+      noneBtn.innerHTML = `<span>🚫 No Project</span>${!c.project_id ? "<span>✓ Current</span>" : ""}`;
+      noneBtn.onclick = async () => {
+        await setConvProject(c, "");
+        closeProjectModal();
+      };
+      list.appendChild(noneBtn);
+
+      const projects = state.projects || [];
+      for (const p of projects) {
+        const isCurrent = c.project_id === p.id;
+        const pBtn = document.createElement("button");
+        pBtn.type = "button";
+        pBtn.className = "conv-project-opt" + (isCurrent ? " current" : "");
+        pBtn.innerHTML = `<span>📁 ${escapeHtml(p.name)}</span>${isCurrent ? "<span>✓ Current</span>" : ""}`;
+        pBtn.onclick = async () => {
+          await setConvProject(c, p.id);
+          closeProjectModal();
+        };
+        list.appendChild(pBtn);
+      }
+
+      modal.hidden = false;
+    }
+
+    function closeProjectModal() {
+      const modal = $("conv-project-modal");
+      if (modal) modal.hidden = true;
+      currentProjectConv = null;
+    }
+
+    async function setConvProject(c, projectId) {
+      try {
+        await api(`/v1/conversations/${c.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ project_id: projectId }),
+        });
+        c.project_id = projectId;
+        renderConversationsList();
+        showErr("");
+      } catch (e) { showErr(e); }
+    }
+
+    async function exportConversationMarkdown(c) {
+      try {
+        const title = chatTitle(c);
+        const [msgsData, runsData] = await Promise.allSettled([
+          api(`/v1/conversations/${c.id}/messages`),
+          api(`/v1/conversations/${c.id}/runs`),
+        ]);
+        const msgs = (msgsData.status === "fulfilled" && msgsData.value ? msgsData.value.messages : []) || [];
+        const runs = (runsData.status === "fulfilled" && runsData.value ? runsData.value.runs : []) || [];
+        const project = state.projects ? state.projects.find((p) => p.id === c.project_id) : null;
+
+        let md = `# ${title}\n\n`;
+        md += `- **Date**: ${c.created_at || "N/A"}\n`;
+        md += `- **Agent**: ${c.agent || "default"}\n`;
+        if (project) md += `- **Project**: ${project.name}\n`;
+        if (c.updated_at) md += `- **Last Updated**: ${c.updated_at}\n`;
+        md += `\n---\n\n`;
+
+        if (msgs.length) {
+          md += `## Messages\n\n`;
+          for (const m of msgs) {
+            const roleName = m.role === "user" ? "User" : (m.role === "assistant" ? "Assistant" : (m.role || "Unknown"));
+            const timeStr = m.created_at ? ` *(${m.created_at})*` : "";
+            md += `### ${roleName}${timeStr}\n\n${(m.content || "").trim()}\n\n`;
+          }
+        }
+
+        if (runs.length) {
+          md += `## Agent Runs & Execution\n\n`;
+          for (const r of runs) {
+            md += `### Run: ${r.objective || r.id}\n\n`;
+            md += `- **Status**: ${r.status}\n`;
+            md += `- **Model**: ${r.model || "default"} (${r.backend || "local"})\n`;
+            if (r.final_result) {
+              md += `\n**Final Result:**\n\n${r.final_result}\n\n`;
+            }
+            if (r.error) {
+              md += `\n**Error:**\n\n${r.error}\n\n`;
+            }
+          }
+        }
+
+        const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const safeName = title.replace(/[^a-zA-Z0-9_\-]/g, "_").toLowerCase().slice(0, 50);
+        a.download = `${safeName || "conversation"}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showErr(err);
+      }
+    }
+
+    function initConvControls() {
+      const activeTab = $("tab-chats-active");
+      const archivedTab = $("tab-chats-archived");
+      const searchInput = $("conv-search");
+
+      if (activeTab) {
+        activeTab.onclick = () => {
+          state.convTab = "active";
+          activeTab.classList.add("active");
+          if (archivedTab) archivedTab.classList.remove("active");
+          renderConversationsList();
+        };
+      }
+      if (archivedTab) {
+        archivedTab.onclick = () => {
+          state.convTab = "archived";
+          archivedTab.classList.add("active");
+          if (activeTab) activeTab.classList.remove("active");
+          renderConversationsList();
+        };
+      }
+      if (searchInput) {
+        searchInput.oninput = (e) => {
+          state.convSearch = (e.target.value || "").trim().toLowerCase();
+          renderConversationsList();
+        };
+      }
+      if ($("conv-project-backdrop")) $("conv-project-backdrop").onclick = closeProjectModal;
+      if ($("conv-project-modal-x")) $("conv-project-modal-x").onclick = closeProjectModal;
+    }
+    initConvControls();
+
     async function deleteConversation(id) {
       if (!confirm("Delete this chat?")) return;
       try {
@@ -5919,6 +6401,7 @@
       const data = await api("/v1/projects");
       state.projects = data.projects || [];
       renderSideProjects();
+      renderConversationsList();
       return state.projects;
     }
     async function loadProjects() {
@@ -7282,6 +7765,7 @@
     }
     async function boot() {
       attachGoalCardListeners();
+      initConvControls();
       await Promise.allSettled([
         loadConversations(),
         loadProviders(),
