@@ -411,10 +411,11 @@ def resolve_smart_model(
     content: str,
     requested_model: str = "",
     installed_models: list[str] | None = None,
+    active_model: str | None = None,
 ) -> tuple[str, str]:
     """Smart model auto-router: select best model based on prompt characteristics."""
     req = (requested_model or "").strip()
-    if req and req != "auto" and "auto" not in req.lower():
+    if req and req != "auto" and "auto" not in req.lower() and req != "fake-instruct":
         if "::" in req:
             b, _, m = req.partition("::")
             if "hybrid" in m.lower():
@@ -431,7 +432,13 @@ def resolve_smart_model(
         return req, "ollama"
     text = (content or "").lower()
     installed = set(installed_models or [])
-    # Coding triggers
+
+    # Conversational continuity & warm-cache affinity:
+    # If a model was already active in this conversation or warm in VRAM, keep the same model loaded!
+    if active_model and active_model in installed:
+        return active_model, "ollama"
+
+    # Coding triggers for cold start (when no model is resident/active)
     code_triggers = (
         "def ",
         "class ",
@@ -451,14 +458,15 @@ def resolve_smart_model(
     )
     if any(t in text for t in code_triggers) and "qwen3-coder:30b" in installed:
         return "qwen3-coder:30b", "ollama"
-    # Fast lightweight triggers (very short query, greeting, ping, status)
-    fast_triggers = ("hello", "hi", "ping", "status", "health", "uptime", "who are you")
-    if (len(text.strip()) < 25 or any(t == text.strip() for t in fast_triggers)) and "llama3.2:3b" in installed:
-        return "llama3.2:3b", "ollama"
-    # Strategic reasoning & second brain default
+
+    # Strategic reasoning & default: keep primary local model loaded
     if "qwen3.6:35b-a3b" in installed:
         return "qwen3.6:35b-a3b", "ollama"
     if "qwen3.8:27b" in installed:
         return "qwen3.8:27b", "ollama"
+    if "qwen3-coder:30b" in installed:
+        return "qwen3-coder:30b", "ollama"
+    if "llama3.2:3b" in installed:
+        return "llama3.2:3b", "ollama"
     return "qwen3.6:35b-a3b", "ollama"
 

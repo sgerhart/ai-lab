@@ -140,12 +140,27 @@ class PresentationsAndSkillsTests(unittest.TestCase):
         model, backend = resolve_smart_model("Review git diff and check for bug in function", "auto", installed)
         self.assertEqual(model, "qwen3-coder:30b")
 
-        # Fast lightweight queries route to llama3.2:3b
+        # General queries, pings, and follow-ups stay on the primary model (no flapping to llama3.2:3b)
         model, backend = resolve_smart_model("ping", "auto", installed)
-        self.assertEqual(model, "llama3.2:3b")
+        self.assertEqual(model, "qwen3.6:35b-a3b")
 
         model, backend = resolve_smart_model("hello", "auto", installed)
-        self.assertEqual(model, "llama3.2:3b")
+        self.assertEqual(model, "qwen3.6:35b-a3b")
+
+        # Short follow-up queries stay on primary model
+        model, backend = resolve_smart_model("What is the gas called?", "auto", installed)
+        self.assertEqual(model, "qwen3.6:35b-a3b")
+
+        model, backend = resolve_smart_model("Why?", "auto", installed)
+        self.assertEqual(model, "qwen3.6:35b-a3b")
+
+        # Conversational / resident active model affinity is preserved
+        model, backend = resolve_smart_model("Tell me more", "auto", installed, active_model="qwen3.6:35b-a3b")
+        self.assertEqual(model, "qwen3.6:35b-a3b")
+
+        # Established conversation stays on active model even for code queries (prevents 20GB VRAM reload)
+        model, backend = resolve_smart_model("Write a python function to parse JSON", "auto", installed, active_model="qwen3.6:35b-a3b")
+        self.assertEqual(model, "qwen3.6:35b-a3b")
 
         # Deep reasoning / planning queries route to qwen3.6:35b-a3b
         model, backend = resolve_smart_model("Synthesize our memory vault into a 6-month product roadmap and strategic plan.", "auto", installed)

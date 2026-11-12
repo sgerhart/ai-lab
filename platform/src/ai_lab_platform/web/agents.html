@@ -1947,8 +1947,55 @@
         <div class="pane-inner narrow">
           <div class="thread" id="messages">
             <div class="empty" id="empty">
-              <strong>Where should we start?</strong>
-              Ask the AI Lab Assistant. Auto mode coordinates research, slides, and tools automatically.
+              <div class="empty-header">
+                <div class="empty-orb"><img src="/static/ai-lab-orb.jpg" alt="AI Lab" class="empty-avatar"></div>
+                <h2>What would you like to accomplish?</h2>
+                <p>Select a goal to start an autonomous agent task, or type directly for conversation.</p>
+              </div>
+              <div class="goal-grid">
+                <button type="button" class="goal-card" data-prompt="Build an executive presentation on " data-mode="agent">
+                  <div class="goal-icon">📊</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Build Presentation</div>
+                    <div class="goal-desc">Research a topic and create a standalone HTML deck</div>
+                  </div>
+                </button>
+                <button type="button" class="goal-card" data-prompt="Conduct deep research and compile an executive report on " data-mode="agent">
+                  <div class="goal-icon">📑</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Deep Research Report</div>
+                    <div class="goal-desc">Multi-source web lookup compiled into an executive dossier</div>
+                  </div>
+                </button>
+                <button type="button" class="goal-card" data-prompt="Search memory and notes for " data-mode="agent">
+                  <div class="goal-icon">🧠</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Second Brain & Notes</div>
+                    <div class="goal-desc">Recall facts, preferences, or update Vault memory</div>
+                  </div>
+                </button>
+                <button type="button" class="goal-card" data-prompt="Schedule a recurring task every " data-mode="agent">
+                  <div class="goal-icon">⏰</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Schedule Automation</div>
+                    <div class="goal-desc">Create automated cron jobs and recurring background runs</div>
+                  </div>
+                </button>
+                <button type="button" class="goal-card" data-prompt="" data-mode="chat">
+                  <div class="goal-icon">💬</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Direct Chat</div>
+                    <div class="goal-desc">Brainstorm, discuss ideas, or write code with fast streaming</div>
+                  </div>
+                </button>
+                <button type="button" class="goal-card" data-prompt="Check lab health and running services using tools" data-mode="agent">
+                  <div class="goal-icon">⚙️</div>
+                  <div class="goal-content">
+                    <div class="goal-title">Lab Operations</div>
+                    <div class="goal-desc">Inspect services, containers, and ports across the lab</div>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -7234,11 +7281,14 @@
       });
     }
     async function boot() {
-      await loadProviders();
-      await loadConversations();
-      await fetchProjects();
-      await loadDefinitions();
-      await loadArtifacts();
+      attachGoalCardListeners();
+      await Promise.allSettled([
+        loadConversations(),
+        loadProviders(),
+        fetchProjects(),
+        loadDefinitions(),
+        loadArtifacts(),
+      ]);
       if ($("toggle-artifacts")) $("toggle-artifacts").onclick = () => openArtifactsExplorer();
       if ($("close-artifacts")) $("close-artifacts").onclick = () => toggleArtifactsRail(false);
       if ($("refresh-artifacts")) $("refresh-artifacts").onclick = () => loadArtifacts();

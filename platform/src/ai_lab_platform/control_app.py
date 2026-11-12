@@ -216,6 +216,56 @@ def _project_text(app: Any, project_id: str, query: str) -> str:
         return ""
 
 
+def _active_or_resident_model(
+    store: Any,
+    conversation_id: str | None,
+    router: Any,
+    installed: list[str],
+) -> str | None:
+    """Find active model from conversation history or currently warm model in Ollama VRAM."""
+    installed_set = {m.lower() for m in installed}
+
+    # 1. Prefer previous agent runs in this conversation
+    if conversation_id and hasattr(store, "list_agent_runs"):
+        try:
+            for r in reversed(store.list_agent_runs(conversation_id)):
+                rm = (r.model or "").strip()
+                if rm and rm not in {"auto", "fake-instruct"} and "auto" not in rm.lower():
+                    if rm.lower() in installed_set:
+                        return rm
+        except Exception:
+            pass
+
+    # 2. Prefer previous messages in this conversation
+    if conversation_id and hasattr(store, "list_messages"):
+        try:
+            for m in reversed(store.list_messages(conversation_id)):
+                mm = ((m.meta or {}).get("model") or "").strip()
+                if mm and mm not in {"auto", "fake-instruct"} and "auto" not in mm.lower():
+                    if mm.lower() in installed_set:
+                        return mm
+        except Exception:
+            pass
+
+    # 3. Prefer currently warm/resident model in Ollama VRAM to avoid swap freezes
+    if router is not None and hasattr(router, "backends"):
+        try:
+            from .model_slot import read_resident
+            ollama_be = router.backends.get("ollama")
+            if ollama_be and hasattr(ollama_be, "base_url"):
+                loaded = read_resident(ollama_be.base_url, timeout=0.5)
+                if loaded:
+                    for item in loaded:
+                        tag = item.strip().split()[0].split("@")[0].lower()
+                        for inst in installed:
+                            if inst.lower() == tag:
+                                return inst
+        except Exception:
+            pass
+
+    return None
+
+
 def _model_sees_images(router: Any, backend: str, model: str) -> bool:
     obj = router.backends.get(backend) if router is not None else None
     reader = getattr(obj, "reads_images", None)
@@ -1529,10 +1579,11 @@ def create_control_app(
             ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
             installed = list((ollama_p or {}).get("models") or [])
             real_models = [m for m in installed if m != "fake-instruct"]
+            active = _active_or_resident_model(store, None, app.state.model_router, real_models or installed)
             if real_models and (run_model in {"auto", "", "fake-instruct"} or "auto" in run_model.lower()):
-                run_model, run_backend = resolve_smart_model(instruction, run_model, real_models)
+                run_model, run_backend = resolve_smart_model(instruction, run_model, real_models, active_model=active)
             elif run_model in {"auto", ""} or "auto" in run_model.lower():
-                run_model, run_backend = resolve_smart_model(instruction, run_model, installed)
+                run_model, run_backend = resolve_smart_model(instruction, run_model, installed, active_model=active)
 
         if run_backend in {"openai", "anthropic", "gemini"}:
             secrets_s: SecretStore = app.state.secret_store
@@ -2663,10 +2714,11 @@ def create_control_app(
         ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
         installed = list((ollama_p or {}).get("models") or [])
         real_models = [m for m in installed if m != "fake-instruct"]
+        active = _active_or_resident_model(store, conversation_id, app.state.model_router, real_models or installed)
         if real_models and (model in {"auto", "", "fake-instruct"} or backend == "fake" or "auto" in (model or "").lower()):
-            model, backend = resolve_smart_model(body.content, model, real_models)
+            model, backend = resolve_smart_model(body.content, model, real_models, active_model=active)
         elif model in {"auto", ""} or "auto" in (model or "").lower():
-            model, backend = resolve_smart_model(body.content, model, installed)
+            model, backend = resolve_smart_model(body.content, model, installed, active_model=active)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
             # IWO-028: prefer anthropic then openai when authorized + keyed.
@@ -2862,10 +2914,11 @@ def create_control_app(
         ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
         installed = list((ollama_p or {}).get("models") or [])
         real_models = [m for m in installed if m != "fake-instruct"]
+        active = _active_or_resident_model(store, conversation_id, app.state.model_router, real_models or installed)
         if real_models and (model in {"auto", "", "fake-instruct"} or backend == "fake" or "auto" in (model or "").lower()):
-            model, backend = resolve_smart_model(body.content, model, real_models)
+            model, backend = resolve_smart_model(body.content, model, real_models, active_model=active)
         elif model in {"auto", ""} or "auto" in (model or "").lower():
-            model, backend = resolve_smart_model(body.content, model, installed)
+            model, backend = resolve_smart_model(body.content, model, installed, active_model=active)
         secrets_s: SecretStore = app.state.secret_store
         if body.deep_research:
             if not secrets_s.usage_billed_authorized():
@@ -3759,10 +3812,11 @@ def create_control_app(
         ollama_p = next((p for p in app.state.model_router.list_providers() if p["id"] == "ollama"), None)
         installed = list((ollama_p or {}).get("models") or [])
         real_models = [m for m in installed if m != "fake-instruct"]
+        active = _active_or_resident_model(store, conversation_id, app.state.model_router, real_models or installed)
         if real_models and (run_model in {"auto", "", "fake-instruct"} or run_backend == "fake" or "auto" in (run_model or "").lower()):
-            run_model, run_backend = resolve_smart_model(body.objective, run_model, real_models)
+            run_model, run_backend = resolve_smart_model(body.objective, run_model, real_models, active_model=active)
         elif run_model in {"auto", ""} or "auto" in (run_model or "").lower():
-            run_model, run_backend = resolve_smart_model(body.objective, run_model, installed)
+            run_model, run_backend = resolve_smart_model(body.objective, run_model, installed, active_model=active)
 
         target_agent = body.agent or conversation.agent
         if target_agent == "lab-operations":
