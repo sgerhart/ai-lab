@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
-  <link rel="stylesheet" href="/static/studio.css?v=9">
+  <link rel="stylesheet" href="/static/studio.css?v=10">
   <link rel="stylesheet" href="/static/steward.css?v=5">
   <style>
     :root {
@@ -347,8 +347,167 @@
       padding: 10px 16px; white-space: pre-wrap; word-break: break-word;
     }
     .msg.assistant .bubble {
-      white-space: pre-wrap; word-break: break-word;
+      word-break: break-word;
       padding-top: 4px; line-height: 1.6;
+      color: var(--ink, #f1f5f9);
+      font-size: 14.5px;
+    }
+    .msg.assistant .bubble .chat-para,
+    .run-final-bubble .chat-para {
+      margin: 0 0 12px 0;
+      line-height: 1.65;
+      color: var(--ink, #f1f5f9);
+    }
+    .msg.assistant .bubble .chat-para:last-child,
+    .run-final-bubble .chat-para:last-child {
+      margin-bottom: 0;
+    }
+    .msg.assistant .bubble .chat-heading,
+    .run-final-bubble .chat-heading {
+      color: var(--ink, #f1f5f9);
+      font-weight: 700;
+      line-height: 1.35;
+      margin: 18px 0 8px 0;
+      letter-spacing: -0.01em;
+    }
+    .msg.assistant .bubble .chat-h1,
+    .run-final-bubble .chat-h1 {
+      font-size: 19px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+    }
+    .msg.assistant .bubble .chat-h2,
+    .run-final-bubble .chat-h2 {
+      font-size: 16.5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 4px;
+    }
+    .msg.assistant .bubble .chat-h3,
+    .run-final-bubble .chat-h3 {
+      font-size: 15px;
+      color: #38bdf8;
+    }
+    .msg.assistant .bubble .chat-list,
+    .run-final-bubble .chat-list {
+      margin: 6px 0 14px 0;
+      padding-left: 20px;
+    }
+    .msg.assistant .bubble .chat-list-item,
+    .run-final-bubble .chat-list-item {
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: var(--ink, #f1f5f9);
+    }
+    .msg.assistant .bubble strong,
+    .run-final-bubble strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .msg.assistant .bubble em,
+    .run-final-bubble em {
+      color: #93c5fd;
+      font-style: italic;
+    }
+    .msg.assistant .bubble .chat-quote,
+    .run-final-bubble .chat-quote {
+      border-left: 3px solid #38bdf8;
+      background: rgba(56, 189, 248, 0.07);
+      border-radius: 0 8px 8px 0;
+      padding: 8px 14px;
+      margin: 10px 0 14px 0;
+      color: #cbd5e1;
+      font-size: 13.5px;
+      line-height: 1.5;
+    }
+    .msg.assistant .bubble .chat-code-block,
+    .run-final-bubble .chat-code-block {
+      background: #070a10;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 10px 0 14px;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", Menlo, monospace;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+    .msg.assistant .bubble .chat-inline-code,
+    .run-final-bubble .chat-inline-code {
+      font-family: "JetBrains Mono", Menlo, monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #6ee7b7;
+    }
+    .msg.assistant .bubble .chat-hr,
+    .run-final-bubble .chat-hr {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 18px 0 14px 0;
+    }
+
+    /* Modern Sources & Grounding Card */
+    .chat-sources-block {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 10px;
+    }
+    .chat-sources-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+    .chat-sources-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .chat-source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--ink, #f1f5f9);
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .chat-source-chip:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #38bdf8;
+      transform: translateY(-1px);
+    }
+    .chat-source-domain {
+      font-weight: 500;
+    }
+    .chat-source-date {
+      font-size: 10.5px;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .chat-source-alert {
+      margin-top: 8px;
+      font-size: 11.5px;
+      color: #f59e0b;
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     .composer-dock {
       flex: 0 0 auto;
@@ -2771,6 +2930,205 @@
       projectId: "",
     };
     const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(s) {
+      return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function formatSourcesFooter(rawFooter) {
+      const lines = rawFooter.split("\n");
+      const sources = [];
+      let current = null;
+      const notices = [];
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (line.startsWith("Source:")) {
+          if (current) sources.push(current);
+          const url = line.slice(7).trim();
+          let hostname = "";
+          try {
+            hostname = new URL(url).hostname.replace(/^www\./, "");
+          } catch (_) {
+            hostname = url;
+          }
+          current = { url, title: "", date: "", hostname };
+        } else if (line.startsWith("Title:") && current) {
+          current.title = line.slice(6).trim();
+        } else if (line.startsWith("Document date:") && current) {
+          const d = line.slice(14).trim();
+          if (d && d !== "not stated on the page") current.date = d;
+        } else if (line.startsWith("HTTP last-modified:") && current) {
+          if (!current.date) current.date = line.slice(19).trim();
+        } else if (line.startsWith("Removed because") || line.startsWith("Named in a no-longer") || line.startsWith("Unverified")) {
+          notices.push(line);
+        }
+      }
+      if (current) sources.push(current);
+
+      if (!sources.length && !notices.length) return "";
+
+      let out = '<div class="chat-sources-block">';
+      if (sources.length) {
+        out += `<div class="chat-sources-head"><span>📚</span><span>Sources &amp; References (${sources.length})</span></div><div class="chat-sources-grid">`;
+        sources.forEach((s, idx) => {
+          const label = s.title || s.hostname || s.url;
+          const dateBadge = s.date ? `<span class="chat-source-date">${escapeHtml(s.date)}</span>` : "";
+          out += `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener noreferrer" class="chat-source-chip" title="${escapeHtml(s.url)}">` +
+            `<span style="font-size:11px;opacity:0.6;">[${idx + 1}]</span>` +
+            `<span class="chat-source-domain">${escapeHtml(label)}</span>` +
+            dateBadge +
+            `</a>`;
+        });
+        out += '</div>';
+      }
+      if (notices.length) {
+        notices.forEach((n) => {
+          out += `<div class="chat-source-alert"><span>⚠️</span> <span>${escapeHtml(n)}</span></div>`;
+        });
+      }
+      out += '</div>';
+      return out;
+    }
+
+    function renderMarkdown(rawText) {
+      if (!rawText) return "";
+      let text = String(rawText);
+
+      let bodyText = text;
+      let sourcesBlock = null;
+
+      const hrMatch = text.match(/\n\s*---\s*\n([\s\S]*)$/);
+      if (hrMatch && (hrMatch[1].includes("Source:") || hrMatch[1].includes("Document date:"))) {
+        bodyText = text.slice(0, hrMatch.index).trim();
+        sourcesBlock = hrMatch[1].trim();
+      }
+
+      // Stash code blocks first
+      const codeBlocks = [];
+      bodyText = bodyText.replace(/```([a-zA-Z0-9_\-]+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push(`<pre class="chat-code-block"><code class="${lang || ""}">${escapeHtml(code.trim())}</code></pre>`);
+        return `\n\n%%CODE_BLOCK_${idx}%%\n\n`;
+      });
+
+      const lines = bodyText.split("\n");
+      const blocks = [];
+      let currentList = null;
+      let currentPara = [];
+
+      function flushList() {
+        if (currentList) {
+          const tag = currentList.type;
+          const lis = currentList.items.map((i) => `<li class="chat-list-item">${formatInline(i)}</li>`).join("");
+          blocks.push(`<${tag} class="chat-list">${lis}</${tag}>`);
+          currentList = null;
+        }
+      }
+
+      function flushPara() {
+        if (currentPara.length) {
+          blocks.push(`<p class="chat-para">${formatInline(currentPara.join(" "))}</p>`);
+          currentPara = [];
+        }
+      }
+
+      function formatInline(s) {
+        let res = escapeHtml(s);
+        res = res.replace(/`([^`]+)`/g, '<code class="chat-inline-code">$1</code>');
+        res = res.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        res = res.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        return res;
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          flushList();
+          flushPara();
+          continue;
+        }
+
+        if (trimmed.startsWith("%%CODE_BLOCK_") && trimmed.endsWith("%%")) {
+          flushList();
+          flushPara();
+          const idx = parseInt(trimmed.replace(/\D/g, ""), 10);
+          if (codeBlocks[idx]) blocks.push(codeBlocks[idx]);
+          continue;
+        }
+
+        if (trimmed.startsWith("### ")) {
+          flushList();
+          flushPara();
+          blocks.push(`<h4 class="chat-heading chat-h3">${formatInline(trimmed.slice(4))}</h4>`);
+          continue;
+        }
+        if (trimmed.startsWith("## ")) {
+          flushList();
+          flushPara();
+          blocks.push(`<h3 class="chat-heading chat-h2">${formatInline(trimmed.slice(3))}</h3>`);
+          continue;
+        }
+        if (trimmed.startsWith("# ")) {
+          flushList();
+          flushPara();
+          blocks.push(`<h2 class="chat-heading chat-h1">${formatInline(trimmed.slice(2))}</h2>`);
+          continue;
+        }
+
+        if (trimmed === "---") {
+          flushList();
+          flushPara();
+          blocks.push('<hr class="chat-hr">');
+          continue;
+        }
+
+        if (trimmed.startsWith("&gt; ") || trimmed.startsWith("> ")) {
+          flushList();
+          flushPara();
+          const q = trimmed.replace(/^(&gt;|>)\s*/, "");
+          blocks.push(`<blockquote class="chat-quote">${formatInline(q)}</blockquote>`);
+          continue;
+        }
+
+        const ulMatch = line.match(/^\s*[-*]\s+(.*)$/);
+        if (ulMatch) {
+          flushPara();
+          if (!currentList || currentList.type !== "ul") {
+            flushList();
+            currentList = { type: "ul", items: [] };
+          }
+          currentList.items.push(ulMatch[1]);
+          continue;
+        }
+
+        const olMatch = line.match(/^\s*\d+\.\s+(.*)$/);
+        if (olMatch) {
+          flushPara();
+          if (!currentList || currentList.type !== "ol") {
+            flushList();
+            currentList = { type: "ol", items: [] };
+          }
+          currentList.items.push(olMatch[1]);
+          continue;
+        }
+
+        flushList();
+        currentPara.push(trimmed);
+      }
+
+      flushList();
+      flushPara();
+
+      let html = blocks.join("\n");
+      if (sourcesBlock) {
+        html += "\n" + formatSourcesFooter(sourcesBlock);
+      }
+      return html;
+    }
     function token() { return sessionStorage.getItem("ai_lab_token") || ""; }
     function headers(json = true) {
       const h = Object.assign({}, window.aiLabHeaders ? window.aiLabHeaders() : {});
@@ -4477,7 +4835,7 @@
         av.alt = "";
         const bubble = document.createElement("div");
         bubble.className = "bubble";
-        bubble.textContent = content || "";
+        bubble.innerHTML = renderMarkdown(content || "");
         el.appendChild(av);
         el.appendChild(bubble);
       }
@@ -4618,7 +4976,7 @@
       if (run.final_result) {
         const done = document.createElement("div");
         done.className = "run-final-bubble";
-        done.textContent = run.final_result;
+        done.innerHTML = renderMarkdown(run.final_result);
         el.appendChild(done);
 
         // Detect generated presentations or reports in final result or traces
@@ -6699,6 +7057,7 @@
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buf = "";
+        let streamText = "";
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
@@ -6713,15 +7072,17 @@
             if (ev.event === "status") {
               ab.textContent = ev.text || "";
             } else if (ev.event === "replace") {
-              ab.textContent = ev.text || "";
+              streamText = ev.text || "";
+              ab.innerHTML = renderMarkdown(streamText);
               $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
             } else if (ev.event === "token") {
               if (!streamStarted) streamStarted = performance.now();
-              ab.textContent += ev.text || "";
+              streamText += ev.text || "";
+              ab.innerHTML = renderMarkdown(streamText);
               $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
               if (!gotOfficial) {
                 const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
-                const toks = approxTokens(ab.textContent);
+                const toks = approxTokens(streamText);
                 setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens`, true);
               }
             } else if (ev.event === "metrics") {
@@ -6737,18 +7098,21 @@
                 setPerf(bits.join(" · "), false);
               } else if (streamStarted) {
                 const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
-                const toks = approxTokens(ab.textContent);
+                const toks = approxTokens(streamText);
                 setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens · ${elapsed.toFixed(1)}s`, false);
               }
             } else if (ev.event === "error") {
               showErr(ev.error);
             } else if (ev.event === "done") {
               showErr("");
+              if (ev.reply && ev.reply.content) {
+                ab.innerHTML = renderMarkdown(ev.reply.content);
+              }
               state.attachments = [];
               renderAttachList();
               if (!gotOfficial && streamStarted) {
                 const elapsed = Math.max(0.05, (performance.now() - streamStarted) / 1000);
-                const toks = approxTokens(ab.textContent);
+                const toks = approxTokens(streamText);
                 setPerf(`~${(toks / elapsed).toFixed(1)} tok/s · ~${toks} tokens · ${elapsed.toFixed(1)}s`, false);
               }
               await loadConversations();

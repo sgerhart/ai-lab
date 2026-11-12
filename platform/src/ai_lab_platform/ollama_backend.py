@@ -64,11 +64,11 @@ class OllamaBackend:
         self.timeout_seconds = timeout_seconds
         # Ollama: default bounded num_predict to keep generation responsive and prevent runaways.
         if num_predict is None:
-            raw = os.environ.get("AI_LAB_OLLAMA_NUM_PREDICT", "3072").strip()
+            raw = os.environ.get("AI_LAB_OLLAMA_NUM_PREDICT", "4096").strip()
             try:
                 num_predict = int(raw)
             except ValueError:
-                num_predict = 3072
+                num_predict = 4096
         self.num_predict = num_predict
         self._vision_cache: dict[str, bool] = {}
 
