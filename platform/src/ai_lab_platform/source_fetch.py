@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlsplit, urlunsplit
-from urllib.request import OpenerDirector, Request, HTTPSHandler, HTTPHandler
+from urllib.request import OpenerDirector, Request, HTTPSHandler, HTTPHandler, urlopen
 
 _DATA = Path(__file__).resolve().parent / "data" / "fetch_allowlist.json"
 _CATALOG = Path(__file__).resolve().parent / "data" / "source_catalog.json"
@@ -133,7 +133,7 @@ _GREETING_RE = re.compile(
     r"^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|good morning|good night)[.!]?$",
     re.I,
 )
-_SEARCH_HOSTS = {"en.wikipedia.org", "html.duckduckgo.com", "duckduckgo.com", "lite.duckduckgo.com"}
+_SEARCH_HOSTS = {"en.wikipedia.org", "html.duckduckgo.com", "duckduckgo.com", "lite.duckduckgo.com", "wttr.in"}
 _RECENCY_WORDS = frozenset(
     {
         "latest", "recent", "news", "current", "breakthrough", "breakthroughs",
@@ -141,7 +141,103 @@ _RECENCY_WORDS = frozenset(
         "working on", "innovation", "innovations", "cool",
     }
 )
+_WEATHER_WORDS = frozenset(
+    {
+        "weather", "temperature", "forecast", "forecasts", "rain", "raining",
+        "snow", "snowing", "sunny", "humid", "humidity", "wind", "windy",
+        "cloudy", "overcast", "drizzle", "precipitation",
+    }
+)
 _UDDG_RE = re.compile(r"[?&]uddg=([^&\"']+)", re.I)
+
+
+def is_weather_query(text: str) -> bool:
+    """Return whether the question is asking about meteorological conditions or weather."""
+    words = set(re.findall(r"[a-z]+", (text or "").lower()))
+    return bool(words & _WEATHER_WORDS)
+
+
+def extract_weather_location(query: str) -> str:
+    """Extract location name from a weather query (e.g. 'Philadelphia' from 'weather in Philadelphia')."""
+    m = re.search(
+        r"\b(?:in|for|at|around)\s+([A-Za-z0-9\s,\.\-]+?)(?:\s+(?:today|tonight|tomorrow|currently|right now|this week)|\?|\!|$)",
+        query,
+        re.I,
+    )
+    if m:
+        loc = m.group(1).strip()
+        if len(loc) >= 2 and loc.lower() not in {"the", "a", "an", "my", "our", "this", "that"}:
+            return loc
+    cleaned = re.sub(
+        r"\b(?:what|how|is|was|are|tell|me|about|can|you|check|the|weather|temperature|temp|forecast|forecasts|conditions|like|today|tonight|tomorrow|currently|right now|this week|outside|raining|rain|snow|snowing|sunny|cloudy|precipitation)\b",
+        " ",
+        query,
+        flags=re.I,
+    )
+    cleaned = re.sub(r"[?.!,]+", "", cleaned).strip()
+    words = [w for w in cleaned.split() if len(w) >= 2]
+    return " ".join(words).strip()
+
+
+def fetch_weather_report(location: str, *, timeout_s: float = 3.5) -> FetchedPage | None:
+    """Fetch live structured weather report for a location via wttr.in with clean fallback."""
+    if not location or len(location) < 2:
+        return None
+    loc_encoded = quote_plus(location)
+    url = f"https://wttr.in/{loc_encoded}?format=j1"
+    now_iso = utc_now()
+    today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    try:
+        req = Request(url, headers={"User-Agent": "curl/7.68.0"})
+        with urlopen(req, timeout=timeout_s) as resp:
+            raw = resp.read().decode("utf-8", "ignore")
+        data = json.loads(raw)
+        cur = data["current_condition"][0]
+        desc = cur["weatherDesc"][0]["value"]
+        tf, tc, fl = cur["temp_F"], cur["temp_C"], cur["FeelsLikeF"]
+        hum, wnd, wdir = cur["humidity"], cur["windspeedMiles"], cur["winddir16Point"]
+        today = data["weather"][0]
+        max_f, min_f = today["maxtempF"], today["mintempF"]
+        max_c, min_c = today["maxtempC"], today["mintempC"]
+
+        lines = [
+            f"Live Weather Report for {location}:",
+            f"- Conditions: {desc}",
+            f"- Current temperature: {tf}°F ({tc}°C) (feels like {fl}°F)",
+            f"- Today's high / low: {max_f}°F ({max_c}°C) / {min_f}°F ({min_c}°C)",
+            f"- Humidity: {hum}%, Wind: {wnd} mph {wdir}",
+            "Hourly breakdown:",
+        ]
+        for h in today.get("hourly", [])[::2]:
+            t = int(h["time"]) // 100
+            hdesc = h["weatherDesc"][0]["value"]
+            lines.append(f"  • {t:02d}:00: {hdesc}, {h['tempF']}°F ({h['tempC']}°C), precipitation chance: {h.get('chanceofrain', '0')}%")
+        weather_text = "\n".join(lines)
+        return FetchedPage(
+            url=f"https://wttr.in/{loc_encoded}",
+            title=f"Live Weather for {location}",
+            text=weather_text,
+            document_date=today_date,
+            date_kind="document",
+            fetched_at=now_iso,
+        )
+    except Exception:
+        try:
+            req_plain = Request(f"https://wttr.in/{loc_encoded}?format=3", headers={"User-Agent": "curl/7.68.0"})
+            with urlopen(req_plain, timeout=2.5) as resp:
+                plain = resp.read().decode("utf-8", "ignore").strip()
+            if plain and len(plain) > 3:
+                return FetchedPage(
+                    url=f"https://wttr.in/{loc_encoded}",
+                    title=f"Live Weather for {location}",
+                    text=f"Live Weather for {location}: {plain}",
+                    document_date=today_date,
+                    date_kind="document",
+                    fetched_at=now_iso,
+                )
+        except Exception:
+            pass
+    return None
 
 
 def factual_query(text: str) -> bool:
@@ -367,6 +463,7 @@ def fetch_page(
     url: str,
     *,
     title: str = "",
+    snippet: str = "",
     opener: Any = None,
     resolve: Callable[[str], list[str]] | None = None,
     allowlist: set[str] | None = None,
@@ -472,8 +569,13 @@ def fetch_page(
         header_date = _header_date(headers)
         if header_date:
             doc_date, kind = header_date, "http-last-modified"
+    if snippet and (len(text) < 200 or "advertisemen" in text.lower()[:300]):
+        text = f"{snippet}\n\n{text}".strip()
     if not text:
-        return FetchedPage(url=current, title=title, fetched_at=fetched_at, error="page had no text")
+        if snippet:
+            text = snippet
+        else:
+            return FetchedPage(url=current, title=title, fetched_at=fetched_at, error="page had no text")
     page = FetchedPage(
         url=current,
         title=title,
@@ -596,25 +698,37 @@ def _unwrap_ddg(href: str) -> str:
 
 
 def _ddg_hits(query: str, *, opener: Any, resolve: Callable[[str], list[str]] | None) -> list[dict[str, str]]:
-    url = "https://lite.duckduckgo.com/lite/?q=" + quote_plus(query[:240])
-    raw = _fetch_raw(url, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
-    if not raw:
-        url_html = "https://html.duckduckgo.com/html/?q=" + quote_plus(query[:240])
-        raw = _fetch_raw(url_html, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
+    url_html = "https://html.duckduckgo.com/html/?q=" + quote_plus(query[:240])
+    raw = _fetch_raw(url_html, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
     hits: list[dict[str, str]] = []
-    # Match lite DuckDuckGo result links: <a rel="nofollow" href="..." class='result-link'>Title</a>
-    for match in re.finditer(
-        r'<a[^>]+href=["\']([^"\']+)["\'][^>]*class=["\']result-link["\'][^>]*>(.*?)</a>',
-        raw or "",
-        re.I | re.DOTALL,
-    ):
-        link = _unwrap_ddg(match.group(1))
-        title = re.sub(r"<[^<]+?>", "", match.group(2)).strip()
-        if link.startswith("https://"):
-            hits.append({"url": link, "title": title})
-    if not hits:
+    if raw:
+        for match in re.finditer(
+            r'<h2[^>]*class=["\']result__title["\'][^>]*>\s*<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>.*?<a[^>]+class=["\']result__snippet["\'][^>]*>(.*?)</a>',
+            raw,
+            re.I | re.DOTALL,
+        ):
+            link = _unwrap_ddg(match.group(1))
+            title = re.sub(r"<[^<]+?>", "", match.group(2)).strip()
+            snippet = re.sub(r"<[^<]+?>", "", match.group(3)).strip()
+            if link.startswith("https://"):
+                hits.append({"url": link, "title": title, "snippet": snippet})
+    if not hits and not raw:
+        url_lite = "https://lite.duckduckgo.com/lite/?q=" + quote_plus(query[:240])
+        raw = _fetch_raw(url_lite, hosts=_SEARCH_HOSTS, opener=opener, resolve=resolve)
+    if not hits and raw:
+        # Match lite DuckDuckGo result links: <a rel="nofollow" href="..." class='result-link'>Title</a>
+        for match in re.finditer(
+            r'<a[^>]+href=["\']([^"\']+)["\'][^>]*class=["\']result-link["\'][^>]*>(.*?)</a>',
+            raw,
+            re.I | re.DOTALL,
+        ):
+            link = _unwrap_ddg(match.group(1))
+            title = re.sub(r"<[^<]+?>", "", match.group(2)).strip()
+            if link.startswith("https://"):
+                hits.append({"url": link, "title": title})
+    if not hits and raw:
         # Fallback to HTML DuckDuckGo result links: class="result__a" href="..."
-        for match in re.finditer(r'class="result__a"[^>]*href="([^"]+)"', raw or "", re.I):
+        for match in re.finditer(r'class="result__a"[^>]*href="([^"]+)"', raw, re.I):
             link = _unwrap_ddg(match.group(1))
             if link.startswith("https://"):
                 hits.append({"url": link, "title": ""})
@@ -667,7 +781,10 @@ def search_pages(
         if url in seen:
             continue
         seen.add(url)
-        found.append({"url": url, "title": row.get("title") or ""})
+        hit_dict = {"url": url, "title": row.get("title") or ""}
+        if row.get("snippet"):
+            hit_dict["snippet"] = row["snippet"]
+        found.append(hit_dict)
         if len(found) >= limit:
             break
     return found

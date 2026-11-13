@@ -14,8 +14,11 @@ from .retrieval import FETCHED_LIBRARY, RetrievalService
 from .source_fetch import (
     FetchedPage,
     catalog_urls,
+    extract_weather_location,
     factual_query,
     fetch_page,
+    fetch_weather_report,
+    is_weather_query,
     search_pages,
     urls_in_text,
 )
@@ -277,34 +280,50 @@ def prepare_grounded_turn(
         if url not in seen:
             seen.add(url)
             chosen.append((url, row.get("title") or "", False))
-    if not chosen and factual_query(query) and not notes and not has_image:
-        finder = search if search is not None else search_pages
-        try:
-            hits = finder(query)
-        except (OSError, ValueError, TimeoutError):
-            hits = []
-        for row in hits or []:
-            url = str(row.get("url") or "")
-            if not url or url in seen:
-                continue
-            seen.add(url)
-            chosen.append((url, str(row.get("title") or ""), True))
-            if len(chosen) >= 2:
-                break
     pages: list[FetchedPage] = []
-    for url, title, public in chosen[:2]:
-        try:
+    if not chosen and factual_query(query) and not notes and not has_image:
+        if is_weather_query(query):
+            loc = extract_weather_location(query)
+            if loc:
+                wpage = fetch_weather_report(loc)
+                if wpage and wpage.text:
+                    pages.append(wpage)
+                    chosen.append((wpage.url, wpage.title, True))
+        if not pages:
+            finder = search if search is not None else search_pages
             try:
-                page = getter(url, title=title, public=public)
-            except TypeError:
-                page = getter(url, title=title)
-        except (OSError, ValueError, TimeoutError):
-            page = FetchedPage(url=url, title=title, error="fetch failed")
-        if not isinstance(page, FetchedPage):
-            page = FetchedPage(url=url, title=title, error="fetch failed")
-        pages.append(page)
-        if retrieval is not None:
-            _remember_page(retrieval, project_id, page)
+                hits = finder(query)
+            except (OSError, ValueError, TimeoutError):
+                hits = []
+            for row in hits or []:
+                url = str(row.get("url") or "")
+                if not url or url in seen:
+                    continue
+                seen.add(url)
+                chosen.append((url, str(row.get("title") or ""), True, str(row.get("snippet") or "")))
+                if len(chosen) >= 2:
+                    break
+    if not pages:
+        for item in chosen[:2]:
+            url = item[0]
+            title = item[1]
+            public = item[2]
+            snippet = item[3] if len(item) > 3 else ""
+            try:
+                try:
+                    page = getter(url, title=title, public=public, snippet=snippet)
+                except TypeError:
+                    try:
+                        page = getter(url, title=title, public=public)
+                    except TypeError:
+                        page = getter(url, title=title)
+            except (OSError, ValueError, TimeoutError):
+                page = FetchedPage(url=url, title=title, error="fetch failed")
+            if not isinstance(page, FetchedPage):
+                page = FetchedPage(url=url, title=title, error="fetch failed")
+            pages.append(page)
+            if retrieval is not None:
+                _remember_page(retrieval, project_id, page)
 
     blocks: list[str] = []
     corpus_parts: list[str] = []

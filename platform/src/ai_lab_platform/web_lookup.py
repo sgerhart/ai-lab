@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from .source_fetch import factual_query, fetch_page, search_pages, urls_in_text
+from .source_fetch import (
+    extract_weather_location,
+    factual_query,
+    fetch_page,
+    fetch_weather_report,
+    is_weather_query,
+    search_pages,
+    urls_in_text,
+)
 
 _EXCERPT = 3_000
 
@@ -32,6 +40,19 @@ def web_search(
         return "web_search does not open a URL from the question. Ask in words."
     if not factual_query(text):
         return "web_search hits=0\nAsk a factual question."
+    if is_weather_query(text):
+        loc = extract_weather_location(text)
+        if loc:
+            wpage = fetch_weather_report(loc)
+            if wpage and wpage.text:
+                lines = [
+                    f"web_search hits=1 query={text[:80]}",
+                    f"url: {wpage.url}",
+                    f"title: {wpage.title}",
+                    f"document_date: {wpage.document_date}",
+                    wpage.text,
+                ]
+                return "\n".join(lines)
     hits = search_pages(text, opener=opener, resolve=resolve, limit=4)
     if not hits:
         return f"web_search hits=0 query={text[:80]}"
@@ -41,6 +62,7 @@ def web_search(
         page = fetch_page(
             hit["url"],
             title=hit.get("title") or "",
+            snippet=hit.get("snippet") or "",
             opener=opener,
             resolve=resolve,
             public=True,
@@ -85,6 +107,29 @@ def research_pages(
         return "research does not open a URL from the question. Ask in words.", []
     if not factual_query(text):
         return "research hits=0\nAsk a factual question.", []
+    if is_weather_query(text):
+        loc = extract_weather_location(text)
+        if loc:
+            wpage = fetch_weather_report(loc)
+            if wpage and wpage.text:
+                sources = [
+                    {
+                        "url": wpage.url,
+                        "title": wpage.title,
+                        "document_date": wpage.document_date,
+                        "excerpt": wpage.text[:700],
+                        "body": wpage.text,
+                        "error": "",
+                    }
+                ]
+                lines = [
+                    f"research hits=1 query={text[:80]}",
+                    f"1. {wpage.title}",
+                    f"url: {wpage.url}",
+                    f"document_date: {wpage.document_date}",
+                    wpage.text[:700],
+                ]
+                return "\n".join(lines), sources
     capped = max(1, min(int(limit), 5))
     hits = search_pages(text, opener=opener, resolve=resolve, limit=capped, wiki_limit=capped)
     sources: list[dict[str, str]] = []
@@ -92,6 +137,7 @@ def research_pages(
         page = fetch_page(
             hit["url"],
             title=hit.get("title") or "",
+            snippet=hit.get("snippet") or "",
             opener=opener,
             resolve=resolve,
             public=True,

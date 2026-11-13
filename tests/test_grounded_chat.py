@@ -27,8 +27,11 @@ from ai_lab_platform.source_fetch import (  # noqa: E402
     FetchedPage,
     catalog_urls,
     clear_fetch_cache,
+    extract_weather_location,
     factual_query,
     fetch_page,
+    fetch_weather_report,
+    is_weather_query,
     load_allowlist,
     search_pages,
     validate_https_url,
@@ -587,6 +590,37 @@ class SemanticLibraryTests(unittest.TestCase):
         shown, _meta = finish_grounded_reply("The label reads N9K-C93180YC-EX.", turn)
         self.assertIn("N9K-C93180YC-EX", shown)
         self.assertNotIn("Unverified", shown)
+
+    def test_weather_query_detection_and_location_extraction(self) -> None:
+        self.assertTrue(is_weather_query("What was the weather like today in Philadelphia?"))
+        self.assertTrue(is_weather_query("temperature in Tokyo"))
+        self.assertTrue(is_weather_query("is it raining in Seattle?"))
+        self.assertFalse(is_weather_query("How do I write a Python function?"))
+        self.assertFalse(is_weather_query("Who wrote the Two Towers?"))
+
+        self.assertEqual(extract_weather_location("What was the weather like today in Philadelphia?"), "Philadelphia")
+        self.assertEqual(extract_weather_location("weather in Tokyo right now"), "Tokyo")
+        self.assertEqual(extract_weather_location("temperature in New York City"), "New York City")
+        self.assertEqual(extract_weather_location("weather for San Francisco, CA"), "San Francisco, CA")
+
+    def test_weather_grounding_injects_live_report(self) -> None:
+        fake_weather = FetchedPage(
+            url="https://wttr.in/Philadelphia",
+            title="Live Weather for Philadelphia",
+            text="Live Weather Report for Philadelphia:\n- Conditions: Overcast\n- Current temperature: 54°F (12°C)",
+            document_date="2026-11-13",
+            date_kind="document",
+        )
+        with patch("ai_lab_platform.chat_grounding.fetch_weather_report", return_value=fake_weather):
+            turn = prepare_grounded_turn(
+                query="What was the weather like today in Philadelphia?",
+                prompt="What was the weather like today in Philadelphia?",
+            )
+            self.assertIn("Live Weather Report for Philadelphia", turn.prompt)
+            self.assertIn("Overcast", turn.prompt)
+            self.assertIn("54°F", turn.prompt)
+            self.assertEqual(len(turn.pages), 1)
+            self.assertEqual(turn.pages[0].url, "https://wttr.in/Philadelphia")
 
 
 if __name__ == "__main__":

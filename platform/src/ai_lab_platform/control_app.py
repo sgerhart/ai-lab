@@ -405,7 +405,19 @@ def _grounded_chat(
         system = f"{system}\nThe user attached an image. Answer from what is visible in it."
     if turn.instructions:
         system = f"{system}\n{turn.instructions}"
-    if not has_image and len(re.findall(r"[A-Za-z]{3,}", query)) >= 3:
+    _STUDY_WORDS = frozenset(
+        {
+            "book", "books", "reading", "read", "paper", "papers", "study",
+            "nexus", "chapter", "textbook", "author", "cite", "literature",
+            "curriculum", "algorithm", "architecture", "data science", "machine learning",
+            "red teaming", "cybersecurity", "ebpf", "robotics",
+        }
+    )
+    query_words = set(re.findall(r"[a-z]{3,}", query.lower()))
+    is_study_agent = getattr(conversation, "agent", "") == "study"
+    should_search_nexus = is_study_agent or bool(query_words & _STUDY_WORDS)
+
+    if not has_image and should_search_nexus:
         try:
             from .nexus_library import books_for_query
 
@@ -415,12 +427,14 @@ def _grounded_chat(
         if shelf:
             turn.prompt = (
                 f"{turn.prompt}\n\n{shelf}\n\n"
-                "If one of those Nexus books would help, name it and why. "
-                "Do not invent a book that is not in that list."
+                "Only cite or recommend a Nexus book if it is directly relevant and helpful "
+                "to answering the user's specific request. If none of the books are relevant, "
+                "answer the user's question directly and do not mention books or the library."
             )
             system = (
                 f"{system}\nSteven's Knowledge Nexus library was searched for this question. "
-                "Recommend a listed book when it fits."
+                "Only recommend a listed book when it genuinely fits the topic. "
+                "Do not add a book recommendation section if no book fits."
             )
     return turn, system
 
