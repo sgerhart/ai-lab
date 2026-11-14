@@ -2797,6 +2797,9 @@
       projects: [],
       projectId: "",
     };
+    let prefsStatusTimer = null;
+    let prefsStatusLive = null;
+    let antaresTimer = null;
     const $ = (id) => document.getElementById(id);
 
     function escapeHtml(s) {
@@ -6333,7 +6336,6 @@
         } catch (_) {}
       }
     };
-    let antaresTimer = null;
     function stopAntaresPoll() {
       if (antaresTimer) clearTimeout(antaresTimer);
       antaresTimer = null;
@@ -6719,8 +6721,6 @@
     });
 
 
-    let prefsStatusTimer = null;
-    let prefsStatusLive = null;
     function stopPrefsStatusPoll() {
       if (prefsStatusTimer) { clearInterval(prefsStatusTimer); prefsStatusTimer = null; }
       if (prefsStatusLive) { clearTimeout(prefsStatusLive); prefsStatusLive = null; }
