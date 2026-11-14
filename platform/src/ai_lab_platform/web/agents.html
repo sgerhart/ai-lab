@@ -2770,6 +2770,23 @@
     </div>
   </div>
 
+  <div class="conv-project-modal" id="conv-delete-modal" hidden>
+    <div class="conv-project-backdrop" id="conv-delete-backdrop"></div>
+    <div class="conv-project-card" role="dialog" aria-modal="true" aria-labelledby="conv-delete-modal-title" style="max-width:380px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 id="conv-delete-modal-title" style="margin:0;font-size:16px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;">
+          <span style="color:#ef4444;font-size:16px;">🗑️</span> Delete chat?
+        </h3>
+        <button type="button" class="icon-btn" id="conv-delete-modal-x" title="Close">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.45;">This will permanently delete this conversation and its message history. This action cannot be undone.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn" id="conv-delete-cancel" style="background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--ink);padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;">Cancel</button>
+        <button type="button" class="btn" id="conv-delete-confirm" style="background:#ef4444;border:1px solid #dc2626;color:#fff;font-weight:600;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(239,68,68,0.35);">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <script src="/static/studio.js?v=11"></script>
   <script src="/static/steward.js?v=5"></script>
   <script>
@@ -5011,11 +5028,31 @@
       }
       if ($("conv-project-backdrop")) $("conv-project-backdrop").onclick = closeProjectModal;
       if ($("conv-project-modal-x")) $("conv-project-modal-x").onclick = closeProjectModal;
+      if ($("conv-delete-backdrop")) $("conv-delete-backdrop").onclick = closeDeleteModal;
+      if ($("conv-delete-modal-x")) $("conv-delete-modal-x").onclick = closeDeleteModal;
+      if ($("conv-delete-cancel")) $("conv-delete-cancel").onclick = closeDeleteModal;
+      if ($("conv-delete-confirm")) $("conv-delete-confirm").onclick = confirmDeleteConversation;
     }
     initConvControls();
 
-    async function deleteConversation(id) {
-      if (!confirm("Delete this chat?")) return;
+    let pendingDeleteConvId = null;
+
+    function openDeleteModal(id) {
+      pendingDeleteConvId = id;
+      const modal = $("conv-delete-modal");
+      if (modal) modal.hidden = false;
+    }
+
+    function closeDeleteModal() {
+      const modal = $("conv-delete-modal");
+      if (modal) modal.hidden = true;
+      pendingDeleteConvId = null;
+    }
+
+    async function confirmDeleteConversation() {
+      const id = pendingDeleteConvId;
+      closeDeleteModal();
+      if (!id) return;
       try {
         await api(`/v1/conversations/${id}`, { method: "DELETE" });
         if (state.conversationId === id) {
@@ -5028,6 +5065,10 @@
         await loadConversations();
         showErr("");
       } catch (e) { showErr(e); }
+    }
+
+    function deleteConversation(id) {
+      openDeleteModal(id);
     }
     function renderMessages(list) {
       const box = $("messages");
@@ -6715,6 +6756,8 @@
       });
     });
     document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && $("conv-delete-modal") && !$("conv-delete-modal").hidden) { closeDeleteModal(); return; }
+      if (ev.key === "Escape" && $("conv-project-modal") && !$("conv-project-modal").hidden) { closeProjectModal(); return; }
       if (ev.key === "Escape" && !$("search-pop").hidden) { closeSearch(); return; }
       if (ev.key === "Escape" && $("prefs-shell").classList.contains("open")) setView("chat");
     });
