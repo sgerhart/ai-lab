@@ -6714,14 +6714,14 @@
         paintAntaresFindings();
       });
     });
-    $("antares-handoff").onclick = () => { requestHandoff(false).catch((e) => showErr(e)); };
-    $("antares-push").onclick = () => { requestHandoff(true).catch((e) => showErr(e)); };
-    $("cwe-popup-close").addEventListener("click", () => {
+    if ($("antares-handoff")) $("antares-handoff").onclick = () => { requestHandoff(false).catch((e) => showErr(e)); };
+    if ($("antares-push")) $("antares-push").onclick = () => { requestHandoff(true).catch((e) => showErr(e)); };
+    if ($("cwe-popup-close")) $("cwe-popup-close").addEventListener("click", () => {
       const dialog = $("cwe-popup");
       if (dialog && typeof dialog.close === "function") dialog.close();
     });
-    $("antares-cwe").addEventListener("input", () => refreshCweHelp());
-    $("antares-run").onclick = async () => {
+    if ($("antares-cwe")) $("antares-cwe").addEventListener("input", () => refreshCweHelp());
+    if ($("antares-run")) $("antares-run").onclick = async () => {
       const err = $("antares-err");
       err.textContent = "";
       const btn = $("antares-run");
@@ -7248,29 +7248,44 @@
     });
     async function sendPersonalTurn(text) {
       const ch = selectedChoice();
-      await api(`/v1/conversations/${state.conversationId}/messages`, {
-        method: "POST",
-        body: JSON.stringify({ content: text, role: "user", reply: false }),
-      });
-      await api(`/v1/conversations/${state.conversationId}/runs`, {
-        method: "POST",
-        body: JSON.stringify({
-          agent: "personal",
-          objective: text,
-          execute: true,
-          backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
-          model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
-          billing_class: ch.billing_class || "local",
-          max_steps: 16,
-        }),
-      });
       $("chat").value = "";
       autosize();
-      setPerf("", false);
-      showErr("");
-      state.sending = false;
-      await refreshThread();
-      await loadConversations();
+      const empty = $("empty");
+      if (empty) empty.remove();
+      $("messages").appendChild(messageEl("user", text));
+      const asst = messageEl("assistant", "");
+      const ab = asst.querySelector(".bubble");
+      ab.textContent = "Steward is investigating with tools…";
+      $("messages").appendChild(asst);
+      $("pane-chat").scrollTop = $("pane-chat").scrollHeight;
+
+      try {
+        await api(`/v1/conversations/${state.conversationId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ content: text, role: "user", reply: false }),
+        });
+        await api(`/v1/conversations/${state.conversationId}/runs`, {
+          method: "POST",
+          body: JSON.stringify({
+            agent: "personal",
+            objective: text,
+            execute: true,
+            backend: (ch.backend && ch.backend !== "fake") ? ch.backend : "ollama",
+            model: (ch.model && ch.model !== "fake-instruct") ? ch.model : "auto",
+            billing_class: ch.billing_class || "local",
+            max_steps: 16,
+          }),
+        });
+        setPerf("", false);
+        showErr("");
+      } catch (e) {
+        showErr(e);
+      } finally {
+        state.sending = false;
+        $("send-chat").disabled = false;
+        await refreshThread();
+        await loadConversations();
+      }
     }
     $("send-chat").onclick = async () => {
       const text = $("chat").value.trim();
@@ -7284,7 +7299,7 @@
         if (!state.conversationId) await newConversation();
         const goal = $("goal-mode") ? $("goal-mode").value : "auto";
         const needsAgent = (goal === "agent") || (goal === "auto" && (
-          /(?:build|create|generate|make)\s+(?:presentation|deck|slides)|schedule\s+(?:a\s+)?(?:recurring|cron)|deep\s+research\s+report/i.test(text)
+          /(?:build|create|generate|make)\s+(?:presentation|deck|slides)|schedule\s+(?:a\s+)?(?:recurring|cron)|deep\s+research\s+report|email|gmail|inbox|draft/i.test(text)
         ));
         if (needsAgent && goal !== "chat") {
           await sendPersonalTurn(text);
