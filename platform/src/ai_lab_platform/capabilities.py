@@ -56,13 +56,13 @@ _TOOL_BLURB = {
 
 
 def assistant_name(agent_id: str) -> str:
+    if agent_id in ("personal", "steward"):
+        return "Steward"
     if agent_id == "lab-operations":
         return "AI Lab Assistant"
-    if agent_id == "personal":
-        return "Personal Agent"
     if agent_id == "security":
         return "Security Compute Agent"
-    return agent_id
+    return agent_id or "Steward"
 
 
 def _built_in(name: str, *, state: str, permitted: bool, risk: str, checked: str) -> dict[str, Any]:

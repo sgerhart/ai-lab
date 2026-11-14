@@ -28,9 +28,9 @@ class PersonalReachPageTests(unittest.TestCase):
         html = (ROOT / "platform/src/ai_lab_platform/web/agents.html").read_text()
         self.assertIn('id="new-personal"', html)
         self.assertIn('id="new-conv"', html)
-        self.assertIn('agent === "personal" ? "personal" : "lab-operations"', html)
+        self.assertIn('agent === "personal" ? "personal" : "personal"', html)
         self.assertIn("function sendPersonalTurn", html)
-        self.assertIn("if (isPersonalConversation())", html)
+        self.assertIn("function isPersonalConversation()", html)
         self.assertIn("/messages/stream", html)
         self.assertIn('id="composer-hint"', html)
         self.assertNotIn("personal conversations answer through an agent run", html.split("sendPersonalTurn")[0])
@@ -53,34 +53,35 @@ class PersonalReachApiTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def test_personal_chat_completion_is_refused(self) -> None:
+    def test_personal_chat_completion_is_supported(self) -> None:
         personal = self.client.post(
             "/v1/conversations", headers=self.h, json={"agent": "personal"}
         ).json()
         self.assertEqual(personal["agent"], "personal")
-        refused = self.client.post(
+        completed = self.client.post(
             f"/v1/conversations/{personal['id']}/messages",
             headers=self.h,
             json={"content": "hello", "role": "user", "reply": True},
         )
-        self.assertEqual(refused.status_code, 400)
-        self.assertIn("agent run", refused.json()["detail"])
+        self.assertEqual(completed.status_code, 200)
         stored = self.client.post(
             f"/v1/conversations/{personal['id']}/messages",
             headers=self.h,
-            json={"content": "hello", "role": "user", "reply": False},
+            json={"content": "another turn", "role": "user", "reply": False},
         )
         self.assertEqual(stored.status_code, 200)
         streamed = self.client.post(
             f"/v1/conversations/{personal['id']}/messages/stream",
             headers=self.h,
-            json={"content": "hello", "role": "user", "reply": True},
+            json={"content": "hello stream", "role": "user", "reply": True},
         )
-        self.assertEqual(streamed.status_code, 400)
+        self.assertEqual(streamed.status_code, 200)
         messages = self.client.get(
             f"/v1/conversations/{personal['id']}/messages", headers=self.h
         ).json()["messages"]
-        self.assertEqual([item["content"] for item in messages], ["hello"])
+        contents = [item["content"] for item in messages]
+        self.assertIn("hello", contents)
+        self.assertIn("another turn", contents)
 
     def test_ordinary_chat_still_accepts_a_user_line(self) -> None:
         chat = self.client.post(

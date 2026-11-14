@@ -443,7 +443,7 @@ class ApproveIn(BaseModel):
 
 
 class ConversationIn(BaseModel):
-    agent: str
+    agent: str = "personal"
     title: str = ""
     project_id: str = ""
 
@@ -1636,8 +1636,9 @@ def create_control_app(
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         _gate(request, authorization)
+        agent = (body.agent or "").strip() or "personal"
         try:
-            load_policy(body.agent)
+            load_policy(agent)
         except (OSError, ValueError) as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not hasattr(store, "put_conversation"):
@@ -1646,7 +1647,7 @@ def create_control_app(
         if project_id:
             if not hasattr(store, "get_project") or store.get_project(project_id) is None:  # type: ignore[attr-defined]
                 raise HTTPException(status_code=400, detail="unknown project")
-        conversation = Conversation.new(agent=body.agent, title=body.title)
+        conversation = Conversation.new(agent=agent, title=body.title)
         conversation.project_id = project_id
         store.put_conversation(conversation)  # type: ignore[attr-defined]
         return conversation.to_dict()
@@ -1872,11 +1873,6 @@ def create_control_app(
             role = MessageRole(body.role)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"invalid role: {body.role}") from exc
-        if conversation.agent == "personal" and body.reply:
-            raise HTTPException(
-                status_code=400,
-                detail="personal conversations answer through an agent run",
-            )
         if body.content:
             body.content = body.content.strip()
 
@@ -2064,11 +2060,6 @@ def create_control_app(
         conversation = store.get_conversation(conversation_id)  # type: ignore[attr-defined]
         if conversation is None:
             raise HTTPException(status_code=404, detail="not found")
-        if conversation.agent == "personal":
-            raise HTTPException(
-                status_code=400,
-                detail="personal conversations answer through an agent run",
-            )
         if body.role != "user":
             raise HTTPException(status_code=400, detail="stream only supports role=user")
 

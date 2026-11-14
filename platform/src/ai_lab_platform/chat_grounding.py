@@ -210,14 +210,17 @@ def project_file_notes(retrieval: RetrievalService, project_id: str, query: str)
 
 
 def system_for_chat(name: str, *, model: str = "", sourced: bool = False) -> str:
-    """Sourced answers, and models other than Fast Local, may be complete."""
+    """Natural, direct, conversational system prompt for Steward."""
     small = bool(_SMALL_MODEL.search(model or ""))
-    if sourced or ((model or "").strip() and not small):
-        return (
-            f"You are {name} in ai-lab. Answer completely. "
-            "When sources are attached, use them and say what they do not contain."
-        )
-    return f"You are {name} in ai-lab. Reply helpfully and briefly."
+    base = (
+        f"You are {name}, Steven's personal AI companion and chief of staff in ai-lab. "
+        "Be conversational, direct, intelligent, and helpful. "
+        "Answer clearly and naturally. When sources or references are attached, synthesize the relevant facts seamlessly into your answer without pedantic meta-commentary or listing what sources lack unless asked. "
+        "If live or specific data is unavailable, state it plainly and offer helpful alternatives."
+    )
+    if not sourced and ((not (model or "").strip()) or small):
+        return f"{base} Reply helpfully and briefly."
+    return f"{base} Answer completely."
 
 
 def _store_page(retrieval: RetrievalService, project_id: str, page: FetchedPage) -> None:

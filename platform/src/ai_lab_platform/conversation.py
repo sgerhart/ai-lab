@@ -87,8 +87,8 @@ class Conversation:
     updated_at: str = field(default_factory=utcnow)
 
     @classmethod
-    def new(cls, *, agent: str, title: str = "") -> Conversation:
-        return cls(id=str(uuid4()), agent=agent, title=title)
+    def new(cls, *, agent: str = "personal", title: str = "") -> Conversation:
+        return cls(id=str(uuid4()), agent=agent or "personal", title=title)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
