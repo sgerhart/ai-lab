@@ -223,8 +223,19 @@ class GmailClient:
     def search_threads(self, query: str = "", limit: int = 5) -> List[Dict[str, Any]]:
         """Search email threads and return structured summaries."""
         bounded = max(1, min(limit, 20))
-        res = self._api_request("threads", params={"q": query or None, "maxResults": bounded})
+        # If query has invalid from: (e.g. from:owner/repo), strip from:
+        effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
+        res = self._api_request("threads", params={"q": effective_query or None, "maxResults": bounded})
         raw_threads = res.get("threads") or []
+
+        # If zero results and query contained an over-constraining filter, fallback to clean keyword search
+        if not raw_threads and ("from:" in effective_query or "subject:" in effective_query):
+            relaxed = re.sub(r"\b(?:from|subject):([\"'][^\"']+[\"']|[^\s]+)", r"\1", effective_query).strip()
+            relaxed = re.sub(r"[\"']", "", relaxed).strip()
+            if relaxed and relaxed != effective_query:
+                res = self._api_request("threads", params={"q": relaxed or None, "maxResults": bounded})
+                raw_threads = res.get("threads") or []
+
         items: List[Dict[str, Any]] = []
         for t in raw_threads:
             tid = t.get("id")

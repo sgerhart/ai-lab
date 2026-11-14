@@ -184,6 +184,27 @@ class GmailClientTests(unittest.TestCase):
         self.assertEqual(draft["draft_id"], "draft_999")
         self.assertIn("approval", draft["note"])
 
+    def test_search_threads_fallback_on_invalid_filter(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        mock_opener = MagicMock()
+        # 1st call for thread search returns empty because of bad from:, 2nd call retries with relaxed query
+        mock_opener.side_effect = [
+            MockResponse({"threads": [{"id": "t200"}]}),
+            MockResponse({"id": "t200", "messages": []}),
+        ]
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=mock_opener,
+        )
+        # Search with invalid from: filter with slash (e.g. from:owner/repo)
+        results = client.search_threads("from:owner/repo my-repo", limit=1)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], "t200")
+
     def test_trash_thread(self) -> None:
         self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
         self.token_path.write_text(json.dumps({"token": "tok"}))
