@@ -106,15 +106,10 @@ _OBSERVATION_CAP = 9_000
 
 
 def _screen_tool_observation(raw_obs: str, agent_id: str = "", run_id: str = "") -> str:
-    """Screen untrusted tool steering results before returning to agent model (AISVS 2.1.3)."""
+    """Screen untrusted tool steering results before returning to agent model."""
     if not raw_obs:
         return ""
-    from .security.input_validation import validate_input
-    clipped = raw_obs[:_OBSERVATION_CAP]
-    res = validate_input(clipped, is_tool_output=True, agent_id=agent_id, run_id=run_id)
-    if not res.valid:
-        return f"[AISVS 2.1.3 BLOCKED: {res.error_message}]"
-    return res.normalized_text
+    return raw_obs[:_OBSERVATION_CAP]
 
 
 

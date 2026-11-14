@@ -114,24 +114,8 @@ def _execute(tool: str, ctx: ToolContext, objective: str, artifacts: list[str]) 
         return path
     if tool == "http_get_allowlist":
         return http_get_allowlist("")
-    if tool == "security_inventory_read":
-        from .security.hypervisor import FakeHypervisor
-        inv = FakeHypervisor().inventory()
-        return f"Hypervisor templates: {', '.join(inv.get('templates', []))}"
-    if tool == "security_preflight_dry_run":
-        from .security.harness import run_dry_run_preflight
-        res = run_dry_run_preflight()
-        return f"Preflight status: {res.get('status')} (VM created: {res.get('vm_created')})"
-    if tool in {
-        "git_push",
-        "gh_pr_merge",
-        "deploy",
-        "security_vm_clone",
-        "security_vm_power",
-        "security_vm_destroy",
-        "security_benign_validate",
-        "security_untrusted_execute",
-        "security_vm_cleanup",
-    }:
+    if tool in {"git_push", "gh_pr_merge", "deploy"}:
         raise ToolError(f"privileged tool {tool} is not in the local plan and will not run")
+    if tool.startswith("security_"):
+        raise ToolError(f"security tool {tool} has been moved to sec-project")
     raise ToolError(f"tool not implemented in local plan: {tool}")

@@ -8,5 +8,4 @@
 | lab-operations | Read-only health and drift notes | routed | lab configs + health URLs | Tailscale health | Local plan: loopback port probe + compose stub |
 | personal | Remember the operator, research a question, and write a report | routed | `~/.ai-lab/memory`, `~/.ai-lab/files`, `~/.ai-lab/reports`, and up to five public pages per research call | none besides that lookup | IWO-095 memory. IWO-096 daily filing. IWO-097 web search. IWO-098 notes folder. IWO-099 sidebar chat. IWO-100 thread memory. IWO-101 research reports. No send, spend, or delete tool |
 | lab-docs-architect | This repo (Cursor) | Cursor | this repository | local Git | Active in chat, not the harness |
-| security | Validate and lifecycle ephemeral analysis VMs | routed | approved hypervisor inventory only | no route from analysis guests to trusted networks | IWO-076 policy defined. Read tools allowlisted; mutating lifecycle actions approval-gated. Local plan: inventory + preflight |
 | study | Knowledge Nexus sidecar study assistant & book reader | routed | Nexus books catalog (~/.ai-lab/nexus) | allowlisted HTTP | Active in Nexus |

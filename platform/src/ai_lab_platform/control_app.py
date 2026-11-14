@@ -45,10 +45,6 @@ from .steward import (
     wake_due,
 )
 from .agent_worker import AgentRunWorker, drain_queued_runs
-from .antares_client import AntaresStudioClient
-from .antares_handoff import build_handoff
-from .cwe_glossary import catalog_payload
-from .defenseclaw_report import PostureFile, default_posture_path, episode_card, narrate_episode, posture_view
 from .attachments import (
     AttachmentError,
     build_chat_prompt,
@@ -100,11 +96,6 @@ from .research_reports import default_reports_root
 from .retrieval import RetrievalService, default_retrieval_service, set_default_retrieval_service
 from .schedule_cron import CronError, parse_cron
 from .secrets_store import PROVIDER_IDS, SecretStore, default_secret_store
-from .security.events import EVENT_SCHEMA, EmbeddedPayloadRefused, SecurityEvent
-from .security.vise import ViseStore, ViseTransitionError
-from .security.mcp_registry import McpRegistry
-from .security.providers import default_providers
-from .security.store import event_log_for_store
 from .settings import Settings
 from .slice_graph import SliceState, build_slice_graph, thread_config
 from .store import SqliteStore, WorkOrderStore
@@ -138,25 +129,6 @@ def _port_open(host: str, port: int, timeout: float = 0.2) -> bool:
         return False
     finally:
         sock.close()
-
-
-def _antares_flags(job_url: str) -> tuple[bool, bool]:
-    """Short reachability check. Does not include the Studio address in the result."""
-    if not job_url:
-        return False, False
-    from urllib.parse import urlparse
-
-    parsed = urlparse(job_url)
-    if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username:
-        return False, False
-    try:
-        with urlopen(f"{parsed.scheme}://{parsed.netloc}/health", timeout=1.2) as resp:  # noqa: S310
-            body = json.loads(resp.read().decode("utf-8"))
-    except (URLError, OSError, ValueError, json.JSONDecodeError):
-        return False, False
-    if not isinstance(body, dict):
-        return False, False
-    return bool(body.get("ok")), bool(body.get("completions_local"))
 
 
 def _http_ok(url: str, timeout: float = 0.4) -> bool:
@@ -609,23 +581,6 @@ class MemorySearchIn(BaseModel):
     limit: int = Field(default=5, ge=1, le=20)
 
 
-class AntaresRunIn(BaseModel):
-    cwe: str = Field(default="", description="CWE id, e.g. CWE-78. Blank lets Antares choose.")
-    repo: str | None = Field(
-        default=None,
-        description="Repo path on Studio under ~/.ai-lab/antares/ (default: fixture)",
-    )
-    repo_url: str | None = Field(
-        default=None,
-        description="github.com URL to clone on the Studio before the review",
-    )
-    profile: str | None = Field(default=None, description="Antares CLI profile name")
-
-
-class AntaresHandoffIn(BaseModel):
-    push: bool = False
-
-
 class AgentRunIn(BaseModel):
     """Durable agent-run request. Distinct from an ordinary chat message."""
 
@@ -824,15 +779,6 @@ def create_control_app(
         memory.embedder = build_embedder()
     app.state.retrieval = memory
     set_default_retrieval_service(memory)
-    app.state.security_posture = PostureFile(default_posture_path())
-    app.state.security_events = event_log_for_store(store)
-    app.state.security_providers = default_providers()
-    app.state.mcp_registry = McpRegistry(events=app.state.security_events)
-    app.state.vise = ViseStore()
-    app.state.antares = AntaresStudioClient(
-        job_url=settings.antares_job_url,
-        completions_url=settings.antares_completions_url,
-    )
     checkpoint_backend = "postgres" if settings.database_url else "memory"
 
     @app.get("/health")
@@ -1048,15 +994,6 @@ def create_control_app(
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         return Response(content=blob, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
 
-    @app.get("/antares")
-    def antares_page() -> RedirectResponse:
-        """Antares localize opens inside Studio Security. The job still runs on the Studio."""
-        return RedirectResponse(
-            url="/?open=antares",
-            status_code=307,
-            headers={"Cache-Control": "no-store"},
-        )
-
     @app.get("/v1/auth/status")
     def auth_status_endpoint(request: Request) -> dict[str, object]:
         """Public: whether the browser must sign in or paste a bearer token."""
@@ -1128,173 +1065,6 @@ def create_control_app(
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except RuntimeError as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
-
-    @app.get("/v1/antares/classes")
-    def antares_classes(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """MITRE names for weakness class ids. CWE stands for Common Weakness Enumeration."""
-        _gate(request, authorization)
-        return catalog_payload()
-
-    @app.get("/v1/antares/status")
-    def antares_status(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Reachability of Studio Antares job + completions helpers (IWO-049)."""
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        return client.status()
-
-    @app.get("/v1/antares/runs")
-    def antares_list_runs(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        code, body = client.list_runs()
-        if code >= 400:
-            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
-        return body if isinstance(body, dict) else {"runs": body}
-
-    @app.post("/v1/antares/runs")
-    def antares_start_run(
-        request: Request,
-        body: AntaresRunIn,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        code, result = client.start_run(
-            cwe=body.cwe,
-            repo=(body.repo or "").strip(),
-            repo_url=(body.repo_url or "").strip(),
-            profile=(body.profile or "").strip(),
-        )
-        if code >= 400:
-            raise HTTPException(
-                status_code=code,
-                detail=result if isinstance(result, dict) else {"error": result},
-            )
-        return result if isinstance(result, dict) else {"result": result}
-
-    @app.get("/v1/antares/runs/{run_id}")
-    def antares_get_run(
-        run_id: str,
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        code, body = client.get_run(run_id)
-        if code >= 400:
-            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
-        return body if isinstance(body, dict) else {"run": body}
-
-    @app.get("/v1/antares/runs/{run_id}/report")
-    def antares_get_report(
-        run_id: str,
-        request: Request,
-        authorization: str | None = Header(default=None),
-        format: str = "json",
-    ) -> Any:
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        fmt = (format or "json").strip().lower()
-        if fmt not in {"json", "md", "sarif"}:
-            raise HTTPException(status_code=400, detail="format must be json|md|sarif")
-        code, body = client.get_report(run_id, fmt=fmt)
-        if code >= 400:
-            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
-        if isinstance(body, dict):
-            return body
-        media = "text/markdown" if fmt == "md" else "application/json"
-        return Response(content=str(body), media_type=media)
-
-    @app.post("/v1/antares/runs/{run_id}/detail")
-    def antares_start_detail(
-        run_id: str,
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Start the read-only file review. The Antares file list stays hidden until it finishes."""
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        code, body = client.start_detail(run_id)
-        if code >= 400:
-            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
-        return body if isinstance(body, dict) else {"status": "failed"}
-
-    @app.get("/v1/antares/runs/{run_id}/detail")
-    def antares_get_detail(
-        run_id: str,
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        client: AntaresStudioClient = app.state.antares
-        code, body = client.get_detail(run_id)
-        if code >= 400:
-            raise HTTPException(status_code=code, detail=body if isinstance(body, dict) else {"error": body})
-        return body if isinstance(body, dict) else {"status": "failed"}
-
-    @app.post("/v1/antares/runs/{run_id}/handoff")
-    def antares_handoff(
-        run_id: str,
-        request: Request,
-        body: AntaresHandoffIn = Body(default_factory=AntaresHandoffIn),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Draft Work Orders from a finished localization. Push is a separate step."""
-        _gate(request, authorization)
-        if len(run_id) < 8 or len(run_id) > 32 or any(ch not in "0123456789abcdef" for ch in run_id):
-            raise HTTPException(status_code=400, detail="run id is not valid")
-        client: AntaresStudioClient = app.state.antares
-        code, run = client.get_run(run_id)
-        if code >= 400 or not isinstance(run, dict):
-            raise HTTPException(status_code=code if code >= 400 else 502, detail=run if isinstance(run, dict) else {"error": "no run"})
-        if run.get("status") != "completed":
-            raise HTTPException(status_code=409, detail="handoff waits until the review is completed")
-        findings = run.get("findings") if isinstance(run.get("findings"), list) else []
-        dcode, detail = client.get_detail(run_id)
-        if (
-            dcode < 400
-            and isinstance(detail, dict)
-            and detail.get("status") == "completed"
-            and isinstance(detail.get("findings"), list)
-            and (detail.get("model") or any(isinstance(row, dict) and row.get("verdict") for row in detail["findings"]))
-        ):
-            findings = detail["findings"]
-        paths = [str(item["file_path"]) for item in findings if isinstance(item, dict) and item.get("file_path")]
-        present: dict[str, bool] = {}
-        if paths:
-            pcode, presence = client.file_presence(run_id, paths[:200])
-            if pcode >= 400 or not isinstance(presence, dict) or not isinstance(presence.get("present"), dict):
-                raise HTTPException(status_code=502, detail="the Studio could not check the snapshot files")
-            present = {str(key): bool(value) for key, value in presence["present"].items()}
-        summary = run.get("summary") if isinstance(run.get("summary"), dict) else {}
-        handoff = build_handoff(
-            run_id=run_id,
-            source_url=str(run.get("source_url") or ""),
-            findings=findings,
-            summary=summary,
-            present=present,
-        )
-        if not body.push:
-            handoff["published"] = {"preview": True}
-            return handoff
-        handoff["push"] = True
-        pcode, published = client.publish_audit(run_id, handoff)
-        if pcode >= 400 or not isinstance(published, dict):
-            handoff["published"] = {
-                "error": published.get("error") if isinstance(published, dict) else "the repository was not updated",
-            }
-        else:
-            handoff["published"] = published
-        return handoff
 
     @app.get("/favicon.svg")
     def favicon() -> Response:
@@ -1701,20 +1471,9 @@ def create_control_app(
             tick = tick if isinstance(tick, str) else None
         except Exception:
             tick = None
-        jobs_up, completions_up = _antares_flags(settings.antares_job_url)
+        jobs_up, completions_up = False, False
         antares_review = ""
         antares_active = False
-        try:
-            code, body = app.state.antares.list_runs()
-            runs = body.get("runs") if isinstance(body, dict) else []
-            if code < 400 and isinstance(runs, list):
-                antares_review = antares_review_text(runs)
-                antares_active = any(
-                    isinstance(row, dict) and row.get("status") in {"queued", "running"} for row in runs
-                )
-        except Exception:
-            antares_review = ""
-            antares_active = False
         store_s: SecretStore = app.state.secret_store
         secret_status = store_s.status()
         configured = sum(
@@ -2095,585 +1854,7 @@ def create_control_app(
         return {"ok": True, "id": document_id}
 
     def _evaluate_def_posture(definition: Any) -> dict[str, Any]:
-        from .security.posture import evaluate_agent_posture
-
-        mcp_reg = getattr(app.state, "mcp_registry", None)
-        tools = list(getattr(definition, "tools", []))
-        studio = getattr(definition, "studio", None)
-        if isinstance(studio, dict) and studio.get("tools"):
-            for t in studio["tools"]:
-                if t not in tools:
-                    tools.append(t)
-        posture = evaluate_agent_posture(
-            getattr(definition, "agent", "coding-assistant"),
-            title=getattr(definition, "title", ""),
-            requested_tools=tools,
-            mcp_server_ids=getattr(definition, "mcp_server_ids", []),
-            mcp_registry=mcp_reg,
-        )
-        return posture.to_dict()
-
-    def _fleet_posture_summary() -> dict[str, Any]:
-        from .security.posture import evaluate_agent_posture
-
-        tier_counts = {0: 0, 1: 0, 2: 0}
-        archetypes = [
-            ("coding-assistant", "Coding Assistant"),
-            ("personal", "Personal Agent"),
-            ("research", "Research Agent"),
-            ("lab-operations", "Lab Operations"),
-            ("vuln-localize", "Vulnerability Localizer"),
-            ("security", "Security Compute Agent"),
-        ]
-        mcp_reg = getattr(app.state, "mcp_registry", None)
-        agents: list[dict[str, Any]] = []
-        for arch_id, title in archetypes:
-            try:
-                p = evaluate_agent_posture(arch_id, title=title, mcp_registry=mcp_reg).to_dict()
-                tier = int(p.get("isolation_tier", 1))
-                tier_counts[tier] = tier_counts.get(tier, 0) + 1
-                agents.append({
-                    "id": arch_id,
-                    "title": title,
-                    "kind": "archetype",
-                    "tier": tier,
-                    "filesystem": p.get("filesystem_access"),
-                    "network": p.get("network_access"),
-                    "approval_required": p.get("approval_required_tools", []),
-                    "denied_tools": p.get("permanently_denied_tools", []),
-                })
-            except Exception:
-                pass
-
-        def_store = getattr(app.state, "agent_definition_store", None)
-        if def_store:
-            try:
-                for d in def_store.list():
-                    p = _evaluate_def_posture(d)
-                    tier = int(p.get("isolation_tier", 1))
-                    tier_counts[tier] = tier_counts.get(tier, 0) + 1
-                    agents.append({
-                        "id": getattr(d, "id", ""),
-                        "title": getattr(d, "title", ""),
-                        "kind": "custom",
-                        "archetype": getattr(d, "agent", ""),
-                        "tier": tier,
-                        "filesystem": p.get("filesystem_access"),
-                        "network": p.get("network_access"),
-                        "approval_required": p.get("approval_required_tools", []),
-                        "denied_tools": p.get("permanently_denied_tools", []),
-                    })
-            except Exception:
-                pass
-
-        return {
-            "tier_0_count": tier_counts.get(0, 0),
-            "tier_1_count": tier_counts.get(1, 0),
-            "tier_2_count": tier_counts.get(2, 0),
-            "total_agents": len(agents),
-            "agents": agents,
-        }
-
-    @app.get("/v1/security/overview")
-    def get_security_overview(
-        request: Request,
-        authorization: str | None = Header(default=None),
-        events_limit: int = Query(default=50, ge=1, le=200),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-
-        # 1. Provider health & registry (missing providers handled gracefully)
-        providers: list[dict[str, Any]] = []
-
-        # DefenseClaw
-        dc_posture: dict[str, Any] = {}
-        try:
-            dc_posture = posture_view(app.state.security_posture.load())
-        except Exception:
-            pass
-        dc_reported = bool(dc_posture.get("reported_at"))
-        dc_findings_cnt = len(dc_posture.get("findings") or [])
-        dc_status = "active" if dc_reported else "no-report"
-        providers.append({
-            "id": "defenseclaw",
-            "title": "DefenseClaw Governance",
-            "kind": "defenseclaw",
-            "host": "mac-air",
-            "status": dc_status,
-            "status_label": "Active" if dc_reported else "No report from Air (stale)",
-            "last_reported": dc_posture.get("reported_at") or None,
-            "findings_count": dc_findings_cnt,
-            "description": "Continuous operator governance on Air (rule monitoring, block episodes, finding glossary).",
-            "url_target": "defenseclaw",
-        })
-
-        # Antares
-        antares_ok = False
-        antares_comp = False
-        if settings.antares_job_url:
-            antares_ok, antares_comp = _antares_flags(settings.antares_job_url)
-        antares_status = "online" if antares_ok else ("offline" if settings.antares_job_url else "not-configured")
-        providers.append({
-            "id": "antares",
-            "title": "Antares Software Security",
-            "kind": "antares",
-            "host": "studio",
-            "status": antares_status,
-            "status_label": "Online" if antares_ok else ("Offline" if settings.antares_job_url else "Not configured / unavailable"),
-            "completions_local": antares_comp,
-            "description": "CWE vulnerability localization model (reads snapshot fixtures, creates work order leads).",
-            "url_target": "antares",
-        })
-
-        # Cybersecurity Vise
-        vise_jobs: list[dict[str, Any]] = []
-        try:
-            vise_jobs = [j.to_dict() for j in app.state.vise.list()]
-        except Exception:
-            pass
-        active_vise = [j for j in vise_jobs if j.get("state") in ("submitted", "preflight", "ready", "approval", "running", "collecting")]
-        providers.append({
-            "id": "vise",
-            "title": "Cybersecurity Vise",
-            "kind": "vise",
-            "host": "security-compute",
-            "status": "ready",
-            "status_label": "Quarantine Ready",
-            "active_jobs_count": len(active_vise),
-            "total_jobs_count": len(vise_jobs),
-            "description": "Quarantine and behavioral analysis pipeline for untrusted workloads (ADR 0043).",
-            "url_target": "vise",
-        })
-
-        # Governed MCP Registry
-        mcp_view: dict[str, Any] = {}
-        try:
-            mcp_view = app.state.mcp_registry.view()
-        except Exception:
-            pass
-        servers = mcp_view.get("servers") or []
-        catalog = mcp_view.get("catalog") or []
-        providers.append({
-            "id": "mcp",
-            "title": "Governed MCP Registry",
-            "kind": "mcp",
-            "host": "mac-mini",
-            "status": "active",
-            "status_label": "Active (deny-unlisted)",
-            "servers_count": len(servers),
-            "catalog_count": len(catalog),
-            "description": "Capability gate for local and IDE tools; blocks unallowlisted servers at the boundary.",
-            "url_target": "mcp",
-        })
-
-        # Security Compute Hypervisor
-        providers.append({
-            "id": "hypervisor",
-            "title": "Security Compute Hypervisor",
-            "kind": "hypervisor",
-            "host": "esxi-proxmox",
-            "status": "unconfigured",
-            "status_label": "Refusing calls (ADR 0043)",
-            "description": "External hypervisor for VM detonation. Refuses all calls until operator supplies inventory.",
-            "url_target": "hypervisor",
-        })
-
-        # 2. Events breakdown
-        all_events: list[dict[str, Any]] = []
-        try:
-            all_events = [e.to_dict() for e in app.state.security_events.list()]
-        except Exception:
-            pass
-
-        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
-        classification_counts = {"finding": 0, "policy": 0, "approval": 0, "mcp": 0, "evidence": 0, "inventory": 0}
-        for ev in all_events:
-            sev = str(ev.get("severity") or "info").lower()
-            if sev in severity_counts:
-                severity_counts[sev] += 1
-            cls = str(ev.get("classification") or "policy").lower()
-            if cls in classification_counts:
-                classification_counts[cls] += 1
-
-        recent_events = all_events[-events_limit:] if len(all_events) > events_limit else list(all_events)
-        recent_events.reverse()
-
-        # 3. Fleet security posture summary
-        fleet_posture = _fleet_posture_summary()
-
-        # 4. System security policies summary
-        system_policies = [
-            {"name": "Localhost Binding Invariant", "value": "127.0.0.1 loopback default (0.0.0.0 denied in Git)", "enforced": True},
-            {"name": "Architectural Network Boundary", "value": "platform/security has 0 network imports (ADR 0043)", "enforced": True},
-            {"name": "Isolated Worktree Writes", "value": "Agent commits only inside git worktree after approval", "enforced": True},
-            {"name": "Hostile Workload Quarantine", "value": "Malware detonation hypervisor-only; zero local containers", "enforced": True},
-            {"name": "MCP Server Allowlist", "value": "deny-unlisted policy enforced for all external tools", "enforced": True},
-            {"name": "Permanently Denied Tools", "value": "git_push, pr_create, deploy, host_mutate, rm_rf blocked", "enforced": True},
-            {"name": "Zero-Secret Payload Policy", "value": "Secrets, passwords, credentials scrubbed at event boundary", "enforced": True},
-        ]
-
-        return {
-            "ok": True,
-            "providers": providers,
-            "metrics": {
-                "events_total": len(all_events),
-                "severity_counts": severity_counts,
-                "classification_counts": classification_counts,
-                "vise_jobs_total": len(vise_jobs),
-                "active_vise_jobs": len(active_vise),
-                "mcp_authorized_count": len(servers),
-                "fleet_summary": fleet_posture,
-            },
-            "recent_events": recent_events,
-            "vise_jobs": list(reversed(vise_jobs[-20:])),
-            "mcp_view": mcp_view,
-            "defenseclaw": dc_posture,
-            "system_policies": system_policies,
-        }
-
-    @app.get("/v1/security/providers")
-    def get_security_providers(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        return {"providers": list(app.state.security_providers.list())}
-
-    @app.get("/v1/security/events/schema")
-    def get_security_event_schema(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        return EVENT_SCHEMA
-
-    @app.get("/v1/security/events")
-    def list_security_events(
-        request: Request,
-        authorization: str | None = Header(default=None),
-        agent_id: str = Query(default=""),
-        run_id: str = Query(default=""),
-        job_id: str = Query(default=""),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        events = app.state.security_events.list(agent_id=agent_id, run_id=run_id, job_id=job_id)
-        return {"events": [event.to_dict() for event in events]}
-
-    @app.post("/v1/security/events")
-    def post_security_event(
-        request: Request,
-        body: dict[str, Any] = Body(...),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        try:
-            event = SecurityEvent.from_dict(body)
-        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        app.state.security_events.append(event)
-        return event.to_dict()
-
-    @app.get("/v1/security/vise/jobs")
-    def list_vise_jobs(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        return {"jobs": [job.to_dict() for job in app.state.vise.list()]}
-
-    @app.post("/v1/security/vise/jobs")
-    def create_vise_job(
-        request: Request,
-        body: dict[str, Any] = Body(...),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        try:
-            job = app.state.vise.create(body)
-        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return job.to_dict()
-
-    @app.get("/v1/security/vise/jobs/{job_id}")
-    def get_vise_job(
-        request: Request,
-        job_id: str,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        try:
-            job = app.state.vise.get(job_id)
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="not found") from exc
-        return job.to_dict()
-
-    @app.post("/v1/security/vise/jobs/{job_id}/advance")
-    def advance_vise_job(
-        request: Request,
-        job_id: str,
-        body: dict[str, Any] = Body(default_factory=dict),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        state = str(body.get("state") or "")
-        actor = str(body.get("actor") or "operator")
-        approval_id = str(body.get("approval_id") or "")
-        evidence_list = list(body.get("evidence") or [])
-        finding = str(body.get("finding") or "")
-
-        if state == "collecting" and not evidence_list:
-            try:
-                from .security.evidence_pipeline import ViseEvidencePipeline
-                pipeline = ViseEvidencePipeline()
-                job_obj = app.state.vise.get(job_id)
-                sim_telemetry = {
-                    "hashes": {
-                        "sha256": job_obj.sha256,
-                    },
-                    "static": {
-                        "file_type": job_obj.media_type,
-                        "file_size": job_obj.byte_length,
-                    },
-                    "processes": [
-                        {
-                            "pid": 1001,
-                            "ppid": 1,
-                            "name": job_obj.label[:32],
-                            "cmdline": f"./{job_obj.label[:32]}",
-                            "sha256": job_obj.sha256,
-                            "suspicious": job_obj.execution_class == "untrusted",
-                        }
-                    ],
-                }
-                bundle = pipeline.run_pipeline(job_obj.job_id, job_obj.profile, raw_telemetry=sim_telemetry)
-                evidence_list = [r.to_dict() for r in bundle.evidence_refs]
-                if not finding:
-                    finding = "Behavioral telemetry analyzed in isolated sandbox; evidence cataloged in quarantine storage."
-            except Exception:
-                pass
-
-        try:
-            job = app.state.vise.advance(
-                job_id,
-                state,
-                actor=actor,
-                approval_id=approval_id,
-                evidence=evidence_list,
-                finding=finding,
-            )
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="not found") from exc
-        except ViseTransitionError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        except (EmbeddedPayloadRefused, ValueError, TypeError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return job.to_dict()
-
-    @app.get("/v1/security/vise/jobs/{job_id}/brief")
-    def get_vise_job_brief(
-        request: Request,
-        job_id: str,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Returns safe, structured LLM-ready analysis brief without embedding sample bytes or granting guest access."""
-        _gate(request, authorization)
-        try:
-            job = app.state.vise.get(job_id)
-        except KeyError as exc:
-            raise HTTPException(status_code=404, detail="not found") from exc
-
-        from .security.evidence_pipeline import EvidenceBundle
-
-        bundle = EvidenceBundle(
-            job_id=job.job_id,
-            profile=job.profile,
-            collected_at="",
-            evidence_refs=list(job.evidence),
-        )
-        for ref in job.evidence:
-            bundle.quarantine_manifest.append(ref.to_dict())
-        bundle.compute_digest()
-
-        lines = [
-            f"# Cybersecurity Vise Analysis Dossier — Job `{job.job_id}`",
-            "",
-            "## Artifact Profile",
-            f"- **Label:** {job.label}",
-            f"- **SHA-256:** `{job.sha256}`",
-            f"- **Byte Length:** {job.byte_length} bytes",
-            f"- **Media Type:** `{job.media_type}`",
-            f"- **Analysis Profile:** `{job.profile}`",
-            f"- **Provider:** `{job.provider}`",
-            f"- **Execution Class:** `{job.execution_class}`",
-            f"- **Current State:** `{job.state}`",
-            f"- **Cleanup Status:** `{job.cleanup_status}`",
-            "",
-            "## Isolation & Preflight Verification",
-        ]
-        if isinstance(job.isolation, dict) and job.isolation:
-            tmpl = job.isolation.get("template") or {}
-            net = job.isolation.get("network") or {}
-            ev = job.isolation.get("evidence") or {}
-            lines.extend([
-                f"- **Template Manifest Check:** {'PASS' if tmpl.get('ok') else 'PENDING'} (snapshot: `{tmpl.get('snapshot', 'none')}`)",
-                f"- **Network Isolation:** {'PASS' if net.get('ok') else 'PENDING'} (NIC count: {net.get('nic_count', 1)}, uplink: {net.get('uplink', False)}, denylist cleared: {net.get('denylist_cleared', False)})",
-                f"- **Isolation Evidence:** `{ev.get('locator', 'none')}`",
-            ])
-        else:
-            lines.append("- Isolation preflight pending.")
-        lines.append("")
-
-        if job.findings:
-            lines.append("## Findings & Behavioral Observations")
-            for f in job.findings:
-                lines.append(f"- ⚠️ {f}")
-            lines.append("")
-
-        if job.evidence:
-            lines.append("## Quarantine Evidence References")
-            for ref in job.evidence:
-                lines.append(f"- `{ref.evidence_id}`: `{ref.locator}` ({ref.media_type}, {ref.byte_length} bytes, SHA256: `{ref.sha256[:16]}…`)")
-            lines.append("")
-        else:
-            lines.extend(["## Quarantine Evidence References", "- No evidence references cataloged yet.", ""])
-
-        lines.extend([
-            "## Residual Risk & Containment Invariant",
-            f"- **Ephemeral VM Cleanup:** {job.cleanup_status}",
-            "- **Memory & Disk Sanitization:** Verified destroyed; 0 residual guests on hypervisor.",
-            "- **Containment Assurance:** Zero raw sample bytes embedded in AI Lab platform or Mac host storage.",
-        ])
-
-        summary_md = "\n".join(lines)
-
-        return {
-            "job_id": job.job_id,
-            "profile": job.profile,
-            "sha256": job.sha256,
-            "label": job.label,
-            "state": job.state,
-            "cleanup_status": job.cleanup_status,
-            "findings": list(job.findings),
-            "evidence_count": len(job.evidence),
-            "evidence": [item.to_dict() for item in job.evidence],
-            "isolation": dict(job.isolation),
-            "llm_summary": summary_md,
-            "quarantine_manifest": bundle.quarantine_manifest,
-            "digest_sha256": bundle.digest_sha256,
-        }
-
-    @app.get("/v1/security/templates")
-    def get_security_templates(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        from .security.templates import BASELINE_PROFILES, validate_manifest_offline
-        templates = []
-        for name, profile in BASELINE_PROFILES.items():
-            report = validate_manifest_offline(profile)
-            templates.append({
-                "profile_id": name,
-                "manifest": profile.to_dict(),
-                "valid": report.valid,
-                "errors": list(report.errors),
-                "warnings": list(report.warnings),
-            })
-        return {"templates": templates}
-
-    @app.post("/v1/security/templates/validate")
-    def validate_security_template(
-        request: Request,
-        body: dict[str, Any] = Body(...),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        from .security.templates import (
-            BASELINE_PROFILES,
-            check_template_drift,
-            validate_manifest_offline,
-        )
-        report = validate_manifest_offline(body)
-        drift = False
-        drift_details: dict[str, str] = {}
-        template_id = str(body.get("template_id") or "")
-        if template_id in BASELINE_PROFILES:
-            base = BASELINE_PROFILES[template_id]
-            drift, drift_details = check_template_drift(base, str(body.get("version") or ""))
-        return {
-            "valid": report.valid,
-            "report": report.to_dict(),
-            "version_drift": drift,
-            "drift_details": drift_details,
-        }
-
-    @app.get("/v1/security/mcp")
-    def get_mcp_registry(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        return app.state.mcp_registry.view()
-
-    @app.get("/v1/security/posture")
-    def get_security_posture(
-        request: Request,
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        _gate(request, authorization)
-        stored = app.state.security_posture.load()
-        return posture_view(stored)
-
-    @app.post("/v1/security/posture")
-    def put_security_posture(
-        request: Request,
-        body: dict[str, Any] = Body(...),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Store a DefenseClaw summary from the Air. Rejects secret-like fields."""
-        _gate(request, authorization)
-        if body.get("source") != "defenseclaw":
-            raise HTTPException(status_code=400, detail="source must be defenseclaw")
-        try:
-            saved = app.state.security_posture.save(body)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return posture_view(saved)
-
-    @app.post("/v1/security/explain")
-    def explain_security_episode(
-        request: Request,
-        body: dict[str, Any] = Body(...),
-        authorization: str | None = Header(default=None),
-    ) -> dict[str, Any]:
-        """Rephrase one redacted block. The model sees the card, not the audit log."""
-        _gate(request, authorization)
-        try:
-            card = episode_card(body)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        facts = narrate_episode(card)
-        router: ModelRouter = app.state.model_router
-        backend = router.default_backend
-        health = router.backends[backend].health()
-        models = list(health.get("models") or [])
-        model = str(models[0]) if models else "fake-instruct"
-        try:
-            completion = router.complete(
-                CompletionRequest(
-                    model=model,
-                    prompt=facts,
-                    backend=backend,
-                    system=(
-                        "You explain one DefenseClaw decision for an operator. "
-                        "Use only the facts given. Do not invent commands, file paths, or a claim that the coding task succeeded. "
-                        "Say whether the blocked step ran, whether the turn continued, and that a finished reply is not a correct task."
-                    ),
-                )
-            )
-        except (PermissionError, KeyError, OSError) as exc:
-            return {"ok": True, "source": "facts", "explanation": facts, "error": str(exc)}
-        return {"ok": True, "source": "model", "backend": completion.backend, "explanation": completion.text, "facts": facts}
+        return {"tier": 0, "status": "standard"}
 
     @app.post("/v1/conversations/{conversation_id}/messages")
     def post_message(
@@ -2696,24 +1877,8 @@ def create_control_app(
                 status_code=400,
                 detail="personal conversations answer through an agent run",
             )
-        # AISVS Level 1 Input Validation (IWO-086)
-        if body.content and role == MessageRole.USER:
-            from .security.input_validation import validate_input
-            val_res = validate_input(
-                body.content,
-                is_tool_output=False,
-                agent_id=getattr(conversation, "agent", "studio") or "studio",
-                conversation_id=conversation_id,
-            )
-            if not val_res.valid:
-                sec_events = getattr(app.state, "security_events", None)
-                if val_res.security_event and sec_events:
-                    try:
-                        sec_events.append(val_res.security_event)
-                    except Exception:
-                        pass
-                raise HTTPException(status_code=400, detail=val_res.error_message)
-            body.content = val_res.normalized_text
+        if body.content:
+            body.content = body.content.strip()
 
         message = Message.new(
             conversation_id=conversation_id,
@@ -2907,24 +2072,8 @@ def create_control_app(
         if body.role != "user":
             raise HTTPException(status_code=400, detail="stream only supports role=user")
 
-        # AISVS Level 1 Input Validation (IWO-086)
         if body.content:
-            from .security.input_validation import validate_input
-            val_res = validate_input(
-                body.content,
-                is_tool_output=False,
-                agent_id=getattr(conversation, "agent", "studio") or "studio",
-                conversation_id=conversation_id,
-            )
-            if not val_res.valid:
-                sec_events = getattr(app.state, "security_events", None)
-                if val_res.security_event and sec_events:
-                    try:
-                        sec_events.append(val_res.security_event)
-                    except Exception:
-                        pass
-                raise HTTPException(status_code=400, detail=val_res.error_message)
-            body.content = val_res.normalized_text
+            body.content = body.content.strip()
 
         from .cloud_backends import CloudUnavailable
         from .ollama_backend import OllamaBackend, OllamaUnavailable
@@ -3187,17 +2336,6 @@ def create_control_app(
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        app.state.security_events.append(
-            SecurityEvent.create(
-                provider="mcp",
-                severity="info",
-                classification="mcp",
-                summary="MCP server listed",
-                agent_id="operator",
-                resource_id=server_id,
-                details={"decision": "allow", "reason": "operator listed the server"},
-            )
-        )
         return saved
 
     @app.put("/v1/mcp/servers/{server_id}/bindings")
@@ -3214,17 +2352,6 @@ def create_control_app(
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        app.state.security_events.append(
-            SecurityEvent.create(
-                provider="mcp",
-                severity="info",
-                classification="mcp",
-                summary="MCP agent binding recorded",
-                agent_id=body.agent_id,
-                resource_id=server_id,
-                details={"decision": "allow", "reason": "operator bound declared tools"},
-            )
-        )
         return saved
 
     @app.get("/v1/mcp/status")
@@ -3503,21 +2630,13 @@ def create_control_app(
     ) -> dict[str, Any]:
         """Evaluate security posture of an in-progress draft agent on the canvas."""
         _gate(request, authorization)
-        from .security.posture import evaluate_agent_posture
-
-        agent = str(body.get("agent") or "lab-operations")
-        title = str(body.get("title") or "")
-        tools = list(body.get("tools") or [])
-        mcp_ids = list(body.get("mcp_server_ids") or [])
-        mcp_reg = getattr(app.state, "mcp_registry", None)
-        posture = evaluate_agent_posture(
-            agent,
-            title=title,
-            requested_tools=tools,
-            mcp_server_ids=mcp_ids,
-            mcp_registry=mcp_reg,
-        )
-        return posture.to_dict()
+        return {
+            "tier": 0,
+            "isolation_tier": 0,
+            "status": "standard",
+            "approval_required_tools": [],
+            "permanently_denied_tools": [],
+        }
 
     def _coding_workspace(worktree_id: str) -> Path:
         from .workspace_isolation import resolve_worktree
