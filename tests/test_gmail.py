@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "platform" / "src"))
 from ai_lab_platform.gmail import (
     GmailAuthError,
     GmailClient,
+    format_mailbox_stats_markdown,
     format_single_thread_markdown,
     format_threads_markdown,
 )
@@ -111,6 +112,30 @@ class GmailClientTests(unittest.TestCase):
         # Verify token file was updated on disk
         saved = json.loads(self.token_path.read_text())
         self.assertEqual(saved["token"], "new_refreshed_token")
+
+    def test_get_mailbox_stats(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        def fake_opener(req: object, timeout: int = 10) -> MockResponse:
+            url = getattr(req, "full_url", "")
+            if "profile" in url:
+                return MockResponse({"emailAddress": "steven@example.com", "messagesTotal": 43820, "threadsTotal": 39280})
+            if "labels/INBOX" in url:
+                return MockResponse({"messagesTotal": 28645, "messagesUnread": 27105, "threadsTotal": 28310, "threadsUnread": 26909})
+            return MockResponse({"messagesTotal": 10, "messagesUnread": 5})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=fake_opener,
+        )
+        stats = client.get_mailbox_stats()
+        self.assertEqual(stats["email"], "steven@example.com")
+        self.assertEqual(stats["messages_total"], 43820)
+        self.assertEqual(stats["threads_total"], 39280)
+        self.assertEqual(stats["labels"]["INBOX"]["messages_total"], 28645)
+        self.assertEqual(stats["labels"]["INBOX"]["messages_unread"], 27105)
 
     def test_search_and_get_thread(self) -> None:
         self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
@@ -342,3 +367,43 @@ class ToolRuntimeGmailTests(unittest.TestCase):
             self.assertTrue(res.ok)
             self.assertIn("has been archived", res.observation)
             self.assertIn("t99", res.observation)
+
+    def test_format_mailbox_stats_markdown(self) -> None:
+        stats = {
+            "email": "test@example.com",
+            "messages_total": 43820,
+            "threads_total": 39280,
+            "labels": {
+                "INBOX": {"messages_total": 28645, "messages_unread": 27105, "threads_total": 28310, "threads_unread": 26909},
+                "UNREAD": {"messages_total": 38098, "threads_total": 35319},
+                "STARRED": {"messages_total": 20, "messages_unread": 12},
+                "SENT": {"messages_total": 725},
+                "TRASH": {"messages_total": 2032},
+                "SPAM": {"messages_total": 575},
+            },
+        }
+        md = format_mailbox_stats_markdown(stats)
+        self.assertIn("43,820", md)
+        self.assertIn("28,645", md)
+        self.assertIn("27,105", md)
+        self.assertIn("test@example.com", md)
+
+    @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True)
+    def test_gmail_mailbox_stats_runtime_dispatch(self, _mock_has_token: MagicMock) -> None:
+        ctx = ToolContext(workspace_root=ROOT, artifact_root=ROOT / "artifacts")
+        allowed = ["gmail_mailbox_stats"]
+
+        mock_stats = {
+            "email": "test@example.com",
+            "messages_total": 100,
+            "threads_total": 50,
+            "labels": {
+                "INBOX": {"messages_total": 80, "messages_unread": 10, "threads_total": 40, "threads_unread": 5},
+            },
+        }
+        with patch("ai_lab_platform.gmail.GmailClient.get_mailbox_stats", return_value=mock_stats):
+            res = execute_allowed_tool("gmail_mailbox_stats", {}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("100", res.observation)
+            self.assertIn("80", res.observation)
+            self.assertIn("test@example.com", res.observation)

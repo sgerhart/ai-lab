@@ -190,6 +190,33 @@ class GmailClient:
         """Fetch user profile to verify connection and email address."""
         return self._api_request("profile")
 
+    def get_mailbox_stats(self) -> Dict[str, Any]:
+        """Fetch mailbox-wide counts and per-label metrics."""
+        profile = self.get_profile()
+        email = profile.get("emailAddress", "unknown")
+        messages_total = profile.get("messagesTotal", 0)
+        threads_total = profile.get("threadsTotal", 0)
+
+        label_counts: Dict[str, Dict[str, int]] = {}
+        for lid in ("INBOX", "UNREAD", "STARRED", "SENT", "TRASH", "SPAM"):
+            try:
+                data = self._api_request(f"labels/{lid}")
+                label_counts[lid] = {
+                    "messages_total": data.get("messagesTotal", 0),
+                    "messages_unread": data.get("messagesUnread", 0),
+                    "threads_total": data.get("threadsTotal", 0),
+                    "threads_unread": data.get("threadsUnread", 0),
+                }
+            except Exception:
+                pass
+
+        return {
+            "email": email,
+            "messages_total": messages_total,
+            "threads_total": threads_total,
+            "labels": label_counts,
+        }
+
     def status(self) -> Dict[str, Any]:
         """Return connectivity status of the Gmail integration."""
         if not self.has_credentials():
@@ -380,11 +407,43 @@ def _parse_message(raw_msg: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def format_threads_markdown(threads: List[Dict[str, Any]]) -> str:
+def format_mailbox_stats_markdown(stats: Dict[str, Any]) -> str:
+    """Format account and label counts for Steward's tool observation."""
+    email = stats.get("email", "unknown")
+    total_msgs = stats.get("messages_total", 0)
+    total_threads = stats.get("threads_total", 0)
+    labels = stats.get("labels", {})
+
+    inbox = labels.get("INBOX", {})
+    unread = labels.get("UNREAD", {})
+    starred = labels.get("STARRED", {})
+    sent = labels.get("SENT", {})
+    trash = labels.get("TRASH", {})
+    spam = labels.get("SPAM", {})
+
+    lines = [
+        f"### Gmail Mailbox Statistics for {email}:",
+        f"- **Total Account Messages**: {total_msgs:,} (across {total_threads:,} threads)",
+        f"- **Primary Inbox**: {inbox.get('messages_total', 0):,} total messages ({inbox.get('messages_unread', 0):,} unread across {inbox.get('threads_unread', 0):,} unread threads)",
+        f"- **Total Unread (Account-wide)**: {unread.get('messages_total', 0):,} messages",
+        f"- **Starred**: {starred.get('messages_total', 0):,} messages ({starred.get('messages_unread', 0):,} unread)",
+        f"- **Sent**: {sent.get('messages_total', 0):,} messages",
+        f"- **Trash**: {trash.get('messages_total', 0):,} messages",
+        f"- **Spam**: {spam.get('messages_total', 0):,} messages",
+    ]
+    return "\n".join(lines)
+
+
+def format_threads_markdown(threads: List[Dict[str, Any]], query_context: str = "") -> str:
     """Format thread list for Steward's tool observation."""
     if not threads:
         return "No email threads found matching the search criteria."
-    lines = [f"Found {len(threads)} email thread(s):\n"]
+    ctx_note = f" (query: '{query_context}')" if query_context else ""
+    lines = [
+        f"Returned {len(threads)} thread(s){ctx_note}. "
+        f"(Note: This is a bounded search/list page, not the total count of emails in the entire mailbox. "
+        f"For account totals or inbox counts, call gmail_mailbox_stats.):\n"
+    ]
     for i, t in enumerate(threads, 1):
         lines.append(f"### {i}. {t.get('subject') or '(No Subject)'}")
         lines.append(f"- **Thread ID**: `{t.get('id')}`")

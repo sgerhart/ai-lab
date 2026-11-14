@@ -107,6 +107,7 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "skill_list": lambda ctx, **a: _skill_list(ctx, a),
     "skill_read": lambda ctx, **a: _skill_read(ctx, a),
     "consult_frontier": lambda ctx, **a: _consult_frontier(ctx, a),
+    "gmail_mailbox_stats": lambda ctx, **a: _gmail_mailbox_stats(ctx, a),
     "gmail_search": lambda ctx, **a: _gmail_search(ctx, a),
     "gmail_read_thread": lambda ctx, **a: _gmail_read_thread(ctx, a),
     "gmail_list_unread": lambda ctx, **a: _gmail_list_unread(ctx, a),
@@ -568,6 +569,19 @@ def _gmail_read_thread(_ctx: ToolContext, args: dict[str, Any]) -> str:
         return format_single_thread_markdown(thread)
     except Exception as exc:
         return f"Gmail error reading thread {thread_id}: {exc}"
+
+
+def _gmail_mailbox_stats(_ctx: ToolContext, _args: dict[str, Any]) -> str:
+    from .gmail import GmailClient, format_mailbox_stats_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        stats = client.get_mailbox_stats()
+        return format_mailbox_stats_markdown(stats)
+    except Exception as exc:
+        return f"Gmail mailbox stats error: {exc}"
 
 
 def _gmail_list_unread(_ctx: ToolContext, args: dict[str, Any]) -> str:

@@ -27,6 +27,7 @@ SEE_TOOLS = frozenset(
         "files_list",
         "files_read",
         "gmail_list_unread",
+        "gmail_mailbox_stats",
         "gmail_read_thread",
         "gmail_search",
         "health_read",

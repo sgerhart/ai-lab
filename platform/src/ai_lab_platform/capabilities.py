@@ -36,6 +36,7 @@ _TOOL_BLURB = {
     "files_list": "List .md and .txt notes in the personal files folder.",
     "files_grep": "Find a note in the personal files folder by words in the file.",
     "files_read": "Read one .md or .txt note in the personal files folder.",
+    "gmail_mailbox_stats": "Get overall Gmail statistics: total emails in account, inbox count, unread count, and per-label metrics.",
     "gmail_search": "Search email threads in Gmail by query, sender, or subject.",
     "gmail_read_thread": "Read the full messages and conversation in an email thread.",
     "gmail_list_unread": "List recent unread emails in Gmail inbox.",

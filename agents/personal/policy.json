@@ -26,6 +26,7 @@
     "skill_list",
     "skill_read",
     "consult_frontier",
+    "gmail_mailbox_stats",
     "gmail_search",
     "gmail_read_thread",
     "gmail_list_unread",
