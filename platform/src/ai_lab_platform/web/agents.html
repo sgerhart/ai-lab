@@ -5115,6 +5115,11 @@
         const packed = await api(`/v1/conversations/${state.conversationId}/runs`);
         runs = packed.runs || [];
       } catch (_) { runs = []; }
+      state.conversationRuns = runs;
+      state.conversationHasAgentContext = Boolean(
+        (runs && runs.length > 0) ||
+        (data.messages || []).some((m) => /\b(?:email|emails|mail|inbox|gmail|messages?|threads?|delete|trash|archive|vault|notes?)\b/i.test(m.content || ""))
+      );
       renderTimeline(data.messages || [], runs);
       loadArtifacts().catch(() => {});
       const active = runs.some((r) => r.status === "queued" || r.status === "running" || r.status === "awaiting_approval");
@@ -5762,6 +5767,8 @@
       });
       state.conversationId = body.id;
       state.conversationAgent = body.agent || chosen;
+      state.conversationRuns = [];
+      state.conversationHasAgentContext = false;
       state.attachments = [];
       renderAttachList();
       renderMessages([]);
@@ -7298,10 +7305,22 @@
       try {
         if (!state.conversationId) await newConversation();
         const goal = $("goal-mode") ? $("goal-mode").value : "auto";
-        const needsAgent = (goal === "agent") || (goal === "auto" && (
-          /(?:build|create|generate|make)\s+(?:presentation|deck|slides)|schedule\s+(?:a\s+)?(?:recurring|cron)|deep\s+research\s+report|email|gmail|inbox|draft|trash|archive|delete.*(?:email|thread|message|mail)/i.test(text)
-        ));
+        const hasAgentContext = Boolean(
+          (state.conversationRuns && state.conversationRuns.length > 0) ||
+          state.conversationHasAgentContext
+        );
+        const isAgentIntent = (
+          /\b(?:email|emails|mail|inbox|gmail|drafts?|messages?|threads?)\b/i.test(text) ||
+          /\b(?:delete|deleting|trash|trashing|archive|archiving|remove|removing|clean\s+up)\b/i.test(text) ||
+          /\b(?:vault|notes?|second\s+brain|remember|recall)\b/i.test(text) ||
+          /(?:build|create|generate|make|update)\s+(?:presentation|deck|slides)/i.test(text) ||
+          /\b(?:schedule|recurring|cron)\b/i.test(text) ||
+          /\b(?:deep\s+research|dossier|report)\b/i.test(text) ||
+          /\[[^\]]+\]/.test(text)
+        );
+        const needsAgent = (goal === "agent") || (goal === "auto" && (hasAgentContext || isAgentIntent));
         if (needsAgent && goal !== "chat") {
+          state.conversationHasAgentContext = true;
           await sendPersonalTurn(text);
           return;
         }
