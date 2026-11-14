@@ -111,6 +111,9 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "gmail_read_thread": lambda ctx, **a: _gmail_read_thread(ctx, a),
     "gmail_list_unread": lambda ctx, **a: _gmail_list_unread(ctx, a),
     "gmail_create_draft": lambda ctx, **a: _gmail_create_draft(ctx, a),
+    "gmail_trash_thread": lambda ctx, **a: _gmail_trash_thread(ctx, a),
+    "gmail_trash_message": lambda ctx, **a: _gmail_trash_message(ctx, a),
+    "gmail_archive_thread": lambda ctx, **a: _gmail_archive_thread(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -603,6 +606,67 @@ def _gmail_create_draft(_ctx: ToolContext, args: dict[str, Any]) -> str:
         )
     except Exception as exc:
         return f"Gmail create draft error: {exc}"
+
+
+def _gmail_trash_thread(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    thread_id = str(args.get("thread_id") or args.get("id") or "").strip()
+    if not thread_id:
+        raise ToolError("gmail_trash_thread requires a thread_id.")
+    from .gmail import GmailClient
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.trash_thread(thread_id)
+        return (
+            f"Thread `{thread_id}` has been moved to Gmail Trash.\n"
+            f"- **Status**: Trashed (recoverable for 30 days in Gmail Trash)\n"
+            f"- **Thread ID**: `{res.get('thread_id')}`"
+        )
+    except Exception as exc:
+        return f"Gmail error trashing thread {thread_id}: {exc}"
+
+
+def _gmail_trash_message(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    message_id = str(args.get("message_id") or args.get("id") or "").strip()
+    if not message_id:
+        raise ToolError("gmail_trash_message requires a message_id.")
+    from .gmail import GmailClient
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.trash_message(message_id)
+        return (
+            f"Message `{message_id}` has been moved to Gmail Trash.\n"
+            f"- **Status**: Trashed (recoverable for 30 days in Gmail Trash)\n"
+            f"- **Message ID**: `{res.get('message_id')}`\n"
+            f"- **Thread ID**: `{res.get('thread_id')}`"
+        )
+    except Exception as exc:
+        return f"Gmail error trashing message {message_id}: {exc}"
+
+
+def _gmail_archive_thread(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    thread_id = str(args.get("thread_id") or args.get("id") or "").strip()
+    if not thread_id:
+        raise ToolError("gmail_archive_thread requires a thread_id.")
+    from .gmail import GmailClient
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.archive_thread(thread_id)
+        return (
+            f"Thread `{thread_id}` has been archived.\n"
+            f"- **Status**: Archived (removed from Inbox, retained in All Mail)\n"
+            f"- **Thread ID**: `{res.get('thread_id')}`"
+        )
+    except Exception as exc:
+        return f"Gmail error archiving thread {thread_id}: {exc}"
 
 
 def execute_allowed_tool(

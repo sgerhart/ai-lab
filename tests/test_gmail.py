@@ -10,7 +10,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "platform" / "src"))
@@ -184,11 +184,72 @@ class GmailClientTests(unittest.TestCase):
         self.assertEqual(draft["draft_id"], "draft_999")
         self.assertIn("approval", draft["note"])
 
+    def test_trash_thread(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        mock_opener = MagicMock()
+        mock_opener.return_value = MockResponse({"id": "thread_abc123", "messages": []})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=mock_opener,
+        )
+        res = client.trash_thread("thread_abc123")
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["thread_id"], "thread_abc123")
+        self.assertEqual(res["status"], "trashed")
+
+    def test_trash_message(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        mock_opener = MagicMock()
+        mock_opener.return_value = MockResponse({"id": "msg_456", "threadId": "thread_abc123"})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=mock_opener,
+        )
+        res = client.trash_message("msg_456")
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["message_id"], "msg_456")
+        self.assertEqual(res["thread_id"], "thread_abc123")
+        self.assertEqual(res["status"], "trashed")
+
+    def test_archive_thread(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        mock_opener = MagicMock()
+        mock_opener.return_value = MockResponse({"id": "thread_abc123"})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=mock_opener,
+        )
+        res = client.archive_thread("thread_abc123")
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["thread_id"], "thread_abc123")
+        self.assertEqual(res["status"], "archived")
+
 
 class ToolRuntimeGmailTests(unittest.TestCase):
-    def test_gmail_tools_execute_in_runtime_when_unauthorized(self) -> None:
+    @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=False)
+    def test_gmail_tools_execute_in_runtime_when_unauthorized(self, _mock_has_token: MagicMock) -> None:
         ctx = ToolContext(workspace_root=ROOT, artifact_root=ROOT / "artifacts")
-        allowed = ["gmail_search", "gmail_read_thread", "gmail_list_unread", "gmail_create_draft"]
+        allowed = [
+            "gmail_search",
+            "gmail_read_thread",
+            "gmail_list_unread",
+            "gmail_create_draft",
+            "gmail_trash_thread",
+            "gmail_trash_message",
+            "gmail_archive_thread",
+        ]
 
         res = execute_allowed_tool("gmail_search", {"query": "test"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
         self.assertTrue(res.ok)
@@ -207,3 +268,56 @@ class ToolRuntimeGmailTests(unittest.TestCase):
         )
         self.assertTrue(res_draft.ok)
         self.assertIn("auth-gmail.sh", res_draft.observation)
+
+        res_trash_t = execute_allowed_tool(
+            "gmail_trash_thread",
+            {"thread_id": "thread_123"},
+            allowed_tools=allowed,
+            approved_tools=set(),
+            ctx=ctx,
+        )
+        self.assertTrue(res_trash_t.ok)
+        self.assertIn("auth-gmail.sh", res_trash_t.observation)
+
+        res_trash_m = execute_allowed_tool(
+            "gmail_trash_message",
+            {"message_id": "msg_123"},
+            allowed_tools=allowed,
+            approved_tools=set(),
+            ctx=ctx,
+        )
+        self.assertTrue(res_trash_m.ok)
+        self.assertIn("auth-gmail.sh", res_trash_m.observation)
+
+        res_arch = execute_allowed_tool(
+            "gmail_archive_thread",
+            {"thread_id": "thread_123"},
+            allowed_tools=allowed,
+            approved_tools=set(),
+            ctx=ctx,
+        )
+        self.assertTrue(res_arch.ok)
+        self.assertIn("auth-gmail.sh", res_arch.observation)
+
+    @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True)
+    def test_gmail_delete_and_archive_runtime_dispatch(self, _mock_has_token: MagicMock) -> None:
+        ctx = ToolContext(workspace_root=ROOT, artifact_root=ROOT / "artifacts")
+        allowed = ["gmail_trash_thread", "gmail_trash_message", "gmail_archive_thread"]
+
+        with patch("ai_lab_platform.gmail.GmailClient.trash_thread", return_value={"ok": True, "thread_id": "t99", "status": "trashed"}):
+            res = execute_allowed_tool("gmail_trash_thread", {"thread_id": "t99"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("moved to Gmail Trash", res.observation)
+            self.assertIn("t99", res.observation)
+
+        with patch("ai_lab_platform.gmail.GmailClient.trash_message", return_value={"ok": True, "message_id": "m88", "thread_id": "t99", "status": "trashed"}):
+            res = execute_allowed_tool("gmail_trash_message", {"message_id": "m88"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("moved to Gmail Trash", res.observation)
+            self.assertIn("m88", res.observation)
+
+        with patch("ai_lab_platform.gmail.GmailClient.archive_thread", return_value={"ok": True, "thread_id": "t99", "status": "archived"}):
+            res = execute_allowed_tool("gmail_archive_thread", {"thread_id": "t99"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("has been archived", res.observation)
+            self.assertIn("t99", res.observation)

@@ -149,6 +149,9 @@ _REPEATABLE_TOOLS = frozenset(
         "gmail_search",
         "gmail_read_thread",
         "gmail_list_unread",
+        "gmail_trash_thread",
+        "gmail_trash_message",
+        "gmail_archive_thread",
     }
 )
 
@@ -247,7 +250,7 @@ def loop_system_prompt(
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
         "8. HYBRID FRONTIER WORKFLOW: You have access to consult_frontier(task, context). When you are running on the local model and need high-level strategic reasoning, complex executive synthesis, creative writing, or polished presentation slide generation, first gather facts locally (using web_search, vault_read, or files_read), then call consult_frontier to collaborate with OpenAI or another configured frontier model. Then finalize or write the presentation/report using the frontier model's output.\n"
         "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory.\n"
-        "10. GMAIL & INBOX ACCESS: You have access to gmail_search, gmail_read_thread, gmail_list_unread, and gmail_create_draft. You can inspect unread emails, search threads, extract action items, and draft email replies. You never automatically send emails; all drafts remain in Gmail Drafts for Steven's review and approval."
+        "10. GMAIL & INBOX ACCESS: You have access to gmail_search, gmail_read_thread, gmail_list_unread, gmail_create_draft, gmail_trash_thread, gmail_trash_message, and gmail_archive_thread. You can inspect unread emails, search threads, extract action items, draft replies, archive threads, and move unwanted messages or threads to Trash when requested. Deleted emails are placed in Gmail's Trash (recoverable for 30 days). You never automatically send emails; drafts remain in Gmail Drafts for Steven's review and approval."
     ) + _brief_block(brief)
 
 

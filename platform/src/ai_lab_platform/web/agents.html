@@ -7299,7 +7299,7 @@
         if (!state.conversationId) await newConversation();
         const goal = $("goal-mode") ? $("goal-mode").value : "auto";
         const needsAgent = (goal === "agent") || (goal === "auto" && (
-          /(?:build|create|generate|make)\s+(?:presentation|deck|slides)|schedule\s+(?:a\s+)?(?:recurring|cron)|deep\s+research\s+report|email|gmail|inbox|draft/i.test(text)
+          /(?:build|create|generate|make)\s+(?:presentation|deck|slides)|schedule\s+(?:a\s+)?(?:recurring|cron)|deep\s+research\s+report|email|gmail|inbox|draft|trash|archive|delete.*(?:email|thread|message|mail)/i.test(text)
         ));
         if (needsAgent && goal !== "chat") {
           await sendPersonalTurn(text);

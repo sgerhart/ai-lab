@@ -29,9 +29,12 @@
     "gmail_search",
     "gmail_read_thread",
     "gmail_list_unread",
-    "gmail_create_draft"
+    "gmail_create_draft",
+    "gmail_trash_thread",
+    "gmail_trash_message",
+    "gmail_archive_thread"
   ],
   "privileged_tools": [],
   "network": [],
-  "notes": "Reads ~/.ai-lab/memory and ~/.ai-lab/files. research gathers up to five public pages the lab chooses and files a source dossier under ~/.ai-lab/reports. report_write saves or replaces a markdown report there. The model does not choose URLs. Send, spend, and delete are not tools."
+  "notes": "Reads ~/.ai-lab/memory and ~/.ai-lab/files. research gathers up to five public pages the lab chooses and files a source dossier under ~/.ai-lab/reports. report_write saves or replaces a markdown report there. The model does not choose URLs. Send and spend are not tools; deletions move items to Gmail Trash (30-day recoverable)."
 }

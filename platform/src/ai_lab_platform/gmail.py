@@ -28,6 +28,7 @@ GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 DEFAULT_SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.compose",
+    "https://www.googleapis.com/auth/gmail.modify",
 ]
 
 
@@ -281,6 +282,41 @@ class GmailClient:
             "to": to,
             "subject": subject,
             "note": "Draft saved in Gmail for Steven's approval. Not sent.",
+        }
+
+    def trash_thread(self, thread_id: str) -> Dict[str, Any]:
+        """Move an entire conversation thread to Gmail Trash (recoverable for 30 days)."""
+        res = self._api_request(f"threads/{thread_id}/trash", method="POST")
+        return {
+            "ok": True,
+            "thread_id": res.get("id") or thread_id,
+            "status": "trashed",
+            "note": "Thread moved to Gmail Trash. Recoverable for 30 days.",
+        }
+
+    def trash_message(self, message_id: str) -> Dict[str, Any]:
+        """Move an individual email message to Gmail Trash (recoverable for 30 days)."""
+        res = self._api_request(f"messages/{message_id}/trash", method="POST")
+        return {
+            "ok": True,
+            "message_id": res.get("id") or message_id,
+            "thread_id": res.get("threadId", ""),
+            "status": "trashed",
+            "note": "Message moved to Gmail Trash. Recoverable for 30 days.",
+        }
+
+    def archive_thread(self, thread_id: str) -> Dict[str, Any]:
+        """Archive a conversation thread by removing it from the Inbox."""
+        res = self._api_request(
+            f"threads/{thread_id}/modify",
+            method="POST",
+            data={"removeLabelIds": ["INBOX"]},
+        )
+        return {
+            "ok": True,
+            "thread_id": res.get("id") or thread_id,
+            "status": "archived",
+            "note": "Thread archived (removed from Inbox, preserved in All Mail).",
         }
 
 
