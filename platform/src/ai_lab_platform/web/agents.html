@@ -4636,7 +4636,6 @@
         console.error("Failed to load conversations:", err);
         if (retry) {
           setTimeout(() => loadConversations(false), 500);
-          return;
         }
       }
       const open = (state.conversations || []).find((c) => c.id === state.conversationId);
@@ -5759,6 +5758,7 @@
       await loadConversations();
       await refreshMessages();
     }
+    const openConversation = selectConversation;
     async function newConversation(projectId, agent) {
       const chosen = agent === "personal" ? "personal" : "personal";
       const body = await api("/v1/conversations", {
@@ -7524,7 +7524,7 @@
         loadRuns: loadRuns,
         loadDefinitions: loadDefinitions,
         selectedChoice: selectedChoice,
-        openConversation: openConversation,
+        openConversation: selectConversation,
         loadConversations: loadConversations,
       });
     }
