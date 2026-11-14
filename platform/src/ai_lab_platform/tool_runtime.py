@@ -107,6 +107,10 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "skill_list": lambda ctx, **a: _skill_list(ctx, a),
     "skill_read": lambda ctx, **a: _skill_read(ctx, a),
     "consult_frontier": lambda ctx, **a: _consult_frontier(ctx, a),
+    "gmail_search": lambda ctx, **a: _gmail_search(ctx, a),
+    "gmail_read_thread": lambda ctx, **a: _gmail_read_thread(ctx, a),
+    "gmail_list_unread": lambda ctx, **a: _gmail_list_unread(ctx, a),
+    "gmail_create_draft": lambda ctx, **a: _gmail_create_draft(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -530,6 +534,75 @@ def _consult_frontier(ctx: ToolContext, args: dict[str, Any]) -> str:
         )
     except Exception as exc:  # noqa: BLE001
         raise ToolError(f"Frontier consultation failed: {exc}") from exc
+
+
+def _gmail_search(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    query = str(args.get("query") or args.get("q") or "").strip()
+    limit = _bounded_limit(args.get("limit") or args.get("max_results"), 5, 20)
+    from .gmail import GmailClient, format_threads_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        threads = client.search_threads(query=query, limit=limit)
+        return format_threads_markdown(threads)
+    except Exception as exc:
+        return f"Gmail search error: {exc}"
+
+
+def _gmail_read_thread(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    thread_id = str(args.get("thread_id") or args.get("id") or "").strip()
+    if not thread_id:
+        raise ToolError("gmail_read_thread requires a thread_id.")
+    from .gmail import GmailClient, format_single_thread_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        thread = client.get_thread(thread_id)
+        return format_single_thread_markdown(thread)
+    except Exception as exc:
+        return f"Gmail error reading thread {thread_id}: {exc}"
+
+
+def _gmail_list_unread(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    limit = _bounded_limit(args.get("limit") or args.get("max_results"), 5, 20)
+    from .gmail import GmailClient, format_threads_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        threads = client.list_unread(limit=limit)
+        return format_threads_markdown(threads)
+    except Exception as exc:
+        return f"Gmail list unread error: {exc}"
+
+
+def _gmail_create_draft(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    to = str(args.get("to") or args.get("recipient") or "").strip()
+    subject = str(args.get("subject") or "").strip()
+    body = str(args.get("body") or args.get("content") or "").strip()
+    if not to or not subject or not body:
+        raise ToolError("gmail_create_draft requires 'to', 'subject', and 'body'.")
+    from .gmail import GmailClient
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.create_draft(to=to, subject=subject, body=body)
+        return (
+            f"Draft created in Gmail successfully!\n"
+            f"- **To**: {to}\n"
+            f"- **Subject**: {subject}\n"
+            f"- **Draft ID**: `{res.get('draft_id')}`\n"
+            f"- **Status**: Saved in Gmail Drafts for Steven's approval. (Emails are never sent automatically)."
+        )
+    except Exception as exc:
+        return f"Gmail create draft error: {exc}"
 
 
 def execute_allowed_tool(

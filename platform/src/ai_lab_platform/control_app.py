@@ -3247,6 +3247,17 @@ def create_control_app(
 
         return {"summaries": list_summaries()}
 
+    @app.get("/v1/gmail/status")
+    def gmail_status_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Check connection status of the Gmail integration."""
+        _gate(request, authorization)
+        from .gmail import GmailClient
+
+        return GmailClient().status()
+
     @app.get("/v1/nexus/cover")
     def nexus_cover_endpoint(
         request: Request,

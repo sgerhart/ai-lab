@@ -146,6 +146,9 @@ _REPEATABLE_TOOLS = frozenset(
         "repo_search",
         "repo_read",
         "consult_frontier",
+        "gmail_search",
+        "gmail_read_thread",
+        "gmail_list_unread",
     }
 )
 
@@ -243,7 +246,8 @@ def loop_system_prompt(
         "6. If the user asks for a presentation, slides, or deck, you MUST call presentation_write(name, title, slides_markdown) before finishing with FINAL. Separate each slide with '---' and use clean executive slide titles (e.g. '## The Rise of Autonomous Agents' — do not prefix titles with 'Slide 1:' or 'Slide 2:'). Do not loop on web searches once you have basic facts; proceed directly to authoring the presentation. If they ask to change a deck that already exists, call presentation_read(name) first, then presentation_write with that same name and the full updated markdown.\n"
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
         "8. HYBRID FRONTIER WORKFLOW: You have access to consult_frontier(task, context). When you are running on the local model and need high-level strategic reasoning, complex executive synthesis, creative writing, or polished presentation slide generation, first gather facts locally (using web_search, vault_read, or files_read), then call consult_frontier to collaborate with OpenAI or another configured frontier model. Then finalize or write the presentation/report using the frontier model's output.\n"
-        "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory."
+        "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory.\n"
+        "10. GMAIL & INBOX ACCESS: You have access to gmail_search, gmail_read_thread, gmail_list_unread, and gmail_create_draft. You can inspect unread emails, search threads, extract action items, and draft email replies. You never automatically send emails; all drafts remain in Gmail Drafts for Steven's review and approval."
     ) + _brief_block(brief)
 
 

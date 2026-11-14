@@ -25,7 +25,11 @@
     "skill_create",
     "skill_list",
     "skill_read",
-    "consult_frontier"
+    "consult_frontier",
+    "gmail_search",
+    "gmail_read_thread",
+    "gmail_list_unread",
+    "gmail_create_draft"
   ],
   "privileged_tools": [],
   "network": [],

@@ -26,6 +26,9 @@ SEE_TOOLS = frozenset(
         "files_grep",
         "files_list",
         "files_read",
+        "gmail_list_unread",
+        "gmail_read_thread",
+        "gmail_search",
         "health_read",
         "nexus_search",
         "presentation_list",
@@ -43,6 +46,7 @@ SEE_TOOLS = frozenset(
 )
 DRAFT_TOOLS = frozenset(
     {
+        "gmail_create_draft",
         "presentation_write",
         "report_write",
         "research",

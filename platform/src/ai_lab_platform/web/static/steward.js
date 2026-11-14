@@ -11,6 +11,7 @@
     { label: "Schedules", icon: "⏰", tools: ["schedule_list"] },
     { label: "Presentations", icon: "📽️", tools: ["presentation_list", "presentation_read"] },
     { label: "Skills", icon: "⚡", tools: ["skill_list", "skill_read"] },
+    { label: "Gmail", icon: "✉️", tools: ["gmail_list_unread", "gmail_search", "gmail_read_thread", "gmail_create_draft"] },
     { label: "Lab health", icon: "🛡️", tools: ["health_read"] },
   ];
   const RHYTHM = {
@@ -24,7 +25,13 @@
       title: "Morning Lab & Vault Briefing",
       intent: "Inspect memory vault for overnight notes, summarize recent reports, and check lab health status.",
       cron: "0 9 * * *",
-      tools: ["vault_list", "vault_read", "report_list", "report_read", "health_read"],
+      tools: ["vault_list", "vault_read", "report_list", "report_read", "health_read", "gmail_list_unread"],
+    },
+    inbox: {
+      title: "Morning Inbox & VIP Sentinel",
+      intent: "Check Gmail inbox for unread priority emails, summarize key requests, and highlight items needing response.",
+      cron: "0 9 * * *",
+      tools: ["gmail_list_unread", "gmail_read_thread", "vault_write"],
     },
     research: {
       title: "AI Research & Paper Sentinel",
