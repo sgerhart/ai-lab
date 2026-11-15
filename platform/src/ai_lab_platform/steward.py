@@ -380,6 +380,12 @@ def _append_activity(entry: dict[str, Any], *, path: Path) -> dict[str, Any]:
     return _public_activity(entry)
 
 
+def append_activity(entry: dict[str, Any], *, path: Path | None = None) -> dict[str, Any]:
+    """Append one public audit activity record."""
+    goals_path = path or default_goals_path()
+    return _append_activity(entry, path=goals_path)
+
+
 def enqueue_wake(
     goal: dict[str, Any],
     *,
@@ -558,6 +564,7 @@ __all__ = [
     "SEE_TOOLS",
     "StewardError",
     "access_manifest",
+    "append_activity",
     "background_tools",
     "classify_tool",
     "close_goal",

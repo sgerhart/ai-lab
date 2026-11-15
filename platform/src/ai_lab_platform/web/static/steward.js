@@ -756,6 +756,31 @@
       });
   }
 
+  function logReceiptToDialogue(receiptText) {
+    if (!activeConvId) {
+      loadConversations().then(function () {
+        if (activeConvId) {
+          postReceiptMessage(activeConvId, receiptText);
+        }
+      });
+      return;
+    }
+    postReceiptMessage(activeConvId, receiptText);
+  }
+
+  function postReceiptMessage(cid, text) {
+    fetch("/v1/conversations/" + encodeURIComponent(cid) + "/messages", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ role: "assistant", content: text }),
+    })
+      .then(readJson)
+      .then(function () {
+        loadMessages(cid);
+      })
+      .catch(function () {});
+  }
+
   function renderMessages(messages) {
     const targets = [chatMessagesEl, cockpitMessagesEl].filter(Boolean);
     if (!targets.length) return;
@@ -1351,11 +1376,50 @@
     });
   }
 
+  function renderSweepReceipt(card, count, snippets) {
+    if (!card) return;
+    card.classList.remove("executed");
+    card.classList.add("sweep-success");
+
+    const oldReceipt = card.querySelector(".sweep-audit-receipt");
+    if (oldReceipt) oldReceipt.remove();
+
+    const receipt = document.createElement("div");
+    receipt.className = "sweep-audit-receipt";
+
+    const head = document.createElement("div");
+    head.className = "sweep-audit-header";
+    head.textContent = "✓ Trashed " + count + " Stale Threads (Audit Receipt)";
+    receipt.appendChild(head);
+
+    if (snippets && snippets.length > 0) {
+      const list = document.createElement("ul");
+      list.className = "sweep-audit-list";
+      snippets.slice(0, 5).forEach(function (snip) {
+        const li = document.createElement("li");
+        li.textContent = snip;
+        list.appendChild(li);
+      });
+      receipt.appendChild(list);
+    }
+
+    const foot = document.createElement("div");
+    foot.className = "sweep-audit-footer";
+    const footText = document.createElement("span");
+    footText.textContent = "Google Trash · 30-day recovery";
+    const footTime = document.createElement("span");
+    footTime.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    foot.appendChild(footText);
+    foot.appendChild(footTime);
+    receipt.appendChild(foot);
+
+    card.appendChild(receipt);
+  }
+
   const btnRetail = document.getElementById("btn-action-retail");
   if (btnRetail) {
     btnRetail.addEventListener("click", function () {
       const card = document.getElementById("action-card-retail");
-      if (card) card.classList.add("executed");
       btnRetail.textContent = "⚡ Sweeping 50...";
       btnRetail.disabled = true;
 
@@ -1367,16 +1431,31 @@
         .then(readJson)
         .then(function (res) {
           const count = res.trashed_count != null ? res.trashed_count : 50;
-          btnRetail.textContent = "✓ Swept " + count + " to Trash";
+          btnRetail.textContent = "⚡ Sweep Next 50";
+          btnRetail.disabled = false;
+
+          renderSweepReceipt(card, count, res.sample_snippets || []);
+
           if (res.stats) {
             updateMailboxUI(res.stats);
           } else {
             loadMailboxStats();
           }
+
+          loadActivity();
+
+          const snippetItems = (res.sample_snippets || []).map(function (s) { return "- " + s; }).join("\n");
+          const receiptMsg = "### 🧹 Gmail Sweep Receipt\n" +
+            "**Action:** Moved **" + count + " promotional threads** (`category:promotions older_than:2d`) to Gmail Trash.\n" +
+            "**Safety:** Recoverable for 30 days in Google Trash.\n" +
+            (snippetItems ? "**Cleaned Samples:**\n" + snippetItems + "\n\n" : "\n") +
+            "Backlog counter updated. Click **Sweep Next 50** on the card to continue cleaning.";
+          logReceiptToDialogue(receiptMsg);
+
           setStatus("🧹 Swept " + count + " promotional threads older than 2 days to Trash.");
         })
         .catch(function (err) {
-          btnRetail.textContent = "Sweep Failed";
+          btnRetail.textContent = "Sweep Failed (Retry)";
           btnRetail.disabled = false;
           setStatus(err.message || "Failed to execute promo sweep.");
         });
@@ -1411,8 +1490,13 @@
           else loadMailboxStats();
           const count = res.trashed_count != null ? res.trashed_count : 50;
           const retailCard = document.getElementById("action-card-retail");
-          if (retailCard) retailCard.classList.add("executed");
-          if (btnRetail) btnRetail.textContent = "✓ Swept " + count + " to Trash";
+          renderSweepReceipt(retailCard, count, res.sample_snippets || []);
+          if (btnRetail) {
+            btnRetail.textContent = "⚡ Sweep Next 50";
+            btnRetail.disabled = false;
+          }
+
+          loadActivity();
 
           const ciCard = document.getElementById("action-card-ci");
           if (ciCard) ciCard.classList.add("executed");

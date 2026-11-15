@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import re
 import socket
+import uuid
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.error import URLError
@@ -33,6 +35,7 @@ from .agent_scheduler import tick as scheduler_tick
 from .steward import (
     StewardError,
     access_manifest,
+    append_activity,
     close_goal,
     create_goal,
     default_goals_path,
@@ -3330,11 +3333,39 @@ def create_control_app(
 
         res = client.batch_trash_threads(query=body.query, limit=body.limit)
         stats = client.get_mailbox_stats()
+        trashed_count = res.get("trashed_count", 0)
+        snippets = res.get("sample_snippets") or []
+
+        # Record public audit log into Steward activity feed
+        samples_formatted = ""
+        if snippets:
+            samples_formatted = "\nCleaned samples:\n" + "\n".join(f"- {s}" for s in snippets)
+        now_iso = datetime.now().astimezone().isoformat()
+        activity_note = (
+            f"Swept {trashed_count} thread(s) matching '{body.query}' to Gmail Trash "
+            f"(recoverable for 30 days).{samples_formatted}"
+        )
+        try:
+            append_activity(
+                {
+                    "id": uuid.uuid4().hex,
+                    "goal_id": "gmail-sweep",
+                    "goal_title": f"Gmail Sweep: {body.query}",
+                    "at": now_iso,
+                    "status": "completed",
+                    "see_tools": ["gmail"],
+                    "note": activity_note,
+                },
+                path=_steward_path(),
+            )
+        except Exception:
+            pass
+
         return {
             "ok": True,
             "dry_run": False,
-            "trashed_count": res.get("trashed_count", 0),
-            "sample_snippets": res.get("sample_snippets", []),
+            "trashed_count": trashed_count,
+            "sample_snippets": snippets,
             "stats": stats,
             "note": res.get("note", ""),
         }

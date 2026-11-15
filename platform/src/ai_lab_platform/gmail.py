@@ -373,9 +373,10 @@ class GmailClient:
             try:
                 self._api_request(f"threads/{tid}/trash", method="POST")
                 trashed.append(tid)
-                snippet = (t.get("snippet") or "")[:80]
-                if snippet and len(samples) < 5:
-                    samples.append(snippet)
+                raw_snip = t.get("snippet") or ""
+                clean_snip = re.sub(r"[\s\u034f\u200b\ufeff]+", " ", raw_snip).strip()[:100]
+                if clean_snip and len(samples) < 8:
+                    samples.append(clean_snip)
             except Exception:
                 pass
 

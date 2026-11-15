@@ -2467,9 +2467,56 @@
 }
 
 .action-card.executed {
-  opacity: 0.45;
-  pointer-events: none;
-  filter: grayscale(0.5);
+  opacity: 0.65;
+  filter: grayscale(0.2);
+}
+
+.action-card.sweep-success {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.sweep-audit-receipt {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease;
+}
+
+.sweep-audit-header {
+  font-weight: 600;
+  color: #34d399;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sweep-audit-list {
+  margin: 0 0 8px 0;
+  padding-left: 16px;
+  color: var(--text-sub);
+}
+
+.sweep-audit-list li {
+  margin-bottom: 4px;
+  white-space: normal;
+  word-break: break-word;
+  color: #cbd5e1;
+}
+
+.sweep-audit-footer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
 }
 
 /* ==========================================================================
