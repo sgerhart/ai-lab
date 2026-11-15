@@ -620,6 +620,12 @@ class NexusSyncIn(BaseModel):
     apply: bool = False
 
 
+class GmailSweepIn(BaseModel):
+    query: str = Field(..., max_length=200)
+    limit: int = Field(default=50, ge=1, le=50)
+    dry_run: bool = False
+
+
 def _studio_payload(raw: Any) -> dict[str, Any]:
     """Operator-facing builder fields. Not secrets, not a second policy engine."""
     if raw is None:
@@ -3297,6 +3303,41 @@ def create_control_app(
             return {"ok": True, "stats": GmailClient().get_mailbox_stats()}
         except Exception as exc:
             return {"ok": False, "error": str(exc)}
+
+    @app.post("/v1/gmail/sweep")
+    def gmail_sweep_endpoint(
+        request: Request,
+        body: GmailSweepIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Execute or preview a batch sweep of matching emails to Trash."""
+        _gate(request, authorization)
+        from .gmail import GmailClient
+
+        client = GmailClient()
+        if not client.has_token():
+            raise HTTPException(status_code=503, detail="Gmail is not authenticated.")
+
+        if body.dry_run:
+            threads = client.search_threads(query=body.query, limit=body.limit)
+            return {
+                "ok": True,
+                "dry_run": True,
+                "query": body.query,
+                "match_count": len(threads),
+                "samples": [t.get("subject", "") for t in threads[:5]],
+            }
+
+        res = client.batch_trash_threads(query=body.query, limit=body.limit)
+        stats = client.get_mailbox_stats()
+        return {
+            "ok": True,
+            "dry_run": False,
+            "trashed_count": res.get("trashed_count", 0),
+            "sample_snippets": res.get("sample_snippets", []),
+            "stats": stats,
+            "note": res.get("note", ""),
+        }
 
     @app.get("/v1/nexus/cover")
     def nexus_cover_endpoint(

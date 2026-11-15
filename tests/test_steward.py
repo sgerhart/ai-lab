@@ -9,6 +9,7 @@ import unittest
 from datetime import datetime
 from pathlib import Path
 from unittest import mock
+from unittest.mock import MagicMock, patch
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -410,6 +411,23 @@ class StewardApiTests(unittest.TestCase):
 
         auto_bad = self.client.post("/v1/steward/autonomy", headers=self.headers, json={"mode": "invalid_mode"})
         self.assertEqual(auto_bad.status_code, 400)
+
+        # Gmail sweep endpoint
+        with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \
+             patch("ai_lab_platform.gmail.GmailClient.batch_trash_threads", return_value={"ok": True, "trashed_count": 5, "sample_snippets": ["Test"]}), \
+             patch("ai_lab_platform.gmail.GmailClient.get_mailbox_stats", return_value={"messages_total": 100}):
+            sweep_res = self.client.post("/v1/gmail/sweep", headers=self.headers, json={"query": "category:promotions", "limit": 50})
+            self.assertEqual(sweep_res.status_code, 200)
+            self.assertTrue(sweep_res.json()["ok"])
+            self.assertEqual(sweep_res.json()["trashed_count"], 5)
+
+        # Gmail sweep dry-run
+        with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \
+             patch("ai_lab_platform.gmail.GmailClient.search_threads", return_value=[{"id": "t1", "subject": "Promo"}]):
+            sweep_dry = self.client.post("/v1/gmail/sweep", headers=self.headers, json={"query": "category:promotions", "dry_run": True})
+            self.assertEqual(sweep_dry.status_code, 200)
+            self.assertTrue(sweep_dry.json()["dry_run"])
+            self.assertEqual(sweep_dry.json()["match_count"], 1)
 
 
 class McpStewardTests(unittest.TestCase):

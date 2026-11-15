@@ -533,16 +533,24 @@
       <div id="goals" style="display:none;" aria-hidden="true"></div>
     </section>
 
-    <!-- Tab 3: Intelligence Feed (Brought Back) -->
+    <!-- Tab 3: Intelligence Feed (Autonomous Findings Stream) -->
     <section class="steward-view" id="steward-view-feed" role="tabpanel" aria-labelledby="steward-tab-feed" hidden>
-      <div class="feed-header">
-        <div>
-          <h2>Intelligence Feed</h2>
-          <p class="feed-sub">Autonomous findings and executive summaries brought back by Steward's background wakes.
+      <!-- Feed Hero Banner -->
+      <div class="sentinel-fleet-hero feed-hero-banner">
+        <div class="sentinel-fleet-info">
+          <div class="sentinel-hero-badge"><span class="beacon-pulse"></span> AUTONOMOUS INTELLIGENCE STREAM</div>
+          <h2>Executive Intelligence Feed</h2>
+          <p class="sentinel-hero-sub">
+            Continuous findings, anomaly alerts, and morning briefings brought back from autonomous background sweeps on the Mac mini.
           </p>
         </div>
-        <button type="button" class="text-btn" id="btn-refresh-feed">↻ Refresh</button>
+        <div class="sentinel-fleet-actions">
+          <button type="button" class="btn-deploy-sentinel" id="btn-refresh-feed">
+            ↻ Refresh Feed
+          </button>
+        </div>
       </div>
+
       <div id="activity" class="feed-stream">
         <p class="empty">Notes from autonomous wakes will show up here.</p>
       </div>

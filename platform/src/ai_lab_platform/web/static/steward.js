@@ -166,9 +166,20 @@
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
-      if (/^[-*]\s+/.test(line)) {
+      if (!line) {
+        currentList = null;
+        continue;
+      }
+      if (/^#{1,3}\s+/.test(line)) {
+        currentList = null;
+        const heading = document.createElement("h4");
+        heading.className = "feed-section-heading";
+        heading.textContent = line.replace(/^#{1,3}\s+/, "");
+        container.appendChild(heading);
+      } else if (/^[-*]\s+/.test(line)) {
         if (!currentList) {
           currentList = document.createElement("ul");
+          currentList.className = "feed-bullet-list";
           container.appendChild(currentList);
         }
         const li = document.createElement("li");
@@ -176,11 +187,9 @@
         currentList.appendChild(li);
       } else {
         currentList = null;
-        if (line) {
-          const p = document.createElement("p");
-          p.textContent = line;
-          container.appendChild(p);
-        }
+        const p = document.createElement("p");
+        p.textContent = line;
+        container.appendChild(p);
       }
     }
   }
@@ -619,40 +628,97 @@
       const card = document.createElement("article");
       card.className = "feed-card";
 
+      // Top row
       const top = document.createElement("div");
       top.className = "feed-card-top";
 
-      const title = add(top, "div", entry.goal_title || "Autonomous Wake", "feed-card-title");
+      const titleGroup = document.createElement("div");
+      titleGroup.className = "feed-card-title-group";
+      const iconSpan = document.createElement("span");
+      iconSpan.className = "feed-card-icon";
+      iconSpan.textContent = getSentinelIcon(entry.goal_title, entry.see_tools);
+      titleGroup.appendChild(iconSpan);
+
+      add(titleGroup, "div", entry.goal_title || "Autonomous Sentinel Wake", "feed-card-title");
+      top.appendChild(titleGroup);
+
+      const metaGroup = document.createElement("div");
+      metaGroup.className = "feed-card-meta-group";
+
       const word = stateWord(entry.status);
-      add(top, "span", word.text, word.className);
+      add(metaGroup, "span", word.text.toUpperCase(), "feed-status-badge " + (entry.status === "completed" ? "badge-completed" : "badge-neutral"));
+
+      const time = document.createElement("span");
+      time.className = "feed-card-time";
+      time.textContent = friendlyWhen(entry.at);
+      metaGroup.appendChild(time);
+      top.appendChild(metaGroup);
+
       card.appendChild(top);
 
-      const time = document.createElement("div");
-      time.className = "feed-card-time";
-      time.textContent = "Woke " + friendlyWhen(entry.at);
-      card.appendChild(time);
-
+      // Body
       const body = document.createElement("div");
       body.className = "feed-card-body";
       appendFormattedText(body, entry.note || "Quiet check completed — no immediate operator action needed.");
       card.appendChild(body);
 
+      // Footer
       const footer = document.createElement("div");
       footer.className = "feed-card-footer";
-      const sources = sourceLabels(entry.see_tools);
-      if (sources) {
-        add(footer, "span", "🔍 Consulted: " + sources);
+
+      const capBadges = getCapabilityBadges(entry.see_tools);
+      if (capBadges.length) {
+        const capsWrap = document.createElement("div");
+        capsWrap.className = "feed-caps";
+        capBadges.forEach(function (b) {
+          const tag = document.createElement("span");
+          tag.className = "cap-tag";
+          tag.textContent = b.icon + " " + b.label;
+          capsWrap.appendChild(tag);
+        });
+        footer.appendChild(capsWrap);
       } else {
-        add(footer, "span", "");
+        footer.appendChild(document.createElement("span"));
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "feed-actions";
+
+      // If email congestion was noted, offer 1-click sweep right inside the report card
+      const noteLower = (entry.note || "").toLowerCase();
+      if (noteLower.indexOf("unread") !== -1 || noteLower.indexOf("promot") !== -1 || noteLower.indexOf("retail") !== -1 || noteLower.indexOf("congest") !== -1) {
+        const sweepBtn = textButton("🧹 Sweep 50 Promos", function () {
+          sweepBtn.textContent = "⚡ Sweeping...";
+          sweepBtn.disabled = true;
+          fetch("/v1/gmail/sweep", {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify({ query: "category:promotions older_than:2d", limit: 50 }),
+          })
+            .then(readJson)
+            .then(function (res) {
+              const count = res.trashed_count != null ? res.trashed_count : 50;
+              sweepBtn.textContent = "✓ Swept " + count;
+              if (res.stats) updateMailboxUI(res.stats);
+              setStatus("🧹 Swept " + count + " promotional threads to Trash.");
+            })
+            .catch(function () {
+              sweepBtn.textContent = "Failed";
+            });
+        }, "btn-feed-action");
+        actions.appendChild(sweepBtn);
       }
 
       if (entry.goal_id) {
-        const rewakeBtn = textButton("⚡ Wake Now", function () {
+        const rewakeBtn = textButton("⚡ Re-wake Sentinel", function () {
+          rewakeBtn.textContent = "⚡ Waking...";
+          rewakeBtn.disabled = true;
           act(entry.goal_id, "wake");
-        }, "btn-wake");
-        footer.appendChild(rewakeBtn);
+        }, "btn-feed-rewake");
+        actions.appendChild(rewakeBtn);
       }
 
+      footer.appendChild(actions);
       card.appendChild(footer);
       activityEl.appendChild(card);
     });
@@ -1290,9 +1356,30 @@
     btnRetail.addEventListener("click", function () {
       const card = document.getElementById("action-card-retail");
       if (card) card.classList.add("executed");
-      btnRetail.textContent = "✓ Sweeping...";
+      btnRetail.textContent = "⚡ Sweeping 50...";
       btnRetail.disabled = true;
-      sendMessage("Sweep 50 promotional emails older than 2 days to Trash now");
+
+      fetch("/v1/gmail/sweep", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ query: "category:promotions older_than:2d", limit: 50 }),
+      })
+        .then(readJson)
+        .then(function (res) {
+          const count = res.trashed_count != null ? res.trashed_count : 50;
+          btnRetail.textContent = "✓ Swept " + count + " to Trash";
+          if (res.stats) {
+            updateMailboxUI(res.stats);
+          } else {
+            loadMailboxStats();
+          }
+          setStatus("🧹 Swept " + count + " promotional threads older than 2 days to Trash.");
+        })
+        .catch(function (err) {
+          btnRetail.textContent = "Sweep Failed";
+          btnRetail.disabled = false;
+          setStatus(err.message || "Failed to execute promo sweep.");
+        });
     });
   }
 
@@ -1309,13 +1396,41 @@
 
   if (btnAuthorizeAll) {
     btnAuthorizeAll.addEventListener("click", function () {
-      btnAuthorizeAll.textContent = "✓ All 3 Bundles Authorized";
-      btnAuthorizeAll.classList.add("authorized");
-      ["action-card-ci", "action-card-retail", "action-card-school"].forEach(function (id) {
-        const c = document.getElementById(id);
-        if (c) c.classList.add("executed");
-      });
-      sendMessage("Authorize all daily triage bundles: dispatch coding assistant for repo-validation, sweep 50 stale retail threads to Trash, and summarize school reports");
+      btnAuthorizeAll.textContent = "⚡ Authorizing All...";
+      btnAuthorizeAll.disabled = true;
+
+      // 1. Execute the 50 promo sweep
+      fetch("/v1/gmail/sweep", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ query: "category:promotions older_than:2d", limit: 50 }),
+      })
+        .then(readJson)
+        .then(function (res) {
+          if (res.stats) updateMailboxUI(res.stats);
+          else loadMailboxStats();
+          const count = res.trashed_count != null ? res.trashed_count : 50;
+          const retailCard = document.getElementById("action-card-retail");
+          if (retailCard) retailCard.classList.add("executed");
+          if (btnRetail) btnRetail.textContent = "✓ Swept " + count + " to Trash";
+
+          const ciCard = document.getElementById("action-card-ci");
+          if (ciCard) ciCard.classList.add("executed");
+          if (btnCi) btnCi.textContent = "✓ Dispatched";
+
+          const schoolCard = document.getElementById("action-card-school");
+          if (schoolCard) schoolCard.classList.add("executed");
+          if (btnSchool) btnSchool.textContent = "✓ Requested";
+
+          btnAuthorizeAll.textContent = "✓ All 3 Bundles Executed";
+          btnAuthorizeAll.classList.add("authorized");
+
+          sendMessage("Daily triage authorized: I swept " + count + " stale promotional threads to Trash. Please dispatch coding assistant to examine the failed repo-validation run, and summarize school reports for Ella and Caroline.");
+        })
+        .catch(function () {
+          btnAuthorizeAll.disabled = false;
+          sendMessage("Authorize all daily triage bundles: dispatch coding assistant for repo-validation, sweep 50 stale retail threads to Trash, and summarize school reports");
+        });
     });
   }
 
