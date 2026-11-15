@@ -367,112 +367,170 @@
       </div>
     </section>
 
-    <!-- Tab 2: Standing Watches (Executive Card Deck) -->
-    <section class="steward-view" id="steward-view-watches" role="tabpanel" aria-labelledby="steward-tab-watches"
-      hidden>
-      <!-- 1-Click Quick Templates Section -->
-      <div class="steward-templates-section">
-        <div class="section-tag">QUICK WATCH TEMPLATES</div>
-        <div class="steward-templates-deck">
-          <button type="button" class="template-card" data-template="morning">
+    <!-- Tab 2: Standing Watches (Autonomous Sentinel Fleet) -->
+    <section class="steward-view" id="steward-view-watches" role="tabpanel" aria-labelledby="steward-tab-watches" hidden>
+      
+      <!-- Sentinel Fleet Header Banner -->
+      <div class="sentinel-fleet-hero">
+        <div class="sentinel-fleet-info">
+          <div class="sentinel-hero-badge"><span class="beacon-dot"></span> AUTONOMOUS SENTINEL FLEET</div>
+          <h2>Standing Sentinel Fleet</h2>
+          <p class="sentinel-hero-sub">
+            Steward runs autonomous background sweeps on the Mac mini, monitors your email, lab operations &amp; notes, and delivers executive findings directly to your Intelligence Feed.
+          </p>
+        </div>
+        <div class="sentinel-fleet-actions">
+          <div class="sentinel-telemetry-pill">
+            <span class="dot dot-emerald"></span>
+            <span id="fleet-active-counter">1 Active Sentinel</span>
+          </div>
+          <button type="button" class="btn-deploy-sentinel" id="btn-toggle-composer">
+            ＋ Deploy New Sentinel
+          </button>
+        </div>
+      </div>
+
+      <!-- Expandable Sentinel Composer Panel -->
+      <div class="sentinel-composer-drawer" id="sentinel-composer-drawer" hidden>
+        <div class="composer-drawer-card">
+          <div class="composer-drawer-header">
+            <div>
+              <h3>Deploy Autonomous Sentinel</h3>
+              <p>Configure a standing background watch for Steward to monitor on schedule.</p>
+            </div>
+            <button type="button" class="btn-close-drawer" id="btn-close-composer" title="Close composer">✕</button>
+          </div>
+
+          <!-- Quick Blueprint Chips inside Composer -->
+          <div class="composer-template-bar">
+            <span class="composer-template-label">Pre-configured Blueprints:</span>
+            <div class="composer-blueprints-pills">
+              <button type="button" class="blueprint-chip" data-template="morning">🌅 Morning Briefing</button>
+              <button type="button" class="blueprint-chip" data-template="inbox">📬 Inbox &amp; VIP Watch</button>
+              <button type="button" class="blueprint-chip" data-template="health">🛡️ Lab CI &amp; Health</button>
+              <button type="button" class="blueprint-chip" data-template="research">🔬 AI Research</button>
+              <button type="button" class="blueprint-chip" data-template="journal">📓 Vault Sync</button>
+            </div>
+          </div>
+
+          <!-- Refined Watch Composer Form -->
+          <form id="goal-form" class="compose watch-composer-card">
+            <div class="composer-field-group">
+              <label for="goal-title" class="field-label">RESPONSIBILITY / SENTINEL NAME</label>
+              <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off"
+                placeholder="e.g. Morning Inbox Sentinel &amp; Anomaly Watch">
+            </div>
+
+            <div class="composer-field-group">
+              <label for="goal-intent" class="field-label">STANDING INSTRUCTIONS &amp; CONDITIONS TO FLAG</label>
+              <textarea id="goal-intent" name="intent" maxlength="4000" rows="2"
+                placeholder="Specific instructions, queries, or anomalous patterns to watch for during background wake..."></textarea>
+            </div>
+
+            <div class="rhythm-wrapper">
+              <span class="field-label">WAKE RHYTHM</span>
+              <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
+                <button type="button" class="seg" data-cron="0 8 * * *" aria-pressed="true">Morning (8:00 AM)</button>
+                <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="false">Morning (9:00 AM)</button>
+                <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
+                <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 min</button>
+                <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom Cron</button>
+              </div>
+              <label class="visually-hidden" for="wake-preset">Wake schedule</label>
+              <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
+                <option value="0 8 * * *">8:00 AM</option>
+                <option value="0 9 * * *">9:00 AM</option>
+                <option value="0 * * * *">Hourly</option>
+                <option value="*/15 * * * *">Every 15 minutes</option>
+                <option value="custom">Custom</option>
+              </select>
+              <div class="cron-row" id="cron-row" hidden>
+                <label for="wake-cron" class="field-label">Custom cron (minute hour day month weekday)</label>
+                <input id="wake-cron" name="wake_cron" value="0 8 * * *" maxlength="80" required autocomplete="off">
+              </div>
+            </div>
+
+            <div class="sources">
+              <span class="field-label">PERMITTED TOOLS (READ-ONLY CEILING)</span>
+              <ul class="chips" id="see-tools"></ul>
+              <p class="ceiling-hint">🛡️ <strong>Read-Only Ceiling:</strong> Background wakes cannot modify files, delete emails, or trigger mutations without human approval.</p>
+            </div>
+
+            <div class="compose-bar">
+              <p id="status" role="status"></p>
+              <div class="composer-submit-actions">
+                <button type="button" class="btn-cancel" id="btn-cancel-composer">Cancel</button>
+                <button type="submit" class="primary" id="save-goal">Keep watch</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Quick Blueprint Ribbon -->
+      <div class="sentinel-blueprints-ribbon" id="sentinel-blueprints-ribbon">
+        <span class="blueprints-ribbon-title">⚡ Quick Blueprints:</span>
+        <div class="blueprints-ribbon-deck">
+          <button type="button" class="blueprint-quick-card" data-template="morning">
             <span class="tpl-icon">🌅</span>
             <div class="tpl-body">
               <strong>Morning Briefing</strong>
-              <span>Daily 9:00 AM · Memory, reports &amp; lab health</span>
+              <span>Daily 8:00 AM · Vault &amp; Health</span>
             </div>
           </button>
-          <button type="button" class="template-card" data-template="research">
-            <span class="tpl-icon">🔬</span>
+          <button type="button" class="blueprint-quick-card" data-template="inbox">
+            <span class="tpl-icon">📬</span>
             <div class="tpl-body">
-              <strong>Research Sentinel</strong>
-              <span>Daily 9:00 AM · Web &amp; Nexus paper scan</span>
+              <strong>Inbox &amp; VIP Watch</strong>
+              <span>Daily 8:00 AM · Email Triage</span>
             </div>
           </button>
-          <button type="button" class="template-card" data-template="health">
+          <button type="button" class="blueprint-quick-card" data-template="health">
             <span class="tpl-icon">🛡️</span>
             <div class="tpl-body">
-              <strong>Lab Health Pulse</strong>
-              <span>Hourly · Health checks &amp; active schedules</span>
+              <strong>Lab CI &amp; Health</strong>
+              <span>Hourly · Health &amp; Crons</span>
             </div>
           </button>
-          <button type="button" class="template-card" data-template="journal">
-            <span class="tpl-icon">📓</span>
+          <button type="button" class="blueprint-quick-card" data-template="research">
+            <span class="tpl-icon">🔬</span>
             <div class="tpl-body">
-              <strong>Memory Journal</strong>
-              <span>Every 15 min · Index vault notes &amp; decisions</span>
-            </div>
-          </button>
-          <button type="button" class="template-card" data-template="study">
-            <span class="tpl-icon">📚</span>
-            <div class="tpl-body">
-              <strong>Study Sentinel</strong>
-              <span>Daily 9:00 AM · Deep chapter RAG &amp; Nexus shelf</span>
+              <strong>AI Literature Watch</strong>
+              <span>Daily 9:00 AM · ArXiv &amp; Nexus</span>
             </div>
           </button>
         </div>
       </div>
 
-
-      <!-- Active Watches Deck -->
-      <div class="watches-deck-header">
-        <h2>In Its Care</h2>
-        <button type="button" class="btn-new-watch" id="btn-toggle-composer">
-          ＋ New Watch
-        </button>
-      </div>
-
-      <div class="stack" id="goals">
-        <p class="empty">The first responsibility will sit here. Choose a quick template above or create one below.</p>
-      </div>
-
-      <!-- Refined Watch Composer Card -->
-      <form id="goal-form" class="compose watch-composer-card">
-        <div class="compose-header">
-          <h3>Assign a Standing Watch</h3>
-          <p class="compose-sub">Steward will wake autonomously on schedule and report findings back to your feed.</p>
-        </div>
-
-        <label class="visually-hidden" for="goal-title">What it should look after</label>
-        <input id="goal-title" name="title" type="text" maxlength="200" required autocomplete="off"
-          placeholder="Responsibility title (e.g. Monitor overnight CI and lab health)">
-
-        <label class="visually-hidden" for="goal-intent">Anything more it should notice</label>
-        <textarea id="goal-intent" name="intent" maxlength="4000" rows="2"
-          placeholder="Specific instructions or conditions to flag during background wake..."></textarea>
-
-        <div class="rhythm-wrapper">
-          <span class="field-label">WAKE RHYTHM</span>
-          <div class="rhythm" id="rhythm" role="group" aria-label="How often it wakes">
-            <button type="button" class="seg" data-cron="0 9 * * *" aria-pressed="true">Each morning (9:00 AM)</button>
-            <button type="button" class="seg" data-cron="0 * * * *" aria-pressed="false">Hourly</button>
-            <button type="button" class="seg" data-cron="*/15 * * * *" aria-pressed="false">Every 15 minutes</button>
-            <button type="button" class="seg" data-cron="custom" aria-pressed="false">Custom Schedule</button>
-          </div>
-          <label class="visually-hidden" for="wake-preset">Wake schedule</label>
-          <select id="wake-preset" class="visually-hidden" tabindex="-1" aria-hidden="true">
-            <option value="0 9 * * *">Each morning</option>
-            <option value="0 * * * *">Hourly</option>
-            <option value="*/15 * * * *">Every 15 minutes</option>
-            <option value="custom">Custom</option>
-          </select>
-          <div class="cron-row" id="cron-row" hidden>
-            <label for="wake-cron">Custom cron (minute hour day month weekday)</label>
-            <input id="wake-cron" name="wake_cron" value="0 9 * * *" maxlength="80" required autocomplete="off">
+      <!-- Active Sentinels Section -->
+      <div class="sentinels-active-section">
+        <div class="watches-deck-header">
+          <div class="deck-header-left">
+            <h2>Active Fleet Sentinels</h2>
+            <span class="deck-count-badge" id="active-sentinels-badge">1 Active</span>
           </div>
         </div>
 
-        <div class="sources">
-          <span class="field-label">PERMITTED TOOLS (READ-ONLY)</span>
-          <ul class="chips" id="see-tools"></ul>
-          <p class="ceiling-hint">🛡️ Read-Only Ceiling: Background wakes cannot modify files or send messages without
-            human approval.</p>
+        <div class="sentinels-active-grid" id="goals-active">
+          <!-- Rendered by JS -->
         </div>
+      </div>
 
-        <div class="compose-bar">
-          <p id="status" role="status"></p>
-          <button type="submit" class="primary" id="save-goal">Keep watch</button>
-        </div>
-      </form>
+      <!-- Archived Sentinels Collapsible Section -->
+      <div class="sentinels-archived-section" id="section-archived-sentinels" hidden>
+        <details class="archived-drawer">
+          <summary class="archived-drawer-summary">
+            <span>📁 Archived &amp; Retired Watches (<span id="archived-count">0</span>)</span>
+            <span class="drawer-arrow">▾</span>
+          </summary>
+          <div class="archived-cards-list" id="goals-archived">
+            <!-- Closed/done cards rendered by JS -->
+          </div>
+        </details>
+      </div>
+
+      <!-- Backward compatibility anchor -->
+      <div id="goals" style="display:none;" aria-hidden="true"></div>
     </section>
 
     <!-- Tab 3: Intelligence Feed (Brought Back) -->

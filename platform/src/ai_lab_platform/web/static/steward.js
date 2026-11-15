@@ -78,6 +78,17 @@
   const presenceMark = document.getElementById("presence-mark");
   const tabActiveCount = document.getElementById("steward-tab-count");
 
+  // Sentinel Fleet Elements
+  const goalsActiveEl = document.getElementById("goals-active");
+  const goalsArchivedEl = document.getElementById("goals-archived");
+  const sectionArchived = document.getElementById("section-archived-sentinels");
+  const archivedCount = document.getElementById("archived-count");
+  const fleetActiveCounter = document.getElementById("fleet-active-counter");
+  const activeSentinelsBadge = document.getElementById("active-sentinels-badge");
+  const composerDrawer = document.getElementById("sentinel-composer-drawer");
+  const btnCloseComposer = document.getElementById("btn-close-composer");
+  const btnCancelComposer = document.getElementById("btn-cancel-composer");
+
   // Chat Elements
   const chatMessagesEl = document.getElementById("steward-chat-messages");
   const emptyChatEl = document.getElementById("steward-empty-chat");
@@ -263,6 +274,41 @@
     return RHYTHM[cron] || cron || "On its schedule";
   }
 
+  function getSentinelIcon(title, tools) {
+    const text = ((title || "") + " " + (tools || []).join(" ")).toLowerCase();
+    if (text.indexOf("inbox") !== -1 || text.indexOf("mail") !== -1 || text.indexOf("gmail") !== -1) return "📬";
+    if (text.indexOf("health") !== -1 || text.indexOf("ci") !== -1 || text.indexOf("host") !== -1) return "🛡️";
+    if (text.indexOf("research") !== -1 || text.indexOf("paper") !== -1 || text.indexOf("arxiv") !== -1) return "🔬";
+    if (text.indexOf("study") !== -1 || text.indexOf("nexus") !== -1 || text.indexOf("book") !== -1) return "📚";
+    if (text.indexOf("vault") !== -1 || text.indexOf("journal") !== -1 || text.indexOf("memory") !== -1) return "🧠";
+    return "🛰️";
+  }
+
+  function getCapabilityBadges(tools) {
+    const badges = [];
+    const seen = {};
+    (tools || []).forEach(function (name) {
+      let icon = "⚙️";
+      let label = name;
+      GROUPS.forEach(function (group) {
+        if (group.tools.indexOf(name) !== -1) {
+          icon = group.icon;
+          label = group.label;
+        }
+      });
+      if (name.indexOf("mcp/") === 0) {
+        const parts = name.split("/");
+        icon = "🔌";
+        label = "MCP " + (parts[1] || "service");
+      }
+      if (!seen[label]) {
+        seen[label] = true;
+        badges.push({ icon: icon, label: label });
+      }
+    });
+    return badges;
+  }
+
   function friendlyWhen(iso) {
     if (!iso) return "";
     const when = new Date(iso);
@@ -376,58 +422,187 @@
   function renderGoals(goals) {
     cachedGoals = goals || [];
     renderCockpitSentinels(cachedGoals);
-    if (!goalsEl) return;
-    clear(goalsEl);
     renderPresence(goals);
-    if (!goals.length) {
-      add(goalsEl, "p", "The first responsibility will sit here. Choose a quick template above or create one below.", "empty");
-      return;
-    }
-    goals.slice().reverse().forEach(function (goal) {
-      const card = document.createElement("article");
-      card.className = "goal" + (goal.id === newestId ? " arrived" : "");
-      const top = document.createElement("div");
-      top.className = "goal-top";
-      add(top, "h3", goal.title || "Untitled");
-      const word = stateWord(goal.status);
-      add(top, "span", word.text, word.className);
-      card.appendChild(top);
-      if (goal.intent) add(card, "p", goal.intent, "intent");
-      const when = rhythmWords(goal.wake_cron);
-      const due = goal.last_due_at ? "Last looked " + friendlyWhen(goal.last_due_at) : "Not looked yet";
-      add(card, "p", "⏰ " + when + " · " + due, "meta");
-      const sources = sourceLabels(goal.see_tools);
-      if (sources) add(card, "p", "🔍 Reading: " + sources, "meta");
+    if (goalsEl) clear(goalsEl);
 
-      const actions = document.createElement("div");
-      actions.className = "goal-actions";
-      if (goal.status === "active") {
-        actions.appendChild(textButton("⚡ Wake now", function () { act(goal.id, "wake"); }, "btn-wake"));
-        actions.appendChild(textButton("⏸️ Pause", function () { act(goal.id, "pause"); }));
-      }
-      if (goal.status === "paused") {
-        actions.appendChild(textButton("▶️ Wake again", function () { act(goal.id, "resume"); }, "btn-wake"));
-      }
-      if (goal.status !== "done") {
-        const confirm = document.createElement("div");
-        confirm.className = "confirm";
-        confirm.hidden = true;
-        add(confirm, "p", "This stops scheduled wakes. The record stays.");
-        confirm.appendChild(textButton("Stop waking", function () { act(goal.id, "close"); }, "danger"));
-        confirm.appendChild(textButton("Keep watching", function () {
-          confirm.hidden = true;
-          delete actions.dataset.mode;
-        }));
-        const close = textButton("✕ Close", function () {
-          actions.dataset.mode = "confirm";
-          confirm.hidden = false;
+    const activeList = cachedGoals.filter(function (g) { return g.status === "active" || g.status === "paused"; });
+    const closedList = cachedGoals.filter(function (g) { return g.status === "done" || g.status === "closed"; });
+
+    const activeCount = cachedGoals.filter(function (g) { return g.status === "active"; }).length;
+    if (fleetActiveCounter) {
+      fleetActiveCounter.textContent = activeCount === 1 ? "1 Active Sentinel" : activeCount + " Active Sentinels";
+    }
+    if (activeSentinelsBadge) {
+      activeSentinelsBadge.textContent = activeCount === 1 ? "1 Active" : activeCount + " Active";
+    }
+    if (archivedCount) {
+      archivedCount.textContent = String(closedList.length);
+    }
+    if (sectionArchived) {
+      sectionArchived.hidden = closedList.length === 0;
+    }
+
+    if (goalsActiveEl) {
+      clear(goalsActiveEl);
+      if (!activeList.length) {
+        const empty = document.createElement("div");
+        empty.className = "sentinel-empty-state";
+        add(empty, "div", "🛰️", "empty-icon");
+        add(empty, "h4", "No active sentinels in flight");
+        add(empty, "p", "Steward is resting. Select a quick blueprint above or click '＋ Deploy New Sentinel' to keep watch.");
+        goalsActiveEl.appendChild(empty);
+      } else {
+        activeList.slice().reverse().forEach(function (goal) {
+          const card = document.createElement("article");
+          card.className = "sentinel-fleet-card" + (goal.id === newestId ? " arrived" : "");
+
+          // Header
+          const header = document.createElement("div");
+          header.className = "fleet-card-header";
+
+          const titleGroup = document.createElement("div");
+          titleGroup.className = "fleet-card-title-group";
+          const iconSpan = document.createElement("span");
+          iconSpan.className = "fleet-card-icon";
+          iconSpan.textContent = getSentinelIcon(goal.title, goal.see_tools);
+          titleGroup.appendChild(iconSpan);
+
+          const titleText = document.createElement("div");
+          add(titleText, "h3", goal.title || "Untitled Sentinel", "fleet-card-title");
+          const when = rhythmWords(goal.wake_cron);
+          add(titleText, "span", "⏰ " + when + " (" + (goal.wake_cron || "cron") + ")", "fleet-card-cron");
+          titleGroup.appendChild(titleText);
+          header.appendChild(titleGroup);
+
+          const statusBadge = document.createElement("div");
+          const word = stateWord(goal.status);
+          statusBadge.className = "fleet-status-badge " + (goal.status === "active" ? "badge-active" : "badge-paused");
+          if (goal.status === "active") {
+            const pulse = document.createElement("span");
+            pulse.className = "beacon-dot";
+            statusBadge.appendChild(pulse);
+          }
+          const badgeText = document.createElement("span");
+          badgeText.textContent = word.text.toUpperCase();
+          statusBadge.appendChild(badgeText);
+          header.appendChild(statusBadge);
+          card.appendChild(header);
+
+          // Intent / Mission
+          if (goal.intent) {
+            add(card, "p", goal.intent, "fleet-card-intent");
+          }
+
+          // Capabilities badges
+          const capBadges = getCapabilityBadges(goal.see_tools);
+          if (capBadges.length) {
+            const capsWrap = document.createElement("div");
+            capsWrap.className = "fleet-card-caps";
+            const capLabel = document.createElement("span");
+            capLabel.className = "caps-label";
+            capLabel.textContent = "Capabilities:";
+            capsWrap.appendChild(capLabel);
+            capBadges.forEach(function (b) {
+              const tag = document.createElement("span");
+              tag.className = "cap-tag";
+              tag.textContent = b.icon + " " + b.label;
+              capsWrap.appendChild(tag);
+            });
+            card.appendChild(capsWrap);
+          }
+
+          // Telemetry
+          const telemetry = document.createElement("div");
+          telemetry.className = "fleet-card-telemetry";
+          const due = goal.last_due_at ? "Last wake " + friendlyWhen(goal.last_due_at) + " · Ran on mini" : "Waiting for next wake cycle";
+          const teleItem = document.createElement("div");
+          teleItem.className = "telemetry-item";
+          add(teleItem, "span", due, "telemetry-text");
+          telemetry.appendChild(teleItem);
+          card.appendChild(telemetry);
+
+          // Action Buttons
+          const actions = document.createElement("div");
+          actions.className = "fleet-card-actions";
+          if (goal.status === "active") {
+            const wakeBtn = textButton("⚡ Wake Now", function () {
+              wakeBtn.textContent = "⚡ Waking...";
+              wakeBtn.disabled = true;
+              act(goal.id, "wake");
+            }, "btn-fleet-wake");
+            actions.appendChild(wakeBtn);
+
+            actions.appendChild(textButton("⏸️ Pause", function () {
+              act(goal.id, "pause");
+            }, "btn-fleet-pause"));
+          }
+          if (goal.status === "paused") {
+            actions.appendChild(textButton("▶️ Resume Wake", function () {
+              act(goal.id, "resume");
+            }, "btn-fleet-wake"));
+          }
+          if (goal.status !== "done") {
+            const confirm = document.createElement("div");
+            confirm.className = "confirm";
+            confirm.hidden = true;
+            add(confirm, "p", "Stop scheduled background wakes? Record will be archived.");
+            confirm.appendChild(textButton("Stop waking", function () { act(goal.id, "close"); }, "danger"));
+            confirm.appendChild(textButton("Keep watching", function () {
+              confirm.hidden = true;
+              delete actions.dataset.mode;
+            }));
+            const close = textButton("✕ Retire", function () {
+              actions.dataset.mode = "confirm";
+              confirm.hidden = false;
+            }, "btn-fleet-close");
+            actions.appendChild(close);
+            actions.appendChild(confirm);
+          }
+          card.appendChild(actions);
+          goalsActiveEl.appendChild(card);
         });
-        actions.appendChild(close);
-        actions.appendChild(confirm);
       }
-      if (actions.childNodes.length) card.appendChild(actions);
-      goalsEl.appendChild(card);
-    });
+    }
+
+    // Render Archived
+    if (goalsArchivedEl) {
+      clear(goalsArchivedEl);
+      closedList.slice().reverse().forEach(function (goal) {
+        const item = document.createElement("div");
+        item.className = "archived-sentinel-row";
+
+        const left = document.createElement("div");
+        left.className = "archived-row-left";
+        const iconSpan = document.createElement("span");
+        iconSpan.className = "archived-row-icon";
+        iconSpan.textContent = getSentinelIcon(goal.title, goal.see_tools);
+        left.appendChild(iconSpan);
+
+        const info = document.createElement("div");
+        add(info, "strong", goal.title || "Untitled Sentinel", "archived-row-title");
+        const when = rhythmWords(goal.wake_cron);
+        const last = goal.last_due_at ? " · Last run " + friendlyWhen(goal.last_due_at) : "";
+        add(info, "span", when + last, "archived-row-meta");
+        left.appendChild(info);
+        item.appendChild(left);
+
+        const right = document.createElement("div");
+        right.className = "archived-row-right";
+        const badge = document.createElement("span");
+        badge.className = "archived-badge";
+        badge.textContent = "ARCHIVED";
+        right.appendChild(badge);
+
+        const reactivateBtn = textButton("▶ Reactivate", function () {
+          act(goal.id, "resume");
+        }, "btn-reactivate");
+        right.appendChild(reactivateBtn);
+        item.appendChild(right);
+
+        goalsArchivedEl.appendChild(item);
+      });
+    }
+
     newestId = "";
   }
 
@@ -740,10 +915,13 @@
     }
 
     switchTab("watches");
-    if (form) {
+    if (composerDrawer) {
+      composerDrawer.hidden = false;
+      composerDrawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else if (form) {
       form.scrollIntoView({ behavior: "smooth", block: "start" });
-      if (titleInput) titleInput.focus();
     }
+    if (titleInput) titleInput.focus();
   }
 
   // --- AUTONOMY & RADAR HELPERS ---
@@ -947,10 +1125,28 @@
 
   if (btnToggleComposer) {
     btnToggleComposer.addEventListener("click", function () {
-      if (form) {
+      if (composerDrawer) {
+        composerDrawer.hidden = !composerDrawer.hidden;
+        if (!composerDrawer.hidden) {
+          composerDrawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          if (titleInput) titleInput.focus();
+        }
+      } else if (form) {
         form.scrollIntoView({ behavior: "smooth", block: "start" });
         if (titleInput) titleInput.focus();
       }
+    });
+  }
+
+  if (btnCloseComposer) {
+    btnCloseComposer.addEventListener("click", function () {
+      if (composerDrawer) composerDrawer.hidden = true;
+    });
+  }
+
+  if (btnCancelComposer) {
+    btnCancelComposer.addEventListener("click", function () {
+      if (composerDrawer) composerDrawer.hidden = true;
     });
   }
 
@@ -1027,6 +1223,7 @@
           newestId = goal.id || "";
           if (titleInput) titleInput.value = "";
           if (intentInput) intentInput.value = "";
+          if (composerDrawer) composerDrawer.hidden = true;
           setStatus("It has this in its care now.");
           if (titleInput) titleInput.focus();
           return load();
