@@ -65,13 +65,33 @@
           <span class="stat-badge">⚡ Studio Ollama Powered</span>
         </div>
       </div>
+
+      <!-- Autonomous Delegation Level Selector -->
+      <div class="autonomy-selector-wrap">
+        <span class="autonomy-label">DELEGATION LEVEL:</span>
+        <div class="autonomy-modes" role="group" aria-label="Steward Autonomy Level">
+          <button type="button" class="autonomy-btn" data-mode="observer" id="btn-mode-observer" title="Read-only ceiling: reviews & reports only">
+            👁️ Observer
+          </button>
+          <button type="button" class="autonomy-btn active" data-mode="copilot" id="btn-mode-copilot" title="Propose & 1-Click Execution: batches staged for approval">
+            ⚡ Co-Pilot
+          </button>
+          <button type="button" class="autonomy-btn" data-mode="guardian" id="btn-mode-guardian" title="Autonomous Guardian: auto-cleans noise at 8am with 30-day rollback receipt">
+            🛡️ Guardian
+          </button>
+        </div>
+      </div>
     </header>
 
     <!-- Executive Tab Switcher -->
     <nav class="steward-tabs" role="tablist" aria-label="Steward Desk Modes">
-      <button type="button" class="steward-tab active" data-tab="chat" role="tab" aria-selected="true"
+      <button type="button" class="steward-tab active" data-tab="cockpit" role="tab" aria-selected="true"
+        id="steward-tab-cockpit">
+        <span class="tab-icon">⚡</span> Executive Cockpit
+      </button>
+      <button type="button" class="steward-tab" data-tab="chat" role="tab" aria-selected="false"
         id="steward-tab-chat">
-        <span class="tab-icon">💬</span> Chief of Staff
+        <span class="tab-icon">💬</span> Full Dialogue
       </button>
       <button type="button" class="steward-tab" data-tab="watches" role="tab" aria-selected="false"
         id="steward-tab-watches">
@@ -82,8 +102,212 @@
       </button>
     </nav>
 
+    <!-- View 0: Flagship Executive Cockpit (Unified Bento Surface) -->
+    <section class="steward-view" id="steward-view-cockpit" role="tabpanel" aria-labelledby="steward-tab-cockpit">
+      <div class="cockpit-grid">
+        
+        <!-- Left Column: Living Radar & Pulse -->
+        <aside class="cockpit-radar">
+          <!-- 1. Live Mailbox Radar Card -->
+          <div class="radar-card" id="radar-mailbox-card">
+            <div class="radar-card-header">
+              <div class="radar-card-title"><span class="radar-icon">📬</span> Mailbox Radar</div>
+              <span class="radar-badge" id="radar-email-badge">sgerhart@gmail.com</span>
+            </div>
+            <div class="radar-stats-grid">
+              <div class="radar-stat-box">
+                <span class="stat-label">Primary Inbox</span>
+                <div class="stat-val" id="cockpit-stat-inbox">28,542</div>
+                <span class="stat-sub text-amber" id="cockpit-stat-unread">27,001 unread</span>
+              </div>
+              <div class="radar-stat-box">
+                <span class="stat-label">Account Total</span>
+                <div class="stat-val" id="cockpit-stat-total">43,725</div>
+                <span class="stat-sub text-muted" id="cockpit-stat-threads">39.2k threads</span>
+              </div>
+            </div>
+            <div class="radar-meter-wrap">
+              <div class="radar-meter-bar" id="radar-meter-inbox" style="width: 94%;"></div>
+            </div>
+            <div class="radar-noise-list">
+              <div class="noise-item">
+                <span class="noise-name"><span class="dot dot-red"></span> GitHub CI Alerts</span>
+                <span class="noise-val">~620 threads</span>
+              </div>
+              <div class="noise-item">
+                <span class="noise-name"><span class="dot dot-purple"></span> Stale Retail Noise</span>
+                <span class="noise-val">~14,200 threads</span>
+              </div>
+              <div class="noise-item">
+                <span class="noise-name"><span class="dot dot-rose"></span> Political Solicitations</span>
+                <span class="noise-val text-rose">Auto-Trash Rule</span>
+              </div>
+              <div class="noise-item">
+                <span class="noise-name"><span class="dot dot-emerald"></span> Family &amp; School (Securly)</span>
+                <span class="noise-val text-emerald">Protected Vault</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Standing Sentinels Pulse Card -->
+          <div class="radar-card">
+            <div class="radar-card-header">
+              <div class="radar-card-title"><span class="radar-icon">🛡️</span> Standing Sentinels</div>
+              <button type="button" class="btn-wake-now" id="btn-cockpit-wake" title="Trigger immediate sentinel wake">⚡ Wake Now</button>
+            </div>
+            <div class="cockpit-sentinel-list" id="cockpit-sentinel-list">
+              <div class="cockpit-sentinel-item">
+                <div class="sentinel-item-top">
+                  <span class="sentinel-name"><span class="dot dot-emerald"></span> Morning Inbox Sentinel</span>
+                  <span class="sentinel-badge-active">ACTIVE</span>
+                </div>
+                <p class="sentinel-desc">Daily 8:00 AM scan · Mailbox stats, unread triage, unfamiliar sender audit.</p>
+                <div class="sentinel-meta">
+                  <span>Cron: 0 8 * * *</span>
+                  <span>Daily Morning Pulse</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Memory Vault Directives Card -->
+          <div class="radar-card">
+            <div class="radar-card-header">
+              <div class="radar-card-title"><span class="radar-icon">🧠</span> Active Policies</div>
+              <span class="radar-badge">~/.ai-lab/memory</span>
+            </div>
+            <div class="vault-directives-list">
+              <div class="directive-box">
+                <strong>📌 Political Directives:</strong>
+                <span>Auto-trash PAC solicitations, campaign blasts immediately.</span>
+              </div>
+              <div class="directive-box">
+                <strong>🛡️ Protected Entities:</strong>
+                <span>Securly school reports (Ella &amp; Caroline), Apple ID, Bank statements.</span>
+              </div>
+              <div class="directive-box">
+                <strong>🧹 Sweep Cadence:</strong>
+                <span>Batches of up to 50 threads older than 2 days.</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Right Column: Decision Tray & Conversation Canvas -->
+        <div class="cockpit-canvas">
+
+          <!-- 1. Hero: Daily Decision & Action Tray -->
+          <section class="action-tray" id="cockpit-action-tray">
+            <div class="action-tray-header">
+              <div>
+                <div class="action-tray-pill"><span class="pill-dot"></span> PROACTIVE TRIAGE READY</div>
+                <h3>Daily Decision &amp; Action Tray</h3>
+                <p class="action-tray-sub">Synthesized from latest Morning Sentinel wake. Authorize with one click.</p>
+              </div>
+              <button type="button" class="btn-authorize-all" id="btn-authorize-all">
+                ⚡ Authorize All Bundles
+              </button>
+            </div>
+
+            <div class="action-tray-cards" id="action-tray-cards">
+              <!-- Action Card 1: CI Pipeline Fix -->
+              <div class="action-card card-urgent" id="action-card-ci">
+                <div class="action-card-top">
+                  <span class="badge-urgent">URGENT · LAB</span>
+                  <span class="card-meta">5 failed runs</span>
+                </div>
+                <h4>CI Failure: repo-validation</h4>
+                <p>GitHub notifications on <code>sgerhart/ai-lab</code> (main branch). Worktree dispatch recommended.</p>
+                <button type="button" class="btn-action-primary" id="btn-action-ci">
+                  🛠️ Dispatch Coding Assistant
+                </button>
+              </div>
+
+              <!-- Action Card 2: Batch Trash Stale Retail -->
+              <div class="action-card card-sweep" id="action-card-retail">
+                <div class="action-card-top">
+                  <span class="badge-sweep">SWEEP · CLEANUP</span>
+                  <span class="card-meta">50 threads</span>
+                </div>
+                <h4>Batch Trash Stale Retail</h4>
+                <p>Amazon, Lands' End, lululemon, Chewy, Pizza Hut older than 2 days. 30-day recoverable.</p>
+                <button type="button" class="btn-action-primary" id="btn-action-retail">
+                  🗑️ Sweep 50 Threads to Trash
+                </button>
+              </div>
+
+              <!-- Action Card 3: School Reports Digest -->
+              <div class="action-card card-family" id="action-card-school">
+                <div class="action-card-top">
+                  <span class="badge-family">FAMILY · DIGEST</span>
+                  <span class="card-meta">Securly</span>
+                </div>
+                <h4>Ella &amp; Caroline Activity</h4>
+                <p>School activity alerts received today. Safe, routine report; protected from any cleanup rules.</p>
+                <button type="button" class="btn-action-primary" id="btn-action-school">
+                  📖 View School Digest
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Chief of Staff Companion Stream -->
+          <section class="cockpit-chat-section">
+            <div class="cockpit-chat-header">
+              <div class="flex-align-center">
+                <span class="chat-header-icon">💬</span>
+                <div>
+                  <strong>Chief of Staff Dialogue</strong>
+                  <span class="chat-header-sub">Continuous memory vault sync · mac-mini private loop</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div class="cockpit-chat-messages" id="cockpit-chat-messages">
+              <!-- Replaces or mirrors messages -->
+            </div>
+
+            <!-- Thinking Banner -->
+            <div class="steward-thinking" id="cockpit-thinking" hidden>
+              <div class="thinking-spinner"></div>
+              <span>Steward is investigating with personal agent tools...</span>
+            </div>
+
+            <!-- Quick Directives Bar -->
+            <div class="cockpit-directives-bar">
+              <span class="directives-label">Directives:</span>
+              <button type="button" class="directive-chip" data-directive="Sweep next 50 promotional emails older than 2 days to Trash now">
+                🧹 Sweep Next 50 Promos
+              </button>
+              <button type="button" class="directive-chip" data-directive="Audit unfamiliar or new senders from the last 48 hours">
+                🔍 Anomaly Audit
+              </button>
+              <button type="button" class="directive-chip" data-directive="What are my upcoming schedule items and calendar events?">
+                📅 Calendar Agenda
+              </button>
+              <button type="button" class="directive-chip" data-directive="Search personal memory vault for email-triage-policy notes">
+                🧠 Query Memory Vault
+              </button>
+            </div>
+
+            <!-- Compact Glass Composer -->
+            <div class="cockpit-composer-bar">
+              <textarea id="cockpit-chat-input" rows="1" placeholder="Instruct Steward, approve an action, or speak your mind..."></textarea>
+              <button type="button" class="steward-send-btn" id="cockpit-send-btn" title="Send message" aria-label="Send">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+              </button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </section>
+
     <!-- Tab 1: Conversational Chief of Staff Desk -->
-    <section class="steward-view" id="steward-view-chat" role="tabpanel" aria-labelledby="steward-tab-chat">
+    <section class="steward-view" id="steward-view-chat" role="tabpanel" aria-labelledby="steward-tab-chat" hidden>
       <div class="steward-chat-container">
         <div class="steward-chat-messages" id="steward-chat-messages">
           <div class="steward-empty-chat" id="steward-empty-chat">

@@ -88,12 +88,21 @@
   const btnToggleComposer = document.getElementById("btn-toggle-composer");
   const btnRefreshFeed = document.getElementById("btn-refresh-feed");
 
+  // Flagship Cockpit Elements
+  const cockpitMessagesEl = document.getElementById("cockpit-chat-messages");
+  const cockpitInput = document.getElementById("cockpit-chat-input");
+  const cockpitSendBtn = document.getElementById("cockpit-send-btn");
+  const cockpitThinking = document.getElementById("cockpit-thinking");
+  const btnCockpitWake = document.getElementById("btn-cockpit-wake");
+  const btnAuthorizeAll = document.getElementById("btn-authorize-all");
+
   // State
   let newestId = "";
-  let activeTab = "chat";
+  let activeTab = "cockpit";
   let activeConvId = null;
   let isThinking = false;
   let pollInterval = null;
+  let cachedGoals = [];
 
   function setStatus(text) {
     if (statusEl) statusEl.textContent = text || "";
@@ -337,6 +346,7 @@
     });
 
     const views = {
+      cockpit: document.getElementById("steward-view-cockpit"),
       chat: document.getElementById("steward-view-chat"),
       watches: document.getElementById("steward-view-watches"),
       feed: document.getElementById("steward-view-feed"),
@@ -355,13 +365,17 @@
       }
     });
 
-    if (targetTab === "chat" && chatInput) {
+    if (targetTab === "cockpit" && cockpitInput) {
+      cockpitInput.focus();
+    } else if (targetTab === "chat" && chatInput) {
       chatInput.focus();
     }
   }
 
   // --- GOALS / STANDING WATCHES ---
   function renderGoals(goals) {
+    cachedGoals = goals || [];
+    renderCockpitSentinels(cachedGoals);
     if (!goalsEl) return;
     clear(goalsEl);
     renderPresence(goals);
@@ -502,59 +516,77 @@
   }
 
   function renderMessages(messages) {
-    if (!chatMessagesEl) return;
-    clear(chatMessagesEl);
+    const targets = [chatMessagesEl, cockpitMessagesEl].filter(Boolean);
+    if (!targets.length) return;
 
-    if (!messages || !messages.length) {
-      if (emptyChatEl) {
-        chatMessagesEl.appendChild(emptyChatEl);
-      }
-      return;
-    }
+    targets.forEach(function (container) {
+      clear(container);
 
-    messages.forEach(function (msg) {
-      const row = document.createElement("div");
-      row.className = "steward-msg " + (msg.role === "user" ? "user" : "assistant");
-
-      if (msg.role !== "user") {
-        const avatar = document.createElement("img");
-        avatar.className = "steward-msg-avatar";
-        avatar.src = "/static/ai-lab-orb.jpg";
-        avatar.alt = "Steward";
-        row.appendChild(avatar);
+      if (!messages || !messages.length) {
+        if (container === chatMessagesEl && emptyChatEl) {
+          container.appendChild(emptyChatEl);
+        } else if (container === cockpitMessagesEl) {
+          add(container, "p", "No messages yet. Send a directive or authorize an action bundle above.", "empty");
+        }
+        return;
       }
 
-      const bubbleWrap = document.createElement("div");
-      const bubble = document.createElement("div");
-      bubble.className = "steward-msg-bubble";
-      appendFormattedText(bubble, msg.content);
-      bubbleWrap.appendChild(bubble);
+      messages.forEach(function (msg) {
+        const row = document.createElement("div");
+        row.className = "steward-msg " + (msg.role === "user" ? "user" : "assistant");
 
-      if (msg.created_at) {
-        const time = document.createElement("div");
-        time.className = "steward-msg-time";
-        time.textContent = friendlyWhen(msg.created_at);
-        bubbleWrap.appendChild(time);
-      }
+        if (msg.role !== "user") {
+          const avatar = document.createElement("img");
+          avatar.className = "steward-msg-avatar";
+          avatar.src = "/static/ai-lab-orb.jpg";
+          avatar.alt = "Steward";
+          row.appendChild(avatar);
+        }
 
-      row.appendChild(bubbleWrap);
-      chatMessagesEl.appendChild(row);
+        const bubbleWrap = document.createElement("div");
+        const bubble = document.createElement("div");
+        bubble.className = "steward-msg-bubble";
+        appendFormattedText(bubble, msg.content);
+        bubbleWrap.appendChild(bubble);
+
+        if (msg.created_at) {
+          const time = document.createElement("div");
+          time.className = "steward-msg-time";
+          time.textContent = friendlyWhen(msg.created_at);
+          bubbleWrap.appendChild(time);
+        }
+
+        row.appendChild(bubbleWrap);
+        container.appendChild(row);
+      });
+
+      container.scrollTop = container.scrollHeight;
     });
-
-    chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
   }
 
   function sendMessage(text) {
-    const content = (text || (chatInput ? chatInput.value : "")).trim();
+    let content = (text || "").trim();
+    if (!content) {
+      if (activeTab === "cockpit" && cockpitInput) {
+        content = cockpitInput.value.trim();
+      } else if (chatInput) {
+        content = chatInput.value.trim();
+      }
+    }
     if (!content || isThinking) return;
 
     if (chatInput) {
       chatInput.value = "";
       chatInput.style.height = "auto";
     }
+    if (cockpitInput) {
+      cockpitInput.value = "";
+      cockpitInput.style.height = "auto";
+    }
 
     isThinking = true;
     if (thinkingBanner) thinkingBanner.hidden = false;
+    if (cockpitThinking) cockpitThinking.hidden = false;
     if (presenceMark) presenceMark.dataset.state = "awake";
 
     // Optimistic user message
@@ -563,12 +595,14 @@
       content: content,
       created_at: new Date().toISOString(),
     };
+    const activeContainer = (activeTab === "cockpit" && cockpitMessagesEl) ? cockpitMessagesEl : chatMessagesEl;
     const currentMessages = Array.prototype.map.call(
-      chatMessagesEl.querySelectorAll(".steward-msg"),
+      activeContainer ? activeContainer.querySelectorAll(".steward-msg") : [],
       function (el) {
+        const bubble = el.querySelector(".steward-msg-bubble");
         return {
           role: el.classList.contains("user") ? "user" : "assistant",
-          content: el.querySelector(".steward-msg-bubble").innerText,
+          content: bubble ? bubble.innerText : "",
         };
       }
     );
@@ -640,6 +674,7 @@
                 pollInterval = null;
                 isThinking = false;
                 if (thinkingBanner) thinkingBanner.hidden = true;
+                if (cockpitThinking) cockpitThinking.hidden = true;
                 renderMessages(msgs);
                 load(); // Refresh watches in case Steward created one
               } else if (attempts >= 20) {
@@ -647,6 +682,7 @@
                 pollInterval = null;
                 isThinking = false;
                 if (thinkingBanner) thinkingBanner.hidden = true;
+                if (cockpitThinking) cockpitThinking.hidden = true;
                 renderMessages(msgs);
               }
             })
@@ -656,6 +692,7 @@
                 pollInterval = null;
                 isThinking = false;
                 if (thinkingBanner) thinkingBanner.hidden = true;
+                if (cockpitThinking) cockpitThinking.hidden = true;
               }
             });
         }, 1100);
@@ -663,6 +700,7 @@
       .catch(function (err) {
         isThinking = false;
         if (thinkingBanner) thinkingBanner.hidden = true;
+        if (cockpitThinking) cockpitThinking.hidden = true;
         setStatus(err.message || "Failed to complete conversation turn.");
       });
   }
@@ -708,8 +746,116 @@
     }
   }
 
+  // --- AUTONOMY & RADAR HELPERS ---
+  function updateAutonomyUI(mode) {
+    const buttons = document.querySelectorAll(".autonomy-btn");
+    buttons.forEach(function (btn) {
+      const match = btn.getAttribute("data-mode") === mode;
+      btn.classList.toggle("active", match);
+    });
+  }
+
+  function loadAutonomyMode() {
+    fetch("/v1/steward/autonomy", { headers: headers() })
+      .then(readJson)
+      .then(function (res) {
+        if (res && res.mode) {
+          updateAutonomyUI(res.mode);
+        }
+      })
+      .catch(function () {});
+  }
+
+  function setAutonomyMode(mode) {
+    updateAutonomyUI(mode);
+    fetch("/v1/steward/autonomy", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ mode: mode }),
+    })
+      .then(readJson)
+      .then(function (res) {
+        if (res && res.mode) {
+          updateAutonomyUI(res.mode);
+        }
+      })
+      .catch(function () {});
+  }
+
+  function loadMailboxRadar() {
+    fetch("/v1/gmail/stats", { headers: headers() })
+      .then(readJson)
+      .then(function (res) {
+        if (res && res.ok && res.stats) {
+          const s = res.stats;
+          const inboxEl = document.getElementById("cockpit-stat-inbox");
+          const unreadEl = document.getElementById("cockpit-stat-unread");
+          const totalEl = document.getElementById("cockpit-stat-total");
+          const threadsEl = document.getElementById("cockpit-stat-threads");
+          const badgeEl = document.getElementById("radar-email-badge");
+          const meterEl = document.getElementById("radar-meter-inbox");
+
+          if (badgeEl && s.email) badgeEl.textContent = s.email;
+          if (totalEl && s.messages_total) totalEl.textContent = Number(s.messages_total).toLocaleString();
+          if (threadsEl && s.threads_total) threadsEl.textContent = (s.threads_total / 1000).toFixed(1) + "k threads";
+
+          const inboxLabel = (s.labels && s.labels.INBOX) || {};
+          if (inboxEl && inboxLabel.messages_total) {
+            inboxEl.textContent = Number(inboxLabel.messages_total).toLocaleString();
+          }
+          if (unreadEl && inboxLabel.messages_unread) {
+            unreadEl.textContent = Number(inboxLabel.messages_unread).toLocaleString() + " unread";
+          }
+          if (meterEl && s.messages_total && inboxLabel.messages_total) {
+            const pct = Math.min(100, Math.round((inboxLabel.messages_total / s.messages_total) * 100));
+            meterEl.style.width = pct + "%";
+          }
+        }
+      })
+      .catch(function () {});
+  }
+
+  function renderCockpitSentinels(goals) {
+    const list = document.getElementById("cockpit-sentinel-list");
+    if (!list) return;
+    clear(list);
+    const active = (goals || []).filter(function (g) { return g.status === "active"; });
+    if (!active.length) {
+      add(list, "p", "No active standing sentinels. Create one in Standing Watches.", "empty");
+      return;
+    }
+    active.forEach(function (g) {
+      const item = document.createElement("div");
+      item.className = "cockpit-sentinel-item";
+
+      const top = document.createElement("div");
+      top.className = "sentinel-item-top";
+      const name = add(top, "span", "", "sentinel-name");
+      const dot = document.createElement("span");
+      dot.className = "dot dot-emerald";
+      name.appendChild(dot);
+      name.appendChild(document.createTextNode(" " + (g.title || "Standing Sentinel")));
+      add(top, "span", "ACTIVE", "sentinel-badge-active");
+      item.appendChild(top);
+
+      if (g.intent) {
+        add(item, "p", g.intent, "sentinel-desc");
+      }
+
+      const meta = document.createElement("div");
+      meta.className = "sentinel-meta";
+      add(meta, "span", "Cron: " + (g.wake_cron || "0 8 * * *"));
+      add(meta, "span", g.last_due_at ? "Last: " + friendlyWhen(g.last_due_at) : "Pending Wake");
+      item.appendChild(meta);
+
+      list.appendChild(item);
+    });
+  }
+
   // --- ACTIONS ---
   function load() {
+    loadAutonomyMode();
+    loadMailboxRadar();
     return fetch("/v1/steward/access", { headers: headers() })
       .then(readJson)
       .then(function (access) {
@@ -891,6 +1037,118 @@
         .then(function () {
           if (saveBtn) saveBtn.disabled = false;
         });
+    });
+  }
+
+  // --- COCKPIT LISTENERS ---
+  document.addEventListener("click", function (event) {
+    // Autonomy buttons
+    const autoBtn = event.target.closest(".autonomy-btn");
+    if (autoBtn) {
+      const mode = autoBtn.getAttribute("data-mode");
+      if (mode) setAutonomyMode(mode);
+      return;
+    }
+
+    // Directive chips
+    const chip = event.target.closest(".directive-chip");
+    if (chip) {
+      const directive = chip.getAttribute("data-directive");
+      if (directive) {
+        sendMessage(directive);
+      }
+      return;
+    }
+  });
+
+  if (btnCockpitWake) {
+    btnCockpitWake.addEventListener("click", function () {
+      const active = (cachedGoals || []).find(function (g) { return g.status === "active"; });
+      const targetId = active ? active.id : "9423ca82773245cebeba04508a1f4fcc";
+      btnCockpitWake.textContent = "⚡ Waking...";
+      btnCockpitWake.disabled = true;
+      fetch("/v1/steward/goals/" + encodeURIComponent(targetId) + "/wake", {
+        method: "POST",
+        headers: headers(),
+      })
+        .then(readJson)
+        .then(function () {
+          setStatus("Sentinel wake triggered.");
+          setTimeout(load, 3000);
+        })
+        .catch(function (err) {
+          setStatus(err.message || "Could not trigger sentinel wake.");
+        })
+        .then(function () {
+          btnCockpitWake.textContent = "⚡ Wake Now";
+          btnCockpitWake.disabled = false;
+        });
+    });
+  }
+
+  // 1-Click Action Tray Execution
+  const btnCi = document.getElementById("btn-action-ci");
+  if (btnCi) {
+    btnCi.addEventListener("click", function () {
+      const card = document.getElementById("action-card-ci");
+      if (card) card.classList.add("executed");
+      btnCi.textContent = "✓ Dispatched";
+      btnCi.disabled = true;
+      sendMessage("Dispatch coding assistant to investigate the failed repo-validation run in a worktree");
+    });
+  }
+
+  const btnRetail = document.getElementById("btn-action-retail");
+  if (btnRetail) {
+    btnRetail.addEventListener("click", function () {
+      const card = document.getElementById("action-card-retail");
+      if (card) card.classList.add("executed");
+      btnRetail.textContent = "✓ Sweeping...";
+      btnRetail.disabled = true;
+      sendMessage("Sweep 50 promotional emails older than 2 days to Trash now");
+    });
+  }
+
+  const btnSchool = document.getElementById("btn-action-school");
+  if (btnSchool) {
+    btnSchool.addEventListener("click", function () {
+      const card = document.getElementById("action-card-school");
+      if (card) card.classList.add("executed");
+      btnSchool.textContent = "✓ Requested Digest";
+      btnSchool.disabled = true;
+      sendMessage("Give me a 3-bullet summary of the school activity reports for Ella and Caroline");
+    });
+  }
+
+  if (btnAuthorizeAll) {
+    btnAuthorizeAll.addEventListener("click", function () {
+      btnAuthorizeAll.textContent = "✓ All 3 Bundles Authorized";
+      btnAuthorizeAll.classList.add("authorized");
+      ["action-card-ci", "action-card-retail", "action-card-school"].forEach(function (id) {
+        const c = document.getElementById(id);
+        if (c) c.classList.add("executed");
+      });
+      sendMessage("Authorize all daily triage bundles: dispatch coding assistant for repo-validation, sweep 50 stale retail threads to Trash, and summarize school reports");
+    });
+  }
+
+  if (cockpitSendBtn) {
+    cockpitSendBtn.addEventListener("click", function () {
+      sendMessage();
+    });
+  }
+
+  if (cockpitInput) {
+    cockpitInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    cockpitInput.addEventListener("input", function () {
+      cockpitInput.style.height = "auto";
+      cockpitInput.style.height = Math.min(cockpitInput.scrollHeight, 140) + "px";
     });
   }
 

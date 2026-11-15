@@ -396,6 +396,21 @@ class StewardApiTests(unittest.TestCase):
         again = self.client.get("/v1/steward/goals", headers=self.headers)
         self.assertEqual(len(again.json()["goals"]), 1)
 
+        # Autonomy mode endpoints
+        auto_get = self.client.get("/v1/steward/autonomy", headers=self.headers)
+        self.assertEqual(auto_get.status_code, 200)
+        self.assertEqual(auto_get.json()["mode"], "copilot")
+
+        auto_set = self.client.post("/v1/steward/autonomy", headers=self.headers, json={"mode": "guardian"})
+        self.assertEqual(auto_set.status_code, 200)
+        self.assertEqual(auto_set.json()["mode"], "guardian")
+
+        auto_get2 = self.client.get("/v1/steward/autonomy", headers=self.headers)
+        self.assertEqual(auto_get2.json()["mode"], "guardian")
+
+        auto_bad = self.client.post("/v1/steward/autonomy", headers=self.headers, json={"mode": "invalid_mode"})
+        self.assertEqual(auto_bad.status_code, 400)
+
 
 class McpStewardTests(unittest.TestCase):
     def setUp(self) -> None:

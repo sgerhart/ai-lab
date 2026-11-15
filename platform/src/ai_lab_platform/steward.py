@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +20,7 @@ from .schedule_cron import CronError, cron_matches, parse_cron
 _ACTIVITY_CAP = 100
 _WAKE_STEPS = 12
 _NOTE_CAP = 500
+_VALID_AUTONOMY_MODES = frozenset({"observer", "copilot", "guardian"})
 
 SEE_TOOLS = frozenset(
     {
@@ -297,6 +298,45 @@ def activity_path_for(goals_path: Path) -> Path:
     return goals_path.with_name("activity.json")
 
 
+def autonomy_path_for(goals_path: Path) -> Path:
+    return goals_path.with_name("autonomy.json")
+
+
+def get_autonomy_mode(*, path: Path | None = None) -> str:
+    """Return active delegation mode: 'observer', 'copilot' (default), or 'guardian'."""
+    goals_path = path or default_goals_path()
+    auto_path = autonomy_path_for(goals_path)
+    if not auto_path.is_file():
+        return "copilot"
+    try:
+        data = json.loads(auto_path.read_text(encoding="utf-8"))
+        mode = str(data.get("mode") or "").strip().lower()
+        if mode in _VALID_AUTONOMY_MODES:
+            return mode
+    except Exception:
+        pass
+    return "copilot"
+
+
+def set_autonomy_mode(mode: str, *, path: Path | None = None) -> str:
+    """Persist active delegation mode."""
+    cleaned = (mode or "").strip().lower()
+    if cleaned not in _VALID_AUTONOMY_MODES:
+        raise StewardError(f"invalid autonomy mode; expected one of {sorted(_VALID_AUTONOMY_MODES)}")
+    goals_path = path or default_goals_path()
+    auto_path = autonomy_path_for(goals_path)
+    auto_path.parent.mkdir(parents=True, exist_ok=True)
+    temp = auto_path.with_name(f"{auto_path.name}.{uuid.uuid4().hex}.tmp")
+    payload = {
+        "mode": cleaned,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    temp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    temp.replace(auto_path)
+    auto_path.chmod(0o600)
+    return cleaned
+
+
 def _read_activity(path: Path) -> dict[str, Any]:
     if not path.is_file():
         return {"entries": []}
@@ -524,6 +564,7 @@ __all__ = [
     "create_goal",
     "default_goals_path",
     "enqueue_wake",
+    "get_autonomy_mode",
     "get_goal",
     "list_activity",
     "list_goals",
@@ -531,5 +572,6 @@ __all__ = [
     "note_wake_finished",
     "pause_goal",
     "resume_goal",
+    "set_autonomy_mode",
     "wake_due",
 ]

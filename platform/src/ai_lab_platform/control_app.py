@@ -2896,6 +2896,32 @@ def create_control_app(
         entry = _steward_call(_wake)
         return {"ok": True, "entry": entry}
 
+    @app.get("/v1/steward/autonomy")
+    def get_steward_autonomy_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .steward import get_autonomy_mode
+
+        return {"ok": True, "mode": get_autonomy_mode(path=_steward_path())}
+
+    @app.post("/v1/steward/autonomy")
+    def set_steward_autonomy_endpoint(
+        request: Request,
+        payload: dict[str, Any],
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        from .steward import set_autonomy_mode
+
+        mode = payload.get("mode") if isinstance(payload, dict) else None
+        try:
+            saved = set_autonomy_mode(str(mode or ""), path=_steward_path())
+            return {"ok": True, "mode": saved}
+        except StewardError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     @app.post("/v1/agent-definitions/{definition_id}/runs")
     def run_agent_definition(
         request: Request,
@@ -3257,6 +3283,20 @@ def create_control_app(
         from .gmail import GmailClient
 
         return GmailClient().status()
+
+    @app.get("/v1/gmail/stats")
+    def gmail_stats_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Fetch detailed label and message counts for the mailbox."""
+        _gate(request, authorization)
+        from .gmail import GmailClient
+
+        try:
+            return {"ok": True, "stats": GmailClient().get_mailbox_stats()}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
 
     @app.get("/v1/nexus/cover")
     def nexus_cover_endpoint(
