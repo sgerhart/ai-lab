@@ -18,7 +18,7 @@ from .policy import AgentPolicy, load_policy
 from .schedule_cron import CronError, cron_matches, parse_cron
 
 _ACTIVITY_CAP = 100
-_WAKE_STEPS = 4
+_WAKE_STEPS = 12
 _NOTE_CAP = 500
 
 SEE_TOOLS = frozenset(
@@ -381,7 +381,7 @@ def enqueue_wake(
         model=model,
         billing_class=BillingClass.LOCAL,
         backend=backend,
-        budget=RunBudget(max_steps=_WAKE_STEPS, max_time_seconds=120),
+        budget=RunBudget(max_steps=_WAKE_STEPS, max_time_seconds=180),
     )
     run.tool_ceiling = list(tools)
     run.steward_goal_id = str(goal.get("id") or "")
