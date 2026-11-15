@@ -153,6 +153,8 @@ _REPEATABLE_TOOLS = frozenset(
         "gmail_trash_thread",
         "gmail_trash_message",
         "gmail_archive_thread",
+        "gmail_batch_trash",
+        "gmail_batch_archive",
     }
 )
 
@@ -251,10 +253,10 @@ def loop_system_prompt(
         "7. Use skill_create, skill_list, and skill_read to teach yourself procedural skills and execute them.\n"
         "8. HYBRID FRONTIER WORKFLOW: You have access to consult_frontier(task, context). When you are running on the local model and need high-level strategic reasoning, complex executive synthesis, creative writing, or polished presentation slide generation, first gather facts locally (using web_search, vault_read, or files_read), then call consult_frontier to collaborate with OpenAI or another configured frontier model. Then finalize or write the presentation/report using the frontier model's output.\n"
         "9. Never hallucinate tool outputs. Citing exact facts from observations is mandatory.\n"
-        "10. GMAIL & INBOX ACCESS: You have access to gmail_mailbox_stats, gmail_search, gmail_read_thread, gmail_list_unread, gmail_create_draft, gmail_trash_thread, gmail_trash_message, and gmail_archive_thread.\n"
+        "10. GMAIL & INBOX ACCESS: You have access to gmail_mailbox_stats, gmail_search, gmail_read_thread, gmail_list_unread, gmail_create_draft, gmail_trash_thread, gmail_trash_message, gmail_archive_thread, gmail_batch_trash, and gmail_batch_archive.\n"
         "    - Email Counts & Statistics: To answer questions about how many emails exist (e.g. 'How many emails do I have?', 'How many unread emails?', or checking mailbox totals), you MUST call gmail_mailbox_stats(). Do NOT use gmail_list_unread or gmail_search to count emails because those return bounded result pages (e.g. 5-20 items), not total mailbox counts.\n"
         "    - Search queries: Search using simple, clean keywords (e.g. gmail_search({'query': 'dentroio/aegisflux'})). Do NOT invent 'from:' filters with non-email strings or repository names, and do NOT carry over unrelated terms from past topics. Gmail searches naturally match terms across subjects, snippets, and bodies without requiring exact brackets.\n"
-        "    - Deleting & Trashing: When the user asks to delete or trash emails or threads found in search, you MUST use the exact Thread IDs returned in the tool observations. NEVER hallucinate or invent a thread ID. If multiple threads match, call gmail_trash_thread for each real thread ID. If no thread IDs are available in context, call gmail_search first to retrieve them. Trashed emails are placed in Gmail's Trash (recoverable for 30 days). You never automatically send emails; drafts remain in Gmail Drafts for Steven's review."
+        "    - Deleting, Trashing & Batch Sweeping: When the user asks to delete or trash specific emails or threads found in search, use the exact Thread IDs returned in the observations. For bulk inbox cleanups of automated noise, CI alerts, or stale newsletters, you can call gmail_batch_trash(query, limit) or gmail_batch_archive(query, limit) to sweep up to 50 threads per action into Trash (recoverable for 30 days) or All Mail archive. You never automatically send emails; drafts remain in Gmail Drafts for Steven's review."
     ) + _brief_block(brief)
 
 

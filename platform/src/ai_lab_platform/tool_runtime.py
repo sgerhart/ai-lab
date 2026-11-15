@@ -115,6 +115,8 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "gmail_trash_thread": lambda ctx, **a: _gmail_trash_thread(ctx, a),
     "gmail_trash_message": lambda ctx, **a: _gmail_trash_message(ctx, a),
     "gmail_archive_thread": lambda ctx, **a: _gmail_archive_thread(ctx, a),
+    "gmail_batch_trash": lambda ctx, **a: _gmail_batch_trash(ctx, a),
+    "gmail_batch_archive": lambda ctx, **a: _gmail_batch_archive(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -681,6 +683,40 @@ def _gmail_archive_thread(_ctx: ToolContext, args: dict[str, Any]) -> str:
         )
     except Exception as exc:
         return f"Gmail error archiving thread {thread_id}: {exc}"
+
+
+def _gmail_batch_trash(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    query = str(args.get("query") or args.get("q") or "").strip()
+    if not query:
+        raise ToolError("gmail_batch_trash requires a search query (e.g. 'from:notifications@github.com' or 'is:unread category:promotions').")
+    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 50)
+    from .gmail import GmailClient, format_batch_result_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.batch_trash_threads(query=query, limit=limit)
+        return format_batch_result_markdown(res, action="trashed")
+    except Exception as exc:
+        return f"Gmail batch trash error for '{query}': {exc}"
+
+
+def _gmail_batch_archive(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    query = str(args.get("query") or args.get("q") or "").strip()
+    if not query:
+        raise ToolError("gmail_batch_archive requires a search query (e.g. 'is:unread category:promotions').")
+    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 50)
+    from .gmail import GmailClient, format_batch_result_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.batch_archive_threads(query=query, limit=limit)
+        return format_batch_result_markdown(res, action="archived")
+    except Exception as exc:
+        return f"Gmail batch archive error for '{query}': {exc}"
 
 
 def execute_allowed_tool(

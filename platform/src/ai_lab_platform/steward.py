@@ -48,6 +48,8 @@ SEE_TOOLS = frozenset(
 DRAFT_TOOLS = frozenset(
     {
         "gmail_archive_thread",
+        "gmail_batch_archive",
+        "gmail_batch_trash",
         "gmail_create_draft",
         "gmail_trash_message",
         "gmail_trash_thread",

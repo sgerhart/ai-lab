@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "platform" / "src"))
 from ai_lab_platform.gmail import (
     GmailAuthError,
     GmailClient,
+    format_batch_result_markdown,
     format_mailbox_stats_markdown,
     format_single_thread_markdown,
     format_threads_markdown,
@@ -407,3 +408,45 @@ class ToolRuntimeGmailTests(unittest.TestCase):
             self.assertIn("100", res.observation)
             self.assertIn("80", res.observation)
             self.assertIn("test@example.com", res.observation)
+
+    def test_format_batch_result_markdown(self) -> None:
+        res = {
+            "query": "from:notifications@github.com",
+            "trashed_count": 25,
+            "sample_snippets": ["Run failed", "PR approved"],
+            "has_more": True,
+        }
+        md = format_batch_result_markdown(res, action="trashed")
+        self.assertIn("25 thread(s) trashed", md)
+        self.assertIn("from:notifications@github.com", md)
+        self.assertIn("Run failed", md)
+
+    @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True)
+    def test_gmail_batch_tools_runtime_dispatch(self, _mock_has_token: MagicMock) -> None:
+        ctx = ToolContext(workspace_root=ROOT, artifact_root=ROOT / "artifacts")
+        allowed = ["gmail_batch_trash", "gmail_batch_archive"]
+
+        mock_trash_res = {
+            "ok": True,
+            "query": "category:promotions",
+            "trashed_count": 10,
+            "sample_snippets": ["Sale now"],
+            "has_more": False,
+        }
+        with patch("ai_lab_platform.gmail.GmailClient.batch_trash_threads", return_value=mock_trash_res):
+            res = execute_allowed_tool("gmail_batch_trash", {"query": "category:promotions"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("10 thread(s) trashed", res.observation)
+            self.assertIn("category:promotions", res.observation)
+
+        mock_arch_res = {
+            "ok": True,
+            "query": "category:updates",
+            "archived_count": 5,
+            "sample_snippets": ["Update note"],
+            "has_more": False,
+        }
+        with patch("ai_lab_platform.gmail.GmailClient.batch_archive_threads", return_value=mock_arch_res):
+            res = execute_allowed_tool("gmail_batch_archive", {"query": "category:updates"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("5 thread(s) archived", res.observation)

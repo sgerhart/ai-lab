@@ -11,7 +11,7 @@
     { label: "Schedules", icon: "⏰", tools: ["schedule_list"] },
     { label: "Presentations", icon: "📽️", tools: ["presentation_list", "presentation_read"] },
     { label: "Skills", icon: "⚡", tools: ["skill_list", "skill_read"] },
-    { label: "Gmail", icon: "✉️", tools: ["gmail_mailbox_stats", "gmail_list_unread", "gmail_search", "gmail_read_thread", "gmail_create_draft", "gmail_trash_thread", "gmail_trash_message", "gmail_archive_thread"] },
+    { label: "Gmail", icon: "✉️", tools: ["gmail_mailbox_stats", "gmail_batch_trash", "gmail_batch_archive", "gmail_list_unread", "gmail_search", "gmail_read_thread", "gmail_create_draft", "gmail_trash_thread", "gmail_trash_message", "gmail_archive_thread"] },
     { label: "Lab health", icon: "🛡️", tools: ["health_read"] },
   ];
   const RHYTHM = {

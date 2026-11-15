@@ -357,6 +357,70 @@ class GmailClient:
             "note": "Thread archived (removed from Inbox, preserved in All Mail).",
         }
 
+    def batch_trash_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
+        """Move multiple threads matching query to Trash (recoverable for 30 days)."""
+        bounded = max(1, min(limit, 50))
+        effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
+        search_res = self._api_request("threads", params={"q": effective_query, "maxResults": bounded})
+        raw_threads = search_res.get("threads") or []
+        trashed: List[str] = []
+        samples: List[str] = []
+
+        for t in raw_threads:
+            tid = t.get("id")
+            if not tid:
+                continue
+            try:
+                self._api_request(f"threads/{tid}/trash", method="POST")
+                trashed.append(tid)
+                snippet = (t.get("snippet") or "")[:80]
+                if snippet and len(samples) < 5:
+                    samples.append(snippet)
+            except Exception:
+                pass
+
+        return {
+            "ok": True,
+            "query": query,
+            "trashed_count": len(trashed),
+            "thread_ids": trashed,
+            "sample_snippets": samples,
+            "has_more": len(raw_threads) >= bounded,
+            "note": f"Moved {len(trashed)} thread(s) to Gmail Trash (recoverable for 30 days).",
+        }
+
+    def batch_archive_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
+        """Archive multiple threads matching query by removing them from Inbox."""
+        bounded = max(1, min(limit, 50))
+        effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
+        search_res = self._api_request("threads", params={"q": f"label:INBOX {effective_query}", "maxResults": bounded})
+        raw_threads = search_res.get("threads") or []
+        archived: List[str] = []
+        samples: List[str] = []
+
+        for t in raw_threads:
+            tid = t.get("id")
+            if not tid:
+                continue
+            try:
+                self._api_request(f"threads/{tid}/modify", method="POST", data={"removeLabelIds": ["INBOX"]})
+                archived.append(tid)
+                snippet = (t.get("snippet") or "")[:80]
+                if snippet and len(samples) < 5:
+                    samples.append(snippet)
+            except Exception:
+                pass
+
+        return {
+            "ok": True,
+            "query": query,
+            "archived_count": len(archived),
+            "thread_ids": archived,
+            "sample_snippets": samples,
+            "has_more": len(raw_threads) >= bounded,
+            "note": f"Archived {len(archived)} thread(s) (removed from Inbox, preserved in All Mail).",
+        }
+
 
 def _extract_body_from_payload(payload: Dict[str, Any]) -> str:
     """Extract plain text body recursively from MIME parts."""
@@ -477,4 +541,26 @@ def format_single_thread_markdown(thread: Dict[str, Any]) -> str:
         lines.append(m.get("body") or m.get("snippet") or "(No body content)")
         lines.append("")
     return "\n".join(lines).strip()
+
+
+def format_batch_result_markdown(result: Dict[str, Any], action: str = "trashed") -> str:
+    """Format batch sweep result for Steward's tool observation."""
+    count = result.get("trashed_count", result.get("archived_count", 0))
+    query = result.get("query", "")
+    has_more = result.get("has_more", False)
+    snippets = result.get("sample_snippets", [])
+
+    lines = [
+        f"### Batch Email Sweep: {count} thread(s) {action} successfully",
+        f"- **Filter Query**: `{query}`",
+        f"- **Status**: Moved to Gmail {'Trash (30-day recoverable)' if action == 'trashed' else 'Archive (All Mail)'}",
+    ]
+    if snippets:
+        lines.append("- **Sample Processed**:")
+        for s in snippets:
+            lines.append(f"  • *{s}*")
+    if has_more:
+        lines.append("\n> **Note**: Additional matching threads exist in your inbox. Run another sweep iteration or arm a standing sentinel to maintain this automatically.")
+    return "\n".join(lines)
+
 
