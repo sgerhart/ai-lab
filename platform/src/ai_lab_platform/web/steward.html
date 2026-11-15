@@ -106,91 +106,93 @@
     <section class="steward-view" id="steward-view-cockpit" role="tabpanel" aria-labelledby="steward-tab-cockpit">
       <div class="cockpit-grid">
         
-        <!-- Left Column: Living Radar & Pulse -->
-        <aside class="cockpit-radar">
-          <!-- 1. Live Mailbox Radar Card -->
-          <div class="radar-card" id="radar-mailbox-card">
-            <div class="radar-card-header">
-              <div class="radar-card-title"><span class="radar-icon">📬</span> Mailbox Radar</div>
-              <span class="radar-badge" id="radar-email-badge">sgerhart@gmail.com</span>
+        <!-- Left Column: Unified Executive Overview (Clean & Borderless) -->
+        <aside class="executive-overview">
+          
+          <!-- Section 1: Mailbox Status -->
+          <div class="overview-section">
+            <div class="overview-section-header">
+              <span class="overview-title">📬 Mailbox Pulse</span>
+              <span class="overview-meta" id="radar-email-badge">sgerhart@gmail.com</span>
             </div>
-            <div class="radar-stats-grid">
-              <div class="radar-stat-box">
-                <span class="stat-label">Primary Inbox</span>
-                <div class="stat-val" id="cockpit-stat-inbox">28,542</div>
-                <span class="stat-sub text-amber" id="cockpit-stat-unread">27,001 unread</span>
+            
+            <div class="pulse-stats-row">
+              <div class="pulse-stat">
+                <span class="pulse-number text-amber" id="cockpit-stat-unread">27,020</span>
+                <span class="pulse-caption">Inbox Unread</span>
               </div>
-              <div class="radar-stat-box">
-                <span class="stat-label">Account Total</span>
-                <div class="stat-val" id="cockpit-stat-total">43,725</div>
-                <span class="stat-sub text-muted" id="cockpit-stat-threads">39.2k threads</span>
+              <div class="pulse-stat-divider"></div>
+              <div class="pulse-stat">
+                <span class="pulse-number" id="cockpit-stat-inbox">28,559</span>
+                <span class="pulse-caption">Primary Total</span>
+              </div>
+              <div class="pulse-stat-divider"></div>
+              <div class="pulse-stat">
+                <span class="pulse-number text-muted" id="cockpit-stat-total">43,759</span>
+                <span class="pulse-caption">Account Total</span>
               </div>
             </div>
-            <div class="radar-meter-wrap">
-              <div class="radar-meter-bar" id="radar-meter-inbox" style="width: 94%;"></div>
+
+            <!-- Single Minimal Gradient Meter -->
+            <div class="overview-meter-track">
+              <div class="overview-meter-fill" id="radar-meter-inbox" style="width: 94%;"></div>
             </div>
-            <div class="radar-noise-list">
-              <div class="noise-item">
-                <span class="noise-name"><span class="dot dot-red"></span> GitHub CI Alerts</span>
-                <span class="noise-val">~620 threads</span>
-              </div>
-              <div class="noise-item">
-                <span class="noise-name"><span class="dot dot-purple"></span> Stale Retail Noise</span>
-                <span class="noise-val">~14,200 threads</span>
-              </div>
-              <div class="noise-item">
-                <span class="noise-name"><span class="dot dot-rose"></span> Political Solicitations</span>
-                <span class="noise-val text-rose">Auto-Trash Rule</span>
-              </div>
-              <div class="noise-item">
-                <span class="noise-name"><span class="dot dot-emerald"></span> Family &amp; School (Securly)</span>
-                <span class="noise-val text-emerald">Protected Vault</span>
+
+            <!-- Clean Borderless Noise Rows -->
+            <ul class="overview-noise-list">
+              <li>
+                <span class="noise-label"><span class="dot dot-red"></span> GitHub CI Runs</span>
+                <span class="noise-count">~620</span>
+              </li>
+              <li>
+                <span class="noise-label"><span class="dot dot-purple"></span> Retail &amp; Newsletters</span>
+                <span class="noise-count">~14.2k</span>
+              </li>
+              <li>
+                <span class="noise-label"><span class="dot dot-rose"></span> Political Solicitations</span>
+                <span class="noise-tag tag-rose">Auto-Trash</span>
+              </li>
+              <li>
+                <span class="noise-label"><span class="dot dot-emerald"></span> Family &amp; School Alerts</span>
+                <span class="noise-tag tag-emerald">Protected</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="overview-separator"></div>
+
+          <!-- Section 2: Active Sentinels -->
+          <div class="overview-section">
+            <div class="overview-section-header">
+              <span class="overview-title">🛡️ Active Sentinels</span>
+              <button type="button" class="btn-text-action" id="btn-cockpit-wake" title="Trigger immediate sentinel wake">⚡ Wake Now</button>
+            </div>
+            <div class="sentinel-beacon" id="cockpit-sentinel-list">
+              <div class="beacon-row">
+                <span class="beacon-dot"></span>
+                <div class="beacon-body">
+                  <strong>Morning Inbox Sentinel</strong>
+                  <span class="beacon-meta">Daily at 8:00 AM · Stats, unread triage &amp; anomalies</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 2. Standing Sentinels Pulse Card -->
-          <div class="radar-card">
-            <div class="radar-card-header">
-              <div class="radar-card-title"><span class="radar-icon">🛡️</span> Standing Sentinels</div>
-              <button type="button" class="btn-wake-now" id="btn-cockpit-wake" title="Trigger immediate sentinel wake">⚡ Wake Now</button>
+          <div class="overview-separator"></div>
+
+          <!-- Section 3: Memory Vault Guardrails -->
+          <div class="overview-section">
+            <div class="overview-section-header">
+              <span class="overview-title">🧠 Executive Guardrails</span>
+              <span class="overview-meta">Vault Synced</span>
             </div>
-            <div class="cockpit-sentinel-list" id="cockpit-sentinel-list">
-              <div class="cockpit-sentinel-item">
-                <div class="sentinel-item-top">
-                  <span class="sentinel-name"><span class="dot dot-emerald"></span> Morning Inbox Sentinel</span>
-                  <span class="sentinel-badge-active">ACTIVE</span>
-                </div>
-                <p class="sentinel-desc">Daily 8:00 AM scan · Mailbox stats, unread triage, unfamiliar sender audit.</p>
-                <div class="sentinel-meta">
-                  <span>Cron: 0 8 * * *</span>
-                  <span>Daily Morning Pulse</span>
-                </div>
-              </div>
-            </div>
+            <ul class="guardrails-list">
+              <li><span class="bullet bullet-rose">Direct Trash</span> Political campaigns &amp; PAC solicitations</li>
+              <li><span class="bullet bullet-emerald">Protected</span> Ella &amp; Caroline school notices (Securly)</li>
+              <li><span class="bullet bullet-purple">Triage Cadence</span> Stale retail noise older than 2 days</li>
+            </ul>
           </div>
 
-          <!-- 3. Memory Vault Directives Card -->
-          <div class="radar-card">
-            <div class="radar-card-header">
-              <div class="radar-card-title"><span class="radar-icon">🧠</span> Active Policies</div>
-              <span class="radar-badge">~/.ai-lab/memory</span>
-            </div>
-            <div class="vault-directives-list">
-              <div class="directive-box">
-                <strong>📌 Political Directives:</strong>
-                <span>Auto-trash PAC solicitations, campaign blasts immediately.</span>
-              </div>
-              <div class="directive-box">
-                <strong>🛡️ Protected Entities:</strong>
-                <span>Securly school reports (Ella &amp; Caroline), Apple ID, Bank statements.</span>
-              </div>
-              <div class="directive-box">
-                <strong>🧹 Sweep Cadence:</strong>
-                <span>Batches of up to 50 threads older than 2 days.</span>
-              </div>
-            </div>
-          </div>
         </aside>
 
         <!-- Right Column: Decision Tray & Conversation Canvas -->
@@ -272,23 +274,6 @@
             <div class="steward-thinking" id="cockpit-thinking" hidden>
               <div class="thinking-spinner"></div>
               <span>Steward is investigating with personal agent tools...</span>
-            </div>
-
-            <!-- Quick Directives Bar -->
-            <div class="cockpit-directives-bar">
-              <span class="directives-label">Directives:</span>
-              <button type="button" class="directive-chip" data-directive="Sweep next 50 promotional emails older than 2 days to Trash now">
-                🧹 Sweep Next 50 Promos
-              </button>
-              <button type="button" class="directive-chip" data-directive="Audit unfamiliar or new senders from the last 48 hours">
-                🔍 Anomaly Audit
-              </button>
-              <button type="button" class="directive-chip" data-directive="What are my upcoming schedule items and calendar events?">
-                📅 Calendar Agenda
-              </button>
-              <button type="button" class="directive-chip" data-directive="Search personal memory vault for email-triage-policy notes">
-                🧠 Query Memory Vault
-              </button>
             </div>
 
             <!-- Compact Glass Composer -->

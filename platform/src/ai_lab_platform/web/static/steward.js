@@ -1049,16 +1049,6 @@
       if (mode) setAutonomyMode(mode);
       return;
     }
-
-    // Directive chips
-    const chip = event.target.closest(".directive-chip");
-    if (chip) {
-      const directive = chip.getAttribute("data-directive");
-      if (directive) {
-        sendMessage(directive);
-      }
-      return;
-    }
   });
 
   if (btnCockpitWake) {
