@@ -827,6 +827,9 @@
       });
 
       container.scrollTop = container.scrollHeight;
+      setTimeout(function () {
+        container.scrollTop = container.scrollHeight;
+      }, 100);
     });
   }
 
