@@ -7,6 +7,7 @@ A background wake may use the See class only. This module does not call a model.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -294,6 +295,71 @@ def get_goal(goal_id: str, *, path: Path | None = None) -> dict[str, Any]:
     raise StewardError("unknown goal")
 
 
+def update_goal(
+    goal_id: str,
+    *,
+    title: str | None = None,
+    intent: str | None = None,
+    wake_cron: str | None = None,
+    see_tools: list[str] | None = None,
+    path: Path | None = None,
+    policy: AgentPolicy | None = None,
+) -> dict[str, Any]:
+    """Update editable parameters on an active or paused standing goal."""
+    cleaned = _require_id(goal_id)
+    store_path = path or default_goals_path()
+    data = _read(store_path)
+    for item in data["goals"]:
+        if isinstance(item, dict) and item.get("id") == cleaned:
+            if item.get("status") == "done":
+                raise StewardError("a closed goal cannot be modified")
+            if title is not None:
+                cleaned_title = _clean_text(title, limit=_MAX_TITLE, field="title")
+                if not cleaned_title:
+                    raise StewardError("title is required")
+                item["title"] = cleaned_title
+            if intent is not None:
+                item["intent"] = _clean_text(intent, limit=_MAX_INTENT, field="intent")
+            if wake_cron is not None:
+                cron = wake_cron.strip()
+                try:
+                    parse_cron(cron)
+                except CronError as exc:
+                    raise StewardError(f"invalid wake_cron: {exc}") from exc
+                item["wake_cron"] = cron
+            if see_tools is not None:
+                manifest = access_manifest(policy)
+                see = manifest["see"]
+                if len(see_tools) > _MAX_TOOLS:
+                    raise StewardError(f"see_tools is longer than {_MAX_TOOLS}")
+                refused = [name for name in see_tools if name not in see]
+                if refused:
+                    raise StewardError(
+                        "background goals may only use see tools; refused: " + ", ".join(refused)
+                    )
+                chosen = []
+                for name in see_tools:
+                    if name not in chosen:
+                        chosen.append(name)
+                if not chosen:
+                    raise StewardError("a goal needs at least one see tool")
+                item["see_tools"] = chosen
+                mcp_sids: list[str] = []
+                try:
+                    from .mcp_client import parse_mcp_tool_name
+
+                    for t in chosen:
+                        parsed = parse_mcp_tool_name(t)
+                        if parsed and parsed[0] not in mcp_sids:
+                            mcp_sids.append(parsed[0])
+                except Exception:
+                    pass
+                item["mcp_server_ids"] = mcp_sids
+            _write(store_path, data)
+            return _public(item)
+    raise StewardError("unknown goal")
+
+
 def activity_path_for(goals_path: Path) -> Path:
     return goals_path.with_name("activity.json")
 
@@ -335,6 +401,212 @@ def set_autonomy_mode(mode: str, *, path: Path | None = None) -> str:
     temp.replace(auto_path)
     auto_path.chmod(0o600)
     return cleaned
+
+
+def default_email_policy_path(vault_root: Path | None = None) -> Path:
+    from .memory_vault import default_vault_root
+
+    root = (vault_root or default_vault_root()).expanduser()
+    return root / "knowledge" / "preferences" / "email-triage-policy.md"
+
+
+def _default_email_policy_markdown() -> str:
+    return (
+        "---\n"
+        "id: email-triage-policy\n"
+        "type: preference\n"
+        "aliases: [email rules, email triage, email cleanup policy, inbox management]\n"
+        "updated_at: " + datetime.now(timezone.utc).date().isoformat() + "\n"
+        "---\n\n"
+        "# Email Triage & Inbox Management Policy\n\n"
+        "Operator preferences confirmed with Steven:\n\n"
+        "## 1. Automated GitHub & CI Notifications\n"
+        "- Filter: `from:notifications@github.com` (workflow runs, repo-validation runs, PR actions)\n"
+        "- Policy: Automatically sweep to Gmail Trash if older than 2 days (`older_than:2d`).\n"
+        "- Active PR comments and direct mentions may be retained if under 2 days old.\n\n"
+        "## 2. Retail & Commercial Promotions\n"
+        "- Filter: `category:promotions older_than:2d`\n"
+        "- Whitelist (DO NOT TRASH):\n"
+        "  - Humble Bundle\n"
+        "  - Eero\n"
+        "  - Experian\n"
+        "  - Marriott\n"
+        "  - Ella & Caroline school notices (Securly)\n"
+        "- Policy: Automatically sweep all other promotional emails older than 2 days to Gmail Trash (`category:promotions -humble -eero -experian -marriott older_than:2d`). 30-day recoverable.\n\n"
+        "## 3. Direct Trash & Unsubscribe Targets\n"
+        "- Political campaigns & PAC solicitations\n"
+        "- TUMI\n"
+        "- CoffeeCo\n"
+        "- Policy: Move directly to Gmail Trash immediately and stage unsubscribe actions. Do not keep in Primary Inbox.\n\n"
+        "## 4. Misaddressed \"Other S. Gerhart\" Emails\n"
+        "- Background: The address `sgerhart@gmail.com` frequently receives emails intended for other individuals sharing the first initial \"S\" and surname \"Gerhart\" who mistakenly type `sgerhart@gmail.com` instead of their own address.\n"
+        "- Identified Senders / Individuals:\n"
+        "  - Siobhan Gerhart (CarParts, Tipsy Elves, retail orders)\n"
+        "  - Shawn Gerhart (Brad Fry Realtor documents, PVC pipe legal notices)\n"
+        "  - Susan Gerhart (Political campaign solicitations)\n"
+        "  - Stephen Gerhart (Tech/business cold outreach)\n"
+        "  - Sam Gerhart (Auto repair orders / 2002 Chevrolet)\n"
+        "- Policy: Triage and flag misaddressed correspondence. Solicitations and retail signups for other individuals should be filtered directly to Trash; significant legal or financial correspondence for others may be archived with a notification.\n\n"
+        "## 5. Protected VIP Shield\n"
+        "- Never trash or archive emails from personal contacts, human correspondents, financial/tax institutions, or Ella & Caroline school activity notices (Securly) without explicit user review.\n"
+    )
+
+
+def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
+    whitelist: list[str] = []
+    direct_trash: list[str] = []
+    misaddressed: list[str] = []
+
+    current_section = ""
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        lower = line.lower()
+        if "whitelist" in lower:
+            current_section = "whitelist"
+            continue
+        elif "direct trash" in lower or "political campaign" in lower or "unsubscribe" in lower:
+            current_section = "direct_trash"
+            continue
+        elif "misaddressed" in lower or "identified senders" in lower:
+            current_section = "misaddressed"
+            continue
+        elif line.startswith("## ") or line.startswith("# "):
+            current_section = ""
+            continue
+
+        if line.startswith("-") or line.startswith("*"):
+            clean = line.lstrip("-* ").strip()
+            clean = clean.replace("**", "").replace("`", "").strip()
+            if not clean:
+                continue
+            lower_clean = clean.lower()
+            if (
+                lower_clean.startswith("filter:")
+                or lower_clean.startswith("policy:")
+                or lower_clean.startswith("background:")
+                or lower_clean.startswith("operator preferences")
+            ):
+                continue
+            if current_section == "whitelist" and clean not in whitelist:
+                whitelist.append(clean)
+            elif current_section == "direct_trash" and clean not in direct_trash:
+                direct_trash.append(clean)
+            elif current_section == "misaddressed" and clean not in misaddressed:
+                misaddressed.append(clean)
+
+    if not whitelist:
+        whitelist = ["Humble Bundle", "Eero", "Experian", "Marriott", "Ella & Caroline school notices (Securly)"]
+    if not direct_trash:
+        direct_trash = ["Political campaigns & PAC solicitations", "TUMI", "CoffeeCo"]
+    if not misaddressed:
+        misaddressed = [
+            "Siobhan Gerhart (CarParts, Tipsy Elves)",
+            "Shawn Gerhart (Brad Fry Realtor)",
+            "Susan Gerhart (Political campaigns)",
+            "Stephen Gerhart (Tech outreach)",
+            "Sam Gerhart (Auto repair)",
+        ]
+
+    return {
+        "ok": True,
+        "whitelist": whitelist,
+        "direct_trash": direct_trash,
+        "misaddressed_senders": misaddressed,
+        "cadence": "Promotions older than 2 days",
+        "markdown": text,
+    }
+
+
+def get_email_policy(*, vault_root: Path | None = None) -> dict[str, Any]:
+    path = default_email_policy_path(vault_root)
+    if not path.is_file():
+        default_text = _default_email_policy_markdown()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(default_text, encoding="utf-8")
+        return _parse_email_policy_markdown(default_text)
+    try:
+        content = path.read_text(encoding="utf-8")
+        return _parse_email_policy_markdown(content)
+    except OSError as exc:
+        raise StewardError(f"could not read email policy: {exc}") from exc
+
+
+def save_email_policy(
+    *,
+    whitelist: list[str] | None = None,
+    direct_trash: list[str] | None = None,
+    misaddressed_senders: list[str] | None = None,
+    cadence: str | None = None,
+    markdown: str | None = None,
+    action: str | None = None,
+    item: str | None = None,
+    vault_root: Path | None = None,
+) -> dict[str, Any]:
+    path = default_email_policy_path(vault_root)
+    current = get_email_policy(vault_root=vault_root)
+
+    if markdown is not None and markdown.strip():
+        text = markdown.strip() + "\n"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return _parse_email_policy_markdown(text)
+
+    wl = list(whitelist) if whitelist is not None else list(current.get("whitelist", []))
+    dt = list(direct_trash) if direct_trash is not None else list(current.get("direct_trash", []))
+    ma = list(misaddressed_senders) if misaddressed_senders is not None else list(current.get("misaddressed_senders", []))
+
+    if action and item:
+        clean_item = item.strip()
+        if action == "add_whitelist" and clean_item and clean_item not in wl:
+            wl.append(clean_item)
+        elif action == "remove_whitelist":
+            wl = [x for x in wl if x != clean_item]
+        elif action == "add_trash" and clean_item and clean_item not in dt:
+            dt.append(clean_item)
+        elif action == "remove_trash":
+            dt = [x for x in dt if x != clean_item]
+        elif action == "add_other" and clean_item and clean_item not in ma:
+            ma.append(clean_item)
+        elif action == "remove_other":
+            ma = [x for x in ma if x != clean_item]
+
+    wl_lines = "\n".join(f"  - {x}" for x in wl) or "  - (none)"
+    dt_lines = "\n".join(f"- {x}" for x in dt) or "- (none)"
+    ma_lines = "\n".join(f"  - {x}" for x in ma) or "  - (none)"
+
+    text = (
+        "---\n"
+        "id: email-triage-policy\n"
+        "type: preference\n"
+        "aliases: [email rules, email triage, email cleanup policy, inbox management]\n"
+        "updated_at: " + datetime.now(timezone.utc).date().isoformat() + "\n"
+        "---\n\n"
+        "# Email Triage & Inbox Management Policy\n\n"
+        "Operator preferences confirmed with Steven:\n\n"
+        "## 1. Automated GitHub & CI Notifications\n"
+        "- Filter: `from:notifications@github.com` (workflow runs, repo-validation runs, PR actions)\n"
+        "- Policy: Automatically sweep to Gmail Trash if older than 2 days (`older_than:2d`).\n"
+        "- Active PR comments and direct mentions may be retained if under 2 days old.\n\n"
+        "## 2. Retail & Commercial Promotions\n"
+        "- Filter: `category:promotions older_than:2d`\n"
+        "- Whitelist (DO NOT TRASH):\n"
+        f"{wl_lines}\n"
+        "- Policy: Automatically sweep all other promotional emails older than 2 days to Gmail Trash. 30-day recoverable.\n\n"
+        "## 3. Direct Trash & Unsubscribe Targets\n"
+        f"{dt_lines}\n"
+        "- Policy: Move directly to Gmail Trash immediately and stage unsubscribe actions. Do not keep in Primary Inbox.\n\n"
+        "## 4. Misaddressed \"Other S. Gerhart\" Emails\n"
+        "- Background: The address `sgerhart@gmail.com` frequently receives emails intended for other individuals sharing the first initial \"S\" and surname \"Gerhart\" who mistakenly type `sgerhart@gmail.com` instead of their own address.\n"
+        "- Identified Senders / Individuals:\n"
+        f"{ma_lines}\n"
+        "- Policy: Triage and flag misaddressed correspondence. Solicitations and retail signups for other individuals should be filtered directly to Trash; significant legal or financial correspondence for others may be archived with a notification.\n\n"
+        "## 5. Protected VIP Shield\n"
+        "- Never trash or archive emails from personal contacts, human correspondents, financial/tax institutions, or Ella & Caroline school activity notices (Securly) without explicit user review.\n"
+    )
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return _parse_email_policy_markdown(text)
 
 
 def _read_activity(path: Path) -> dict[str, Any]:
@@ -570,8 +842,10 @@ __all__ = [
     "close_goal",
     "create_goal",
     "default_goals_path",
+    "default_email_policy_path",
     "enqueue_wake",
     "get_autonomy_mode",
+    "get_email_policy",
     "get_goal",
     "list_activity",
     "list_goals",
@@ -579,6 +853,8 @@ __all__ = [
     "note_wake_finished",
     "pause_goal",
     "resume_goal",
+    "save_email_policy",
     "set_autonomy_mode",
+    "update_goal",
     "wake_due",
 ]

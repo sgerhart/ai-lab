@@ -25,11 +25,14 @@ from ai_lab_platform.steward import (
     classify_tool,
     close_goal,
     create_goal,
+    get_email_policy,
     get_goal,
     list_activity,
     list_goals,
     note_wake_finished,
     pause_goal,
+    save_email_policy,
+    update_goal,
     wake_due,
 )
 
@@ -87,6 +90,49 @@ class GoalTests(unittest.TestCase):
             get_goal("0" * 32, path=self.path)
         mode = self.path.stat().st_mode & 0o777
         self.assertEqual(mode, 0o600)
+
+    def test_update_goal(self) -> None:
+        goal = self._goal()
+        updated = update_goal(
+            goal["id"],
+            title="Updated Title",
+            intent="Updated Intent",
+            wake_cron="0 10 * * *",
+            see_tools=["vault_read", "files_list"],
+            path=self.path,
+        )
+        self.assertEqual(updated["title"], "Updated Title")
+        self.assertEqual(updated["intent"], "Updated Intent")
+        self.assertEqual(updated["wake_cron"], "0 10 * * *")
+        self.assertEqual(updated["see_tools"], ["vault_read", "files_list"])
+
+        # Refuses bad cron
+        with self.assertRaises(StewardError):
+            update_goal(goal["id"], wake_cron="bad cron", path=self.path)
+
+        # Refuses draft/approval tool
+        with self.assertRaises(StewardError):
+            update_goal(goal["id"], see_tools=["vault_write"], path=self.path)
+
+        # Closed goal cannot be modified
+        close_goal(goal["id"], path=self.path)
+        with self.assertRaises(StewardError):
+            update_goal(goal["id"], title="Attempt After Close", path=self.path)
+
+    def test_email_policy_round_trip(self) -> None:
+        vault = Path(self.tmp.name) / "vault"
+        policy = get_email_policy(vault_root=vault)
+        self.assertTrue(policy["ok"])
+        self.assertIn("Humble Bundle", policy["whitelist"])
+        self.assertIn("TUMI", policy["direct_trash"])
+
+        # Add to whitelist
+        saved = save_email_policy(action="add_whitelist", item="Custom VIP", vault_root=vault)
+        self.assertIn("Custom VIP", saved["whitelist"])
+
+        # Remove from whitelist
+        removed = save_email_policy(action="remove_whitelist", item="Custom VIP", vault_root=vault)
+        self.assertNotIn("Custom VIP", removed["whitelist"])
 
     def test_refuses_draft_approval_and_unknown_tools(self) -> None:
         with self.assertRaises(StewardError) as caught:
@@ -411,6 +457,40 @@ class StewardApiTests(unittest.TestCase):
 
         auto_bad = self.client.post("/v1/steward/autonomy", headers=self.headers, json={"mode": "invalid_mode"})
         self.assertEqual(auto_bad.status_code, 400)
+
+        # Goal update endpoint (PATCH)
+        goal_to_patch = self.client.post(
+            "/v1/steward/goals",
+            headers=self.headers,
+            json={
+                "title": "Initial Goal",
+                "intent": "Initial intent",
+                "wake_cron": "0 8 * * *",
+                "see_tools": ["vault_read"],
+            },
+        ).json()
+        patched = self.client.patch(
+            f"/v1/steward/goals/{goal_to_patch['id']}",
+            headers=self.headers,
+            json={"title": "Patched Goal", "wake_cron": "0 11 * * *"},
+        )
+        self.assertEqual(patched.status_code, 200)
+        self.assertEqual(patched.json()["title"], "Patched Goal")
+        self.assertEqual(patched.json()["wake_cron"], "0 11 * * *")
+
+        # Policy endpoints (GET and POST)
+        pol_get = self.client.get("/v1/steward/policy", headers=self.headers)
+        self.assertEqual(pol_get.status_code, 200)
+        self.assertTrue(pol_get.json()["ok"])
+        self.assertIn("Humble Bundle", pol_get.json()["whitelist"])
+
+        pol_post = self.client.post(
+            "/v1/steward/policy",
+            headers=self.headers,
+            json={"action": "add_whitelist", "item": "Delta Airlines"},
+        )
+        self.assertEqual(pol_post.status_code, 200)
+        self.assertIn("Delta Airlines", pol_post.json()["whitelist"])
 
         # Gmail sweep endpoint
         with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \

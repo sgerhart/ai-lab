@@ -180,17 +180,18 @@
 
           <div class="overview-separator"></div>
 
-          <!-- Section 3: Memory Vault Guardrails -->
-          <div class="overview-section">
+          <!-- Section 3: Memory Vault Guardrails & Whitelists -->
+          <div class="overview-section" id="cockpit-guardrails-section">
             <div class="overview-section-header">
               <span class="overview-title">🧠 Executive Guardrails</span>
-              <span class="overview-meta">Vault Synced</span>
+              <div class="overview-header-actions">
+                <span class="overview-meta" id="guardrails-vault-status">Vault Synced</span>
+                <button type="button" class="btn-text-action" id="btn-edit-guardrails" title="Configure whitelists & rules">⚙️ Manage Rules</button>
+              </div>
             </div>
-            <ul class="guardrails-list">
-              <li><span class="bullet bullet-rose">Direct Trash</span> Political campaigns &amp; PAC solicitations</li>
-              <li><span class="bullet bullet-emerald">Protected</span> Ella &amp; Caroline school notices (Securly)</li>
-              <li><span class="bullet bullet-purple">Triage Cadence</span> Stale retail noise older than 2 days</li>
-            </ul>
+            <div id="cockpit-guardrails-container" class="guardrails-container">
+              <!-- Rendered dynamically by JS with interactive tags and modification controls -->
+            </div>
           </div>
 
         </aside>
@@ -555,6 +556,134 @@
         <p class="empty">Notes from autonomous wakes will show up here.</p>
       </div>
     </section>
+
+    <!-- Slide-over Drawer: Guardrails & Policy Manager -->
+    <div class="drawer-backdrop" id="guardrails-drawer-overlay" hidden>
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="guardrails-drawer-title">
+        <div class="drawer-header">
+          <div>
+            <div class="sentinel-hero-badge"><span class="beacon-dot"></span> MEMORY VAULT RULEBOOK</div>
+            <h3 id="guardrails-drawer-title">Executive Guardrails &amp; Email Policy</h3>
+            <p class="drawer-sub">Stored in <code>~/.ai-lab/memory/knowledge/preferences/email-triage-policy.md</code></p>
+          </div>
+          <button type="button" class="btn-close-drawer" id="btn-close-guardrails-drawer" title="Close drawer">✕</button>
+        </div>
+
+        <div class="drawer-body">
+          <!-- 1. Whitelist Section -->
+          <div class="drawer-section">
+            <div class="drawer-section-header-flex">
+              <label class="drawer-label">🛡️ PROTECTED WHITELIST (NEVER TRASH / PRESERVE IN SWEEPS)</label>
+              <span class="drawer-count-badge" id="whitelist-count-badge">5 items</span>
+            </div>
+            <div class="interactive-tags-box" id="drawer-whitelist-tags"></div>
+            <div class="tag-input-row">
+              <input type="text" id="input-new-whitelist" placeholder="Add sender name or domain (e.g. Delta, Netflix, NYTimes)..." autocomplete="off">
+              <button type="button" class="btn-add-tag" id="btn-add-whitelist">＋ Add Whitelist</button>
+            </div>
+          </div>
+
+          <!-- 2. Direct Trash & Unsubscribe Section -->
+          <div class="drawer-section">
+            <div class="drawer-section-header-flex">
+              <label class="drawer-label">🗑️ DIRECT TRASH &amp; BULK UNSUBSCRIBE TARGETS</label>
+              <span class="drawer-count-badge" id="trash-count-badge">3 items</span>
+            </div>
+            <div class="interactive-tags-box" id="drawer-trash-tags"></div>
+            <div class="tag-input-row">
+              <input type="text" id="input-new-trash" placeholder="Add sender or keyword to direct trash (e.g. Temu, CoffeeCo, TUMI)..." autocomplete="off">
+              <button type="button" class="btn-add-tag" id="btn-add-trash">＋ Add Trash</button>
+            </div>
+          </div>
+
+          <!-- 3. Misaddressed S. Gerhart Emails -->
+          <div class="drawer-section">
+            <div class="drawer-section-header-flex">
+              <label class="drawer-label">👤 MISADDRESSED S. GERHART PATTERNS</label>
+              <span class="drawer-count-badge" id="other-count-badge">5 patterns</span>
+            </div>
+            <div class="interactive-tags-box" id="drawer-other-tags"></div>
+            <div class="tag-input-row">
+              <input type="text" id="input-new-other" placeholder="Add misaddressed pattern (e.g. Shawn Gerhart Realtor)..." autocomplete="off">
+              <button type="button" class="btn-add-tag" id="btn-add-other">＋ Add Pattern</button>
+            </div>
+          </div>
+
+          <!-- 4. Raw Memory Vault Editor -->
+          <div class="drawer-section">
+            <div class="drawer-section-header-flex">
+              <label class="drawer-label">📄 RAW MEMORY VAULT MARKDOWN</label>
+              <button type="button" class="btn-text-action" id="btn-toggle-raw-markdown">Toggle Raw Editor</button>
+            </div>
+            <div id="raw-markdown-wrap" hidden>
+              <textarea id="policy-raw-markdown" rows="10" class="policy-markdown-editor" spellcheck="false"></textarea>
+              <button type="button" class="btn-action-primary" id="btn-save-raw-markdown">💾 Save Markdown to Memory Vault</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <span id="guardrails-save-status" class="save-status-text"></span>
+          <button type="button" class="btn-action-primary" id="btn-done-guardrails">Done / Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sentinel Configuration Modal / Drawer -->
+    <div class="drawer-backdrop" id="sentinel-config-drawer-overlay" hidden>
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="sentinel-config-title">
+        <div class="drawer-header">
+          <div>
+            <div class="sentinel-hero-badge"><span class="beacon-dot"></span> CONFIGURE STANDING SENTINEL</div>
+            <h3 id="sentinel-config-title">Configure Sentinel Watch</h3>
+            <p class="drawer-sub">Modify instructions, wake rhythm schedule, and permitted read-only tools.</p>
+          </div>
+          <button type="button" class="btn-close-drawer" id="btn-close-sentinel-config" title="Close">✕</button>
+        </div>
+
+        <form id="sentinel-edit-form" class="drawer-body">
+          <input type="hidden" id="edit-goal-id">
+
+          <div class="composer-field-group">
+            <label for="edit-goal-title" class="field-label">RESPONSIBILITY / SENTINEL NAME</label>
+            <input id="edit-goal-title" type="text" maxlength="200" required autocomplete="off">
+          </div>
+
+          <div class="composer-field-group">
+            <label for="edit-goal-intent" class="field-label">STANDING INSTRUCTIONS &amp; ANOMALIES TO FLAG</label>
+            <textarea id="edit-goal-intent" maxlength="4000" rows="3"></textarea>
+          </div>
+
+          <div class="rhythm-wrapper">
+            <span class="field-label">WAKE RHYTHM</span>
+            <div class="rhythm" id="edit-rhythm" role="group" aria-label="Schedule rhythm">
+              <button type="button" class="seg" data-cron="0 8 * * *">Morning (8:00 AM)</button>
+              <button type="button" class="seg" data-cron="0 9 * * *">Morning (9:00 AM)</button>
+              <button type="button" class="seg" data-cron="0 * * * *">Hourly</button>
+              <button type="button" class="seg" data-cron="*/15 * * * *">Every 15 min</button>
+              <button type="button" class="seg" data-cron="custom">Custom Cron</button>
+            </div>
+            <div class="cron-row" id="edit-cron-row" hidden>
+              <label for="edit-wake-cron" class="field-label">Custom cron (minute hour day month weekday)</label>
+              <input id="edit-wake-cron" value="0 8 * * *" maxlength="80" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="sources">
+            <span class="field-label">PERMITTED TOOLS (READ-ONLY CEILING)</span>
+            <ul class="chips" id="edit-see-tools"></ul>
+          </div>
+
+          <div class="compose-bar">
+            <p id="edit-goal-status" role="status"></p>
+            <div class="composer-submit-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-edit-goal">Cancel</button>
+              <button type="submit" class="primary" id="btn-save-edit-goal">💾 Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   </main>
   <script src="/static/chrome.js?v=20261105-clean"></script>
   <script src="/static/steward.js?v=5"></script>

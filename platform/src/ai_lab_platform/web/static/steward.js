@@ -551,6 +551,11 @@
             }, "btn-fleet-wake"));
           }
           if (goal.status !== "done") {
+            const configBtn = textButton("⚙️ Configure", function () {
+              openGoalConfigModal(goal);
+            }, "btn-fleet-configure");
+            actions.appendChild(configBtn);
+
             const confirm = document.createElement("div");
             confirm.className = "confirm";
             confirm.hidden = true;
@@ -1118,18 +1123,321 @@
 
       const meta = document.createElement("div");
       meta.className = "sentinel-meta";
-      add(meta, "span", "Cron: " + (g.wake_cron || "0 8 * * *"));
-      add(meta, "span", g.last_due_at ? "Last: " + friendlyWhen(g.last_due_at) : "Pending Wake");
+      add(meta, "span", "🕒 " + (g.wake_cron || "0 8 * * *"));
+      add(meta, "span", "⚡ " + (g.last_due_at ? "Last: " + friendlyWhen(g.last_due_at) : "Pending Wake"));
       item.appendChild(meta);
+
+      const actions = document.createElement("div");
+      actions.className = "sentinel-item-actions";
+      const cfgBtn = add(actions, "button", "⚙️ Configure Watch", "btn-sentinel-edit");
+      cfgBtn.type = "button";
+      cfgBtn.addEventListener("click", function () {
+        openGoalConfigModal(g);
+      });
+      const wakeBtn = add(actions, "button", "⚡ Wake Now", "btn-text-action");
+      wakeBtn.type = "button";
+      wakeBtn.addEventListener("click", function () {
+        wakeBtn.textContent = "⚡ Waking...";
+        wakeBtn.disabled = true;
+        act(g.id, "wake");
+      });
+      item.appendChild(actions);
 
       list.appendChild(item);
     });
+  }
+
+  let currentPolicy = null;
+
+  function loadEmailPolicy() {
+    return fetch("/v1/steward/policy", { headers: headers() })
+      .then(readJson)
+      .then(function (policy) {
+        currentPolicy = policy;
+        renderExecutiveGuardrails(policy);
+        renderGuardrailsDrawer(policy);
+      })
+      .catch(function () {});
+  }
+
+  function modifyPolicy(payload) {
+    return fetch("/v1/steward/policy", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(payload),
+    })
+      .then(readJson)
+      .then(function (policy) {
+        currentPolicy = policy;
+        renderExecutiveGuardrails(policy);
+        renderGuardrailsDrawer(policy);
+        const status = document.getElementById("guardrails-save-status");
+        if (status) {
+          status.textContent = "✓ Synced with Memory Vault";
+          setTimeout(function () { status.textContent = ""; }, 3000);
+        }
+      })
+      .catch(function (err) {
+        alert("Could not update policy: " + err.message);
+      });
+  }
+
+  function renderExecutiveGuardrails(policy) {
+    const container = document.getElementById("cockpit-guardrails-container");
+    if (!container) return;
+    clear(container);
+    if (!policy) return;
+
+    // 1. Protected Whitelist
+    const groupProtected = document.createElement("div");
+    groupProtected.className = "guardrails-group";
+    const headProt = document.createElement("div");
+    headProt.className = "guardrails-group-header";
+    add(headProt, "span", "🛡️ Protected Whitelist", "guardrails-group-title title-protected");
+    add(headProt, "span", "(" + (policy.whitelist ? policy.whitelist.length : 0) + ")", "drawer-count-badge");
+    groupProtected.appendChild(headProt);
+
+    const pillsProt = document.createElement("div");
+    pillsProt.className = "guardrail-pills";
+    (policy.whitelist || []).forEach(function (item) {
+      const pill = document.createElement("span");
+      pill.className = "guardrail-pill pill-protected";
+      pill.appendChild(document.createTextNode(item));
+      const rem = add(pill, "button", "×", "pill-remove-btn");
+      rem.type = "button";
+      rem.title = "Remove from whitelist";
+      rem.addEventListener("click", function (e) {
+        e.stopPropagation();
+        modifyPolicy({ action: "remove_whitelist", item: item });
+      });
+      pillsProt.appendChild(pill);
+    });
+
+    const addProtBtn = add(pillsProt, "button", "＋ Add", "btn-add-pill-inline");
+    addProtBtn.type = "button";
+    addProtBtn.title = "Add sender to whitelist";
+    addProtBtn.addEventListener("click", function () {
+      const val = prompt("Enter sender or domain to protect / whitelist (e.g. Delta, Netflix, NYTimes):");
+      if (val && val.trim()) {
+        modifyPolicy({ action: "add_whitelist", item: val.trim() });
+      }
+    });
+    groupProtected.appendChild(pillsProt);
+    container.appendChild(groupProtected);
+
+    // 2. Direct Trash & Unsubscribe
+    const groupTrash = document.createElement("div");
+    groupTrash.className = "guardrails-group";
+    const headTrash = document.createElement("div");
+    headTrash.className = "guardrails-group-header";
+    add(headTrash, "span", "🗑️ Direct Trash & Unsubscribe", "guardrails-group-title title-trash");
+    add(headTrash, "span", "(" + (policy.direct_trash ? policy.direct_trash.length : 0) + ")", "drawer-count-badge");
+    groupTrash.appendChild(headTrash);
+
+    const pillsTrash = document.createElement("div");
+    pillsTrash.className = "guardrail-pills";
+    (policy.direct_trash || []).forEach(function (item) {
+      const pill = document.createElement("span");
+      pill.className = "guardrail-pill pill-trash";
+      pill.appendChild(document.createTextNode(item));
+      const rem = add(pill, "button", "×", "pill-remove-btn");
+      rem.type = "button";
+      rem.title = "Remove from direct trash";
+      rem.addEventListener("click", function (e) {
+        e.stopPropagation();
+        modifyPolicy({ action: "remove_trash", item: item });
+      });
+      pillsTrash.appendChild(pill);
+    });
+
+    const addTrashBtn = add(pillsTrash, "button", "＋ Add", "btn-add-pill-inline");
+    addTrashBtn.type = "button";
+    addTrashBtn.title = "Add sender to direct trash";
+    addTrashBtn.addEventListener("click", function () {
+      const val = prompt("Enter sender to direct trash / unsubscribe (e.g. Temu, Shein):");
+      if (val && val.trim()) {
+        modifyPolicy({ action: "add_trash", item: val.trim() });
+      }
+    });
+    groupTrash.appendChild(pillsTrash);
+    container.appendChild(groupTrash);
+
+    // 3. Misaddressed S. Gerhart Patterns
+    const groupOther = document.createElement("div");
+    groupOther.className = "guardrails-group";
+    const headOther = document.createElement("div");
+    headOther.className = "guardrails-group-header";
+    add(headOther, "span", "👤 Misaddressed ('Other Gerharts')", "guardrails-group-title title-other");
+    add(headOther, "span", "(" + (policy.misaddressed_senders ? policy.misaddressed_senders.length : 0) + ")", "drawer-count-badge");
+    groupOther.appendChild(headOther);
+
+    const pillsOther = document.createElement("div");
+    pillsOther.className = "guardrail-pills";
+    (policy.misaddressed_senders || []).forEach(function (item) {
+      const pill = document.createElement("span");
+      pill.className = "guardrail-pill pill-other";
+      pill.appendChild(document.createTextNode(item));
+      const rem = add(pill, "button", "×", "pill-remove-btn");
+      rem.type = "button";
+      rem.title = "Remove misaddressed pattern";
+      rem.addEventListener("click", function (e) {
+        e.stopPropagation();
+        modifyPolicy({ action: "remove_other", item: item });
+      });
+      pillsOther.appendChild(pill);
+    });
+
+    const addOtherBtn = add(pillsOther, "button", "＋ Add", "btn-add-pill-inline");
+    addOtherBtn.type = "button";
+    addOtherBtn.title = "Add misaddressed pattern";
+    addOtherBtn.addEventListener("click", function () {
+      const val = prompt("Enter misaddressed name or pattern (e.g. Shawn Gerhart Realtor):");
+      if (val && val.trim()) {
+        modifyPolicy({ action: "add_other", item: val.trim() });
+      }
+    });
+    groupOther.appendChild(pillsOther);
+    container.appendChild(groupOther);
+  }
+
+  function renderGuardrailsDrawer(policy) {
+    if (!policy) return;
+    const wlTags = document.getElementById("drawer-whitelist-tags");
+    const dtTags = document.getElementById("drawer-trash-tags");
+    const otherTags = document.getElementById("drawer-other-tags");
+    const rawMd = document.getElementById("policy-raw-markdown");
+    const wlBadge = document.getElementById("whitelist-count-badge");
+    const dtBadge = document.getElementById("trash-count-badge");
+    const otherBadge = document.getElementById("other-count-badge");
+
+    if (wlBadge) wlBadge.textContent = (policy.whitelist ? policy.whitelist.length : 0) + " items";
+    if (dtBadge) dtBadge.textContent = (policy.direct_trash ? policy.direct_trash.length : 0) + " items";
+    if (otherBadge) otherBadge.textContent = (policy.misaddressed_senders ? policy.misaddressed_senders.length : 0) + " patterns";
+
+    if (rawMd && (!rawMd.dataset.userEdited || rawMd.dataset.userEdited === "false")) {
+      rawMd.value = policy.markdown || "";
+    }
+
+    if (wlTags) {
+      clear(wlTags);
+      (policy.whitelist || []).forEach(function (item) {
+        const pill = document.createElement("span");
+        pill.className = "guardrail-pill pill-protected";
+        pill.appendChild(document.createTextNode(item));
+        const rem = add(pill, "button", "×", "pill-remove-btn");
+        rem.type = "button";
+        rem.addEventListener("click", function () {
+          modifyPolicy({ action: "remove_whitelist", item: item });
+        });
+        wlTags.appendChild(pill);
+      });
+    }
+
+    if (dtTags) {
+      clear(dtTags);
+      (policy.direct_trash || []).forEach(function (item) {
+        const pill = document.createElement("span");
+        pill.className = "guardrail-pill pill-trash";
+        pill.appendChild(document.createTextNode(item));
+        const rem = add(pill, "button", "×", "pill-remove-btn");
+        rem.type = "button";
+        rem.addEventListener("click", function () {
+          modifyPolicy({ action: "remove_trash", item: item });
+        });
+        dtTags.appendChild(pill);
+      });
+    }
+
+    if (otherTags) {
+      clear(otherTags);
+      (policy.misaddressed_senders || []).forEach(function (item) {
+        const pill = document.createElement("span");
+        pill.className = "guardrail-pill pill-other";
+        pill.appendChild(document.createTextNode(item));
+        const rem = add(pill, "button", "×", "pill-remove-btn");
+        rem.type = "button";
+        rem.addEventListener("click", function () {
+          modifyPolicy({ action: "remove_other", item: item });
+        });
+        otherTags.appendChild(pill);
+      });
+    }
+  }
+
+  function openGoalConfigModal(goal) {
+    if (!goal) return;
+    const modal = document.getElementById("sentinel-config-drawer-overlay");
+    const idInput = document.getElementById("edit-goal-id");
+    const titleInput = document.getElementById("edit-goal-title");
+    const intentInput = document.getElementById("edit-goal-intent");
+    const cronInput = document.getElementById("edit-wake-cron");
+    const cronRow = document.getElementById("edit-cron-row");
+    const rhythmSegs = document.querySelectorAll("#edit-rhythm .seg");
+    const statusText = document.getElementById("edit-goal-status");
+
+    if (idInput) idInput.value = goal.id;
+    if (titleInput) titleInput.value = goal.title || "";
+    if (intentInput) intentInput.value = goal.intent || "";
+    if (statusText) statusText.textContent = "";
+
+    const cron = goal.wake_cron || "0 8 * * *";
+    if (cronInput) cronInput.value = cron;
+
+    let matched = false;
+    rhythmSegs.forEach(function (seg) {
+      if (seg.dataset.cron === cron) {
+        seg.classList.add("active");
+        seg.setAttribute("aria-pressed", "true");
+        matched = true;
+      } else {
+        seg.classList.remove("active");
+        seg.setAttribute("aria-pressed", "false");
+      }
+    });
+
+    if (!matched) {
+      rhythmSegs.forEach(function (seg) {
+        if (seg.dataset.cron === "custom") {
+          seg.classList.add("active");
+          seg.setAttribute("aria-pressed", "true");
+        }
+      });
+      if (cronRow) cronRow.hidden = false;
+    } else {
+      if (cronRow) cronRow.hidden = true;
+    }
+
+    const toolsUl = document.getElementById("edit-see-tools");
+    if (toolsUl) {
+      clear(toolsUl);
+      fetch("/v1/steward/access", { headers: headers() })
+        .then(readJson)
+        .then(function (access) {
+          const see = (access.classes && access.classes.see) || [];
+          see.forEach(function (toolName) {
+            const li = document.createElement("li");
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "chip-tool" + ((goal.see_tools || []).includes(toolName) ? " active" : "");
+            btn.textContent = toolName;
+            btn.addEventListener("click", function () {
+              btn.classList.toggle("active");
+            });
+            li.appendChild(btn);
+            toolsUl.appendChild(li);
+          });
+        })
+        .catch(function () {});
+    }
+
+    if (modal) modal.hidden = false;
   }
 
   // --- ACTIONS ---
   function load() {
     loadAutonomyMode();
     loadMailboxRadar();
+    loadEmailPolicy();
     return fetch("/v1/steward/access", { headers: headers() })
       .then(readJson)
       .then(function (access) {
@@ -1543,6 +1851,161 @@
     cockpitInput.addEventListener("input", function () {
       cockpitInput.style.height = "auto";
       cockpitInput.style.height = Math.min(cockpitInput.scrollHeight, 140) + "px";
+    });
+  }
+
+  // --- GUARDRAILS & SENTINEL MODALS EVENT LISTENERS ---
+  const btnEditGuardrails = document.getElementById("btn-edit-guardrails");
+  const guardrailsDrawerOverlay = document.getElementById("guardrails-drawer-overlay");
+  const btnCloseGuardrailsDrawer = document.getElementById("btn-close-guardrails-drawer");
+  const btnDoneGuardrails = document.getElementById("btn-done-guardrails");
+
+  if (btnEditGuardrails && guardrailsDrawerOverlay) {
+    btnEditGuardrails.addEventListener("click", function () {
+      guardrailsDrawerOverlay.hidden = false;
+      renderGuardrailsDrawer(currentPolicy);
+    });
+  }
+  if (btnCloseGuardrailsDrawer && guardrailsDrawerOverlay) {
+    btnCloseGuardrailsDrawer.addEventListener("click", function () {
+      guardrailsDrawerOverlay.hidden = true;
+    });
+  }
+  if (btnDoneGuardrails && guardrailsDrawerOverlay) {
+    btnDoneGuardrails.addEventListener("click", function () {
+      guardrailsDrawerOverlay.hidden = true;
+    });
+  }
+
+  const btnAddWl = document.getElementById("btn-add-whitelist");
+  if (btnAddWl) {
+    btnAddWl.addEventListener("click", function () {
+      const input = document.getElementById("input-new-whitelist");
+      if (input && input.value.trim()) {
+        modifyPolicy({ action: "add_whitelist", item: input.value.trim() });
+        input.value = "";
+      }
+    });
+  }
+
+  const btnAddDt = document.getElementById("btn-add-trash");
+  if (btnAddDt) {
+    btnAddDt.addEventListener("click", function () {
+      const input = document.getElementById("input-new-trash");
+      if (input && input.value.trim()) {
+        modifyPolicy({ action: "add_trash", item: input.value.trim() });
+        input.value = "";
+      }
+    });
+  }
+
+  const btnAddOther = document.getElementById("btn-add-other");
+  if (btnAddOther) {
+    btnAddOther.addEventListener("click", function () {
+      const input = document.getElementById("input-new-other");
+      if (input && input.value.trim()) {
+        modifyPolicy({ action: "add_other", item: input.value.trim() });
+        input.value = "";
+      }
+    });
+  }
+
+  const btnToggleRaw = document.getElementById("btn-toggle-raw-markdown");
+  const rawWrap = document.getElementById("raw-markdown-wrap");
+  if (btnToggleRaw && rawWrap) {
+    btnToggleRaw.addEventListener("click", function () {
+      rawWrap.hidden = !rawWrap.hidden;
+    });
+  }
+
+  const btnSaveRaw = document.getElementById("btn-save-raw-markdown");
+  if (btnSaveRaw) {
+    btnSaveRaw.addEventListener("click", function () {
+      const rawText = (document.getElementById("policy-raw-markdown").value || "").trim();
+      modifyPolicy({ markdown: rawText });
+    });
+  }
+
+  // Sentinel Config Drawer events
+  const sentinelModal = document.getElementById("sentinel-config-drawer-overlay");
+  const btnCloseSentConfig = document.getElementById("btn-close-sentinel-config");
+  const btnCancelSentConfig = document.getElementById("btn-cancel-edit-goal");
+  const editRhythmSegs = document.querySelectorAll("#edit-rhythm .seg");
+  const editCronRow = document.getElementById("edit-cron-row");
+
+  if (btnCloseSentConfig && sentinelModal) {
+    btnCloseSentConfig.addEventListener("click", function () {
+      sentinelModal.hidden = true;
+    });
+  }
+  if (btnCancelSentConfig && sentinelModal) {
+    btnCancelSentConfig.addEventListener("click", function () {
+      sentinelModal.hidden = true;
+    });
+  }
+
+  editRhythmSegs.forEach(function (seg) {
+    seg.addEventListener("click", function () {
+      editRhythmSegs.forEach(function (s) {
+        s.classList.remove("active");
+        s.setAttribute("aria-pressed", "false");
+      });
+      seg.classList.add("active");
+      seg.setAttribute("aria-pressed", "true");
+      if (seg.dataset.cron === "custom") {
+        if (editCronRow) editCronRow.hidden = false;
+      } else {
+        if (editCronRow) editCronRow.hidden = true;
+        const cronInput = document.getElementById("edit-wake-cron");
+        if (cronInput) cronInput.value = seg.dataset.cron;
+      }
+    });
+  });
+
+  const sentinelEditForm = document.getElementById("sentinel-edit-form");
+  if (sentinelEditForm) {
+    sentinelEditForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const goalId = document.getElementById("edit-goal-id").value;
+      const title = document.getElementById("edit-goal-title").value.trim();
+      const intent = document.getElementById("edit-goal-intent").value.trim();
+
+      let cron = "0 8 * * *";
+      const activeSeg = document.querySelector("#edit-rhythm .seg.active");
+      if (activeSeg) {
+        if (activeSeg.dataset.cron === "custom") {
+          cron = (document.getElementById("edit-wake-cron").value || "").trim();
+        } else {
+          cron = activeSeg.dataset.cron;
+        }
+      }
+
+      const chosenTools = [];
+      document.querySelectorAll("#edit-see-tools .chip-tool.active").forEach(function (el) {
+        chosenTools.push(el.textContent.trim());
+      });
+
+      const statusText = document.getElementById("edit-goal-status");
+      if (statusText) statusText.textContent = "Saving changes...";
+
+      fetch("/v1/steward/goals/" + encodeURIComponent(goalId), {
+        method: "PATCH",
+        headers: headers(),
+        body: JSON.stringify({
+          title: title,
+          intent: intent,
+          wake_cron: cron,
+          see_tools: chosenTools.length ? chosenTools : ["vault_read"],
+        }),
+      })
+        .then(readJson)
+        .then(function () {
+          if (sentinelModal) sentinelModal.hidden = true;
+          load();
+        })
+        .catch(function (err) {
+          if (statusText) statusText.textContent = "Error: " + err.message;
+        });
     });
   }
 

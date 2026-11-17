@@ -40,11 +40,14 @@ from .steward import (
     create_goal,
     default_goals_path,
     enqueue_wake,
+    get_email_policy,
     get_goal,
     list_activity,
     list_goals,
     pause_goal,
     resume_goal,
+    save_email_policy,
+    update_goal,
     wake_due,
 )
 from .agent_worker import AgentRunWorker, drain_queued_runs
@@ -520,6 +523,23 @@ class StewardGoalIn(BaseModel):
     intent: str = ""
     wake_cron: str
     see_tools: list[str] | None = None
+
+
+class StewardGoalUpdateIn(BaseModel):
+    title: str | None = None
+    intent: str | None = None
+    wake_cron: str | None = None
+    see_tools: list[str] | None = None
+
+
+class StewardPolicyIn(BaseModel):
+    whitelist: list[str] | None = None
+    direct_trash: list[str] | None = None
+    misaddressed_senders: list[str] | None = None
+    cadence: str | None = None
+    markdown: str | None = None
+    action: str | None = None
+    item: str | None = None
 
 
 class AgentDefinitionIn(BaseModel):
@@ -2854,6 +2874,42 @@ def create_control_app(
             path=_steward_path(),
         )
 
+    @app.patch("/v1/steward/goals/{goal_id}")
+    def patch_steward_goal(
+        request: Request,
+        goal_id: str,
+        body: StewardGoalUpdateIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(
+            update_goal,
+            goal_id,
+            title=body.title,
+            intent=body.intent,
+            wake_cron=body.wake_cron,
+            see_tools=body.see_tools,
+            path=_steward_path(),
+        )
+
+    @app.put("/v1/steward/goals/{goal_id}")
+    def put_steward_goal(
+        request: Request,
+        goal_id: str,
+        body: StewardGoalUpdateIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        return _steward_call(
+            update_goal,
+            goal_id,
+            title=body.title,
+            intent=body.intent,
+            wake_cron=body.wake_cron,
+            see_tools=body.see_tools,
+            path=_steward_path(),
+        )
+
     @app.post("/v1/steward/goals/{goal_id}/pause")
     def post_steward_pause(
         request: Request,
@@ -2930,6 +2986,55 @@ def create_control_app(
             return {"ok": True, "mode": saved}
         except StewardError as exc:
             raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.get("/v1/steward/policy")
+    def get_steward_policy_endpoint(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        root = getattr(app.state, "memory_vault_root", None)
+        return _steward_call(get_email_policy, vault_root=root)
+
+    @app.post("/v1/steward/policy")
+    def post_steward_policy_endpoint(
+        request: Request,
+        body: StewardPolicyIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        root = getattr(app.state, "memory_vault_root", None)
+        return _steward_call(
+            save_email_policy,
+            whitelist=body.whitelist,
+            direct_trash=body.direct_trash,
+            misaddressed_senders=body.misaddressed_senders,
+            cadence=body.cadence,
+            markdown=body.markdown,
+            action=body.action,
+            item=body.item,
+            vault_root=root,
+        )
+
+    @app.patch("/v1/steward/policy")
+    def patch_steward_policy_endpoint(
+        request: Request,
+        body: StewardPolicyIn,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _gate(request, authorization)
+        root = getattr(app.state, "memory_vault_root", None)
+        return _steward_call(
+            save_email_policy,
+            whitelist=body.whitelist,
+            direct_trash=body.direct_trash,
+            misaddressed_senders=body.misaddressed_senders,
+            cadence=body.cadence,
+            markdown=body.markdown,
+            action=body.action,
+            item=body.item,
+            vault_root=root,
+        )
 
     @app.post("/v1/agent-definitions/{definition_id}/runs")
     def run_agent_definition(
