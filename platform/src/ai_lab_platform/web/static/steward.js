@@ -1428,10 +1428,11 @@
       btnRetail.textContent = "⚡ Sweeping 50...";
       btnRetail.disabled = true;
 
+      const promoQuery = "category:promotions -humble -eero -experian -marriott older_than:2d";
       fetch("/v1/gmail/sweep", {
         method: "POST",
         headers: headers(),
-        body: JSON.stringify({ query: "category:promotions older_than:2d", limit: 50 }),
+        body: JSON.stringify({ query: promoQuery, limit: 50 }),
       })
         .then(readJson)
         .then(function (res) {
@@ -1451,7 +1452,8 @@
 
           const snippetItems = (res.sample_snippets || []).map(function (s) { return "- " + s; }).join("\n");
           const receiptMsg = "### 🧹 Gmail Sweep Receipt\n" +
-            "**Action:** Moved **" + count + " promotional threads** (`category:promotions older_than:2d`) to Gmail Trash.\n" +
+            "**Action:** Moved **" + count + " promotional threads** (`" + promoQuery + "`) to Gmail Trash.\n" +
+            "**Whitelisted & Protected:** Humble Bundle, Eero, Experian, Marriott are preserved.\n" +
             "**Safety:** Recoverable for 30 days in Google Trash.\n" +
             (snippetItems ? "**Cleaned Samples:**\n" + snippetItems + "\n\n" : "\n") +
             "Backlog counter updated. Click **Sweep Next 50** on the card to continue cleaning.";
@@ -1483,11 +1485,12 @@
       btnAuthorizeAll.textContent = "⚡ Authorizing All...";
       btnAuthorizeAll.disabled = true;
 
+      const promoQuery = "category:promotions -humble -eero -experian -marriott older_than:2d";
       // 1. Execute the 50 promo sweep
       fetch("/v1/gmail/sweep", {
         method: "POST",
         headers: headers(),
-        body: JSON.stringify({ query: "category:promotions older_than:2d", limit: 50 }),
+        body: JSON.stringify({ query: promoQuery, limit: 50 }),
       })
         .then(readJson)
         .then(function (res) {
