@@ -925,7 +925,7 @@
         // 3. Drain via tick if available
         fetch("/v1/agent-runs/worker/tick", { method: "POST", headers: headers() }).catch(function () {});
 
-        // 4. Poll for assistant message
+        // 4. Poll for assistant message (up to 5 minutes for local LLM + batch tool execution)
         let attempts = 0;
         if (pollInterval) clearInterval(pollInterval);
         pollInterval = setInterval(function () {
@@ -943,7 +943,9 @@
                 if (cockpitThinking) cockpitThinking.hidden = true;
                 renderMessages(msgs);
                 load(); // Refresh watches in case Steward created one
-              } else if (attempts >= 20) {
+                loadMailboxStats(); // Refresh live mailbox counter
+                loadActivity(); // Refresh intelligence feed
+              } else if (attempts >= 150) {
                 clearInterval(pollInterval);
                 pollInterval = null;
                 isThinking = false;
@@ -953,7 +955,7 @@
               }
             })
             .catch(function () {
-              if (attempts >= 20) {
+              if (attempts >= 150) {
                 clearInterval(pollInterval);
                 pollInterval = null;
                 isThinking = false;
@@ -961,7 +963,7 @@
                 if (cockpitThinking) cockpitThinking.hidden = true;
               }
             });
-        }, 1100);
+        }, 2000);
       })
       .catch(function (err) {
         isThinking = false;
