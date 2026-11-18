@@ -137,6 +137,10 @@
             <div class="overview-meter-track">
               <div class="overview-meter-fill" id="radar-meter-inbox" style="width: 94%;"></div>
             </div>
+            <div class="burndown-meter-label">
+              <span>Backlog Burn</span>
+              <span id="cockpit-burndown-target">26,956 → 500 Target</span>
+            </div>
 
             <!-- Clean Borderless Noise Rows -->
             <ul class="overview-noise-list">
@@ -264,6 +268,19 @@
                   📁 Archive 100 LinkedIn Alerts
                 </button>
               </div>
+
+              <!-- Action Card 5: Misaddressed Mail Filter -->
+              <div class="action-card card-sweep" id="action-card-misaddressed">
+                <div class="action-card-top">
+                  <span class="badge-sweep">MISADDRESSED · ARCHIVE</span>
+                  <span class="card-meta" id="misaddressed-card-meta">S. Gerhart</span>
+                </div>
+                <h4>Misaddressed Mail Triage</h4>
+                <p>Archive stray emails sent to other individuals (e.g. Shawn Gerhart, realtor &amp; escrow alerts). Clears to All Mail.</p>
+                <button type="button" class="btn-action-primary" id="btn-action-misaddressed">
+                  👤 Filter Misaddressed Threads
+                </button>
+              </div>
             </div>
           </section>
 
@@ -284,10 +301,13 @@
               <!-- Replaces or mirrors messages -->
             </div>
 
-            <!-- Thinking Banner -->
+            <!-- Thinking Banner with Live Step & Timer -->
             <div class="steward-thinking" id="cockpit-thinking" hidden>
               <div class="thinking-spinner"></div>
-              <span>Steward is investigating with personal agent tools...</span>
+              <div class="thinking-content">
+                <span class="thinking-main" id="cockpit-thinking-text">Waking Qwen 35B on mac-mini...</span>
+                <span class="thinking-sub" id="cockpit-thinking-sub">0s elapsed · mac-mini private loop</span>
+              </div>
             </div>
 
             <!-- Compact Glass Composer -->

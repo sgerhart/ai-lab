@@ -104,6 +104,8 @@
   const cockpitInput = document.getElementById("cockpit-chat-input");
   const cockpitSendBtn = document.getElementById("cockpit-send-btn");
   const cockpitThinking = document.getElementById("cockpit-thinking");
+  const cockpitThinkingText = document.getElementById("cockpit-thinking-text");
+  const cockpitThinkingSub = document.getElementById("cockpit-thinking-sub");
   const btnCockpitWake = document.getElementById("btn-cockpit-wake");
   const btnAuthorizeAll = document.getElementById("btn-authorize-all");
 
@@ -165,30 +167,75 @@
     let currentList = null;
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) {
+      const rawLine = lines[i].trim();
+      if (!rawLine) {
         currentList = null;
         continue;
       }
-      if (/^#{1,3}\s+/.test(line)) {
+
+      // Check if line represents an in-chat guardrail promotion pill
+      const cleanLine = rawLine.replace(/^[-*]\s+/, "").replace(/^`+|`+$/g, "").trim();
+      const pillMatch = cleanLine.match(/^\[?\+\s*(Auto-Archive|Direct Trash|Whitelist):\s*([^\]]+)\]?$/i);
+      if (pillMatch) {
+        currentList = null;
+        const actionType = pillMatch[1].toLowerCase();
+        const itemName = pillMatch[2].trim();
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "guardrail-promote-pill";
+        const icon = actionType.indexOf("archive") !== -1 ? "📁 " : (actionType.indexOf("trash") !== -1 ? "🗑️ " : "🛡️ ");
+        btn.textContent = icon + "+ " + pillMatch[1] + ": " + itemName;
+
+        btn.addEventListener("click", function () {
+          btn.disabled = true;
+          btn.textContent = "⏳ Adding...";
+          const apiAction = actionType.indexOf("archive") !== -1
+            ? "add_auto_archive"
+            : (actionType.indexOf("trash") !== -1 ? "add_direct_trash" : "add_whitelist");
+
+          fetch("/v1/steward/policy", {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify({ action: apiAction, item: itemName }),
+          })
+            .then(readJson)
+            .then(function () {
+              btn.textContent = "✓ Added: " + itemName;
+              btn.classList.add("pill-saved");
+              loadPolicy();
+              setStatus("✓ Added " + itemName + " to Executive Guardrails.");
+            })
+            .catch(function (err) {
+              btn.disabled = false;
+              btn.textContent = "Failed (Retry)";
+              setStatus(err.message || "Failed to update guardrails.");
+            });
+        });
+
+        container.appendChild(btn);
+        continue;
+      }
+
+      if (/^#{1,3}\s+/.test(rawLine)) {
         currentList = null;
         const heading = document.createElement("h4");
         heading.className = "feed-section-heading";
-        heading.textContent = line.replace(/^#{1,3}\s+/, "");
+        heading.textContent = rawLine.replace(/^#{1,3}\s+/, "");
         container.appendChild(heading);
-      } else if (/^[-*]\s+/.test(line)) {
+      } else if (/^[-*]\s+/.test(rawLine)) {
         if (!currentList) {
           currentList = document.createElement("ul");
           currentList.className = "feed-bullet-list";
           container.appendChild(currentList);
         }
         const li = document.createElement("li");
-        li.textContent = line.replace(/^[-*]\s+/, "");
+        li.textContent = rawLine.replace(/^[-*]\s+/, "");
         currentList.appendChild(li);
       } else {
         currentList = null;
         const p = document.createElement("p");
-        p.textContent = line;
+        p.textContent = rawLine;
         container.appendChild(p);
       }
     }
@@ -755,6 +802,18 @@
       .then(readJson)
       .then(function (res) {
         renderMessages(res.messages || []);
+        // Check for in-flight run to resume live tracking
+        fetch("/v1/conversations/" + encodeURIComponent(convId) + "/runs", { headers: headers() })
+          .then(readJson)
+          .then(function (rRes) {
+            const runs = rRes.runs || [];
+            const activeRun = runs.find(function (r) { return r.status === "running" || r.status === "queued"; });
+            if (activeRun) {
+              const startMs = activeRun.created_at ? new Date(activeRun.created_at).getTime() : Date.now();
+              startThinkingPoll(convId, startMs, (res.messages || []).length + 1);
+            }
+          })
+          .catch(function () {});
       })
       .catch(function () {
         renderMessages([]);
@@ -838,6 +897,114 @@
     });
   }
 
+  function setThinkingState(on, customMain, customSub) {
+    isThinking = on;
+    if (thinkingBanner) thinkingBanner.hidden = !on;
+    if (cockpitThinking) cockpitThinking.hidden = !on;
+    if (presenceMark) presenceMark.dataset.state = on ? "awake" : "idle";
+
+    const textEl = document.getElementById("cockpit-thinking-text");
+    const subEl = document.getElementById("cockpit-thinking-sub");
+    if (on) {
+      if (textEl && customMain) textEl.textContent = customMain;
+      if (subEl && customSub) subEl.textContent = customSub;
+    }
+  }
+
+  function stopThinkingPoll() {
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      pollInterval = null;
+    }
+    setThinkingState(false);
+  }
+
+  function startThinkingPoll(cid, startTime, expectedMinMsgs) {
+    if (pollInterval) clearInterval(pollInterval);
+    const startMs = startTime || Date.now();
+    setThinkingState(true, "⚡ Waking Qwen 35B on mac-mini...", "0s elapsed · mac-mini private loop");
+
+    let attempts = 0;
+    pollInterval = setInterval(function () {
+      attempts++;
+      const elapsed = Math.max(1, Math.round((Date.now() - startMs) / 1000));
+      const subEl = document.getElementById("cockpit-thinking-sub");
+      if (subEl) subEl.textContent = elapsed + "s elapsed · mac-mini private loop";
+
+      // 1. Check runs status & tool traces
+      fetch("/v1/conversations/" + encodeURIComponent(cid) + "/runs", { headers: headers() })
+        .then(readJson)
+        .then(function (res) {
+          const runs = res.runs || [];
+          const activeRun = runs.find(function (r) { return r.status === "running" || r.status === "queued"; }) || runs[runs.length - 1];
+          const textEl = document.getElementById("cockpit-thinking-text");
+
+          let isDone = false;
+          if (activeRun) {
+            if (activeRun.status === "completed" || activeRun.status === "failed") {
+              isDone = true;
+            } else {
+              const traces = activeRun.traces || [];
+              if (!traces.length) {
+                if (textEl) textEl.textContent = "⚡ Initializing Qwen 35B on mac-mini...";
+              } else {
+                const lastTrace = traces[traces.length - 1];
+                if (lastTrace.kind === "tool_result") {
+                  const t = lastTrace.tool || "";
+                  if (t === "gmail_search") {
+                    if (textEl) textEl.textContent = "🔍 Searched mailbox · Analyzing results...";
+                  } else if (t.indexOf("trash") !== -1) {
+                    if (textEl) textEl.textContent = "🧹 Trashed batch of noise · Checking next batch...";
+                  } else if (t.indexOf("archive") !== -1) {
+                    if (textEl) textEl.textContent = "📁 Archived batch · Reviewing remaining...";
+                  } else if (t === "gmail_mailbox_stats") {
+                    if (textEl) textEl.textContent = "📊 Checked mailbox totals · Synthesizing...";
+                  } else {
+                    if (textEl) textEl.textContent = "⚡ Step " + traces.length + ": Finished " + t + "...";
+                  }
+                } else if (lastTrace.kind === "model_call") {
+                  const txt = lastTrace.text || "";
+                  if (txt.indexOf("gmail_search") !== -1) {
+                    if (textEl) textEl.textContent = "🔍 Tool: Searching mailbox...";
+                  } else if (txt.indexOf("batch_trash") !== -1) {
+                    if (textEl) textEl.textContent = "🧹 Tool: Trashing matching threads...";
+                  } else if (txt.indexOf("batch_archive") !== -1) {
+                    if (textEl) textEl.textContent = "📁 Tool: Archiving matching threads...";
+                  } else {
+                    if (textEl) textEl.textContent = "⚡ Evaluating step " + (traces.length + 1) + "...";
+                  }
+                }
+              }
+            }
+          }
+
+          // 2. Poll messages if run is done or periodically
+          if (isDone || attempts % 2 === 0) {
+            fetch("/v1/conversations/" + encodeURIComponent(cid) + "/messages", { headers: headers() })
+              .then(readJson)
+              .then(function (mRes) {
+                const msgs = mRes.messages || [];
+                const last = msgs[msgs.length - 1];
+                const hasAssistant = last && last.role === "assistant";
+                const countSatisfied = expectedMinMsgs ? msgs.length >= expectedMinMsgs : hasAssistant;
+
+                if ((hasAssistant && (isDone || countSatisfied)) || attempts >= 180) {
+                  stopThinkingPoll();
+                  renderMessages(msgs);
+                  load();
+                  loadMailboxStats();
+                  loadActivity();
+                }
+              })
+              .catch(function () {});
+          }
+        })
+        .catch(function () {
+          if (attempts >= 180) stopThinkingPoll();
+        });
+    }, 2000);
+  }
+
   function sendMessage(text) {
     let content = (text || "").trim();
     if (!content) {
@@ -858,10 +1025,7 @@
       cockpitInput.style.height = "auto";
     }
 
-    isThinking = true;
-    if (thinkingBanner) thinkingBanner.hidden = false;
-    if (cockpitThinking) cockpitThinking.hidden = false;
-    if (presenceMark) presenceMark.dataset.state = "awake";
+    setThinkingState(true, "⚡ Waking Qwen 35B on mac-mini...", "0s elapsed · mac-mini private loop");
 
     // Optimistic user message
     const tempMsg = {
@@ -933,50 +1097,11 @@
         // 3. Drain via tick if available
         fetch("/v1/agent-runs/worker/tick", { method: "POST", headers: headers() }).catch(function () {});
 
-        // 4. Poll for assistant message (up to 5 minutes for local LLM + batch tool execution)
-        let attempts = 0;
-        if (pollInterval) clearInterval(pollInterval);
-        pollInterval = setInterval(function () {
-          attempts++;
-          fetch("/v1/conversations/" + encodeURIComponent(cid) + "/messages", { headers: headers() })
-            .then(readJson)
-            .then(function (res) {
-              const msgs = res.messages || [];
-              const last = msgs[msgs.length - 1];
-              if (last && last.role === "assistant" && msgs.length > currentMessages.length) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                isThinking = false;
-                if (thinkingBanner) thinkingBanner.hidden = true;
-                if (cockpitThinking) cockpitThinking.hidden = true;
-                renderMessages(msgs);
-                load(); // Refresh watches in case Steward created one
-                loadMailboxStats(); // Refresh live mailbox counter
-                loadActivity(); // Refresh intelligence feed
-              } else if (attempts >= 150) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                isThinking = false;
-                if (thinkingBanner) thinkingBanner.hidden = true;
-                if (cockpitThinking) cockpitThinking.hidden = true;
-                renderMessages(msgs);
-              }
-            })
-            .catch(function () {
-              if (attempts >= 150) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                isThinking = false;
-                if (thinkingBanner) thinkingBanner.hidden = true;
-                if (cockpitThinking) cockpitThinking.hidden = true;
-              }
-            });
-        }, 2000);
+        // 4. Poll live status & traces
+        startThinkingPoll(cid, Date.now(), currentMessages.length + 1);
       })
       .catch(function (err) {
-        isThinking = false;
-        if (thinkingBanner) thinkingBanner.hidden = true;
-        if (cockpitThinking) cockpitThinking.hidden = true;
+        stopThinkingPoll();
         setStatus(err.message || "Failed to complete conversation turn.");
       });
   }
@@ -1061,34 +1186,46 @@
       .catch(function () {});
   }
 
+  function updateMailboxUI(s) {
+    if (!s) return;
+    const inboxEl = document.getElementById("cockpit-stat-inbox");
+    const unreadEl = document.getElementById("cockpit-stat-unread");
+    const totalEl = document.getElementById("cockpit-stat-total");
+    const threadsEl = document.getElementById("cockpit-stat-threads");
+    const badgeEl = document.getElementById("radar-email-badge");
+    const meterEl = document.getElementById("radar-meter-inbox");
+    const burndownEl = document.getElementById("cockpit-burndown-target");
+
+    if (badgeEl && s.email) badgeEl.textContent = s.email;
+    if (totalEl && s.messages_total) totalEl.textContent = Number(s.messages_total).toLocaleString();
+    if (threadsEl && s.threads_total) threadsEl.textContent = (s.threads_total / 1000).toFixed(1) + "k threads";
+
+    const inboxLabel = (s.labels && s.labels.INBOX) || {};
+    if (inboxEl && inboxLabel.messages_total != null) {
+      inboxEl.textContent = Number(inboxLabel.messages_total).toLocaleString();
+    }
+    if (unreadEl && inboxLabel.messages_unread != null) {
+      unreadEl.textContent = Number(inboxLabel.messages_unread).toLocaleString();
+      if (burndownEl) {
+        burndownEl.textContent = Number(inboxLabel.messages_unread).toLocaleString() + " → 500 Target";
+      }
+    }
+    if (meterEl && s.messages_total && inboxLabel.messages_total) {
+      const pct = Math.min(100, Math.round((inboxLabel.messages_total / s.messages_total) * 100));
+      meterEl.style.width = pct + "%";
+    }
+  }
+
+  function loadMailboxStats() {
+    return loadMailboxRadar();
+  }
+
   function loadMailboxRadar() {
-    fetch("/v1/gmail/stats", { headers: headers() })
+    return fetch("/v1/gmail/stats", { headers: headers() })
       .then(readJson)
       .then(function (res) {
         if (res && res.ok && res.stats) {
-          const s = res.stats;
-          const inboxEl = document.getElementById("cockpit-stat-inbox");
-          const unreadEl = document.getElementById("cockpit-stat-unread");
-          const totalEl = document.getElementById("cockpit-stat-total");
-          const threadsEl = document.getElementById("cockpit-stat-threads");
-          const badgeEl = document.getElementById("radar-email-badge");
-          const meterEl = document.getElementById("radar-meter-inbox");
-
-          if (badgeEl && s.email) badgeEl.textContent = s.email;
-          if (totalEl && s.messages_total) totalEl.textContent = Number(s.messages_total).toLocaleString();
-          if (threadsEl && s.threads_total) threadsEl.textContent = (s.threads_total / 1000).toFixed(1) + "k threads";
-
-          const inboxLabel = (s.labels && s.labels.INBOX) || {};
-          if (inboxEl && inboxLabel.messages_total) {
-            inboxEl.textContent = Number(inboxLabel.messages_total).toLocaleString();
-          }
-          if (unreadEl && inboxLabel.messages_unread) {
-            unreadEl.textContent = Number(inboxLabel.messages_unread).toLocaleString() + " unread";
-          }
-          if (meterEl && s.messages_total && inboxLabel.messages_total) {
-            const pct = Math.min(100, Math.round((inboxLabel.messages_total / s.messages_total) * 100));
-            meterEl.style.width = pct + "%";
-          }
+          updateMailboxUI(res.stats);
         }
       })
       .catch(function () {});
@@ -1890,6 +2027,53 @@
           btnSocial.textContent = "Archive Failed (Retry)";
           btnSocial.disabled = false;
           setStatus(err.message || "Failed to archive LinkedIn threads.");
+        });
+    });
+  }
+
+  const btnMisaddressed = document.getElementById("btn-action-misaddressed");
+  if (btnMisaddressed) {
+    btnMisaddressed.addEventListener("click", function () {
+      const card = document.getElementById("action-card-misaddressed");
+      btnMisaddressed.textContent = "⚡ Filtering...";
+      btnMisaddressed.disabled = true;
+
+      const misaddressedQuery = '"Shawn Gerhart" OR "realtor" OR "MLS" OR "mortgage closing"';
+      fetch("/v1/gmail/sweep", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ query: misaddressedQuery, limit: 100, action: "archive" }),
+      })
+        .then(readJson)
+        .then(function (res) {
+          const count = res.archived_count != null ? res.archived_count : (res.trashed_count != null ? res.trashed_count : 0);
+          btnMisaddressed.textContent = "✓ Filter Next Batch";
+          btnMisaddressed.disabled = false;
+
+          renderSweepReceipt(card, count, res.sample_snippets || [], "archive");
+
+          if (res.stats) {
+            updateMailboxUI(res.stats);
+          } else {
+            loadMailboxStats();
+          }
+
+          loadActivity();
+
+          const snippetItems = (res.sample_snippets || []).map(function (s) { return "- " + s; }).join("\n");
+          const receiptMsg = "### 👤 Misaddressed Mail Triage Receipt\n" +
+            "**Action:** Archived **" + count + " stray threads** (`" + misaddressedQuery + "`) to All Mail.\n" +
+            "**Destination:** Cleared from Primary Inbox, safely archived in All Mail.\n" +
+            (snippetItems ? "**Filtered Samples:**\n" + snippetItems + "\n\n" : "\n") +
+            "Backlog counter updated. Click **Filter Next Batch** on the card to continue cleaning.";
+          logReceiptToDialogue(receiptMsg);
+
+          setStatus("👤 Archived " + count + " misaddressed threads to All Mail.");
+        })
+        .catch(function (err) {
+          btnMisaddressed.textContent = "Filter Failed (Retry)";
+          btnMisaddressed.disabled = false;
+          setStatus(err.message || "Failed to filter misaddressed mail.");
         });
     });
   }
