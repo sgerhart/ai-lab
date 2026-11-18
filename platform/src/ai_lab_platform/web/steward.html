@@ -12,7 +12,7 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/static/chrome.css">
-  <link rel="stylesheet" href="/static/steward.css?v=7">
+  <link rel="stylesheet" href="/static/steward.css?v=8">
   <style>
     html {
       color-scheme: dark;
@@ -211,12 +211,29 @@
                 <h3>Daily Decision &amp; Action Tray</h3>
                 <p class="action-tray-sub">Synthesized from latest Morning Sentinel wake. Authorize with one click.</p>
               </div>
-              <button type="button" class="btn-authorize-all" id="btn-authorize-all">
-                ⚡ Authorize All Bundles
-              </button>
+              <div class="action-tray-actions">
+                <button type="button" class="btn-burndown-quick" id="btn-burndown-quick" title="Autonomous rapid burndown across stale promos, social alerts, and direct trash">
+                  🔥 Rapid Burndown (1,000)
+                </button>
+                <button type="button" class="btn-authorize-all" id="btn-authorize-all">
+                  ⚡ Authorize All Bundles
+                </button>
+              </div>
             </div>
 
             <div class="action-tray-cards" id="action-tray-cards">
+              <!-- Action Card 0: Autonomous Backlog Burndown -->
+              <div class="action-card card-burndown" id="action-card-burndown">
+                <div class="action-card-top">
+                  <span class="badge-burndown">🔥 AUTONOMOUS BURNDOWN</span>
+                  <span class="card-meta" id="burndown-card-meta">Target: &lt;500</span>
+                </div>
+                <h4>Autonomous Backlog Burndown</h4>
+                <p>High-speed parallel sweep across stale promos (&gt;2d), LinkedIn alerts, social noise, and direct trash until unread drops toward target (&lt;500).</p>
+                <button type="button" class="btn-action-primary btn-burndown" id="btn-action-burndown">
+                  ⚡ Rapid Burndown (Sweep 1,000)
+                </button>
+              </div>
               <!-- Action Card 1: CI Pipeline Fix -->
               <div class="action-card card-urgent" id="action-card-ci">
                 <div class="action-card-top">
@@ -735,7 +752,7 @@
     </div>
   </main>
   <script src="/static/chrome.js?v=20261105-clean"></script>
-  <script src="/static/steward.js?v=7"></script>
+  <script src="/static/steward.js?v=8"></script>
 </body>
 
 </html>

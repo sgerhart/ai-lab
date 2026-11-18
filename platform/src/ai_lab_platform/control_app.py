@@ -651,6 +651,12 @@ class GmailSweepIn(BaseModel):
     action: str = Field(default="trash", description="trash or archive")
 
 
+class GmailBurndownIn(BaseModel):
+    target_unread: int = Field(default=500, ge=0, le=100000)
+    max_batches: int = Field(default=5, ge=1, le=10)
+    batch_size: int = Field(default=500, ge=50, le=1000)
+
+
 def _studio_payload(raw: Any) -> dict[str, Any]:
     """Operator-facing builder fields. Not secrets, not a second policy engine."""
     if raw is None:
@@ -3491,6 +3497,52 @@ def create_control_app(
             "trashed_count": affected_count,
             "archived_count": affected_count if body.action == "archive" else 0,
             "sample_snippets": snippets,
+            "stats": stats,
+            "note": res.get("note", ""),
+        }
+
+    @app.post("/v1/gmail/burndown")
+    def gmail_burndown_endpoint(
+        request: Request,
+        body: GmailBurndownIn = Body(...),
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Execute autonomous rapid burndown across noise categories toward target_unread."""
+        _gate(request, authorization)
+        from .gmail import GmailClient
+
+        client = GmailClient()
+        if not client.has_token():
+            raise HTTPException(status_code=503, detail="Gmail is not authenticated.")
+
+        res = client.burndown_sweep(
+            target_unread=body.target_unread,
+            max_batches=body.max_batches,
+            batch_size=body.batch_size,
+        )
+        stats = client.get_mailbox_stats()
+
+        # Record activity entry
+        now_iso = datetime.now().astimezone().isoformat()
+        try:
+            append_activity(
+                {
+                    "id": uuid.uuid4().hex,
+                    "goal_id": "gmail-burndown",
+                    "goal_title": f"Autonomous Burndown: {res.get('total_swept', 0)} emails",
+                    "at": now_iso,
+                    "status": "completed",
+                    "see_tools": ["gmail"],
+                    "note": res.get("note", "Autonomous burndown completed."),
+                },
+                path=_steward_path(),
+            )
+        except Exception:
+            pass
+
+        return {
+            "ok": True,
+            "result": res,
             "stats": stats,
             "note": res.get("note", ""),
         }

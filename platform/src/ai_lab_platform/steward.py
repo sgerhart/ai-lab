@@ -52,6 +52,7 @@ DRAFT_TOOLS = frozenset(
         "gmail_archive_thread",
         "gmail_batch_archive",
         "gmail_batch_trash",
+        "gmail_burndown_sweep",
         "gmail_create_draft",
         "gmail_trash_message",
         "gmail_trash_thread",

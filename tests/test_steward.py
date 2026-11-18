@@ -562,6 +562,29 @@ class StewardApiTests(unittest.TestCase):
             self.assertTrue(sweep_dry.json()["dry_run"])
             self.assertEqual(sweep_dry.json()["match_count"], 1)
 
+        # Gmail burndown endpoint
+        mock_burndown = {
+            "ok": True,
+            "starting_unread": 26900,
+            "ending_unread": 450,
+            "target_unread": 500,
+            "total_swept": 26450,
+            "total_trashed": 21000,
+            "total_archived": 5450,
+            "batches_run": 3,
+            "target_reached": True,
+            "breakdown": [],
+            "note": "Autonomous burndown complete",
+        }
+        with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \
+             patch("ai_lab_platform.gmail.GmailClient.burndown_sweep", return_value=mock_burndown), \
+             patch("ai_lab_platform.gmail.GmailClient.get_mailbox_stats", return_value={"messages_total": 100}):
+            bd_res = self.client.post("/v1/gmail/burndown", headers=self.headers, json={"target_unread": 500, "max_batches": 3, "batch_size": 500})
+            self.assertEqual(bd_res.status_code, 200)
+            self.assertTrue(bd_res.json()["ok"])
+            self.assertEqual(bd_res.json()["result"]["total_swept"], 26450)
+            self.assertTrue(bd_res.json()["result"]["target_reached"])
+
 
 class McpStewardTests(unittest.TestCase):
     def setUp(self) -> None:

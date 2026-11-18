@@ -14,7 +14,9 @@ from email.message import EmailMessage
 import json
 import os
 from pathlib import Path
+import random
 import re
+import time
 from typing import Any, Dict, List, Optional
 import urllib.error
 import urllib.parse
@@ -89,7 +91,7 @@ class GmailClient:
         except OSError:
             pass
 
-    def get_valid_access_token(self) -> str:
+    def get_valid_access_token(self, force_refresh: bool = False) -> str:
         token_data = self.load_token_data()
         token = token_data.get("token") or token_data.get("access_token")
         expiry = token_data.get("expiry")
@@ -104,11 +106,11 @@ class GmailClient:
             except Exception:
                 pass
 
-        if token and not is_expired:
+        if token and not is_expired and not force_refresh:
             return str(token)
 
         if not refresh_token:
-            if token:
+            if token and not force_refresh:
                 return str(token)
             raise GmailAuthError("No access token or refresh token available. Re-authorization required.")
 
@@ -158,33 +160,71 @@ class GmailClient:
         method: str = "GET",
         data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
+        max_retries: int = 3,
     ) -> Dict[str, Any]:
-        token = self.get_valid_access_token()
-        url = f"{GMAIL_API_BASE}/{endpoint.lstrip('/')}"
-        if params:
-            query = urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
-            if query:
-                url = f"{url}?{query}"
+        attempt = 0
+        last_exc: Optional[Exception] = None
+        while attempt <= max_retries:
+            # Enforce throttle delay to stay well under Google's 250 quota units/sec
+            now = time.monotonic()
+            last_time = getattr(self, "_last_request_time", 0.0)
+            if now - last_time < 0.05:
+                time.sleep(0.05 - (now - last_time))
+            self._last_request_time = time.monotonic()
 
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
-        }
-        body_bytes = None
-        if data is not None:
-            headers["Content-Type"] = "application/json"
-            body_bytes = json.dumps(data).encode("utf-8")
+            token = self.get_valid_access_token(
+                force_refresh=(attempt > 0 and getattr(last_exc, "code", None) == 401)
+            )
+            url = f"{GMAIL_API_BASE}/{endpoint.lstrip('/')}"
+            if params:
+                query = urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
+                if query:
+                    url = f"{url}?{query}"
 
-        req = urllib.request.Request(url, data=body_bytes, headers=headers, method=method)
-        try:
-            with self.opener(req, timeout=15) as resp:
-                raw = resp.read().decode("utf-8")
-                return json.loads(raw) if raw else {}
-        except urllib.error.HTTPError as exc:
-            err_body = exc.read().decode("utf-8", "ignore")
-            raise GmailAPIError(f"Gmail API error {exc.code} for {url}: {err_body}") from exc
-        except Exception as exc:
-            raise GmailAPIError(f"Request to {url} failed: {exc}") from exc
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            }
+            body_bytes = None
+            if data is not None:
+                headers["Content-Type"] = "application/json"
+                body_bytes = json.dumps(data).encode("utf-8")
+
+            req = urllib.request.Request(url, data=body_bytes, headers=headers, method=method)
+            try:
+                with self.opener(req, timeout=20) as resp:
+                    raw = resp.read().decode("utf-8")
+                    return json.loads(raw) if raw else {}
+            except urllib.error.HTTPError as exc:
+                last_exc = exc
+                # Rate limit (429) or transient server errors (5xx)
+                if exc.code in (429, 500, 502, 503, 504) and attempt < max_retries:
+                    retry_after = None
+                    if hasattr(exc, "headers") and exc.headers:
+                        val = exc.headers.get("Retry-After")
+                        if val:
+                            try:
+                                retry_after = float(val)
+                            except (ValueError, TypeError):
+                                pass
+                    backoff = retry_after if retry_after is not None else (2 ** attempt) + random.uniform(0.1, 0.5)
+                    time.sleep(backoff)
+                    attempt += 1
+                    continue
+                # Auth token expired mid-operation (401)
+                if exc.code == 401 and attempt == 0:
+                    attempt += 1
+                    continue
+                err_body = exc.read().decode("utf-8", "ignore") if hasattr(exc, "read") else str(exc)
+                raise GmailAPIError(f"Gmail API error {exc.code} for {url}: {err_body}") from exc
+            except Exception as exc:
+                last_exc = exc
+                if attempt < max_retries:
+                    time.sleep((2 ** attempt) + random.uniform(0.1, 0.4))
+                    attempt += 1
+                    continue
+                raise GmailAPIError(f"Request to {url} failed: {exc}") from exc
+        raise GmailAPIError(f"Request to {endpoint} failed after {max_retries} retries: {last_exc}")
 
     def get_profile(self) -> Dict[str, Any]:
         """Fetch user profile to verify connection and email address."""
@@ -358,68 +398,270 @@ class GmailClient:
         }
 
     def batch_trash_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
-        """Move multiple threads matching query to Trash (recoverable for 30 days)."""
-        bounded = max(1, min(limit, 250))
-        effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
-        search_res = self._api_request("threads", params={"q": effective_query, "maxResults": bounded})
-        raw_threads = search_res.get("threads") or []
-        trashed: List[str] = []
-        samples: List[str] = []
+        """Move multiple threads/messages matching query to Trash (recoverable for 30 days).
 
-        for t in raw_threads:
-            tid = t.get("id")
-            if not tid:
-                continue
-            try:
-                self._api_request(f"threads/{tid}/trash", method="POST")
-                trashed.append(tid)
+        Uses Gmail messages/batchModify for sub-second, bulk atomic execution while
+        strictly preserving recoverable 30-day Trash status.
+        """
+        bounded = max(1, min(limit, 500))
+        effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
+        search_q = f"label:INBOX {effective_query}".strip() if "label:INBOX" not in effective_query else effective_query
+
+        # 1. Fetch sample thread snippets (up to 5) for user audit receipts in 1 lightweight call
+        samples: List[str] = []
+        try:
+            snip_res = self._api_request("threads", params={"q": search_q, "maxResults": min(5, bounded)})
+            for t in snip_res.get("threads") or []:
                 raw_snip = t.get("snippet") or ""
                 clean_snip = re.sub(r"[\s\u034f\u200b\ufeff]+", " ", raw_snip).strip()[:100]
-                if clean_snip and len(samples) < 8:
+                if clean_snip:
                     samples.append(clean_snip)
-            except Exception:
-                pass
+        except Exception:
+            pass
 
+        # 2. Fetch matching messages for bulk operation
+        search_res = self._api_request("messages", params={"q": search_q, "maxResults": bounded})
+        raw_msgs = search_res.get("messages") or []
+        if not raw_msgs:
+            return {
+                "ok": True,
+                "query": query,
+                "trashed_count": 0,
+                "message_ids": [],
+                "thread_ids": [],
+                "sample_snippets": [],
+                "has_more": False,
+                "note": f"No messages found matching '{query}' in Inbox.",
+            }
+
+        msg_ids = [m["id"] for m in raw_msgs if m.get("id")]
+        thread_ids = list(dict.fromkeys(m["threadId"] for m in raw_msgs if m.get("threadId")))
+
+        # 3. Execute bulk batchModify in 1 single HTTP request (up to 1,000 per call)
+        for i in range(0, len(msg_ids), 1000):
+            chunk = msg_ids[i : i + 1000]
+            self._api_request(
+                "messages/batchModify",
+                method="POST",
+                data={
+                    "ids": chunk,
+                    "addLabelIds": ["TRASH"],
+                    "removeLabelIds": ["INBOX"],
+                },
+            )
+
+        count = len(thread_ids) or len(msg_ids)
         return {
             "ok": True,
             "query": query,
-            "trashed_count": len(trashed),
-            "thread_ids": trashed,
+            "trashed_count": count,
+            "message_ids": msg_ids,
+            "thread_ids": thread_ids,
             "sample_snippets": samples,
-            "has_more": len(raw_threads) >= bounded,
-            "note": f"Moved {len(trashed)} thread(s) to Gmail Trash (recoverable for 30 days).",
+            "has_more": len(raw_msgs) >= bounded,
+            "note": f"Moved {count} thread(s) ({len(msg_ids)} messages) to Gmail Trash (recoverable for 30 days).",
         }
 
     def batch_archive_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
-        """Archive multiple threads matching query by removing them from Inbox."""
-        bounded = max(1, min(limit, 250))
+        """Archive multiple threads/messages matching query by removing them from Inbox.
+
+        Uses Gmail messages/batchModify for sub-second, bulk atomic execution.
+        """
+        bounded = max(1, min(limit, 500))
         effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
-        search_res = self._api_request("threads", params={"q": f"label:INBOX {effective_query}", "maxResults": bounded})
-        raw_threads = search_res.get("threads") or []
-        archived: List[str] = []
+        search_q = f"label:INBOX {effective_query}".strip() if "label:INBOX" not in effective_query else effective_query
+
+        # 1. Fetch sample thread snippets (up to 5) for user audit receipts
         samples: List[str] = []
+        try:
+            snip_res = self._api_request("threads", params={"q": search_q, "maxResults": min(5, bounded)})
+            for t in snip_res.get("threads") or []:
+                raw_snip = t.get("snippet") or ""
+                clean_snip = re.sub(r"[\s\u034f\u200b\ufeff]+", " ", raw_snip).strip()[:100]
+                if clean_snip:
+                    samples.append(clean_snip)
+        except Exception:
+            pass
 
-        for t in raw_threads:
-            tid = t.get("id")
-            if not tid:
-                continue
-            try:
-                self._api_request(f"threads/{tid}/modify", method="POST", data={"removeLabelIds": ["INBOX"]})
-                archived.append(tid)
-                snippet = (t.get("snippet") or "")[:80]
-                if snippet and len(samples) < 5:
-                    samples.append(snippet)
-            except Exception:
-                pass
+        # 2. Fetch matching messages for bulk operation
+        search_res = self._api_request("messages", params={"q": search_q, "maxResults": bounded})
+        raw_msgs = search_res.get("messages") or []
+        if not raw_msgs:
+            return {
+                "ok": True,
+                "query": query,
+                "archived_count": 0,
+                "message_ids": [],
+                "thread_ids": [],
+                "sample_snippets": [],
+                "has_more": False,
+                "note": f"No messages found matching '{query}' in Inbox.",
+            }
 
+        msg_ids = [m["id"] for m in raw_msgs if m.get("id")]
+        thread_ids = list(dict.fromkeys(m["threadId"] for m in raw_msgs if m.get("threadId")))
+
+        # 3. Execute bulk batchModify in 1 single HTTP request
+        for i in range(0, len(msg_ids), 1000):
+            chunk = msg_ids[i : i + 1000]
+            self._api_request(
+                "messages/batchModify",
+                method="POST",
+                data={
+                    "ids": chunk,
+                    "removeLabelIds": ["INBOX"],
+                },
+            )
+
+        count = len(thread_ids) or len(msg_ids)
         return {
             "ok": True,
             "query": query,
-            "archived_count": len(archived),
-            "thread_ids": archived,
+            "archived_count": count,
+            "message_ids": msg_ids,
+            "thread_ids": thread_ids,
             "sample_snippets": samples,
-            "has_more": len(raw_threads) >= bounded,
-            "note": f"Archived {len(archived)} thread(s) (removed from Inbox, preserved in All Mail).",
+            "has_more": len(raw_msgs) >= bounded,
+            "note": f"Archived {count} thread(s) ({len(msg_ids)} messages) (removed from Inbox, preserved in All Mail).",
+        }
+
+    def burndown_sweep(
+        self,
+        target_unread: int = 500,
+        max_batches: int = 5,
+        batch_size: int = 500,
+    ) -> Dict[str, Any]:
+        """Autonomously burn down the inbox backlog across policy categories toward target_unread.
+
+        Runs high-speed bulk sweeps using messages/batchModify while strictly honoring the
+        VIP Whitelist and rate-pacing under 250 units/sec. Stops immediately when target
+        is reached or when no matching noise remains.
+        """
+        # Fetch initial stats
+        initial_stats = self.get_mailbox_stats()
+        inbox_stats = initial_stats.get("labels", {}).get("INBOX", {})
+        starting_unread = inbox_stats.get("messages_unread", 0) or inbox_stats.get("threads_unread", 0)
+
+        # Standard noise categories aligned with email-triage-policy.md
+        rules = [
+            {
+                "category": "Stale Promotions (>2d)",
+                "action": "trash",
+                "query": "category:promotions older_than:2d -humble -eero -experian -marriott -securly",
+            },
+            {
+                "category": "LinkedIn Alerts",
+                "action": "archive",
+                "query": "from:linkedin.com",
+            },
+            {
+                "category": "Social Noise (Facebook/Threads/Cozey)",
+                "action": "archive",
+                "query": "(from:facebookmail.com OR from:threads.net OR from:cozey.ca OR \"Facebook Friend Suggestions\")",
+            },
+            {
+                "category": "Direct Trash & Unsubscribe",
+                "action": "trash",
+                "query": "(from:unidays.com OR from:palottery.com OR from:tumi.com OR from:coffeeco.com OR \"Word Daily\" OR \"Nutcracker Cash\" OR from:stephengerhart OR from:samgerhart)",
+            },
+            {
+                "category": "Stale CI Notifications (>2d)",
+                "action": "trash",
+                "query": "from:notifications@github.com older_than:2d",
+            },
+        ]
+
+        total_trashed = 0
+        total_archived = 0
+        batches_run = 0
+        breakdown: List[Dict[str, Any]] = []
+
+        current_unread = starting_unread
+        for batch_idx in range(max_batches):
+            if current_unread <= target_unread and starting_unread > 0:
+                break
+
+            any_swept_this_batch = False
+            batches_run += 1
+
+            for r in rules:
+                if current_unread <= target_unread and starting_unread > 0:
+                    break
+
+                cat = r["category"]
+                action = r["action"]
+                q = r["query"]
+
+                if action == "trash":
+                    res = self.batch_trash_threads(query=q, limit=batch_size)
+                    cnt = res.get("trashed_count", 0)
+                    if cnt > 0:
+                        total_trashed += cnt
+                        any_swept_this_batch = True
+                        breakdown.append({
+                            "category": cat,
+                            "action": "trashed",
+                            "count": cnt,
+                            "samples": res.get("sample_snippets", [])[:3],
+                        })
+                else:
+                    res = self.batch_archive_threads(query=q, limit=batch_size)
+                    cnt = res.get("archived_count", 0)
+                    if cnt > 0:
+                        total_archived += cnt
+                        any_swept_this_batch = True
+                        breakdown.append({
+                            "category": cat,
+                            "action": "archived",
+                            "count": cnt,
+                            "samples": res.get("sample_snippets", [])[:3],
+                        })
+
+                # Pacing pause to stay well below quota ceiling
+                time.sleep(0.15)
+
+            # If an entire round through all categories found 0 noise, stop
+            if not any_swept_this_batch:
+                break
+
+            # Check updated stats
+            try:
+                mid_stats = self.get_mailbox_stats()
+                inb = mid_stats.get("labels", {}).get("INBOX", {})
+                current_unread = inb.get("messages_unread", 0) or inb.get("threads_unread", 0)
+            except Exception:
+                current_unread = max(0, starting_unread - (total_trashed + total_archived))
+
+        # Final mailbox stats
+        try:
+            final_stats = self.get_mailbox_stats()
+            fin_inb = final_stats.get("labels", {}).get("INBOX", {})
+            ending_unread = fin_inb.get("messages_unread", 0) or fin_inb.get("threads_unread", 0)
+        except Exception:
+            ending_unread = max(0, starting_unread - (total_trashed + total_archived))
+
+        total_swept = total_trashed + total_archived
+        target_reached = ending_unread <= target_unread
+
+        note = (
+            f"Autonomous Burndown Complete: Swept {total_swept:,} emails "
+            f"({total_trashed:,} trashed to 30d recovery, {total_archived:,} archived to All Mail). "
+            f"Inbox unread reduced from {starting_unread:,} to {ending_unread:,} "
+            f"(Target: < {target_unread:,})."
+        )
+
+        return {
+            "ok": True,
+            "target_unread": target_unread,
+            "starting_unread": starting_unread,
+            "ending_unread": ending_unread,
+            "total_swept": total_swept,
+            "total_trashed": total_trashed,
+            "total_archived": total_archived,
+            "batches_run": batches_run,
+            "breakdown": breakdown,
+            "target_reached": target_reached,
+            "note": note,
         }
 
 
@@ -563,5 +805,47 @@ def format_batch_result_markdown(result: Dict[str, Any], action: str = "trashed"
     if has_more:
         lines.append("\n> **Note**: Additional matching threads exist in your inbox. Run another sweep iteration or arm a standing sentinel to maintain this automatically.")
     return "\n".join(lines)
+
+
+def format_burndown_result_markdown(res: Dict[str, Any]) -> str:
+    """Format burndown sweep results into clean executive markdown."""
+    total = res.get("total_swept", 0)
+    trashed = res.get("total_trashed", 0)
+    archived = res.get("total_archived", 0)
+    start = res.get("starting_unread", 0)
+    end = res.get("ending_unread", 0)
+    target = res.get("target_unread", 500)
+    batches = res.get("batches_run", 0)
+
+    lines = [
+        "### 🧹 Autonomous Backlog Burndown Complete",
+        f"- **Initial Inbox Unread:** {start:,}",
+        f"- **Current Inbox Unread:** {end:,} (Target: < {target:,})",
+        f"- **Total Swept This Run:** **{total:,} emails** across {batches} batch cycle(s)",
+        f"  - **Moved to Trash (30-day recoverable):** {trashed:,}",
+        f"  - **Archived to All Mail:** {archived:,}",
+        "- **VIP Whitelist Protected:** Humble Bundle, Eero, Experian, Marriott, Securly.",
+    ]
+
+    breakdown = res.get("breakdown") or []
+    if breakdown:
+        lines.append("\n**Category Breakdown:**")
+        for b in breakdown:
+            cat = b.get("category", "Other")
+            act = b.get("action", "processed")
+            cnt = b.get("count", 0)
+            lines.append(f"- **{cat}:** {cnt:,} {act}")
+            for snip in b.get("samples") or []:
+                lines.append(f"  - *{snip}*")
+
+    if res.get("target_reached"):
+        lines.append("\n🎯 **Inbox Burndown Target Reached!** Inbox unread is below target.")
+    elif total == 0:
+        lines.append("\n✨ **No matching noise found in Inbox.** Inbox matches current policy rules.")
+    else:
+        lines.append("\n⚡ Guardian autonomy can continue burndown on the next wake or on command.")
+
+    return "\n".join(lines)
+
 
 

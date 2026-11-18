@@ -46,6 +46,7 @@ _TOOL_BLURB = {
     "gmail_archive_thread": "Archive an email thread in Gmail (removes from Inbox, keeps in All Mail).",
     "gmail_batch_trash": "Move multiple matching email threads to Gmail Trash in a batch (recoverable for 30 days).",
     "gmail_batch_archive": "Archive multiple matching email threads from Inbox to All Mail in a batch.",
+    "gmail_burndown_sweep": "Autonomously sweep and burn down inbox backlog across multiple noise categories toward unread target.",
     "apply_patch": "Apply a patch. Requires approval and an isolated copy.",
     "git_commit": "Commit in an isolated copy. Requires approval.",
     "security_inventory_read": "Read security compute plane templates and network inventory.",

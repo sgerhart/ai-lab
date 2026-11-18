@@ -117,6 +117,7 @@ _HANDLERS: dict[str, Callable[..., str]] = {
     "gmail_archive_thread": lambda ctx, **a: _gmail_archive_thread(ctx, a),
     "gmail_batch_trash": lambda ctx, **a: _gmail_batch_trash(ctx, a),
     "gmail_batch_archive": lambda ctx, **a: _gmail_batch_archive(ctx, a),
+    "gmail_burndown_sweep": lambda ctx, **a: _gmail_burndown_sweep(ctx, a),
     "memory_write": lambda ctx, **a: memory_write_tool(
         str(a.get("text") or ""),
         str(a.get("source") or ""),
@@ -717,6 +718,23 @@ def _gmail_batch_archive(_ctx: ToolContext, args: dict[str, Any]) -> str:
         return format_batch_result_markdown(res, action="archived")
     except Exception as exc:
         return f"Gmail batch archive error for '{query}': {exc}"
+
+
+def _gmail_burndown_sweep(_ctx: ToolContext, args: dict[str, Any]) -> str:
+    target_unread = int(args.get("target_unread", 500))
+    max_batches = int(args.get("max_batches", 5))
+    batch_size = int(args.get("batch_size", 500))
+    from .gmail import GmailClient, format_burndown_result_markdown
+
+    client = GmailClient()
+    if not client.has_token():
+        return "Gmail is not authorized yet. Run `./scripts/auth-gmail.sh` on the control plane to connect your Google account."
+    try:
+        res = client.burndown_sweep(target_unread=target_unread, max_batches=max_batches, batch_size=batch_size)
+        return format_burndown_result_markdown(res)
+    except Exception as exc:
+        return f"Gmail autonomous burndown sweep error: {exc}"
+
 
 
 def execute_allowed_tool(

@@ -11,7 +11,7 @@
     { label: "Schedules", icon: "⏰", tools: ["schedule_list"] },
     { label: "Presentations", icon: "📽️", tools: ["presentation_list", "presentation_read"] },
     { label: "Skills", icon: "⚡", tools: ["skill_list", "skill_read"] },
-    { label: "Gmail", icon: "✉️", tools: ["gmail_mailbox_stats", "gmail_batch_trash", "gmail_batch_archive", "gmail_list_unread", "gmail_search", "gmail_read_thread", "gmail_create_draft", "gmail_trash_thread", "gmail_trash_message", "gmail_archive_thread"] },
+    { label: "Gmail", icon: "✉️", tools: ["gmail_mailbox_stats", "gmail_batch_trash", "gmail_batch_archive", "gmail_burndown_sweep", "gmail_list_unread", "gmail_search", "gmail_read_thread", "gmail_create_draft", "gmail_trash_thread", "gmail_trash_message", "gmail_archive_thread"] },
     { label: "Lab health", icon: "🛡️", tools: ["health_read"] },
   ];
   const RHYTHM = {
@@ -1020,6 +1020,8 @@
                   const txt = lastTrace.text || "";
                   if (txt.indexOf("gmail_search") !== -1) {
                     statusMsg = "🔍 Tool: Searching mailbox...";
+                  } else if (txt.indexOf("burndown_sweep") !== -1) {
+                    statusMsg = "🔥 Tool: Autonomous Backlog Burndown in progress...";
                   } else if (txt.indexOf("batch_trash") !== -1) {
                     statusMsg = "🧹 Tool: Trashing matching threads...";
                   } else if (txt.indexOf("batch_archive") !== -1) {
@@ -2038,6 +2040,156 @@
     });
 
     card.appendChild(receipt);
+  }
+
+  function renderBurndownReceipt(card, result) {
+    if (!card) return;
+    card.classList.remove("executed");
+    card.classList.add("sweep-success", "card-completed", "minimized");
+    addCardCollapseToggle(card);
+
+    const oldReceipt = card.querySelector(".sweep-audit-receipt");
+    if (oldReceipt) oldReceipt.remove();
+
+    const receipt = document.createElement("div");
+    receipt.className = "sweep-audit-receipt";
+
+    const head = document.createElement("div");
+    head.className = "sweep-audit-header";
+    const headTitle = document.createElement("span");
+    headTitle.className = "sweep-audit-title";
+    const total = result.total_swept != null ? result.total_swept : 0;
+    headTitle.textContent = "✓ Burndown Swept " + Number(total).toLocaleString() + " Emails";
+    head.appendChild(headTitle);
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "btn-receipt-toggle";
+    toggleBtn.textContent = "Details ▾";
+    head.appendChild(toggleBtn);
+    receipt.appendChild(head);
+
+    const bodyWrap = document.createElement("div");
+    bodyWrap.className = "sweep-audit-details";
+    bodyWrap.style.display = "none";
+
+    const list = document.createElement("ul");
+    list.className = "sweep-audit-list";
+
+    const liStats = document.createElement("li");
+    liStats.textContent = "Unread: " + Number(result.starting_unread || 0).toLocaleString() + " → " + Number(result.ending_unread || 0).toLocaleString() + " (Target: < " + Number(result.target_unread || 500).toLocaleString() + ")";
+    list.appendChild(liStats);
+
+    const liTrash = document.createElement("li");
+    liTrash.textContent = "Trashed (30d recovery): " + Number(result.total_trashed || 0).toLocaleString();
+    list.appendChild(liTrash);
+
+    const liArch = document.createElement("li");
+    liArch.textContent = "Archived to All Mail: " + Number(result.total_archived || 0).toLocaleString();
+    list.appendChild(liArch);
+
+    if (result.breakdown && result.breakdown.length > 0) {
+      result.breakdown.forEach(function (b) {
+        const liB = document.createElement("li");
+        liB.textContent = b.category + ": " + Number(b.count || 0).toLocaleString() + " " + b.action;
+        list.appendChild(liB);
+      });
+    }
+
+    bodyWrap.appendChild(list);
+
+    const foot = document.createElement("div");
+    foot.className = "sweep-audit-footer";
+    const footText = document.createElement("span");
+    footText.textContent = "Guardian Autonomy · Rate-Paced Batch";
+    const footTime = document.createElement("span");
+    footTime.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    foot.appendChild(footText);
+    foot.appendChild(footTime);
+    bodyWrap.appendChild(foot);
+
+    receipt.appendChild(bodyWrap);
+
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const isHidden = bodyWrap.style.display === "none";
+      bodyWrap.style.display = isHidden ? "block" : "none";
+      toggleBtn.textContent = isHidden ? "Details ▴" : "Details ▾";
+    });
+
+    card.appendChild(receipt);
+  }
+
+  function handleBurndownExecution(triggerBtn) {
+    const card = document.getElementById("action-card-burndown");
+    const metaEl = document.getElementById("burndown-card-meta");
+    triggerBtn.textContent = "⚡ Burning Down...";
+    triggerBtn.disabled = true;
+
+    fetch("/v1/gmail/burndown", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ target_unread: 500, max_batches: 5, batch_size: 500 }),
+    })
+      .then(readJson)
+      .then(function (res) {
+        const r = res.result || {};
+        const total = r.total_swept != null ? r.total_swept : 0;
+        if (card) renderBurndownReceipt(card, r);
+
+        if (metaEl && r.ending_unread != null) {
+          metaEl.textContent = Number(r.ending_unread).toLocaleString() + " unread";
+        }
+
+        if (res.stats) {
+          updateMailboxUI(res.stats);
+        } else {
+          loadMailboxStats();
+        }
+
+        loadActivity();
+
+        if (r.target_reached || total === 0) {
+          triggerBtn.textContent = "✓ Backlog Target Met";
+          triggerBtn.disabled = true;
+        } else {
+          triggerBtn.textContent = "⚡ Burn Down Next 1,000";
+          triggerBtn.disabled = false;
+        }
+
+        const breakdownLines = (r.breakdown || []).map(function (b) {
+          return "- **" + b.category + ":** " + Number(b.count).toLocaleString() + " " + b.action;
+        }).join("\n");
+
+        const receiptMsg = "### 🔥 Autonomous Backlog Burndown Receipt\n" +
+          "**Total Swept:** **" + Number(total).toLocaleString() + " emails** (" + Number(r.total_trashed || 0).toLocaleString() + " trashed, " + Number(r.total_archived || 0).toLocaleString() + " archived).\n" +
+          "**Mailbox Progress:** Inbox unread reduced from **" + Number(r.starting_unread || 0).toLocaleString() + "** to **" + Number(r.ending_unread || 0).toLocaleString() + "** (Target: < 500).\n" +
+          "**Protected:** VIP Whitelist senders (Humble Bundle, Eero, Experian, Marriott, Securly) preserved.\n" +
+          (breakdownLines ? "\n**Category Breakdown:**\n" + breakdownLines + "\n\n" : "\n") +
+          (r.target_reached ? "🎯 **Target reached!** Inbox backlog is cleared." : "Ready for next autonomous burndown cycle.");
+        logReceiptToDialogue(receiptMsg);
+
+        setStatus("🔥 Burndown complete: swept " + Number(total).toLocaleString() + " emails. Inbox unread now " + Number(r.ending_unread || 0).toLocaleString() + ".");
+      })
+      .catch(function (err) {
+        triggerBtn.textContent = "Burndown Failed (Retry)";
+        triggerBtn.disabled = false;
+        setStatus(err.message || "Failed to execute burndown.");
+      });
+  }
+
+  const btnBurndown = document.getElementById("btn-action-burndown");
+  if (btnBurndown) {
+    btnBurndown.addEventListener("click", function () {
+      handleBurndownExecution(btnBurndown);
+    });
+  }
+
+  const btnBurndownQuick = document.getElementById("btn-burndown-quick");
+  if (btnBurndownQuick) {
+    btnBurndownQuick.addEventListener("click", function () {
+      handleBurndownExecution(btnBurndownQuick);
+    });
   }
 
   const btnRetail = document.getElementById("btn-action-retail");

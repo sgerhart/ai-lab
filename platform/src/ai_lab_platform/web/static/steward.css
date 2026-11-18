@@ -2466,7 +2466,7 @@
   margin-bottom: 10px;
 }
 
-.badge-urgent, .badge-sweep, .badge-family {
+.badge-urgent, .badge-sweep, .badge-family, .badge-burndown {
   font-family: "JetBrains Mono", monospace;
   font-size: 9px;
   font-weight: 700;
@@ -2477,6 +2477,7 @@
 .badge-urgent { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 .badge-sweep { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
 .badge-family { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-burndown { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
 
 .card-meta {
   font-family: "JetBrains Mono", monospace;
@@ -2538,6 +2539,48 @@
 }
 .card-family .btn-action-primary:hover {
   background: rgba(16, 185, 129, 0.25);
+}
+
+.card-burndown {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: radial-gradient(circle at top right, rgba(245, 158, 11, 0.08), rgba(15, 23, 42, 0.6) 70%);
+}
+
+.card-burndown .btn-action-primary, .btn-burndown {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(239, 68, 68, 0.18));
+  color: #fde68a;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.card-burndown .btn-action-primary:hover, .btn-burndown:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(239, 68, 68, 0.28));
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+}
+
+.action-tray-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-burndown-quick {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.15));
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-burndown-quick:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.32), rgba(239, 68, 68, 0.25));
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
 }
 
 .action-card.executed {

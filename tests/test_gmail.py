@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
+import urllib.error
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "platform" / "src"))
@@ -19,6 +20,7 @@ from ai_lab_platform.gmail import (
     GmailAuthError,
     GmailClient,
     format_batch_result_markdown,
+    format_burndown_result_markdown,
     format_mailbox_stats_markdown,
     format_single_thread_markdown,
     format_threads_markdown,
@@ -283,6 +285,119 @@ class GmailClientTests(unittest.TestCase):
         self.assertEqual(res["thread_id"], "thread_abc123")
         self.assertEqual(res["status"], "archived")
 
+    def test_api_request_429_backoff_and_retry(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        err_headers = {"Retry-After": "0.01"}
+        http_err = urllib.error.HTTPError(
+            url="https://gmail.googleapis.com/gmail/v1/users/me/profile",
+            code=429,
+            msg="Too Many Requests",
+            hdrs=err_headers,  # type: ignore
+            fp=BytesIO(b'{"error": "rate limit"}'),
+        )
+        mock_opener = MagicMock()
+        mock_opener.side_effect = [
+            http_err,
+            MockResponse({"emailAddress": "steven@example.com", "messagesTotal": 100}),
+        ]
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=mock_opener,
+        )
+        prof = client.get_profile()
+        self.assertEqual(prof["emailAddress"], "steven@example.com")
+        self.assertEqual(mock_opener.call_count, 2)
+
+    def test_batch_trash_threads_uses_batch_modify(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        def fake_opener(req: object, timeout: int = 10) -> MockResponse:
+            url = getattr(req, "full_url", "")
+            if "threads?" in url:
+                return MockResponse({"threads": [{"id": "t1", "snippet": "Sale 50% off"}]})
+            if "messages?" in url:
+                return MockResponse({
+                    "messages": [
+                        {"id": "m1", "threadId": "t1"},
+                        {"id": "m2", "threadId": "t1"},
+                    ]
+                })
+            if "messages/batchModify" in url:
+                return MockResponse({})
+            return MockResponse({})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=fake_opener,
+        )
+        res = client.batch_trash_threads("category:promotions", limit=50)
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["trashed_count"], 1)
+        self.assertEqual(len(res["message_ids"]), 2)
+        self.assertIn("Sale 50% off", res["sample_snippets"])
+
+    def test_batch_archive_threads_uses_batch_modify(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        def fake_opener(req: object, timeout: int = 10) -> MockResponse:
+            url = getattr(req, "full_url", "")
+            if "threads?" in url:
+                return MockResponse({"threads": [{"id": "t10", "snippet": "LinkedIn connection request"}]})
+            if "messages?" in url:
+                return MockResponse({"messages": [{"id": "m10", "threadId": "t10"}]})
+            if "messages/batchModify" in url:
+                return MockResponse({})
+            return MockResponse({})
+
+        client = GmailClient(
+            credentials_path=self.creds_path,
+            token_path=self.token_path,
+            opener=fake_opener,
+        )
+        res = client.batch_archive_threads("from:linkedin.com", limit=50)
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["archived_count"], 1)
+        self.assertEqual(res["message_ids"], ["m10"])
+        self.assertIn("LinkedIn connection request", res["sample_snippets"])
+
+    def test_burndown_sweep_flow(self) -> None:
+        self.creds_path.write_text(json.dumps({"installed": {"client_id": "c1", "client_secret": "s1"}}))
+        self.token_path.write_text(json.dumps({"token": "tok"}))
+
+        client = GmailClient(credentials_path=self.creds_path, token_path=self.token_path)
+
+        with patch.object(
+            client,
+            "get_mailbox_stats",
+            side_effect=[
+                {"labels": {"INBOX": {"messages_unread": 2500, "threads_unread": 2000}}},
+                {"labels": {"INBOX": {"messages_unread": 450, "threads_unread": 400}}},
+                {"labels": {"INBOX": {"messages_unread": 450, "threads_unread": 400}}},
+            ],
+        ), patch.object(
+            client,
+            "batch_trash_threads",
+            return_value={"ok": True, "trashed_count": 1500, "sample_snippets": ["Promo"]},
+        ), patch.object(
+            client,
+            "batch_archive_threads",
+            return_value={"ok": True, "archived_count": 550, "sample_snippets": ["LinkedIn"]},
+        ):
+            res = client.burndown_sweep(target_unread=500, max_batches=2, batch_size=500)
+            self.assertTrue(res["ok"])
+            self.assertEqual(res["starting_unread"], 2500)
+            self.assertEqual(res["ending_unread"], 450)
+            self.assertTrue(res["target_reached"])
+            self.assertGreater(res["total_swept"], 0)
+
+
 
 class ToolRuntimeGmailTests(unittest.TestCase):
     @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=False)
@@ -450,3 +565,51 @@ class ToolRuntimeGmailTests(unittest.TestCase):
             res = execute_allowed_tool("gmail_batch_archive", {"query": "category:updates"}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
             self.assertTrue(res.ok)
             self.assertIn("5 thread(s) archived", res.observation)
+
+    def test_format_burndown_result_markdown(self) -> None:
+        res = {
+            "ok": True,
+            "starting_unread": 26900,
+            "ending_unread": 480,
+            "target_unread": 500,
+            "total_swept": 26420,
+            "total_trashed": 21000,
+            "total_archived": 5420,
+            "batches_run": 3,
+            "target_reached": True,
+            "breakdown": [
+                {"category": "Stale Promotions (>2d)", "action": "trashed", "count": 20000, "samples": ["Promo 1"]},
+                {"category": "LinkedIn Alerts", "action": "archived", "count": 5000, "samples": ["Alert 1"]},
+            ],
+        }
+        md = format_burndown_result_markdown(res)
+        self.assertIn("26,420 emails", md)
+        self.assertIn("26,900", md)
+        self.assertIn("480", md)
+        self.assertIn("Stale Promotions (>2d)", md)
+        self.assertIn("LinkedIn Alerts", md)
+        self.assertIn("Target Reached", md)
+
+    @patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True)
+    def test_gmail_burndown_sweep_runtime_dispatch(self, _mock_has_token: MagicMock) -> None:
+        ctx = ToolContext(workspace_root=ROOT, artifact_root=ROOT / "artifacts")
+        allowed = ["gmail_burndown_sweep"]
+
+        mock_burndown_res = {
+            "ok": True,
+            "starting_unread": 1000,
+            "ending_unread": 400,
+            "target_unread": 500,
+            "total_swept": 600,
+            "total_trashed": 400,
+            "total_archived": 200,
+            "batches_run": 1,
+            "target_reached": True,
+            "breakdown": [],
+        }
+        with patch("ai_lab_platform.gmail.GmailClient.burndown_sweep", return_value=mock_burndown_res):
+            res = execute_allowed_tool("gmail_burndown_sweep", {"target_unread": 500}, allowed_tools=allowed, approved_tools=set(), ctx=ctx)
+            self.assertTrue(res.ok)
+            self.assertIn("600 emails", res.observation)
+            self.assertIn("Target Reached", res.observation)
+

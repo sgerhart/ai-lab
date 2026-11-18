@@ -35,7 +35,8 @@
     "gmail_trash_message",
     "gmail_archive_thread",
     "gmail_batch_trash",
-    "gmail_batch_archive"
+    "gmail_batch_archive",
+    "gmail_burndown_sweep"
   ],
   "privileged_tools": [],
   "network": [],
