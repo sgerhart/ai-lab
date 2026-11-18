@@ -903,11 +903,17 @@
     if (cockpitThinking) cockpitThinking.hidden = !on;
     if (presenceMark) presenceMark.dataset.state = on ? "awake" : "idle";
 
-    const textEl = document.getElementById("cockpit-thinking-text");
-    const subEl = document.getElementById("cockpit-thinking-sub");
+    const textEls = [
+      document.getElementById("cockpit-thinking-text"),
+      document.getElementById("steward-thinking-text"),
+    ].filter(Boolean);
+    const subEls = [
+      document.getElementById("cockpit-thinking-sub"),
+      document.getElementById("steward-thinking-sub"),
+    ].filter(Boolean);
     if (on) {
-      if (textEl && customMain) textEl.textContent = customMain;
-      if (subEl && customSub) subEl.textContent = customSub;
+      if (customMain) textEls.forEach(function (el) { el.textContent = customMain; });
+      if (customSub) subEls.forEach(function (el) { el.textContent = customSub; });
     }
   }
 
@@ -928,8 +934,11 @@
     pollInterval = setInterval(function () {
       attempts++;
       const elapsed = Math.max(1, Math.round((Date.now() - startMs) / 1000));
-      const subEl = document.getElementById("cockpit-thinking-sub");
-      if (subEl) subEl.textContent = elapsed + "s elapsed · mac-mini private loop";
+      const subEls = [
+        document.getElementById("cockpit-thinking-sub"),
+        document.getElementById("steward-thinking-sub"),
+      ].filter(Boolean);
+      subEls.forEach(function (el) { el.textContent = elapsed + "s elapsed · mac-mini private loop"; });
 
       // 1. Check runs status & tool traces
       fetch("/v1/conversations/" + encodeURIComponent(cid) + "/runs", { headers: headers() })
@@ -937,7 +946,10 @@
         .then(function (res) {
           const runs = res.runs || [];
           const activeRun = runs.find(function (r) { return r.status === "running" || r.status === "queued"; }) || runs[runs.length - 1];
-          const textEl = document.getElementById("cockpit-thinking-text");
+          const textEls = [
+            document.getElementById("cockpit-thinking-text"),
+            document.getElementById("steward-thinking-text"),
+          ].filter(Boolean);
 
           let isDone = false;
           if (activeRun) {
@@ -945,36 +957,38 @@
               isDone = true;
             } else {
               const traces = activeRun.traces || [];
+              let statusMsg = "";
               if (!traces.length) {
-                if (textEl) textEl.textContent = "⚡ Initializing Qwen 35B on mac-mini...";
+                statusMsg = "⚡ Initializing Qwen 35B on mac-mini...";
               } else {
                 const lastTrace = traces[traces.length - 1];
                 if (lastTrace.kind === "tool_result") {
                   const t = lastTrace.tool || "";
                   if (t === "gmail_search") {
-                    if (textEl) textEl.textContent = "🔍 Searched mailbox · Analyzing results...";
+                    statusMsg = "🔍 Searched mailbox · Analyzing results...";
                   } else if (t.indexOf("trash") !== -1) {
-                    if (textEl) textEl.textContent = "🧹 Trashed batch of noise · Checking next batch...";
+                    statusMsg = "🧹 Trashed batch of noise · Checking next batch...";
                   } else if (t.indexOf("archive") !== -1) {
-                    if (textEl) textEl.textContent = "📁 Archived batch · Reviewing remaining...";
+                    statusMsg = "📁 Archived batch · Reviewing remaining...";
                   } else if (t === "gmail_mailbox_stats") {
-                    if (textEl) textEl.textContent = "📊 Checked mailbox totals · Synthesizing...";
+                    statusMsg = "📊 Checked mailbox totals · Synthesizing...";
                   } else {
-                    if (textEl) textEl.textContent = "⚡ Step " + traces.length + ": Finished " + t + "...";
+                    statusMsg = "⚡ Step " + traces.length + ": Finished " + t + "...";
                   }
                 } else if (lastTrace.kind === "model_call") {
                   const txt = lastTrace.text || "";
                   if (txt.indexOf("gmail_search") !== -1) {
-                    if (textEl) textEl.textContent = "🔍 Tool: Searching mailbox...";
+                    statusMsg = "🔍 Tool: Searching mailbox...";
                   } else if (txt.indexOf("batch_trash") !== -1) {
-                    if (textEl) textEl.textContent = "🧹 Tool: Trashing matching threads...";
+                    statusMsg = "🧹 Tool: Trashing matching threads...";
                   } else if (txt.indexOf("batch_archive") !== -1) {
-                    if (textEl) textEl.textContent = "📁 Tool: Archiving matching threads...";
+                    statusMsg = "📁 Tool: Archiving matching threads...";
                   } else {
-                    if (textEl) textEl.textContent = "⚡ Evaluating step " + (traces.length + 1) + "...";
+                    statusMsg = "⚡ Evaluating step " + (traces.length + 1) + "...";
                   }
                 }
               }
+              if (statusMsg) textEls.forEach(function (el) { el.textContent = statusMsg; });
             }
           }
 
