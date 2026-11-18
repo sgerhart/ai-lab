@@ -175,11 +175,15 @@
 
       // Check if line represents an in-chat guardrail promotion pill
       const cleanLine = rawLine.replace(/^[-*]\s+/, "").replace(/^`+|`+$/g, "").trim();
-      const pillMatch = cleanLine.match(/^\[?\+\s*(Auto-Archive|Direct Trash|Whitelist):\s*([^\]]+)\]?$/i);
+      const pillMatch = cleanLine.match(/['"`]?\[?\+\s*(Auto-Archive|Direct Trash|Whitelist):\s*([^\]'"`\n\r]+)\]?['"`]?(.*)/i);
       if (pillMatch) {
         currentList = null;
         const actionType = pillMatch[1].toLowerCase();
         const itemName = pillMatch[2].trim();
+        const extraNote = (pillMatch[3] || "").trim();
+
+        const wrap = document.createElement("div");
+        wrap.className = "guardrail-pill-row";
 
         const btn = document.createElement("button");
         btn.type = "button";
@@ -194,26 +198,27 @@
             ? "add_auto_archive"
             : (actionType.indexOf("trash") !== -1 ? "add_direct_trash" : "add_whitelist");
 
-          fetch("/v1/steward/policy", {
-            method: "POST",
-            headers: headers(),
-            body: JSON.stringify({ action: apiAction, item: itemName }),
-          })
-            .then(readJson)
+          modifyPolicy({ action: apiAction, item: itemName })
             .then(function () {
               btn.textContent = "✓ Added: " + itemName;
               btn.classList.add("pill-saved");
-              loadPolicy();
               setStatus("✓ Added " + itemName + " to Executive Guardrails.");
             })
             .catch(function (err) {
               btn.disabled = false;
               btn.textContent = "Failed (Retry)";
-              setStatus(err.message || "Failed to update guardrails.");
+              setStatus((err && err.message) || "Failed to update guardrails.");
             });
         });
 
-        container.appendChild(btn);
+        wrap.appendChild(btn);
+        if (extraNote) {
+          const noteSpan = document.createElement("span");
+          noteSpan.className = "guardrail-pill-note";
+          noteSpan.textContent = extraNote;
+          wrap.appendChild(noteSpan);
+        }
+        container.appendChild(wrap);
         continue;
       }
 
@@ -1327,9 +1332,12 @@
           status.textContent = "✓ Synced with Memory Vault";
           setTimeout(function () { status.textContent = ""; }, 3000);
         }
+        return policy;
       })
       .catch(function (err) {
-        alert("Could not update policy: " + err.message);
+        const status = document.getElementById("guardrails-save-status");
+        if (status) status.textContent = "Error saving policy";
+        throw err;
       });
   }
 
