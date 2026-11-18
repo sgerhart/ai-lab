@@ -2541,19 +2541,80 @@
 }
 
 .action-card.executed {
-  opacity: 0.65;
-  filter: grayscale(0.2);
+  opacity: 0.75;
+  filter: grayscale(0.15);
 }
 
 .action-card.sweep-success {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.action-card.minimized {
+  opacity: 0.88;
+  padding: 12px 14px;
+}
+
+.action-card.minimized p {
+  display: none;
+}
+
+.action-card.minimized h4 {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.action-card.minimized .btn-action-primary {
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.action-card.minimized:hover {
+  opacity: 1;
+}
+
+.btn-card-collapse {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--muted);
+  font-size: 9px;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.btn-card-collapse:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-receipt-toggle {
+  background: transparent;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #34d399;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
+}
+
+.btn-receipt-toggle:hover {
+  background: rgba(52, 211, 153, 0.2);
 }
 
 .sweep-audit-receipt {
-  margin-top: 14px;
-  padding: 10px 12px;
-  background: rgba(15, 23, 42, 0.7);
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(16, 185, 129, 0.25);
   border-radius: 10px;
   font-size: 0.78rem;
@@ -2564,10 +2625,16 @@
 .sweep-audit-header {
   font-weight: 600;
   color: #34d399;
-  margin-bottom: 6px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
+  font-size: 0.8rem;
+}
+
+.sweep-audit-details {
+  margin-top: 8px;
+  animation: fadeIn 0.2s ease;
 }
 
 .sweep-audit-list {

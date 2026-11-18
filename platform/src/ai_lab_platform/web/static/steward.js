@@ -1688,6 +1688,15 @@
   }
 
   // --- ACTIONS ---
+  function loadActivity() {
+    return fetch("/v1/steward/activity", { headers: headers() })
+      .then(readJson)
+      .then(function (res) {
+        renderActivity(res.activity || []);
+      })
+      .catch(function () {});
+  }
+
   function load() {
     loadAutonomyMode();
     loadMailboxRadar();
@@ -1931,12 +1940,33 @@
     });
   }
 
+  function addCardCollapseToggle(card) {
+    if (!card) return;
+    const top = card.querySelector(".action-card-top");
+    if (top && !top.querySelector(".btn-card-collapse")) {
+      const colBtn = document.createElement("button");
+      colBtn.type = "button";
+      colBtn.className = "btn-card-collapse";
+      colBtn.title = "Toggle card details";
+      colBtn.textContent = card.classList.contains("minimized") ? "▸ Expand" : "▾ Minimize";
+      colBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const isMin = card.classList.toggle("minimized");
+        colBtn.textContent = isMin ? "▸ Expand" : "▾ Minimize";
+      });
+      top.appendChild(colBtn);
+    }
+  }
+
   // 1-Click Action Tray Execution
   const btnCi = document.getElementById("btn-action-ci");
   if (btnCi) {
     btnCi.addEventListener("click", function () {
       const card = document.getElementById("action-card-ci");
-      if (card) card.classList.add("executed");
+      if (card) {
+        card.classList.add("executed", "card-completed", "minimized");
+        addCardCollapseToggle(card);
+      }
       btnCi.textContent = "✓ Dispatched";
       btnCi.disabled = true;
       sendMessage("Dispatch coding assistant to investigate the failed repo-validation run in a worktree");
@@ -1946,7 +1976,8 @@
   function renderSweepReceipt(card, count, snippets, action) {
     if (!card) return;
     card.classList.remove("executed");
-    card.classList.add("sweep-success");
+    card.classList.add("sweep-success", "card-completed", "minimized");
+    addCardCollapseToggle(card);
 
     const oldReceipt = card.querySelector(".sweep-audit-receipt");
     if (oldReceipt) oldReceipt.remove();
@@ -1956,12 +1987,25 @@
 
     const head = document.createElement("div");
     head.className = "sweep-audit-header";
+    const headTitle = document.createElement("span");
+    headTitle.className = "sweep-audit-title";
     if (action === "archive") {
-      head.textContent = "✓ Archived " + count + " Threads to All Mail";
+      headTitle.textContent = "✓ Archived " + count + " Threads";
     } else {
-      head.textContent = "✓ Trashed " + count + " Stale Threads (Audit Receipt)";
+      headTitle.textContent = "✓ Trashed " + count + " Stale Threads";
     }
+    head.appendChild(headTitle);
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.type = "button";
+    toggleBtn.className = "btn-receipt-toggle";
+    toggleBtn.textContent = "Details ▾";
+    head.appendChild(toggleBtn);
     receipt.appendChild(head);
+
+    const bodyWrap = document.createElement("div");
+    bodyWrap.className = "sweep-audit-details";
+    bodyWrap.style.display = "none";
 
     if (snippets && snippets.length > 0) {
       const list = document.createElement("ul");
@@ -1971,7 +2015,7 @@
         li.textContent = snip;
         list.appendChild(li);
       });
-      receipt.appendChild(list);
+      bodyWrap.appendChild(list);
     }
 
     const foot = document.createElement("div");
@@ -1982,7 +2026,16 @@
     footTime.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     foot.appendChild(footText);
     foot.appendChild(footTime);
-    receipt.appendChild(foot);
+    bodyWrap.appendChild(foot);
+
+    receipt.appendChild(bodyWrap);
+
+    toggleBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const isHidden = bodyWrap.style.display === "none";
+      bodyWrap.style.display = isHidden ? "block" : "none";
+      toggleBtn.textContent = isHidden ? "Details ▴" : "Details ▾";
+    });
 
     card.appendChild(receipt);
   }
@@ -2003,8 +2056,13 @@
         .then(readJson)
         .then(function (res) {
           const count = res.trashed_count != null ? res.trashed_count : 50;
-          btnRetail.textContent = "⚡ Sweep Next 50";
-          btnRetail.disabled = false;
+          if (count === 0) {
+            btnRetail.textContent = "✓ Promotions Clean";
+            btnRetail.disabled = true;
+          } else {
+            btnRetail.textContent = "⚡ Sweep Next 50";
+            btnRetail.disabled = false;
+          }
 
           renderSweepReceipt(card, count, res.sample_snippets || []);
 
@@ -2039,7 +2097,10 @@
   if (btnSchool) {
     btnSchool.addEventListener("click", function () {
       const card = document.getElementById("action-card-school");
-      if (card) card.classList.add("executed");
+      if (card) {
+        card.classList.add("executed", "card-completed", "minimized");
+        addCardCollapseToggle(card);
+      }
       btnSchool.textContent = "✓ Requested Digest";
       btnSchool.disabled = true;
       sendMessage("Give me a 3-bullet summary of the school activity reports for Ella and Caroline");
@@ -2062,8 +2123,13 @@
         .then(readJson)
         .then(function (res) {
           const count = res.archived_count != null ? res.archived_count : (res.trashed_count != null ? res.trashed_count : 100);
-          btnSocial.textContent = "⚡ Archive Next 100";
-          btnSocial.disabled = false;
+          if (count === 0) {
+            btnSocial.textContent = "✓ LinkedIn Clean";
+            btnSocial.disabled = true;
+          } else {
+            btnSocial.textContent = "⚡ Archive Next 100";
+            btnSocial.disabled = false;
+          }
 
           renderSweepReceipt(card, count, res.sample_snippets || [], "archive");
 
@@ -2109,8 +2175,13 @@
         .then(readJson)
         .then(function (res) {
           const count = res.archived_count != null ? res.archived_count : (res.trashed_count != null ? res.trashed_count : 0);
-          btnMisaddressed.textContent = "✓ Filter Next Batch";
-          btnMisaddressed.disabled = false;
+          if (count === 0) {
+            btnMisaddressed.textContent = "✓ In-Box Clean";
+            btnMisaddressed.disabled = true;
+          } else {
+            btnMisaddressed.textContent = "✓ Filter Next Batch";
+            btnMisaddressed.disabled = false;
+          }
 
           renderSweepReceipt(card, count, res.sample_snippets || [], "archive");
 
@@ -2167,14 +2238,20 @@
           loadActivity();
 
           const ciCard = document.getElementById("action-card-ci");
-          if (ciCard) ciCard.classList.add("executed");
+          if (ciCard) {
+            ciCard.classList.add("executed", "card-completed", "minimized");
+            addCardCollapseToggle(ciCard);
+          }
           if (btnCi) btnCi.textContent = "✓ Dispatched";
 
           const schoolCard = document.getElementById("action-card-school");
-          if (schoolCard) schoolCard.classList.add("executed");
+          if (schoolCard) {
+            schoolCard.classList.add("executed", "card-completed", "minimized");
+            addCardCollapseToggle(schoolCard);
+          }
           if (btnSchool) btnSchool.textContent = "✓ Requested";
 
-          btnAuthorizeAll.textContent = "✓ All 3 Bundles Executed";
+          btnAuthorizeAll.textContent = "✓ All Bundles Executed";
           btnAuthorizeAll.classList.add("authorized");
 
           sendMessage("Daily triage authorized: I swept " + count + " stale promotional threads to Trash. Please dispatch coding assistant to examine the failed repo-validation run, and summarize school reports for Ella and Caroline.");
