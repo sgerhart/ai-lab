@@ -2992,19 +2992,23 @@ def create_control_app(
     @app.get("/v1/steward/policy")
     def get_steward_policy_endpoint(
         request: Request,
+        response: Response,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         _gate(request, authorization)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         root = getattr(app.state, "memory_vault_root", None)
         return _steward_call(get_email_policy, vault_root=root)
 
     @app.post("/v1/steward/policy")
     def post_steward_policy_endpoint(
         request: Request,
+        response: Response,
         body: StewardPolicyIn,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         _gate(request, authorization)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         root = getattr(app.state, "memory_vault_root", None)
         return _steward_call(
             save_email_policy,
@@ -3022,10 +3026,12 @@ def create_control_app(
     @app.patch("/v1/steward/policy")
     def patch_steward_policy_endpoint(
         request: Request,
+        response: Response,
         body: StewardPolicyIn,
         authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         _gate(request, authorization)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         root = getattr(app.state, "memory_vault_root", None)
         return _steward_call(
             save_email_policy,

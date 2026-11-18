@@ -130,6 +130,14 @@ class GoalTests(unittest.TestCase):
         saved = save_email_policy(action="add_whitelist", item="Custom VIP", vault_root=vault)
         self.assertIn("Custom VIP", saved["whitelist"])
 
+        # Add to direct trash via add_direct_trash alias
+        saved_trash = save_email_policy(action="add_direct_trash", item="Word Daily", vault_root=vault)
+        self.assertIn("Word Daily", saved_trash["direct_trash"])
+
+        # Add to auto archive via add_auto_archive alias
+        saved_archive = save_email_policy(action="add_auto_archive", item="Threads", vault_root=vault)
+        self.assertIn("Threads", saved_archive["auto_archive"])
+
         # Remove from whitelist
         removed = save_email_policy(action="remove_whitelist", item="Custom VIP", vault_root=vault)
         self.assertNotIn("Custom VIP", removed["whitelist"])
@@ -377,11 +385,46 @@ class StewardApiTests(unittest.TestCase):
         self.assertIn("/v1/steward/activity", script.text)
         self.assertIn("textContent", script.text)
         self.assertNotIn("innerHTML", script.text)
+        self.assertIn("updatePillsState", script.text)
         home = self.client.get("/")
         self.assertIn('id="nav-steward"', home.text)
         self.assertIn('href="/steward"', home.text)
         chrome = self.client.get("/static/chrome.js")
         self.assertIn('href: "/steward"', chrome.text)
+
+    def test_policy_api_persists_items_and_sets_no_cache_headers(self) -> None:
+        # GET returns default policy and no-store headers
+        res = self.client.get("/v1/steward/policy", headers=self.headers)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("no-store", res.headers.get("Cache-Control", ""))
+        body = res.json()
+        self.assertTrue(body["ok"])
+
+        # POST add_direct_trash persists Word Daily
+        post_res = self.client.post(
+            "/v1/steward/policy",
+            json={"action": "add_direct_trash", "item": "Word Daily"},
+            headers=self.headers,
+        )
+        self.assertEqual(post_res.status_code, 200)
+        self.assertIn("no-store", post_res.headers.get("Cache-Control", ""))
+        self.assertIn("Word Daily", post_res.json()["direct_trash"])
+
+        # POST add_auto_archive persists Threads
+        post_arch = self.client.post(
+            "/v1/steward/policy",
+            json={"action": "add_auto_archive", "item": "Threads"},
+            headers=self.headers,
+        )
+        self.assertEqual(post_arch.status_code, 200)
+        self.assertIn("Threads", post_arch.json()["auto_archive"])
+
+        # Subsequent GET retains both items across calls
+        get_after = self.client.get("/v1/steward/policy", headers=self.headers)
+        self.assertEqual(get_after.status_code, 200)
+        data = get_after.json()
+        self.assertIn("Word Daily", data["direct_trash"])
+        self.assertIn("Threads", data["auto_archive"])
 
     def test_routes_require_auth_and_round_trip_a_goal(self) -> None:
         denied = self.client.get("/v1/steward/goals")

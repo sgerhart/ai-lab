@@ -200,7 +200,7 @@
       }
 
       // Check if line represents an in-chat guardrail promotion pill
-      const cleanLine = rawLine.replace(/^[-*]\s+/, "").replace(/^`+|`+$/g, "").trim();
+      const cleanLine = rawLine.replace(/^[-*•\u2022]\s+/, "").replace(/^`+|`+$/g, "").trim();
       const pillMatch = cleanLine.match(/['"`]?\[?\+\s*(Auto-Archive|Direct Trash|Whitelist):\s*([^\]'"`\n\r]+)\]?['"`]?(.*)/i);
       if (pillMatch) {
         currentList = null;
@@ -237,6 +237,7 @@
               btn.textContent = "✓ Added: " + itemName;
               btn.classList.add("pill-saved");
               setStatus("✓ Added " + itemName + " to Executive Guardrails.");
+              updatePillsState();
             })
             .catch(function (err) {
               btn.disabled = false;
@@ -934,6 +935,7 @@
         container.scrollTop = container.scrollHeight;
       }, 100);
     });
+    updatePillsState();
   }
 
   function setThinkingState(on, customMain, customSub) {
@@ -1346,6 +1348,7 @@
         currentPolicy = policy;
         renderExecutiveGuardrails(policy);
         renderGuardrailsDrawer(policy);
+        updatePillsState();
       })
       .catch(function () {});
   }
@@ -1361,6 +1364,7 @@
         currentPolicy = policy;
         renderExecutiveGuardrails(policy);
         renderGuardrailsDrawer(policy);
+        updatePillsState();
         const status = document.getElementById("guardrails-save-status");
         if (status) {
           status.textContent = "✓ Synced with Memory Vault";
@@ -1376,6 +1380,7 @@
   }
 
   function renderExecutiveGuardrails(policy) {
+    currentPolicy = policy;
     const container = document.getElementById("cockpit-guardrails-container");
     if (!container) return;
     clear(container);
