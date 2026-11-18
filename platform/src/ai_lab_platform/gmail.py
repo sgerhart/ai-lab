@@ -359,7 +359,7 @@ class GmailClient:
 
     def batch_trash_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
         """Move multiple threads matching query to Trash (recoverable for 30 days)."""
-        bounded = max(1, min(limit, 50))
+        bounded = max(1, min(limit, 250))
         effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
         search_res = self._api_request("threads", params={"q": effective_query, "maxResults": bounded})
         raw_threads = search_res.get("threads") or []
@@ -392,7 +392,7 @@ class GmailClient:
 
     def batch_archive_threads(self, query: str, limit: int = 25) -> Dict[str, Any]:
         """Archive multiple threads matching query by removing them from Inbox."""
-        bounded = max(1, min(limit, 50))
+        bounded = max(1, min(limit, 250))
         effective_query = re.sub(r"\bfrom:([^\s/]+/[^\s]+)", r"\1", query or "").strip()
         search_res = self._api_request("threads", params={"q": f"label:INBOX {effective_query}", "maxResults": bounded})
         raw_threads = search_res.get("threads") or []

@@ -689,7 +689,7 @@ def _gmail_batch_trash(_ctx: ToolContext, args: dict[str, Any]) -> str:
     query = str(args.get("query") or args.get("q") or "").strip()
     if not query:
         raise ToolError("gmail_batch_trash requires a search query (e.g. 'from:notifications@github.com' or 'is:unread category:promotions').")
-    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 50)
+    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 250)
     from .gmail import GmailClient, format_batch_result_markdown
 
     client = GmailClient()
@@ -706,7 +706,7 @@ def _gmail_batch_archive(_ctx: ToolContext, args: dict[str, Any]) -> str:
     query = str(args.get("query") or args.get("q") or "").strip()
     if not query:
         raise ToolError("gmail_batch_archive requires a search query (e.g. 'is:unread category:promotions').")
-    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 50)
+    limit = _bounded_limit(args.get("limit") or args.get("max_threads"), 25, 250)
     from .gmail import GmailClient, format_batch_result_markdown
 
     client = GmailClient()

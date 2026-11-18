@@ -646,8 +646,9 @@ class NexusSyncIn(BaseModel):
 
 class GmailSweepIn(BaseModel):
     query: str = Field(..., max_length=200)
-    limit: int = Field(default=50, ge=1, le=50)
+    limit: int = Field(default=50, ge=1, le=500)
     dry_run: bool = False
+    action: str = Field(default="trash", description="trash or archive")
 
 
 def _studio_payload(raw: Any) -> dict[str, Any]:
@@ -3439,9 +3440,18 @@ def create_control_app(
                 "samples": [t.get("subject", "") for t in threads[:5]],
             }
 
-        res = client.batch_trash_threads(query=body.query, limit=body.limit)
+        if body.action == "archive":
+            res = client.batch_archive_threads(query=body.query, limit=body.limit)
+            affected_count = res.get("archived_count", 0)
+            action_verb = "Archived"
+            dest_desc = "All Mail archive (cleared from Inbox)"
+        else:
+            res = client.batch_trash_threads(query=body.query, limit=body.limit)
+            affected_count = res.get("trashed_count", 0)
+            action_verb = "Swept"
+            dest_desc = "Gmail Trash (recoverable for 30 days)"
+
         stats = client.get_mailbox_stats()
-        trashed_count = res.get("trashed_count", 0)
         snippets = res.get("sample_snippets") or []
 
         # Record public audit log into Steward activity feed
@@ -3450,8 +3460,7 @@ def create_control_app(
             samples_formatted = "\nCleaned samples:\n" + "\n".join(f"- {s}" for s in snippets)
         now_iso = datetime.now().astimezone().isoformat()
         activity_note = (
-            f"Swept {trashed_count} thread(s) matching '{body.query}' to Gmail Trash "
-            f"(recoverable for 30 days).{samples_formatted}"
+            f"{action_verb} {affected_count} thread(s) matching '{body.query}' to {dest_desc}.{samples_formatted}"
         )
         try:
             append_activity(
@@ -3472,7 +3481,9 @@ def create_control_app(
         return {
             "ok": True,
             "dry_run": False,
-            "trashed_count": trashed_count,
+            "action": body.action,
+            "trashed_count": affected_count,
+            "archived_count": affected_count if body.action == "archive" else 0,
             "sample_snippets": snippets,
             "stats": stats,
             "note": res.get("note", ""),

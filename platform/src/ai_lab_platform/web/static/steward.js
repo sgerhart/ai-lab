@@ -1744,7 +1744,7 @@
     });
   }
 
-  function renderSweepReceipt(card, count, snippets) {
+  function renderSweepReceipt(card, count, snippets, action) {
     if (!card) return;
     card.classList.remove("executed");
     card.classList.add("sweep-success");
@@ -1757,7 +1757,11 @@
 
     const head = document.createElement("div");
     head.className = "sweep-audit-header";
-    head.textContent = "✓ Trashed " + count + " Stale Threads (Audit Receipt)";
+    if (action === "archive") {
+      head.textContent = "✓ Archived " + count + " Threads to All Mail";
+    } else {
+      head.textContent = "✓ Trashed " + count + " Stale Threads (Audit Receipt)";
+    }
     receipt.appendChild(head);
 
     if (snippets && snippets.length > 0) {
@@ -1774,7 +1778,7 @@
     const foot = document.createElement("div");
     foot.className = "sweep-audit-footer";
     const footText = document.createElement("span");
-    footText.textContent = "Google Trash · 30-day recovery";
+    footText.textContent = action === "archive" ? "All Mail Archive · Cleared from Inbox" : "Google Trash · 30-day recovery";
     const footTime = document.createElement("span");
     footTime.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     foot.appendChild(footText);
@@ -1840,6 +1844,53 @@
       btnSchool.textContent = "✓ Requested Digest";
       btnSchool.disabled = true;
       sendMessage("Give me a 3-bullet summary of the school activity reports for Ella and Caroline");
+    });
+  }
+
+  const btnSocial = document.getElementById("btn-action-social");
+  if (btnSocial) {
+    btnSocial.addEventListener("click", function () {
+      const card = document.getElementById("action-card-social");
+      btnSocial.textContent = "⚡ Archiving 100...";
+      btnSocial.disabled = true;
+
+      const socialQuery = "from:linkedin.com";
+      fetch("/v1/gmail/sweep", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ query: socialQuery, limit: 100, action: "archive" }),
+      })
+        .then(readJson)
+        .then(function (res) {
+          const count = res.archived_count != null ? res.archived_count : (res.trashed_count != null ? res.trashed_count : 100);
+          btnSocial.textContent = "⚡ Archive Next 100";
+          btnSocial.disabled = false;
+
+          renderSweepReceipt(card, count, res.sample_snippets || [], "archive");
+
+          if (res.stats) {
+            updateMailboxUI(res.stats);
+          } else {
+            loadMailboxStats();
+          }
+
+          loadActivity();
+
+          const snippetItems = (res.sample_snippets || []).map(function (s) { return "- " + s; }).join("\n");
+          const receiptMsg = "### 📁 Gmail Archive Receipt\n" +
+            "**Action:** Archived **" + count + " LinkedIn threads** (`" + socialQuery + "`) to All Mail.\n" +
+            "**Destination:** Cleared from Primary Inbox, preserved in All Mail archive.\n" +
+            (snippetItems ? "**Archived Samples:**\n" + snippetItems + "\n\n" : "\n") +
+            "Backlog counter updated. Click **Archive Next 100** on the card to continue cleaning.";
+          logReceiptToDialogue(receiptMsg);
+
+          setStatus("📁 Archived " + count + " LinkedIn threads to All Mail.");
+        })
+        .catch(function (err) {
+          btnSocial.textContent = "Archive Failed (Retry)";
+          btnSocial.disabled = false;
+          setStatus(err.message || "Failed to archive LinkedIn threads.");
+        });
     });
   }
 

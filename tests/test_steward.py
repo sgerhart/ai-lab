@@ -501,6 +501,16 @@ class StewardApiTests(unittest.TestCase):
             self.assertTrue(sweep_res.json()["ok"])
             self.assertEqual(sweep_res.json()["trashed_count"], 5)
 
+        # Gmail sweep archive endpoint
+        with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \
+             patch("ai_lab_platform.gmail.GmailClient.batch_archive_threads", return_value={"ok": True, "archived_count": 100, "sample_snippets": ["LinkedIn"]}), \
+             patch("ai_lab_platform.gmail.GmailClient.get_mailbox_stats", return_value={"messages_total": 100}):
+            sweep_arc = self.client.post("/v1/gmail/sweep", headers=self.headers, json={"query": "from:linkedin.com", "limit": 100, "action": "archive"})
+            self.assertEqual(sweep_arc.status_code, 200)
+            self.assertTrue(sweep_arc.json()["ok"])
+            self.assertEqual(sweep_arc.json()["archived_count"], 100)
+            self.assertEqual(sweep_arc.json()["action"], "archive")
+
         # Gmail sweep dry-run
         with patch("ai_lab_platform.gmail.GmailClient.has_token", return_value=True), \
              patch("ai_lab_platform.gmail.GmailClient.search_threads", return_value=[{"id": "t1", "subject": "Promo"}]):
