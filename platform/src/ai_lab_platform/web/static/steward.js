@@ -161,6 +161,32 @@
     return el;
   }
 
+  function isItemInPolicy(itemName, actionType) {
+    if (!currentPolicy) return false;
+    const clean = String(itemName || "").toLowerCase().trim();
+    if (!clean) return false;
+    const list = actionType.indexOf("archive") !== -1
+      ? (currentPolicy.auto_archive || [])
+      : (actionType.indexOf("trash") !== -1 ? (currentPolicy.direct_trash || []) : (currentPolicy.whitelist || []));
+    return list.some(function (x) {
+      const s = String(x).toLowerCase().trim();
+      return s === clean || s.indexOf(clean) !== -1 || clean.indexOf(s) !== -1;
+    });
+  }
+
+  function updatePillsState() {
+    if (!currentPolicy) return;
+    const pills = document.querySelectorAll(".guardrail-promote-pill");
+    Array.prototype.forEach.call(pills, function (btn) {
+      const item = btn.getAttribute("data-item");
+      const action = btn.getAttribute("data-action");
+      if (item && action && isItemInPolicy(item, action)) {
+        btn.textContent = "✓ Added: " + item;
+        btn.classList.add("pill-saved");
+      }
+    });
+  }
+
   function appendFormattedText(container, text) {
     if (!text) return;
     const lines = String(text).split("\n");
@@ -188,8 +214,16 @@
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "guardrail-promote-pill";
-        const icon = actionType.indexOf("archive") !== -1 ? "📁 " : (actionType.indexOf("trash") !== -1 ? "🗑️ " : "🛡️ ");
-        btn.textContent = icon + "+ " + pillMatch[1] + ": " + itemName;
+        btn.setAttribute("data-item", itemName);
+        btn.setAttribute("data-action", actionType);
+
+        if (isItemInPolicy(itemName, actionType)) {
+          btn.textContent = "✓ Added: " + itemName;
+          btn.classList.add("pill-saved");
+        } else {
+          const icon = actionType.indexOf("archive") !== -1 ? "📁 " : (actionType.indexOf("trash") !== -1 ? "🗑️ " : "🛡️ ");
+          btn.textContent = icon + "+ " + pillMatch[1] + ": " + itemName;
+        }
 
         btn.addEventListener("click", function () {
           btn.disabled = true;
@@ -1494,6 +1528,7 @@
     });
     groupOther.appendChild(pillsOther);
     container.appendChild(groupOther);
+    updatePillsState();
   }
 
   function renderGuardrailsDrawer(policy) {

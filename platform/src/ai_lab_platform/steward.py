@@ -568,21 +568,21 @@ def save_email_policy(
 
     if action and item:
         clean_item = item.strip()
-        if action == "add_whitelist" and clean_item and clean_item not in wl:
+        if action in ("add_whitelist", "add_protected") and clean_item and clean_item not in wl:
             wl.append(clean_item)
-        elif action == "remove_whitelist":
+        elif action in ("remove_whitelist", "remove_protected"):
             wl = [x for x in wl if x != clean_item]
-        elif action == "add_archive" and clean_item and clean_item not in aa:
+        elif action in ("add_archive", "add_auto_archive") and clean_item and clean_item not in aa:
             aa.append(clean_item)
-        elif action == "remove_archive":
+        elif action in ("remove_archive", "remove_auto_archive"):
             aa = [x for x in aa if x != clean_item]
-        elif action == "add_trash" and clean_item and clean_item not in dt:
+        elif action in ("add_trash", "add_direct_trash") and clean_item and clean_item not in dt:
             dt.append(clean_item)
-        elif action == "remove_trash":
+        elif action in ("remove_trash", "remove_direct_trash"):
             dt = [x for x in dt if x != clean_item]
-        elif action == "add_other" and clean_item and clean_item not in ma:
+        elif action in ("add_other", "add_misaddressed") and clean_item and clean_item not in ma:
             ma.append(clean_item)
-        elif action == "remove_other":
+        elif action in ("remove_other", "remove_misaddressed"):
             ma = [x for x in ma if x != clean_item]
 
     wl_lines = "\n".join(f"  - {x}" for x in wl) or "  - (none)"
