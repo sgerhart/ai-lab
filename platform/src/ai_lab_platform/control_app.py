@@ -534,6 +534,7 @@ class StewardGoalUpdateIn(BaseModel):
 
 class StewardPolicyIn(BaseModel):
     whitelist: list[str] | None = None
+    auto_archive: list[str] | None = None
     direct_trash: list[str] | None = None
     misaddressed_senders: list[str] | None = None
     cadence: str | None = None
@@ -3007,6 +3008,7 @@ def create_control_app(
         return _steward_call(
             save_email_policy,
             whitelist=body.whitelist,
+            auto_archive=body.auto_archive,
             direct_trash=body.direct_trash,
             misaddressed_senders=body.misaddressed_senders,
             cadence=body.cadence,
@@ -3027,6 +3029,7 @@ def create_control_app(
         return _steward_call(
             save_email_policy,
             whitelist=body.whitelist,
+            auto_archive=body.auto_archive,
             direct_trash=body.direct_trash,
             misaddressed_senders=body.misaddressed_senders,
             cadence=body.cadence,

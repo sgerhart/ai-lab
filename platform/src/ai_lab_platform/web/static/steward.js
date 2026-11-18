@@ -1225,7 +1225,44 @@
     groupProtected.appendChild(pillsProt);
     container.appendChild(groupProtected);
 
-    // 2. Direct Trash & Unsubscribe
+    // 2. Auto-Archive Targets (Social & Newsletters)
+    const groupArchive = document.createElement("div");
+    groupArchive.className = "guardrails-group";
+    const headArch = document.createElement("div");
+    headArch.className = "guardrails-group-header";
+    add(headArch, "span", "📁 Auto-Archive (Social & Alerts)", "guardrails-group-title title-archive");
+    add(headArch, "span", "(" + (policy.auto_archive ? policy.auto_archive.length : 0) + ")", "drawer-count-badge");
+    groupArchive.appendChild(headArch);
+
+    const pillsArch = document.createElement("div");
+    pillsArch.className = "guardrail-pills";
+    (policy.auto_archive || []).forEach(function (item) {
+      const pill = document.createElement("span");
+      pill.className = "guardrail-pill pill-archive";
+      pill.appendChild(document.createTextNode(item));
+      const rem = add(pill, "button", "×", "pill-remove-btn");
+      rem.type = "button";
+      rem.title = "Remove from auto-archive";
+      rem.addEventListener("click", function (e) {
+        e.stopPropagation();
+        modifyPolicy({ action: "remove_archive", item: item });
+      });
+      pillsArch.appendChild(pill);
+    });
+
+    const addArchBtn = add(pillsArch, "button", "＋ Add", "btn-add-pill-inline");
+    addArchBtn.type = "button";
+    addArchBtn.title = "Add platform or sender to auto-archive";
+    addArchBtn.addEventListener("click", function () {
+      const val = prompt("Enter social site or platform to auto-archive (e.g. Threads, Bluesky, LinkedIn):");
+      if (val && val.trim()) {
+        modifyPolicy({ action: "add_archive", item: val.trim() });
+      }
+    });
+    groupArchive.appendChild(pillsArch);
+    container.appendChild(groupArchive);
+
+    // 3. Direct Trash & Unsubscribe
     const groupTrash = document.createElement("div");
     groupTrash.className = "guardrails-group";
     const headTrash = document.createElement("div");
@@ -1303,14 +1340,17 @@
   function renderGuardrailsDrawer(policy) {
     if (!policy) return;
     const wlTags = document.getElementById("drawer-whitelist-tags");
+    const archTags = document.getElementById("drawer-archive-tags");
     const dtTags = document.getElementById("drawer-trash-tags");
     const otherTags = document.getElementById("drawer-other-tags");
     const rawMd = document.getElementById("policy-raw-markdown");
     const wlBadge = document.getElementById("whitelist-count-badge");
+    const archBadge = document.getElementById("archive-count-badge");
     const dtBadge = document.getElementById("trash-count-badge");
     const otherBadge = document.getElementById("other-count-badge");
 
     if (wlBadge) wlBadge.textContent = (policy.whitelist ? policy.whitelist.length : 0) + " items";
+    if (archBadge) archBadge.textContent = (policy.auto_archive ? policy.auto_archive.length : 0) + " items";
     if (dtBadge) dtBadge.textContent = (policy.direct_trash ? policy.direct_trash.length : 0) + " items";
     if (otherBadge) otherBadge.textContent = (policy.misaddressed_senders ? policy.misaddressed_senders.length : 0) + " patterns";
 
@@ -1330,6 +1370,21 @@
           modifyPolicy({ action: "remove_whitelist", item: item });
         });
         wlTags.appendChild(pill);
+      });
+    }
+
+    if (archTags) {
+      clear(archTags);
+      (policy.auto_archive || []).forEach(function (item) {
+        const pill = document.createElement("span");
+        pill.className = "guardrail-pill pill-archive";
+        pill.appendChild(document.createTextNode(item));
+        const rem = add(pill, "button", "×", "pill-remove-btn");
+        rem.type = "button";
+        rem.addEventListener("click", function () {
+          modifyPolicy({ action: "remove_archive", item: item });
+        });
+        archTags.appendChild(pill);
       });
     }
 
@@ -1883,6 +1938,17 @@
       const input = document.getElementById("input-new-whitelist");
       if (input && input.value.trim()) {
         modifyPolicy({ action: "add_whitelist", item: input.value.trim() });
+        input.value = "";
+      }
+    });
+  }
+
+  const btnAddArch = document.getElementById("btn-add-archive");
+  if (btnAddArch) {
+    btnAddArch.addEventListener("click", function () {
+      const input = document.getElementById("input-new-archive");
+      if (input && input.value.trim()) {
+        modifyPolicy({ action: "add_archive", item: input.value.trim() });
         input.value = "";
       }
     });

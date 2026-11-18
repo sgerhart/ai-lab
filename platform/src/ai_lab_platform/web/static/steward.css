@@ -2745,6 +2745,7 @@
 }
 
 .title-protected { color: #34d399; }
+.title-archive { color: #38bdf8; }
 .title-trash { color: #f43f5e; }
 .title-other { color: #fbbf24; }
 .title-cadence { color: #a855f7; }
@@ -2772,6 +2773,12 @@
   background: rgba(16, 185, 129, 0.12);
   color: #6ee7b7;
   border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pill-archive {
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .pill-trash {

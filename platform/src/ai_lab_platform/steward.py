@@ -454,6 +454,7 @@ def _default_email_policy_markdown() -> str:
 
 def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
     whitelist: list[str] = []
+    auto_archive: list[str] = []
     direct_trash: list[str] = []
     misaddressed: list[str] = []
 
@@ -463,6 +464,9 @@ def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
         lower = line.lower()
         if "whitelist" in lower:
             current_section = "whitelist"
+            continue
+        elif "archive" in lower:
+            current_section = "auto_archive"
             continue
         elif "direct trash" in lower or "political campaign" in lower or "unsubscribe" in lower:
             current_section = "direct_trash"
@@ -489,6 +493,8 @@ def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
                 continue
             if current_section == "whitelist" and clean not in whitelist:
                 whitelist.append(clean)
+            elif current_section == "auto_archive" and clean not in auto_archive:
+                auto_archive.append(clean)
             elif current_section == "direct_trash" and clean not in direct_trash:
                 direct_trash.append(clean)
             elif current_section == "misaddressed" and clean not in misaddressed:
@@ -496,6 +502,8 @@ def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
 
     if not whitelist:
         whitelist = ["Humble Bundle", "Eero", "Experian", "Marriott", "Ella & Caroline school notices (Securly)"]
+    if not auto_archive:
+        auto_archive = ["LinkedIn notifications", "Social alerts & platforms"]
     if not direct_trash:
         direct_trash = ["Political campaigns & PAC solicitations", "TUMI", "CoffeeCo"]
     if not misaddressed:
@@ -510,6 +518,7 @@ def _parse_email_policy_markdown(text: str) -> dict[str, Any]:
     return {
         "ok": True,
         "whitelist": whitelist,
+        "auto_archive": auto_archive,
         "direct_trash": direct_trash,
         "misaddressed_senders": misaddressed,
         "cadence": "Promotions older than 2 days",
@@ -534,6 +543,7 @@ def get_email_policy(*, vault_root: Path | None = None) -> dict[str, Any]:
 def save_email_policy(
     *,
     whitelist: list[str] | None = None,
+    auto_archive: list[str] | None = None,
     direct_trash: list[str] | None = None,
     misaddressed_senders: list[str] | None = None,
     cadence: str | None = None,
@@ -552,6 +562,7 @@ def save_email_policy(
         return _parse_email_policy_markdown(text)
 
     wl = list(whitelist) if whitelist is not None else list(current.get("whitelist", []))
+    aa = list(auto_archive) if auto_archive is not None else list(current.get("auto_archive", []))
     dt = list(direct_trash) if direct_trash is not None else list(current.get("direct_trash", []))
     ma = list(misaddressed_senders) if misaddressed_senders is not None else list(current.get("misaddressed_senders", []))
 
@@ -561,6 +572,10 @@ def save_email_policy(
             wl.append(clean_item)
         elif action == "remove_whitelist":
             wl = [x for x in wl if x != clean_item]
+        elif action == "add_archive" and clean_item and clean_item not in aa:
+            aa.append(clean_item)
+        elif action == "remove_archive":
+            aa = [x for x in aa if x != clean_item]
         elif action == "add_trash" and clean_item and clean_item not in dt:
             dt.append(clean_item)
         elif action == "remove_trash":
@@ -571,6 +586,7 @@ def save_email_policy(
             ma = [x for x in ma if x != clean_item]
 
     wl_lines = "\n".join(f"  - {x}" for x in wl) or "  - (none)"
+    aa_lines = "\n".join(f"  - {x}" for x in aa) or "  - (none)"
     dt_lines = "\n".join(f"- {x}" for x in dt) or "- (none)"
     ma_lines = "\n".join(f"  - {x}" for x in ma) or "  - (none)"
 
@@ -592,15 +608,19 @@ def save_email_policy(
         "- Whitelist (DO NOT TRASH):\n"
         f"{wl_lines}\n"
         "- Policy: Automatically sweep all other promotional emails older than 2 days to Gmail Trash. 30-day recoverable.\n\n"
-        "## 3. Direct Trash & Unsubscribe Targets\n"
+        "## 3. Auto-Archive Targets (Social & Notifications)\n"
+        "- Filter: Social platform updates and routine notifications to move directly to Archive.\n"
+        f"{aa_lines}\n"
+        "- Policy: Automatically archive to keep Primary Inbox clean without deleting.\n\n"
+        "## 4. Direct Trash & Unsubscribe Targets\n"
         f"{dt_lines}\n"
         "- Policy: Move directly to Gmail Trash immediately and stage unsubscribe actions. Do not keep in Primary Inbox.\n\n"
-        "## 4. Misaddressed \"Other S. Gerhart\" Emails\n"
+        "## 5. Misaddressed \"Other S. Gerhart\" Emails\n"
         "- Background: The address `sgerhart@gmail.com` frequently receives emails intended for other individuals sharing the first initial \"S\" and surname \"Gerhart\" who mistakenly type `sgerhart@gmail.com` instead of their own address.\n"
         "- Identified Senders / Individuals:\n"
         f"{ma_lines}\n"
         "- Policy: Triage and flag misaddressed correspondence. Solicitations and retail signups for other individuals should be filtered directly to Trash; significant legal or financial correspondence for others may be archived with a notification.\n\n"
-        "## 5. Protected VIP Shield\n"
+        "## 6. Protected VIP Shield\n"
         "- Never trash or archive emails from personal contacts, human correspondents, financial/tax institutions, or Ella & Caroline school activity notices (Securly) without explicit user review.\n"
     )
 
