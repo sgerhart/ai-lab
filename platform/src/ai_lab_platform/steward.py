@@ -710,9 +710,9 @@ def enqueue_wake(
     store.put_conversation(conversation)
     objective = (
         f"Standing goal: {title}\n{intent}\n"
-        "Instructions: Actively invoke your available read tools (e.g. web_search, gmail_search, gmail_mailbox_stats, etc.) with relevant queries to gather real-time data before concluding. "
-        "Do NOT return FINAL until you have actively queried your tools and inspected the observations. "
-        "Once you have gathered the data, synthesize an executive briefing of your findings and any items needing operator attention."
+        "Instructions: Query 1 or 2 relevant read tools (e.g. web_search or gmail_search) to gather current information. "
+        "Once you inspect the observation, immediately return FINAL with a concise, well-structured executive briefing summarizing your findings and any items needing operator attention. "
+        "Do not repeat tool calls or loop."
     )
     run = AgentRun.new(
         agent="personal",
