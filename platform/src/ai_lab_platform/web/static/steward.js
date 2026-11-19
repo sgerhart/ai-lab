@@ -515,42 +515,115 @@
     }
   }
 
-  function buildSentinelReportDrawer(goal) {
+  let selectedSentinelGoalId = null;
+  let cachedConversations = [];
+
+  function findConversationForGoal(goal) {
     if (!goal) return null;
-    const entry = (cachedActivity || []).find(function (a) {
-      return a.goal_id === goal.id || (a.goal_title && goal.title && a.goal_title.trim().toLowerCase() === goal.title.trim().toLowerCase());
+    const goalTitle = (goal.title || "").trim().toLowerCase();
+
+    // 1. Check if cachedActivity has an entry for this goal with conversation_id
+    const actEntry = (cachedActivity || []).find(function (a) {
+      return a.goal_id === goal.id && a.conversation_id;
+    });
+    if (actEntry && actEntry.conversation_id) {
+      const match = (cachedConversations || []).find(function (c) {
+        return c.id === actEntry.conversation_id;
+      });
+      if (match) return match;
+    }
+
+    // 2. Look for personal conversation whose title matches "Steward: <goal.title>" or "<goal.title>"
+    const targetTitle = "steward: " + goalTitle;
+    const match = (cachedConversations || []).find(function (c) {
+      if (c.agent !== "personal") return false;
+      const cTitle = (c.title || "").trim().toLowerCase();
+      return cTitle === targetTitle || cTitle === goalTitle || cTitle.indexOf(goalTitle) !== -1;
+    });
+    return match || null;
+  }
+
+  function openSentinelDialogue(goal) {
+    if (!goal) return;
+    selectedSentinelGoalId = goal.id;
+
+    // Update active highlight on left sentinel items
+    const items = document.querySelectorAll(".cockpit-sentinel-item");
+    items.forEach(function (el) {
+      if (el.dataset.goalId === goal.id) {
+        el.classList.add("selected-sentinel");
+      } else {
+        el.classList.remove("selected-sentinel");
+      }
     });
 
-    const drawer = document.createElement("div");
-    drawer.className = "sentinel-report-drawer";
-    drawer.hidden = true;
-
-    const head = document.createElement("div");
-    head.className = "sentinel-report-header";
-
-    const titleSpan = document.createElement("span");
-    titleSpan.className = "sentinel-report-title";
-    titleSpan.textContent = "📄 Latest Intelligence Report";
-    head.appendChild(titleSpan);
-
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "sentinel-report-time";
-    timeSpan.textContent = entry && entry.at ? friendlyWhen(entry.at) : (goal.last_due_at ? friendlyWhen(goal.last_due_at) : "Awaiting first wake");
-    head.appendChild(timeSpan);
-    drawer.appendChild(head);
-
-    const body = document.createElement("div");
-    body.className = "sentinel-report-body";
-    if (entry && entry.note) {
-      appendFormattedText(body, entry.note);
-    } else {
-      const emptyP = document.createElement("p");
-      emptyP.textContent = "No wake report logged yet. Click '⚡ Wake Now' to trigger a live run.";
-      body.appendChild(emptyP);
+    // Update dialogue header title / subtitle
+    const dialogueTitle = document.getElementById("cockpit-dialogue-title");
+    const dialogueSub = document.getElementById("cockpit-dialogue-sub");
+    if (dialogueTitle) {
+      dialogueTitle.textContent = "Chief of Staff Dialogue — " + (goal.title || "Sentinel");
     }
-    drawer.appendChild(body);
+    if (dialogueSub) {
+      dialogueSub.textContent = "Viewing Sentinel: " + (goal.title || "Watch") + " · mac-mini private loop";
+    }
 
-    return drawer;
+    // Find conversation matching this sentinel
+    const conv = findConversationForGoal(goal);
+    if (conv) {
+      activeConvId = conv.id;
+      loadMessages(activeConvId);
+      setStatus("Switched to dialogue for " + goal.title);
+    } else {
+      fetch("/v1/conversations", {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ agent: "personal", title: "Steward: " + (goal.title || "Sentinel") }),
+      })
+        .then(readJson)
+        .then(function (created) {
+          if (created && created.id) {
+            activeConvId = created.id;
+            cachedConversations.unshift(created);
+            loadMessages(activeConvId);
+            setStatus("Opened dialogue for " + goal.title);
+          }
+        })
+        .catch(function () {
+          setStatus("Could not open dialogue for " + goal.title);
+        });
+    }
+  }
+
+  function highlightSentinelForActiveConv() {
+    if (!activeConvId) return;
+    const activeConv = (cachedConversations || []).find(function (c) { return c.id === activeConvId; });
+    if (!activeConv) return;
+    const cTitle = (activeConv.title || "").trim().toLowerCase();
+
+    const matchingGoal = (cachedGoals || []).find(function (g) {
+      const gTitle = (g.title || "").trim().toLowerCase();
+      return cTitle === "steward: " + gTitle || cTitle === gTitle || cTitle.indexOf(gTitle) !== -1;
+    });
+
+    if (matchingGoal) {
+      selectedSentinelGoalId = matchingGoal.id;
+      const items = document.querySelectorAll(".cockpit-sentinel-item");
+      items.forEach(function (el) {
+        if (el.dataset.goalId === matchingGoal.id) {
+          el.classList.add("selected-sentinel");
+        } else {
+          el.classList.remove("selected-sentinel");
+        }
+      });
+      const dialogueTitle = document.getElementById("cockpit-dialogue-title");
+      const dialogueSub = document.getElementById("cockpit-dialogue-sub");
+      if (dialogueTitle) {
+        dialogueTitle.textContent = "Chief of Staff Dialogue — " + matchingGoal.title;
+      }
+      if (dialogueSub) {
+        dialogueSub.textContent = "Viewing Sentinel: " + matchingGoal.title + " · mac-mini private loop";
+      }
+    }
   }
 
   // --- GOALS / STANDING WATCHES ---
@@ -656,40 +729,36 @@
           telemetry.appendChild(teleItem);
           card.appendChild(telemetry);
 
-          // Report Drawer
-          const drawer = buildSentinelReportDrawer(goal);
-
-          function toggleDrawer(e) {
-            if (e) e.stopPropagation();
-            if (!drawer) return;
-            const isHidden = drawer.hidden;
-            drawer.hidden = !isHidden;
-            if (reportBtn) {
-              reportBtn.textContent = drawer.hidden ? "📄 Latest Report ▾" : "📄 Close Report ▴";
-            }
-          }
-
           titleGroup.style.cursor = "pointer";
-          titleGroup.title = "Click to toggle latest wake report";
-          titleGroup.addEventListener("click", toggleDrawer);
+          titleGroup.title = "Click to open dialogue in Chief of Staff Cockpit";
+          titleGroup.addEventListener("click", function () {
+            switchTab("cockpit");
+            openSentinelDialogue(goal);
+          });
 
           teleItem.style.cursor = "pointer";
-          teleItem.title = "Click to toggle latest wake report";
-          teleItem.addEventListener("click", toggleDrawer);
+          teleItem.title = "Click to open dialogue in Chief of Staff Cockpit";
+          teleItem.addEventListener("click", function () {
+            switchTab("cockpit");
+            openSentinelDialogue(goal);
+          });
 
           // Action Buttons
           const actions = document.createElement("div");
           actions.className = "fleet-card-actions";
 
-          const reportBtn = textButton("📄 Latest Report ▾", toggleDrawer, "btn-fleet-report");
-          actions.appendChild(reportBtn);
+          const dialogueBtn = textButton("💬 Open Dialogue", function () {
+            switchTab("cockpit");
+            openSentinelDialogue(goal);
+          }, "btn-fleet-wake");
+          actions.appendChild(dialogueBtn);
 
           if (goal.status === "active") {
             const wakeBtn = textButton("⚡ Wake Now", function () {
               wakeBtn.textContent = "⚡ Waking...";
               wakeBtn.disabled = true;
               act(goal.id, "wake");
-            }, "btn-fleet-wake");
+            }, "btn-fleet-pause");
             actions.appendChild(wakeBtn);
 
             actions.appendChild(textButton("⏸️ Pause", function () {
@@ -724,10 +793,6 @@
             actions.appendChild(confirm);
           }
           card.appendChild(actions);
-
-          if (drawer) {
-            card.appendChild(drawer);
-          }
 
           goalsActiveEl.appendChild(card);
         });
@@ -888,13 +953,27 @@
 
   // --- CONVERSATION / CHIEF OF STAFF DESK ---
   function loadConversations() {
-    return fetch("/v1/conversations?limit=40", { headers: headers() })
+    return fetch("/v1/conversations?limit=60", { headers: headers() })
       .then(readJson)
       .then(function (res) {
-        const list = res.conversations || [];
-        const personal = list.filter(function (c) { return c.agent === "personal"; });
+        cachedConversations = res.conversations || [];
+        const personal = cachedConversations.filter(function (c) { return c.agent === "personal"; });
+
+        if (selectedSentinelGoalId) {
+          const selectedGoal = (cachedGoals || []).find(function (g) { return g.id === selectedSentinelGoalId; });
+          const goalConv = findConversationForGoal(selectedGoal);
+          if (goalConv) {
+            activeConvId = goalConv.id;
+            highlightSentinelForActiveConv();
+            return loadMessages(activeConvId);
+          }
+        }
+
         if (personal.length > 0) {
-          activeConvId = personal[0].id;
+          if (!activeConvId || !personal.some(function (c) { return c.id === activeConvId; })) {
+            activeConvId = personal[0].id;
+          }
+          highlightSentinelForActiveConv();
           return loadMessages(activeConvId);
         } else {
           activeConvId = null;
@@ -1367,9 +1446,21 @@
       add(list, "p", "No active standing sentinels. Create one in Standing Watches.", "empty");
       return;
     }
+
+    if (!selectedSentinelGoalId && active.length > 0) {
+      selectedSentinelGoalId = active[0].id;
+    }
+
     active.forEach(function (g) {
       const item = document.createElement("div");
-      item.className = "cockpit-sentinel-item";
+      const isSelected = g.id === selectedSentinelGoalId;
+      item.className = "cockpit-sentinel-item" + (isSelected ? " selected-sentinel" : "");
+      item.dataset.goalId = g.id;
+      item.title = "Click to open dialogue for " + (g.title || "Sentinel");
+
+      item.addEventListener("click", function () {
+        openSentinelDialogue(g);
+      });
 
       const top = document.createElement("div");
       top.className = "sentinel-item-top";
@@ -1391,46 +1482,24 @@
       add(meta, "span", "⚡ " + (g.last_due_at ? "Last: " + friendlyWhen(g.last_due_at) : "Pending Wake"));
       item.appendChild(meta);
 
-      const drawer = buildSentinelReportDrawer(g);
-
-      function toggleCockpitDrawer(e) {
-        if (e) e.stopPropagation();
-        if (!drawer) return;
-        const isHidden = drawer.hidden;
-        drawer.hidden = !isHidden;
-        if (reportBtn) {
-          reportBtn.textContent = drawer.hidden ? "📄 Latest Report ▾" : "📄 Close Report ▴";
-        }
-      }
-
-      top.style.cursor = "pointer";
-      top.title = "Click to toggle latest wake report";
-      top.addEventListener("click", toggleCockpitDrawer);
-
       const actions = document.createElement("div");
       actions.className = "sentinel-item-actions";
 
-      const reportBtn = add(actions, "button", "📄 Latest Report ▾", "btn-sentinel-report");
-      reportBtn.type = "button";
-      reportBtn.addEventListener("click", toggleCockpitDrawer);
-
       const cfgBtn = add(actions, "button", "⚙️ Configure Watch", "btn-sentinel-edit");
       cfgBtn.type = "button";
-      cfgBtn.addEventListener("click", function () {
+      cfgBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
         openGoalConfigModal(g);
       });
       const wakeBtn = add(actions, "button", "⚡ Wake Now", "btn-text-action");
       wakeBtn.type = "button";
-      wakeBtn.addEventListener("click", function () {
+      wakeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
         wakeBtn.textContent = "⚡ Waking...";
         wakeBtn.disabled = true;
         act(g.id, "wake");
       });
       item.appendChild(actions);
-
-      if (drawer) {
-        item.appendChild(drawer);
-      }
 
       list.appendChild(item);
     });

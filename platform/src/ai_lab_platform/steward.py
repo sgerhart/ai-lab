@@ -747,6 +747,7 @@ def enqueue_wake(
             "goal_title": title,
             "at": now,
             "run_id": run.id,
+            "conversation_id": conversation.id,
             "status": "queued",
             "see_tools": list(tools),
             "note": "",
