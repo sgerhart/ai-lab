@@ -116,6 +116,7 @@
   let isThinking = false;
   let pollInterval = null;
   let cachedGoals = [];
+  let cachedActivity = [];
 
   function setStatus(text) {
     if (statusEl) statusEl.textContent = text || "";
@@ -514,6 +515,44 @@
     }
   }
 
+  function buildSentinelReportDrawer(goal) {
+    if (!goal) return null;
+    const entry = (cachedActivity || []).find(function (a) {
+      return a.goal_id === goal.id || (a.goal_title && goal.title && a.goal_title.trim().toLowerCase() === goal.title.trim().toLowerCase());
+    });
+
+    const drawer = document.createElement("div");
+    drawer.className = "sentinel-report-drawer";
+    drawer.hidden = true;
+
+    const head = document.createElement("div");
+    head.className = "sentinel-report-header";
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "sentinel-report-title";
+    titleSpan.textContent = "📄 Latest Intelligence Report";
+    head.appendChild(titleSpan);
+
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "sentinel-report-time";
+    timeSpan.textContent = entry && entry.at ? friendlyWhen(entry.at) : (goal.last_due_at ? friendlyWhen(goal.last_due_at) : "Awaiting first wake");
+    head.appendChild(timeSpan);
+    drawer.appendChild(head);
+
+    const body = document.createElement("div");
+    body.className = "sentinel-report-body";
+    if (entry && entry.note) {
+      appendFormattedText(body, entry.note);
+    } else {
+      const emptyP = document.createElement("p");
+      emptyP.textContent = "No wake report logged yet. Click '⚡ Wake Now' to trigger a live run.";
+      body.appendChild(emptyP);
+    }
+    drawer.appendChild(body);
+
+    return drawer;
+  }
+
   // --- GOALS / STANDING WATCHES ---
   function renderGoals(goals) {
     cachedGoals = goals || [];
@@ -617,9 +656,34 @@
           telemetry.appendChild(teleItem);
           card.appendChild(telemetry);
 
+          // Report Drawer
+          const drawer = buildSentinelReportDrawer(goal);
+
+          function toggleDrawer(e) {
+            if (e) e.stopPropagation();
+            if (!drawer) return;
+            const isHidden = drawer.hidden;
+            drawer.hidden = !isHidden;
+            if (reportBtn) {
+              reportBtn.textContent = drawer.hidden ? "📄 Latest Report ▾" : "📄 Close Report ▴";
+            }
+          }
+
+          titleGroup.style.cursor = "pointer";
+          titleGroup.title = "Click to toggle latest wake report";
+          titleGroup.addEventListener("click", toggleDrawer);
+
+          teleItem.style.cursor = "pointer";
+          teleItem.title = "Click to toggle latest wake report";
+          teleItem.addEventListener("click", toggleDrawer);
+
           // Action Buttons
           const actions = document.createElement("div");
           actions.className = "fleet-card-actions";
+
+          const reportBtn = textButton("📄 Latest Report ▾", toggleDrawer, "btn-fleet-report");
+          actions.appendChild(reportBtn);
+
           if (goal.status === "active") {
             const wakeBtn = textButton("⚡ Wake Now", function () {
               wakeBtn.textContent = "⚡ Waking...";
@@ -660,6 +724,11 @@
             actions.appendChild(confirm);
           }
           card.appendChild(actions);
+
+          if (drawer) {
+            card.appendChild(drawer);
+          }
+
           goalsActiveEl.appendChild(card);
         });
       }
@@ -709,6 +778,7 @@
 
   // --- INTELLIGENCE FEED / ACTIVITY ---
   function renderActivity(entries) {
+    cachedActivity = entries || [];
     if (!activityEl) return;
     clear(activityEl);
     if (!entries || !entries.length) {
@@ -1321,8 +1391,29 @@
       add(meta, "span", "⚡ " + (g.last_due_at ? "Last: " + friendlyWhen(g.last_due_at) : "Pending Wake"));
       item.appendChild(meta);
 
+      const drawer = buildSentinelReportDrawer(g);
+
+      function toggleCockpitDrawer(e) {
+        if (e) e.stopPropagation();
+        if (!drawer) return;
+        const isHidden = drawer.hidden;
+        drawer.hidden = !isHidden;
+        if (reportBtn) {
+          reportBtn.textContent = drawer.hidden ? "📄 Latest Report ▾" : "📄 Close Report ▴";
+        }
+      }
+
+      top.style.cursor = "pointer";
+      top.title = "Click to toggle latest wake report";
+      top.addEventListener("click", toggleCockpitDrawer);
+
       const actions = document.createElement("div");
       actions.className = "sentinel-item-actions";
+
+      const reportBtn = add(actions, "button", "📄 Latest Report ▾", "btn-sentinel-report");
+      reportBtn.type = "button";
+      reportBtn.addEventListener("click", toggleCockpitDrawer);
+
       const cfgBtn = add(actions, "button", "⚙️ Configure Watch", "btn-sentinel-edit");
       cfgBtn.type = "button";
       cfgBtn.addEventListener("click", function () {
@@ -1336,6 +1427,10 @@
         act(g.id, "wake");
       });
       item.appendChild(actions);
+
+      if (drawer) {
+        item.appendChild(drawer);
+      }
 
       list.appendChild(item);
     });
@@ -1694,7 +1789,9 @@
     return fetch("/v1/steward/activity", { headers: headers() })
       .then(readJson)
       .then(function (res) {
-        renderActivity(res.activity || []);
+        cachedActivity = res.activity || [];
+        renderActivity(cachedActivity);
+        renderGoals(cachedGoals);
       })
       .catch(function () {});
   }
@@ -1714,6 +1811,7 @@
         ]);
       })
       .then(function (pair) {
+        cachedActivity = pair[1].activity || [];
         renderGoals(pair[0].goals || []);
         renderActivity(pair[1].activity || []);
         return loadConversations();
