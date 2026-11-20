@@ -530,6 +530,7 @@ class GmailClient:
         target_unread: int = 500,
         max_batches: int = 5,
         batch_size: int = 500,
+        exclude_github: bool = True,
     ) -> Dict[str, Any]:
         """Autonomously burn down the inbox backlog across policy categories toward target_unread.
 
@@ -542,12 +543,14 @@ class GmailClient:
         inbox_stats = initial_stats.get("labels", {}).get("INBOX", {})
         starting_unread = inbox_stats.get("messages_unread", 0) or inbox_stats.get("threads_unread", 0)
 
+        github_exclusion = " -from:notifications@github.com -from:github.com" if exclude_github else ""
+
         # Standard noise categories aligned with email-triage-policy.md
         rules = [
             {
                 "category": "Stale Promotions (>2d)",
                 "action": "trash",
-                "query": "category:promotions older_than:2d -humble -eero -experian -marriott -securly",
+                "query": f"category:promotions older_than:2d -humble -eero -experian -marriott -securly{github_exclusion}",
             },
             {
                 "category": "LinkedIn Alerts",
@@ -560,16 +563,23 @@ class GmailClient:
                 "query": "(from:facebookmail.com OR from:threads.net OR from:cozey.ca OR \"Facebook Friend Suggestions\")",
             },
             {
-                "category": "Direct Trash & Unsubscribe",
-                "action": "trash",
-                "query": "(from:unidays.com OR from:palottery.com OR from:tumi.com OR from:coffeeco.com OR \"Word Daily\" OR \"Nutcracker Cash\" OR from:stephengerhart OR from:samgerhart)",
+                "category": "Misaddressed Mail (Other S. Gerharts)",
+                "action": "archive",
+                "query": "(\"Shawn Gerhart\" OR \"Siobhan Gerhart\" OR \"Brad Fry\" OR \"realtor\" OR \"MLS\" OR \"mortgage closing\")",
             },
             {
+                "category": "Direct Trash & Unsubscribe",
+                "action": "trash",
+                "query": "(from:unidays.com OR from:palottery.com OR from:tumi.com OR from:coffeeco.com OR from:womaness.com OR from:newegg.com OR from:udemy.com OR \"Word Daily\" OR \"Nutcracker Cash\" OR from:stephengerhart OR from:samgerhart)",
+            },
+        ]
+
+        if not exclude_github:
+            rules.append({
                 "category": "Stale CI Notifications (>2d)",
                 "action": "trash",
                 "query": "from:notifications@github.com older_than:2d",
-            },
-        ]
+            })
 
         total_trashed = 0
         total_archived = 0
